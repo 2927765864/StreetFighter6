@@ -31,10 +31,14 @@ import {
   sanitizeObjectMaterials,
   worldBox,
 } from './materialUtils';
-import { shouldLocoSoftBlend } from '../combat/loco/WalkController';
+import {
+  defaultCrossfadeDurations,
+  resolveCrossfadeSec,
+  type CrossfadeDurations,
+} from '../combat/anim/AnimCrossfade';
 
-/** In-flight soft switch between two loco clips (walk roles / idle). */
-type LocoBlend = {
+/** In-flight freeze-old + blend-to-new (§3.11 presentation crossfade). */
+type PoseBlend = {
   from: THREE.AnimationAction;
   to: THREE.AnimationAction;
   fromKey: string;
@@ -45,6 +49,12 @@ type LocoBlend = {
   fromTimeSec: number;
   /** If true, `to` free-runs with wall clock after weight settles. */
   toFreeRun: boolean;
+};
+
+const HARD_CUT: CrossfadeDurations = {
+  locoSec: 0,
+  residualToMoveSec: 0,
+  residualToAttackSec: 0,
 };
 
 /**
@@ -70,8 +80,8 @@ export class FighterView {
   private placeholder: THREE.Mesh;
   private procedural = new ProceduralRyuAnim();
   private useProcedural = false;
-  /** Soft crossfade for walk start/loop/end ↔ idle (wall-clock). */
-  private locoBlend: LocoBlend | null = null;
+  /** Freeze-old presentation crossfade (§3.11; walk + residual→move, etc.). */
+  private poseBlend: PoseBlend | null = null;
   /**
    * When true, ignore logic clipId and only advance the preview mixer
    * (used by the animation test panel).
@@ -632,20 +642,20 @@ export class FighterView {
     if (updateMixer) this.mixer.update(0);
   }
 
-  private clearLocoBlend(stopFrom = true): void {
-    if (!this.locoBlend) return;
+  private clearPoseBlend(stopFrom = true): void {
+    if (!this.poseBlend) return;
     if (stopFrom) {
-      this.locoBlend.from.stop();
-      this.locoBlend.from.setEffectiveWeight(0);
+      this.poseBlend.from.stop();
+      this.poseBlend.from.setEffectiveWeight(0);
     }
-    this.locoBlend = null;
+    this.poseBlend = null;
   }
 
   /**
-   * Start or replace a wall-clock soft blend between two loco actions.
-   * Freezes `from` pose; `to` is scrubbed/free-run by the sync path.
+   * Start freeze-old + blend-to-new (§3.11). Freezes `from`; `to` is
+   * scrubbed/free-run by the sync path.
    */
-  private beginLocoBlend(
+  private beginPoseBlend(
     from: THREE.AnimationAction,
     to: THREE.AnimationAction,
     fromKey: string,
@@ -654,7 +664,7 @@ export class FighterView {
     blendSec: number,
   ): void {
     if (!this.mixer || blendSec <= 1e-4) {
-      this.clearLocoBlend(true);
+      this.clearPoseBlend(true);
       this.mixer?.stopAllAction();
       to.reset();
       to.setLoop(
@@ -671,9 +681,9 @@ export class FighterView {
     }
 
     // Drop any prior blend's from-clip
-    if (this.locoBlend && this.locoBlend.from !== from) {
-      this.locoBlend.from.stop();
-      this.locoBlend.from.setEffectiveWeight(0);
+    if (this.poseBlend && this.poseBlend.from !== from) {
+      this.poseBlend.from.stop();
+      this.poseBlend.from.setEffectiveWeight(0);
     }
 
     const fromTime = from.time;
@@ -690,7 +700,7 @@ export class FighterView {
     to.time = 0;
     to.play();
 
-    this.locoBlend = {
+    this.poseBlend = {
       from,
       to,
       fromKey,
@@ -704,11 +714,11 @@ export class FighterView {
   }
 
   /**
-   * Advance loco blend weights; scrub/freeze from; prepare `to` weight.
+   * Advance pose-blend weights; freeze from; prepare `to` weight.
    * Returns weight on `to` in [0,1]. When finished, clears blend and returns 1.
    */
-  private stepLocoBlend(wallDtSec: number): number {
-    const b = this.locoBlend;
+  private stepPoseBlend(wallDtSec: number): number {
+    const b = this.poseBlend;
     if (!b || !this.mixer) return 1;
 
     b.elapsed += Math.min(Math.max(wallDtSec, 0), 0.1);
@@ -726,7 +736,7 @@ export class FighterView {
         b.to.paused = false;
         b.to.setLoop(THREE.LoopRepeat, Infinity);
       }
-      this.locoBlend = null;
+      this.poseBlend = null;
       this.mixer.update(0);
       return 1;
     }
@@ -738,13 +748,14 @@ export class FighterView {
   }
 
   /**
-   * Switch to a loaded logic action (sync). Soft-blends walk/idle role changes.
+   * Switch to a loaded logic action (sync).
+   * Soft-blends per §3.11 resolveCrossfadeSec (freeze-old).
    */
   private switchToLogicAction(
     canon: string,
     role: string,
     action: THREE.AnimationAction,
-    blendSec: number,
+    durations: CrossfadeDurations,
   ): void {
     const bind = this.bindingKey(canon, role);
     if (this.currentBinding === bind) return;
@@ -755,15 +766,13 @@ export class FighterView {
         ? this.logicActions.get(prevKey)!
         : null;
     const freeRun = this.isFreeRunLogic(canon, role);
-    const soft =
-      prev &&
-      shouldLocoSoftBlend(prevKey, bind) &&
-      blendSec > 1e-4;
+    const blendSec = resolveCrossfadeSec(prevKey, bind, durations);
+    const soft = prev != null && blendSec > 1e-4;
 
     if (soft && prev) {
-      this.beginLocoBlend(prev, action, prevKey, bind, freeRun, blendSec);
+      this.beginPoseBlend(prev, action, prevKey, bind, freeRun, blendSec);
     } else {
-      this.clearLocoBlend(true);
+      this.clearPoseBlend(true);
       this.mixer?.stopAllAction();
       action.reset();
       action.setLoop(freeRun ? THREE.LoopRepeat : THREE.LoopOnce, Infinity);
@@ -785,10 +794,23 @@ export class FighterView {
 
   /**
    * Switch to logic clip + role. Does not thrash if binding unchanged.
-   * @param blendSec wall-clock crossfade for loco soft switches; 0 = hard
+   * @param durations §3.11 crossfade table (or HARD_CUT / all zeros)
    */
-  playBest(clipId: string, role = 'main', blendSec = 0): void {
+  playBest(
+    clipId: string,
+    role = 'main',
+    durations: CrossfadeDurations | number = HARD_CUT,
+  ): void {
     if (this.previewMode) return;
+
+    const d: CrossfadeDurations =
+      typeof durations === 'number'
+        ? defaultCrossfadeDurations({
+            locoSec: durations,
+            residualToMoveSec: durations,
+            residualToAttackSec: 0,
+          })
+        : durations;
 
     if (this.animsMode) {
       const canon = this.logicMap?.canonical(clipId) ?? clipId;
@@ -798,7 +820,7 @@ export class FighterView {
       }
       const ready = this.resolveLogicAction(clipId, role);
       if (ready) {
-        this.switchToLogicAction(canon, role, ready, blendSec);
+        this.switchToLogicAction(canon, role, ready, d);
         return;
       }
       void this.ensureLogicClip(clipId, role).then((ok) => {
@@ -811,7 +833,7 @@ export class FighterView {
         );
         if (this.currentBinding === bind) return;
         // Async first bind: hard cut (preload should make this rare for walk)
-        this.switchToLogicAction(canon, role, action, 0);
+        this.switchToLogicAction(canon, role, action, HARD_CUT);
       });
       return;
     }
@@ -1023,17 +1045,21 @@ export class FighterView {
       return;
     }
 
-    const blendSec = cfg.locoBlendSec ?? 0.12;
+    const fadePolicy = defaultCrossfadeDurations({
+      locoSec: cfg.locoBlendSec ?? 0.12,
+      residualToMoveSec: cfg.residualToMoveBlendSec ?? 0.1,
+      residualToAttackSec: cfg.residualToAttackBlendSec ?? 0,
+    });
 
     if (this.useProcedural) {
       if (fighter.phase === 'attack' && fighter.mover.move) {
-        this.clearLocoBlend(true);
-        this.playBest(fighter.clipId, role, 0);
+        this.clearPoseBlend(true);
+        this.playBest(fighter.clipId, role, HARD_CUT);
         const total = Math.max(1, fighter.mover.total);
         this.procedural.setAttackProgress(fighter.mover.moveFrame / total);
         this.procedural.update(0, true);
       } else {
-        this.playBest(fighter.clipId, role, blendSec);
+        this.playBest(fighter.clipId, role, fadePolicy);
         this.procedural.update(animDt, false);
       }
       this.maybePlantAfterPose(fighter, cfg, wallDtSec);
@@ -1063,10 +1089,10 @@ export class FighterView {
       this.scrubActionTo(action, t, weight, updateMixer);
     };
 
-    // Attack locked segment: hard cut; 60Hz prefix scrub (§3.7.1)
+    // Attack locked segment: no crossfade (不侵占逻辑动画 §3.11); 60Hz prefix
     if (fighter.phase === 'attack' && fighter.mover.move) {
-      this.clearLocoBlend(true);
-      this.playBest(fighter.clipId, role, 0);
+      this.clearPoseBlend(true);
+      this.playBest(fighter.clipId, role, HARD_CUT);
       const action = this.resolveAction(fighter.clipId, role);
       if (action && this.mixer) {
         const vf = fighter.mover.moveFrame;
@@ -1080,13 +1106,14 @@ export class FighterView {
     this.attackHipsLockLocal = null;
 
     // Attack residual tail (logic idle/crouch canAct, still attack clip) — §3.7.1
+    // Stay on attack clip with hard cut to self; freeze-old starts only when leaving.
     if (
       fighter.animTail &&
       (fighter.phase === 'idle' || fighter.phase === 'crouch')
     ) {
-      this.clearLocoBlend(true);
+      this.clearPoseBlend(true);
       const tailClip = fighter.animTail.clipId;
-      this.playBest(tailClip, 'main', 0);
+      this.playBest(tailClip, 'main', HARD_CUT);
       const action = this.resolveAction(tailClip, 'main');
       if (action && this.mixer) {
         const t = visualFrameToClipTime(
@@ -1099,15 +1126,15 @@ export class FighterView {
       return;
     }
 
-    // Stance transition: stand_to_crouch / crouch_to_stand scrub (§3.7.2)
+    // Stance transition: stand_to_crouch / crouch_to_stand scrub (§3.7.2) — 必接片, no sol
     if (
       fighter.inStanceTransition &&
       (fighter.phase === 'idle' || fighter.phase === 'crouch')
     ) {
-      this.clearLocoBlend(true);
-      const role = fighter.animRole || 'main';
-      this.playBest(fighter.clipId, role, 0);
-      const action = this.resolveAction(fighter.clipId, role);
+      this.clearPoseBlend(true);
+      const stRole = fighter.animRole || 'main';
+      this.playBest(fighter.clipId, stRole, HARD_CUT);
+      const action = this.resolveAction(fighter.clipId, stRole);
       if (action && this.mixer) {
         // 60Hz prefix along transition clip (same as attack residual timeline)
         const t = visualFrameToClipTime(
@@ -1120,15 +1147,15 @@ export class FighterView {
       return;
     }
 
-    // Walk: scrub by locoFrame; soft-blend start/loop/end switches
+    // Walk: scrub by locoFrame; §3.11 freeze-old (loco + residual→move)
     if (fighter.phase === 'walk') {
-      this.playBest(fighter.clipId, role, blendSec);
+      this.playBest(fighter.clipId, role, fadePolicy);
       const action = this.resolveAction(fighter.clipId, role);
       if (action && this.mixer) {
         const mapTotal =
           this.logicMap?.frameCountForRole(fighter.clipId, role) ?? 60;
-        if (this.locoBlend && this.locoBlend.to === action) {
-          const w = this.stepLocoBlend(wallDtSec);
+        if (this.poseBlend && this.poseBlend.to === action) {
+          const w = this.stepPoseBlend(wallDtSec);
           scrubTo(action, fighter.locoFrame, mapTotal, w, true);
         } else {
           scrubTo(action, fighter.locoFrame, mapTotal);
@@ -1144,8 +1171,8 @@ export class FighterView {
       fighter.phase === 'airborne' ||
       fighter.phase === 'landing'
     ) {
-      this.clearLocoBlend(true);
-      this.playBest(fighter.clipId, role, 0);
+      this.clearPoseBlend(true);
+      this.playBest(fighter.clipId, role, HARD_CUT);
       const action = this.resolveAction(fighter.clipId, role);
       if (action && this.mixer) {
         const mapTotal =
@@ -1163,8 +1190,8 @@ export class FighterView {
 
     // Dash: hard cut
     if (fighter.phase === 'dash') {
-      this.clearLocoBlend(true);
-      this.playBest(fighter.clipId, 'main', 0);
+      this.clearPoseBlend(true);
+      this.playBest(fighter.clipId, 'main', HARD_CUT);
       const action = this.resolveAction(fighter.clipId, 'main');
       if (action && this.mixer) {
         const total =
@@ -1176,10 +1203,10 @@ export class FighterView {
       return;
     }
 
-    // Hitstun / blockstun
+    // Hitstun / blockstun — usually no sol (§3.11)
     if (fighter.phase === 'hitstun' || fighter.phase === 'blockstun') {
-      this.clearLocoBlend(true);
-      this.playBest(fighter.clipId, 'main', 0);
+      this.clearPoseBlend(true);
+      this.playBest(fighter.clipId, 'main', HARD_CUT);
       const action = this.resolveAction(fighter.clipId, 'main');
       if (action && this.mixer) {
         action.paused = false;
@@ -1190,19 +1217,19 @@ export class FighterView {
       return;
     }
 
-    // Idle / crouch: free-run wall clock (consensus §3.7); soft-blend from walk end
+    // Idle / crouch: free-run; soft-blend from walk end or residual→idle (§3.11)
     this.playBest(
       fighter.clipId,
       role === 'main' ? 'main' : role,
-      blendSec,
+      fadePolicy,
     );
     if (this.mixer) {
       const action = this.resolveAction(fighter.clipId, 'main');
       if (action) {
-        if (this.locoBlend && this.locoBlend.to === action) {
-          const w = this.stepLocoBlend(wallDtSec);
-          if (this.locoBlend) {
-            // Still blending: hold idle at start pose while previous walk freezes
+        if (this.poseBlend && this.poseBlend.to === action) {
+          const w = this.stepPoseBlend(wallDtSec);
+          if (this.poseBlend) {
+            // Still blending: hold idle at start pose while previous freezes
             this.scrubActionTo(action, 0, w, true);
           } else {
             action.paused = false;

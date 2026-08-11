@@ -69,8 +69,17 @@ export type MutableSimConfig = {
   applySelfMovement: boolean;
   selfMovementScale: number;
   showFootDebug: boolean;
-  /** Wall-clock seconds for walk/idle role crossfade (0 = hard cut). */
+  /** Wall-clock seconds for walk/idle role crossfade (0 = hard cut). §3.11 loco. */
   locoBlendSec: number;
+  /**
+   * Attack residual (or attack clip) → walk/idle freeze-old blend (§3.11).
+   * Must not apply during attack lock (callers pass 0 there).
+   */
+  residualToMoveBlendSec: number;
+  /**
+   * Attack residual → another attack (§3.11). Default 0 = hard cut (跟手).
+   */
+  residualToAttackBlendSec: number;
   /** Max |ΔY| for sole plant per second (meters, world). Softens foot pops. */
   plantSlewPerSec: number;
   /** Stand → crouch transition logic frames (§3.7.2). */
@@ -135,6 +144,8 @@ export function createDefaultSimConfig(): MutableSimConfig {
     selfMovementScale: 1,
     showFootDebug: false,
     locoBlendSec: 0.12,
+    residualToMoveBlendSec: 0.1,
+    residualToAttackBlendSec: 0,
     plantSlewPerSec: 0.55,
     standToCrouchFrames: 60,
     crouchToStandFrames: 38,

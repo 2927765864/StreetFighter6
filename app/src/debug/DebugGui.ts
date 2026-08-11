@@ -363,6 +363,12 @@ export function createDebugGui(
     .add(cfg, 'locoBlendSec', 0, 0.35, 0.01)
     .name('locoBlendSec');
   animDrive
+    .add(cfg, 'residualToMoveBlendSec', 0, 0.35, 0.01)
+    .name('residual→move溶图');
+  animDrive
+    .add(cfg, 'residualToAttackBlendSec', 0, 0.2, 0.01)
+    .name('residual→攻溶图');
+  animDrive
     .add(cfg, 'plantSlewPerSec', 0.05, 2, 0.01)
     .name('plantSlewPerSec');
   animDrive.add(cfg, 'showFootDebug').name('showFootDebug');
