@@ -69,6 +69,14 @@ export type MutableSimConfig = {
   applySelfMovement: boolean;
   selfMovementScale: number;
   showFootDebug: boolean;
+  /** Wall-clock seconds for walk/idle role crossfade (0 = hard cut). */
+  locoBlendSec: number;
+  /** Max |ΔY| for sole plant per second (meters, world). Softens foot pops. */
+  plantSlewPerSec: number;
+  /** Stand → crouch transition logic frames (§3.7.2). */
+  standToCrouchFrames: number;
+  /** Crouch → stand transition logic frames (§3.7.2). */
+  crouchToStandFrames: number;
 };
 
 export function createDefaultSimConfig(): MutableSimConfig {
@@ -126,6 +134,10 @@ export function createDefaultSimConfig(): MutableSimConfig {
     applySelfMovement: true,
     selfMovementScale: 1,
     showFootDebug: false,
+    locoBlendSec: 0.12,
+    plantSlewPerSec: 0.55,
+    standToCrouchFrames: 60,
+    crouchToStandFrames: 38,
   };
 }
 
@@ -157,6 +169,8 @@ export function applyConfigToMatchOpts(cfg: MutableSimConfig) {
     jumpNeutralDist: cfg.jumpNeutralDist,
     applySelfMovement: cfg.applySelfMovement,
     selfMovementScale: cfg.selfMovementScale,
+    standToCrouchFrames: cfg.standToCrouchFrames,
+    crouchToStandFrames: cfg.crouchToStandFrames,
   };
 }
 

@@ -6,7 +6,7 @@
 
 ## 策略
 
-- Super / 6HK：**不映射**（按你的决定延后）。
+- Super：**不映射**（延后）。6HK 已映射到磁盘名 `ATK_3HK`（旋风脚）。
 - L/M/H/OD 暂共用主 clip。
 - 多段招：`clips[].role` = start / loop / end。
 - 逻辑帧驱动 scrub，不以 glb `frameCount` 为招式总长。
@@ -39,8 +39,8 @@
 | ✅ mapped | `ryu_6hp` | 6+HP | Solar Plexus Strike | `basic/esf001v00_skill_01/glb/000_esf001_ATK_6HP_id0000_f90.glb` | 1 (main) |
 | ✅ mapped | `ryu_4hp` | 4+HP | Short Uppercut | `basic/esf001v00_skill_05/glb/000_esf001_ATK_4HP_id0000_f82.glb` | 1 (main) |
 | ✅ mapped | `ryu_4hk` | 4+HK | Axe Kick | `basic/esf001v00_skill_02/glb/000_esf001_ATK_4HK_id0000_f140.glb` | 1 (main) |
-| ✅ mapped | `ryu_3hk` | 3HK | 3HK (disk) | `basic/esf001v00_skill_03/glb/000_esf001_ATK_3HK_id0000_f111.glb` | 1 (main) |
-| ⏸ unmapped | `ryu_6hk` | 6+HK | Whirlwind Kick | `—` | 0 (—) |
+| ✅ mapped | `ryu_3hk` | 3HK (disk) | Whirlwind Kick (disk ATK_3HK) | `basic/esf001v00_skill_03/glb/000_esf001_ATK_3HK_id0000_f111.glb` | 1 (main) |
+| ✅ mapped | `ryu_6hk` | 6+HK | Whirlwind Kick | `basic/esf001v00_skill_03/glb/000_esf001_ATK_3HK_id0000_f111.glb` | 1 (main) |
 | ✅ mapped | `ryu_hadoken` | 236+P | Hadoken | `specialskill/esf001v00_specialskill_00/glb/000_esf001_SPA_HADO_id0000_f110.glb` | 1 (main) |
 | ✅ mapped | `ryu_shoryuken` | 623+P | Shoryuken | `specialskill/esf001v00_specialskill_01/glb/000_esf001_SPA_SYORYU_START_id0200_f49.glb` | 2 (start,end) |
 | ✅ mapped | `ryu_tatsu` | 214+K | Tatsumaki | `specialskill/esf001v00_specialskill_02/glb/000_esf001_SPA_TATSUMAKI_START_id0200_f14.glb` | 3 (start,loop,end) |
@@ -149,3 +149,4 @@
 | 日期 | 说明 |
 |------|------|
 | 2026-08-10 | 初版：普攻/移动/必杀映射；SA/6HK deferred |
+| 2026-08-11 | `ryu_6hk` → `ATK_3HK`（skill_03 f111；卡普空磁盘名≠指令 6HK） |

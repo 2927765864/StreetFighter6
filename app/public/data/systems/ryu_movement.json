@@ -40,5 +40,10 @@
     "backDistance": 1.52,
     "neutralDistance": 0,
     "approx": "uniform horizontal on air; parabola y=4*apex*t*(1-t)"
+  },
+  "stance": {
+    "standToCrouchFrames": 60,
+    "crouchToStandFrames": 38,
+    "notes": "Matches glb frameCount stand_to_crouch f60 / crouch_to_stand f38; scrub 60Hz"
   }
 }

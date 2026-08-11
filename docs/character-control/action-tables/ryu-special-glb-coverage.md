@@ -23,10 +23,10 @@
 | ❌ | `ryu_sa1` | 236236+P | Shinku Hadoken | 0 | 未见 |
 | ❌ | `ryu_sa2` | 214214+P | Shin Hashogeki | 0 | 未见 |
 | ❌ | `ryu_sa3` | 236236+K | Shin Shoryuken | 0 | 未见 |
-| ❌ | `ryu_6hk` | 6+HK | Whirlwind Kick | 0 | 无 `ATK_6HK`（属 unique，非本包） |
+| ✅ | `ryu_6hk` | 6+HK | Whirlwind Kick | 1 | 磁盘名 `ATK_3HK`（`basic/skill_03`，非 specialskill） |
 
 **必杀 7 招：全部有素材。**  
-**仍缺：3 个 Super + 指令普攻 6HK。**
+**仍缺：3 个 Super。** 6HK 已用磁盘 `ATK_3HK` 接入。
 
 ---
 
@@ -76,14 +76,14 @@
 |------|------|
 | **无 SA1/SA2/SA3** | 超必杀表现仍缺；可能在 `superskill` / 其它 motlist |
 | **强度分轨少** | 多半 1 clip 打 L/M/H/OD；逻辑表仍可分强度，动画先共用 |
-| **6HK 仍无** | 指令普攻，应在 attack 包，不是 specialskill 漏导 |
+| **6HK 已接** | 磁盘 `ATK_3HK` / `basic/skill_03` → `ryu_6hk`（非 specialskill） |
 | **clip 帧数 vs 帧表** | 如 HADO f110 ≫ 公开 recovery；需 **逻辑帧 scrub**，勿播满才收招 |
 | **未接运行时** | 对战 `clip_map` 仍几乎只有 idle/5lp |
 
 ### 总评
 
 **必杀素材补包：合格且可用，主干目标达成。**  
-按「完整隆指令表动画」还差 **超必杀 + 6HK +（可选）强度/OD 分轨**；  
+按「完整隆指令表动画」还差 **超必杀 +（可选）强度/OD 分轨**；  
 按「先做 special 状态机 + 出招表现」**已经够开工**。
 
 ---
@@ -91,7 +91,7 @@
 ## 5. 建议的下一步（素材侧）
 
 1. 在本机 natives 搜 `super` / `specialart` / `ca` 类 motlist → 导出 SA。  
-2. 在 attack motlist 里确认是否有 `6HK` / Whirlwind 未导出。  
+2. ~~6HK~~ 已确认 = `ATK_3HK` 并接入 `ryu_6hk`。  
 3. 项目内建 `SPA_* → moveId` 映射表（可从本文抄）。  
 4. 调试 GUI 已能扫新目录的话，逐条播 SPA 确认绑定是否正常。
 

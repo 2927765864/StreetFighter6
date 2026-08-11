@@ -1,20 +1,21 @@
 {
   "$schema_note": "Logic moveId → private/assets/ryu/anims glb paths. Runtime should resolve via this table; scrub by logic frames not full glb length.",
   "version": 1,
-  "generated": "2026-08-10",
+  "generated": "2026-08-11",
   "assetRoot": "private/assets/ryu/anims",
   "devFileUrlPattern": "/api/ryu-anims/file/{path}",
   "policy": {
     "missingSupers": "deferred",
-    "missing6hk": "deferred",
+    "missing6hk": "mapped_via_ATK_3HK",
     "strengthVariants": "share primary clip until separate takes exist",
     "multiClipMoves": "use clips[].role order: start → loop → end",
-    "logicVsAnimFrames": "FighterView scrubs by move.frames.total @ 60Hz; do not wait for glb frameCount"
+    "logicVsAnimFrames": "FighterView scrubs by move.frames.total @ 60Hz; do not wait for glb frameCount",
+    "atk3hkIsWhirlwind": true
   },
   "summary": {
     "entries": 48,
-    "mapped": 44,
-    "unmapped_or_deferred": 4
+    "mapped": 45,
+    "unmapped_or_deferred": 3
   },
   "aliasIndex": {
     "ryu_5lp": "ryu_5lp",
@@ -733,7 +734,7 @@
     {
       "moveId": "ryu_3hk",
       "command": "3HK",
-      "displayName": "3HK (disk)",
+      "displayName": "Whirlwind Kick (disk ATK_3HK)",
       "category": "unique",
       "status": "mapped",
       "aliases": [
@@ -750,20 +751,31 @@
         }
       ],
       "primaryPath": "basic/esf001v00_skill_03/glb/000_esf001_ATK_3HK_id0000_f111.glb",
-      "notes": ""
+      "notes": "Disk clip ATK_3HK is Capcom-internal name for Whirlwind Kick (game input 6+HK / ryu_6hk). Same glb as ryu_6hk."
     },
     {
       "moveId": "ryu_6hk",
       "command": "6+HK",
       "displayName": "Whirlwind Kick",
       "category": "unique",
-      "status": "unmapped",
+      "status": "mapped",
       "aliases": [
-        "6hk"
+        "6hk",
+        "whirlwind",
+        "whirlwind-kick"
       ],
-      "clips": [],
-      "primaryPath": null,
-      "notes": "Intentionally not filled; no glb. Deferred."
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "ATK_3HK",
+          "path": "basic/esf001v00_skill_03/glb/000_esf001_ATK_3HK_id0000_f111.glb",
+          "stem": "000_esf001_ATK_3HK_id0000_f111",
+          "motionId": 0,
+          "frameCount": 111
+        }
+      ],
+      "primaryPath": "basic/esf001v00_skill_03/glb/000_esf001_ATK_3HK_id0000_f111.glb",
+      "notes": "Capcom disk name is ATK_3HK (esf001v00_skill_03); confirmed Whirlwind Kick / 6+HK. No ATK_6HK string in dump."
     },
     {
       "moveId": "ryu_hadoken",

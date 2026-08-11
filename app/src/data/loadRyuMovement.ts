@@ -38,6 +38,11 @@ export type RyuMovementTable = {
     neutralDistance: number;
     approx?: string;
   };
+  stance?: {
+    standToCrouchFrames: number;
+    crouchToStandFrames: number;
+    notes?: string;
+  };
 };
 
 export const RYU_MOVEMENT_URL = '/data/systems/ryu_movement.json';
@@ -74,6 +79,10 @@ export function parseRyuMovement(raw: unknown): RyuMovementTable {
   finite(o.jump?.apexHeight, 'jump.apexHeight');
   finite(o.jump?.forwardDistance, 'jump.forwardDistance');
   finite(o.jump?.backDistance, 'jump.backDistance');
+  if (o.stance) {
+    finite(o.stance.standToCrouchFrames, 'stance.standToCrouchFrames');
+    finite(o.stance.crouchToStandFrames, 'stance.crouchToStandFrames');
+  }
   return o;
 }
 
@@ -110,5 +119,7 @@ export function movementToSimDefaults(t: RyuMovementTable) {
     jumpFwdDist: t.jump.forwardDistance,
     jumpBackDist: t.jump.backDistance,
     jumpNeutralDist: t.jump.neutralDistance,
+    standToCrouchFrames: t.stance?.standToCrouchFrames ?? 60,
+    crouchToStandFrames: t.stance?.crouchToStandFrames ?? 38,
   };
 }

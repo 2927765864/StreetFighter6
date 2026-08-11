@@ -42,6 +42,8 @@ export type MatchSimOptions = {
   jumpNeutralDist: number;
   applySelfMovement: boolean;
   selfMovementScale: number;
+  standToCrouchFrames: number;
+  crouchToStandFrames: number;
 };
 
 const DEFAULT_OPTS: MatchSimOptions = {
@@ -71,6 +73,8 @@ const DEFAULT_OPTS: MatchSimOptions = {
   jumpNeutralDist: 0,
   applySelfMovement: true,
   selfMovementScale: 1,
+  standToCrouchFrames: 60,
+  crouchToStandFrames: 38,
 };
 
 export type MatchSnapshot = {
@@ -402,11 +406,16 @@ export class MatchSim {
     }
 
     // Locomotion when can act and not attacking this frame
+    // Residual §3.7.1 + stance transition §3.7.2
     if (this.p1.canAct() && this.p1.phase !== 'attack') {
+      this.p1.setStanceConfig({
+        standToCrouchFrames: this.opts.standToCrouchFrames,
+        crouchToStandFrames: this.opts.crouchToStandFrames,
+      });
       if (intent.kind === 'crouch') {
-        this.p1.clearLoco();
-        this.p1.setIdleWalk('crouch');
+        this.p1.applyPostureOrWalkIntent('crouch');
       } else if (intent.kind === 'walk') {
+        this.p1.applyPostureOrWalkIntent('walk');
         this.stepWalkLocomotion(true);
       } else if (intent.kind === 'none') {
         // Finish walk end segment if needed
@@ -417,7 +426,7 @@ export class MatchSim {
         ) {
           this.stepWalkLocomotion(false);
         } else {
-          this.p1.setIdleWalk('idle');
+          this.p1.applyPostureOrWalkIntent('none');
         }
       }
     }

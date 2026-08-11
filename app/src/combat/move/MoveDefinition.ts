@@ -49,6 +49,19 @@ export type MoveDefinition = {
   selfMovement?: number[];
   /** Support-foot plant window (attack only). Consensus §3.9 */
   plant?: PlantWindow;
+  /**
+   * Full presentation length @60Hz (glb samples). If > frames.total, residual
+   * tail plays after logic ends (consensus §3.7.1). Optional; may be filled
+   * from glbPath `_fN` or map frameCount.
+   */
+  animFrameCount?: number;
+  /** Optional anims-relative path (for tooling / frameCount parse). */
+  glbPath?: string;
+  /**
+   * Posture family for residual compatibility (consensus §3.7.1).
+   * If omitted, inferred from moveId (2* crouch, j./8* air, else stand).
+   */
+  stance?: 'stand' | 'crouch' | 'air';
 };
 
 function asNum(v: unknown, fallback: number): number {
@@ -134,6 +147,24 @@ export function parseMoveDefinition(raw: unknown): MoveDefinition {
     }
   }
 
+  const glbPath =
+    o.glbPath != null && String(o.glbPath).length > 0
+      ? String(o.glbPath)
+      : undefined;
+
+  let animFrameCount: number | undefined;
+  if (o.animFrameCount != null && Number.isFinite(Number(o.animFrameCount))) {
+    animFrameCount = Math.max(1, Math.floor(Number(o.animFrameCount)));
+  } else if (glbPath) {
+    const m = /_f(\d+)(?:\.|$)/i.exec(glbPath);
+    if (m) animFrameCount = Math.max(1, parseInt(m[1]!, 10));
+  }
+
+  let stance: MoveDefinition['stance'];
+  if (o.stance === 'stand' || o.stance === 'crouch' || o.stance === 'air') {
+    stance = o.stance;
+  }
+
   return {
     id: String(o.id),
     characterId: String(o.characterId ?? 'ryu'),
@@ -167,6 +198,9 @@ export function parseMoveDefinition(raw: unknown): MoveDefinition {
     sources: o.sources as MoveDefinition['sources'],
     selfMovement,
     plant,
+    animFrameCount,
+    glbPath,
+    stance,
   };
 }
 

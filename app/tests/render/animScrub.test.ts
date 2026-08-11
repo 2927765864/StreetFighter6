@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { logicFrameToClipTime } from '../../src/render/AnimScrub';
+import {
+  logicFrameToClipTime,
+  visualFrameToClipTime,
+} from '../../src/render/AnimScrub';
 
 describe('logicFrameToClipTime', () => {
   it('uniform maps 0 and last frame into duration', () => {
@@ -16,3 +19,14 @@ describe('logicFrameToClipTime', () => {
     expect(logicFrameToClipTime(30, 13, d, 'truncate')).toBeCloseTo(12 / 60, 5);
   });
 });
+
+describe('visualFrameToClipTime §3.7.1', () => {
+  it('maps 5LK-style timeline: logic 18 then residual toward 48', () => {
+    const d = 48 / 60; // 0.8s
+    expect(visualFrameToClipTime(0, d)).toBe(0);
+    expect(visualFrameToClipTime(17, d)).toBeCloseTo(17 / 60, 5);
+    expect(visualFrameToClipTime(18, d)).toBeCloseTo(18 / 60, 5);
+    expect(visualFrameToClipTime(47, d)).toBeCloseTo(47 / 60, 5);
+  });
+});
+

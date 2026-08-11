@@ -359,6 +359,12 @@ export function createDebugGui(
     .name('plantMode');
   animDrive.add(cfg, 'footPlantEnabled').name('footPlantEnabled');
   animDrive.add(cfg, 'rootPoseLockAttack').name('rootPoseLockAttack');
+  animDrive
+    .add(cfg, 'locoBlendSec', 0, 0.35, 0.01)
+    .name('locoBlendSec');
+  animDrive
+    .add(cfg, 'plantSlewPerSec', 0.05, 2, 0.01)
+    .name('plantSlewPerSec');
   animDrive.add(cfg, 'showFootDebug').name('showFootDebug');
 
   const disp = gui.addFolder('位移调试');

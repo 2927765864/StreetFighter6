@@ -355,14 +355,60 @@ export function resetFbxUnitScales(root: THREE.Object3D): number {
 }
 
 /**
+ * Local-space position keys beyond this (meters) are treated as toxic / wrong unit.
+ * Healthy SF6 RE glbs (C_Hip idle ~0.9–1.0, crouch ~0.62) stay well under this.
+ */
+export const RE_POS_TOXIC_ABS = 3;
+
+/** After ×0.01, still toxic → drop the track. */
+const RE_POS_TOXIC_AFTER_SCALE = 3;
+
+function trackAbsMax(values: ArrayLike<number>): number {
+  let m = 0;
+  for (let i = 0; i < values.length; i++) {
+    const a = Math.abs(values[i]!);
+    if (a > m) m = a;
+  }
+  return m;
+}
+
+/**
+ * Decide fate of one position track:
+ * - keep as-is if absMax ≤ RE_POS_TOXIC_ABS
+ * - if looks like FBX cm (large abs), scale ×0.01 and keep when safe
+ * - else drop
+ *
+ * Critical: do NOT blanket-strip all positions. Idle bob + crouch hip drop live
+ * on C_Hip.position; stripping them causes feet through floor and mesh stretch.
+ */
+export function sanitizeRePositionTrack(
+  track: THREE.KeyframeTrack,
+): { keep: boolean; scaled: boolean; track: THREE.KeyframeTrack } {
+  const absMax = trackAbsMax(track.values);
+  if (absMax <= RE_POS_TOXIC_ABS) {
+    return { keep: true, scaled: false, track };
+  }
+  // FBX UnitScaleFactor 0.01: values often tens–hundreds in "cm-like" space
+  if (absMax >= 5 && absMax < 500) {
+    const scaled = track.clone();
+    for (let i = 0; i < scaled.values.length; i++) {
+      scaled.values[i]! *= 0.01;
+    }
+    if (trackAbsMax(scaled.values) <= RE_POS_TOXIC_AFTER_SCALE) {
+      return { keep: true, scaled: true, track: scaled };
+    }
+  }
+  return { keep: false, scaled: false, track };
+}
+
+/**
  * Noesis/Blender FBX clips for RE fighters need cleanup:
  *
- * 1. Bone `.position` tracks are often wrong-unit (C_Hip y≈-9 vs bind 1.05) and
- *    collapse the mesh — drop them; bind translations + quats are enough.
- * 2. Armature `.scale` is authored as 0.01 (FBX UnitScaleFactor) and re-shrinks
- *    the whole rig every frame — rewrite those keys to 1.
- * 3. Armature `.quaternion` is often 90° X from Blender export; bone idle quats
- *    already produce a Y-up stance when the Armature is identity — drop it.
+ * 1. Bone `.position`: keep healthy keys (hip Y bob / crouch drop). Only drop or
+ *    unit-scale tracks that exceed {@link RE_POS_TOXIC_ABS}. Never strip all pos —
+ *    that freezes hips at bind height and breaks idle/crouch.
+ * 2. Armature `.scale` authored as 0.01 → rewrite keys to 1.
+ * 3. Armature `.quaternion` 90° X from Blender → drop (bone quats already Y-up).
  */
 export function sanitizeReAnimationClips(
   clips: THREE.AnimationClip[],
@@ -371,17 +417,30 @@ export function sanitizeReAnimationClips(
     const next = clip.clone();
     const before = next.tracks.length;
     let droppedPos = 0;
+    let keptPos = 0;
+    let scaledPos = 0;
     let droppedArmQuat = 0;
     let fixedScale = 0;
-    next.tracks = next.tracks.filter((track) => {
+    const out: THREE.KeyframeTrack[] = [];
+    for (const track of next.tracks) {
       if (track.name.endsWith('.position')) {
-        droppedPos++;
-        return false;
+        const r = sanitizeRePositionTrack(track);
+        if (!r.keep) {
+          droppedPos++;
+          continue;
+        }
+        if (r.scaled) scaledPos++;
+        keptPos++;
+        out.push(r.track);
+        continue;
       }
       // Blender FBX "Y up" on the Armature fights bone quats → character on its side
-      if (/Armature\.quaternion$/i.test(track.name) || /_Armature\.quaternion$/i.test(track.name)) {
+      if (
+        /Armature\.quaternion$/i.test(track.name) ||
+        /_Armature\.quaternion$/i.test(track.name)
+      ) {
         droppedArmQuat++;
-        return false;
+        continue;
       }
       if (track.name.endsWith('.scale')) {
         const v = track.values;
@@ -397,11 +456,18 @@ export function sanitizeReAnimationClips(
           fixedScale++;
         }
       }
-      return true;
-    });
-    if (droppedPos > 0 || fixedScale > 0 || droppedArmQuat > 0) {
+      out.push(track);
+    }
+    next.tracks = out;
+    if (
+      droppedPos > 0 ||
+      scaledPos > 0 ||
+      fixedScale > 0 ||
+      droppedArmQuat > 0
+    ) {
       console.info(
-        `[re-anim] "${next.name}": stripPos=${droppedPos} fixScale01=${fixedScale} ` +
+        `[re-anim] "${next.name}": keepPos=${keptPos} dropPos=${droppedPos} ` +
+          `scalePos01=${scaledPos} fixScale01=${fixedScale} ` +
           `dropArmQuat=${droppedArmQuat} (tracks ${before}→${next.tracks.length})`,
       );
     }
@@ -427,14 +493,24 @@ export function resetReArmatureTransform(root: THREE.Object3D): number {
   return n;
 }
 
+export type PrepareReExtractedOptions = {
+  /**
+   * When true (default), reset FBX scales and skeleton.pose() on `model`.
+   * Set false when only sanitizing clips for an already-installed live fighter
+   * (ensureLogicClip) — pose() would flash bind pose every async load.
+   */
+  poseModel?: boolean;
+};
+
 /**
  * Prepare RE-extracted fighter hierarchy for runtime:
- * fix unit scales, bind pose, strip toxic position curves.
+ * fix unit scales, optional bind pose, sanitize position curves (keep healthy hip Y).
  * Safe no-op for Soldier/Xbot/etc.
  */
 export function prepareReExtractedFighter(
   model: THREE.Object3D,
   animations: THREE.AnimationClip[],
+  opts?: PrepareReExtractedOptions,
 ): { animations: THREE.AnimationClip[]; applied: boolean; unitScalesFixed: number } {
   if (!looksLikeReExtractedModel(model) && animations.length === 0) {
     return { animations, applied: false, unitScalesFixed: 0 };
@@ -444,7 +520,7 @@ export function prepareReExtractedFighter(
     clip.tracks.some((t) => {
       if (!t.name.endsWith('.position')) return false;
       for (let i = 0; i < t.values.length; i++) {
-        if (Math.abs(t.values[i]!) > 3) return true;
+        if (Math.abs(t.values[i]!) > RE_POS_TOXIC_ABS) return true;
       }
       return false;
     }),
@@ -452,28 +528,34 @@ export function prepareReExtractedFighter(
   const isRe = looksLikeReExtractedModel(model) || hasToxicPos;
   if (!isRe) return { animations, applied: false, unitScalesFixed: 0 };
 
-  let unitScalesFixed = resetFbxUnitScales(model);
-  unitScalesFixed += resetReArmatureTransform(model);
+  const poseModel = opts?.poseModel !== false;
+  let unitScalesFixed = 0;
 
-  model.traverse((o) => {
-    const sm = o as THREE.SkinnedMesh;
-    if (sm.isSkinnedMesh && sm.skeleton) {
-      sm.skeleton.pose();
-    }
-  });
-  // pose() re-applies Root bone bind scale 0.01
-  unitScalesFixed += resetFbxUnitScales(model);
-  unitScalesFixed += resetReArmatureTransform(model);
+  if (poseModel) {
+    unitScalesFixed = resetFbxUnitScales(model);
+    unitScalesFixed += resetReArmatureTransform(model);
 
-  model.traverse((o) => {
-    const sm = o as THREE.SkinnedMesh;
-    if (sm.isSkinnedMesh && sm.skeleton) sm.skeleton.update();
-  });
-  model.updateMatrixWorld(true);
+    model.traverse((o) => {
+      const sm = o as THREE.SkinnedMesh;
+      if (sm.isSkinnedMesh && sm.skeleton) {
+        sm.skeleton.pose();
+      }
+    });
+    // pose() re-applies Root bone bind scale 0.01
+    unitScalesFixed += resetFbxUnitScales(model);
+    unitScalesFixed += resetReArmatureTransform(model);
+
+    model.traverse((o) => {
+      const sm = o as THREE.SkinnedMesh;
+      if (sm.isSkinnedMesh && sm.skeleton) sm.skeleton.update();
+    });
+    model.updateMatrixWorld(true);
+  }
 
   const cleaned = sanitizeReAnimationClips(animations);
   console.info(
-    `[re-extract] prepared model unitScalesFixed=${unitScalesFixed} clips=${cleaned.length}`,
+    `[re-extract] prepared model unitScalesFixed=${unitScalesFixed} ` +
+      `poseModel=${poseModel ? 1 : 0} clips=${cleaned.length}`,
   );
   return { animations: cleaned, applied: true, unitScalesFixed };
 }

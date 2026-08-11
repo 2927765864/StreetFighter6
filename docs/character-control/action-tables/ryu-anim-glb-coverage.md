@@ -54,8 +54,8 @@
 | ✅ FOUND | unique | `ryu_6hp` | 6+HP | Solar Plexus Strike | 1 | `6HP` |
 | ✅ FOUND | unique | `ryu_4hp` | 4+HP | Short Uppercut | 2 | `4HP_H` |
 | ✅ FOUND | unique | `ryu_4hk` | 4+HK | Axe Kick | 1 | `4HK` |
-| ❌ MISSING | unique | `ryu_6hk` | 6+HK | Whirlwind Kick | 0 | `—` |
-| ✅ FOUND | unique | `ryu_3hk` | 3HK? | Possible sweep/unique 3HK | 1 | `3HK` |
+| ✅ FOUND | unique | `ryu_6hk` | 6+HK | Whirlwind Kick | 1 | `3HK`（磁盘名 ATK_3HK） |
+| ✅ FOUND | unique | `ryu_3hk` | 3HK (disk) | = Whirlwind / 6HK | 1 | `3HK` |
 | ✅ FOUND | target_combo | `ryu_tc_hp_hk` | 5HP~5HK | High Double Strike | 4 | `5HP` |
 | ✅ FOUND | target_combo | `ryu_tc_fuwa` | 5MP~5LK~5HK | Fuwa Triple Strike | 5 | `5LK` |
 | ❌ MISSING | special_super | `ryu_hadoken` | 236+P | Hadoken | 0 | `—` |
@@ -94,7 +94,7 @@
 
 | moveId | 名称 | 指令 | 备注 |
 |--------|------|------|------|
-| `ryu_6hk` | Whirlwind Kick | 6+HK | ATK 列表中**无** `6HK`（有 6MP/6HP/4HK/3HK） |
+| ~~`ryu_6hk`~~ | Whirlwind Kick | 6+HK | **已确认** = 磁盘 `ATK_3HK` / `skill_03`（无 `ATK_6HK` 字符串） |
 | `ryu_hadoken` | Hadoken | 236+P | 无 Hadoken 等可读名 |
 | `ryu_shoryuken` | Shoryuken | 623+P | 无 |
 | `ryu_tatsu` | Tatsumaki | 214+K | 无 |
