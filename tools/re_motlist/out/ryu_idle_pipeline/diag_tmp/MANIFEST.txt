@@ -1,0 +1,11 @@
+stage=mesh
+natives_stm=/Users/yangjianlin/Documents/SF6_export/natives/stm
+materials=True
+meshes_imported=[PosixPath('/Users/yangjianlin/Documents/SF6_export/natives/stm/product/model/esf/esf001/001/00/esf001_001_00.mesh.230110883'), PosixPath('/Users/yangjianlin/Documents/SF6_export/natives/stm/product/model/esf/esf001/001/01/esf001_001_01.mesh.230110883'), PosixPath('/Users/yangjianlin/Documents/SF6_export/natives/stm/product/model/esf/esf001/001/02/esf001_001_02.mesh.230110883')]
+armature=esf001_001_00 Armature bones=679
+mesh_objects=21
+material_stats={'materials': 21, 'materials_with_nodes': 21, 'images': 0, 'image_names': []}
+validate_ok=True
+validate_hard=[]
+validate_soft=['zero images — tex conversion likely failed (on Apple Silicon RE Mesh uses libtexconv which often lacks ARM support; geometry/skin still OK for animation test)']
+mesh_only_blend=/Users/yangjianlin/Library/Mobile Documents/com~apple~CloudDocs/GameProject/StreetFighter6/tools/re_motlist/out/ryu_idle_pipeline/diag_tmp/ryu_c1_mesh_only.blend

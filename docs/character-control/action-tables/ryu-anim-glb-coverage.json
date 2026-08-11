@@ -1,0 +1,1499 @@
+{
+  "generated": "2026-08-10",
+  "root": "private/assets/ryu/anims",
+  "total_glbs": 307,
+  "summary": {
+    "checklist_rows": 53,
+    "found": 41,
+    "missing": 12,
+    "atk_variant_keys": 37,
+    "bas_keys": 38,
+    "other_keys": 232
+  },
+  "checklist": [
+    {
+      "category": "normal",
+      "moveId": "ryu_5lp",
+      "command": "5LP",
+      "name": "Standing LP",
+      "kind": "ATK",
+      "status": "FOUND",
+      "match_count": 3,
+      "matches": [
+        {
+          "key": "5LP_C",
+          "path": "attack/esf001v00_attack_00/glb/002_esf001_ATK_5LP_C_id0002_f38.glb"
+        },
+        {
+          "key": "5LP_B",
+          "path": "attack/esf001v00_attack_00/glb/001_esf001_ATK_5LP_B_id0001_f38.glb"
+        },
+        {
+          "key": "5LP",
+          "path": "attack/esf001v00_attack_00/glb/000_esf001_ATK_5LP_id0000_f39.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "normal",
+      "moveId": "ryu_5mp",
+      "command": "5MP",
+      "name": "Standing MP",
+      "kind": "ATK",
+      "status": "FOUND",
+      "match_count": 1,
+      "matches": [
+        {
+          "key": "5MP",
+          "path": "attack/esf001v00_attack_01/glb/000_esf001_ATK_5MP_id0000_f53.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "normal",
+      "moveId": "ryu_5hp",
+      "command": "5HP",
+      "name": "Standing HP",
+      "kind": "ATK",
+      "status": "FOUND",
+      "match_count": 1,
+      "matches": [
+        {
+          "key": "5HP",
+          "path": "attack/esf001v00_attack_02/glb/000_esf001_ATK_5HP_id0000_f79.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "normal",
+      "moveId": "ryu_5lk",
+      "command": "5LK",
+      "name": "Standing LK",
+      "kind": "ATK",
+      "status": "FOUND",
+      "match_count": 1,
+      "matches": [
+        {
+          "key": "5LK",
+          "path": "attack/esf001v00_attack_03/glb/000_esf001_ATK_5LK_id0000_f48.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "normal",
+      "moveId": "ryu_5mk",
+      "command": "5MK",
+      "name": "Standing MK",
+      "kind": "ATK",
+      "status": "FOUND",
+      "match_count": 1,
+      "matches": [
+        {
+          "key": "5MK",
+          "path": "attack/esf001v00_attack_04/glb/000_esf001_ATK_5MK_id0000_f89.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "normal",
+      "moveId": "ryu_5hk",
+      "command": "5HK",
+      "name": "Standing HK",
+      "kind": "ATK",
+      "status": "FOUND",
+      "match_count": 3,
+      "matches": [
+        {
+          "key": "5HK_G",
+          "path": "attack/esf001v00_attack_05/glb/001_esf001_ATK_5HK_G_id0005_f47.glb"
+        },
+        {
+          "key": "5HK_2",
+          "path": "attack/esf001v00_attack_05/glb/002_esf001_ATK_5HK_2_id0006_f114.glb"
+        },
+        {
+          "key": "5HK",
+          "path": "attack/esf001v00_attack_05/glb/000_esf001_ATK_5HK_id0000_f86.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "normal",
+      "moveId": "ryu_2lp",
+      "command": "2LP",
+      "name": "Crouching LP",
+      "kind": "ATK",
+      "status": "FOUND",
+      "match_count": 3,
+      "matches": [
+        {
+          "key": "2LP",
+          "path": "attack/esf001v00_attack_06/glb/000_esf001_ATK_2LP_id2000_f58.glb"
+        },
+        {
+          "key": "2LP_C",
+          "path": "attack/esf001v00_attack_06/glb/002_esf001_ATK_2LP_C_id2002_f58.glb"
+        },
+        {
+          "key": "2LP_B",
+          "path": "attack/esf001v00_attack_06/glb/001_esf001_ATK_2LP_B_id2001_f58.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "normal",
+      "moveId": "ryu_2mp",
+      "command": "2MP",
+      "name": "Crouching MP",
+      "kind": "ATK",
+      "status": "FOUND",
+      "match_count": 1,
+      "matches": [
+        {
+          "key": "2MP",
+          "path": "attack/esf001v00_attack_07/glb/000_esf001_ATK_2MP_id2000_f46.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "normal",
+      "moveId": "ryu_2hp",
+      "command": "2HP",
+      "name": "Crouching HP",
+      "kind": "ATK",
+      "status": "FOUND",
+      "match_count": 2,
+      "matches": [
+        {
+          "key": "2HP",
+          "path": "attack/esf001v00_attack_08/glb/000_esf001_ATK_2HP_id2000_f76.glb"
+        },
+        {
+          "key": "2HP_H",
+          "path": "attack/esf001v00_attack_08/glb/001_esf001_ATK_2HP_H_id2005_f80.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "normal",
+      "moveId": "ryu_2lk",
+      "command": "2LK",
+      "name": "Crouching LK",
+      "kind": "ATK",
+      "status": "FOUND",
+      "match_count": 3,
+      "matches": [
+        {
+          "key": "2LK_C",
+          "path": "attack/esf001v00_attack_09/glb/002_esf001_ATK_2LK_C_id2002_f82.glb"
+        },
+        {
+          "key": "2LK_B",
+          "path": "attack/esf001v00_attack_09/glb/001_esf001_ATK_2LK_B_id2001_f82.glb"
+        },
+        {
+          "key": "2LK",
+          "path": "attack/esf001v00_attack_09/glb/000_esf001_ATK_2LK_id2000_f83.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "normal",
+      "moveId": "ryu_2mk",
+      "command": "2MK",
+      "name": "Crouching MK",
+      "kind": "ATK",
+      "status": "FOUND",
+      "match_count": 1,
+      "matches": [
+        {
+          "key": "2MK_Y2",
+          "path": "attack/esf001v00_attack_10/glb/000_esf001_ATK_2MK_Y2_id2000_f58.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "normal",
+      "moveId": "ryu_2hk",
+      "command": "2HK",
+      "name": "Crouching HK",
+      "kind": "ATK",
+      "status": "FOUND",
+      "match_count": 2,
+      "matches": [
+        {
+          "key": "2HK",
+          "path": "attack/esf001v00_attack_11/glb/000_esf001_ATK_2HK_id2000_f145.glb"
+        },
+        {
+          "key": "2HK_G",
+          "path": "attack/esf001v00_attack_11/glb/001_esf001_ATK_2HK_G_id2005_f97.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "normal",
+      "moveId": "ryu_jlp",
+      "command": "j.LP / 8LP",
+      "name": "Jump LP",
+      "kind": "ATK",
+      "status": "FOUND",
+      "match_count": 1,
+      "matches": [
+        {
+          "key": "8LP",
+          "path": "attack/esf001v00_attack_12/glb/000_esf001_ATK_8LP_id3000_f47.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "normal",
+      "moveId": "ryu_jmp",
+      "command": "j.MP / 8MP",
+      "name": "Jump MP",
+      "kind": "ATK",
+      "status": "FOUND",
+      "match_count": 1,
+      "matches": [
+        {
+          "key": "8MP",
+          "path": "attack/esf001v00_attack_13/glb/000_esf001_ATK_8MP_id3000_f49.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "normal",
+      "moveId": "ryu_jhp",
+      "command": "j.HP / 8HP",
+      "name": "Jump HP",
+      "kind": "ATK",
+      "status": "FOUND",
+      "match_count": 1,
+      "matches": [
+        {
+          "key": "8HP",
+          "path": "attack/esf001v00_attack_14/glb/000_esf001_ATK_8HP_id3000_f48.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "normal",
+      "moveId": "ryu_jlk",
+      "command": "j.LK / 8LK",
+      "name": "Jump LK",
+      "kind": "ATK",
+      "status": "FOUND",
+      "match_count": 1,
+      "matches": [
+        {
+          "key": "8LK",
+          "path": "attack/esf001v00_attack_15/glb/000_esf001_ATK_8LK_id3000_f52.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "normal",
+      "moveId": "ryu_jmk",
+      "command": "j.MK / 8MK",
+      "name": "Jump MK",
+      "kind": "ATK",
+      "status": "FOUND",
+      "match_count": 1,
+      "matches": [
+        {
+          "key": "8MK",
+          "path": "attack/esf001v00_attack_16/glb/000_esf001_ATK_8MK_id3000_f60.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "normal",
+      "moveId": "ryu_jhk",
+      "command": "j.HK / 8HK",
+      "name": "Jump HK",
+      "kind": "ATK",
+      "status": "FOUND",
+      "match_count": 1,
+      "matches": [
+        {
+          "key": "8HK",
+          "path": "attack/esf001v00_attack_17/glb/000_esf001_ATK_8HK_id3000_f82.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "unique",
+      "moveId": "ryu_6mp",
+      "command": "6+MP",
+      "name": "Collarbone Breaker",
+      "kind": "ATK",
+      "status": "FOUND",
+      "match_count": 1,
+      "matches": [
+        {
+          "key": "6MP",
+          "path": "basic/esf001v00_skill_00/glb/000_esf001_ATK_6MP_id0000_f115.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "unique",
+      "moveId": "ryu_6hp",
+      "command": "6+HP",
+      "name": "Solar Plexus Strike",
+      "kind": "ATK",
+      "status": "FOUND",
+      "match_count": 1,
+      "matches": [
+        {
+          "key": "6HP",
+          "path": "basic/esf001v00_skill_01/glb/000_esf001_ATK_6HP_id0000_f90.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "unique",
+      "moveId": "ryu_4hp",
+      "command": "4+HP",
+      "name": "Short Uppercut",
+      "kind": "ATK",
+      "status": "FOUND",
+      "match_count": 2,
+      "matches": [
+        {
+          "key": "4HP_H",
+          "path": "basic/esf001v00_skill_05/glb/001_esf001_ATK_4HP_H_id0001_f100.glb"
+        },
+        {
+          "key": "4HP",
+          "path": "basic/esf001v00_skill_05/glb/000_esf001_ATK_4HP_id0000_f82.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "unique",
+      "moveId": "ryu_4hk",
+      "command": "4+HK",
+      "name": "Axe Kick",
+      "kind": "ATK",
+      "status": "FOUND",
+      "match_count": 1,
+      "matches": [
+        {
+          "key": "4HK",
+          "path": "basic/esf001v00_skill_02/glb/000_esf001_ATK_4HK_id0000_f140.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "unique",
+      "moveId": "ryu_6hk",
+      "command": "6+HK",
+      "name": "Whirlwind Kick",
+      "kind": "ATK",
+      "status": "MISSING",
+      "match_count": 0,
+      "matches": [],
+      "extra_count": 0
+    },
+    {
+      "category": "unique",
+      "moveId": "ryu_3hk",
+      "command": "3HK?",
+      "name": "Possible sweep/unique 3HK",
+      "kind": "ATK",
+      "status": "FOUND",
+      "match_count": 1,
+      "matches": [
+        {
+          "key": "3HK",
+          "path": "basic/esf001v00_skill_03/glb/000_esf001_ATK_3HK_id0000_f111.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "target_combo",
+      "moveId": "ryu_tc_hp_hk",
+      "command": "5HP~5HK",
+      "name": "High Double Strike",
+      "kind": "ATK/comp",
+      "status": "FOUND",
+      "match_count": 4,
+      "matches": [
+        {
+          "key": "5HP",
+          "path": "attack/esf001v00_attack_02/glb/000_esf001_ATK_5HP_id0000_f79.glb"
+        },
+        {
+          "key": "5HK_G",
+          "path": "attack/esf001v00_attack_05/glb/001_esf001_ATK_5HK_G_id0005_f47.glb"
+        },
+        {
+          "key": "5HK_2",
+          "path": "attack/esf001v00_attack_05/glb/002_esf001_ATK_5HK_2_id0006_f114.glb"
+        },
+        {
+          "key": "5HK",
+          "path": "attack/esf001v00_attack_05/glb/000_esf001_ATK_5HK_id0000_f86.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "target_combo",
+      "moveId": "ryu_tc_fuwa",
+      "command": "5MP~5LK~5HK",
+      "name": "Fuwa Triple Strike",
+      "kind": "ATK/comp",
+      "status": "FOUND",
+      "match_count": 5,
+      "matches": [
+        {
+          "key": "5LK",
+          "path": "attack/esf001v00_attack_03/glb/000_esf001_ATK_5LK_id0000_f48.glb"
+        },
+        {
+          "key": "5HK_G",
+          "path": "attack/esf001v00_attack_05/glb/001_esf001_ATK_5HK_G_id0005_f47.glb"
+        },
+        {
+          "key": "5HK_2",
+          "path": "attack/esf001v00_attack_05/glb/002_esf001_ATK_5HK_2_id0006_f114.glb"
+        },
+        {
+          "key": "5HK",
+          "path": "attack/esf001v00_attack_05/glb/000_esf001_ATK_5HK_id0000_f86.glb"
+        },
+        {
+          "key": "5MP",
+          "path": "attack/esf001v00_attack_01/glb/000_esf001_ATK_5MP_id0000_f53.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "special_super",
+      "moveId": "ryu_hadoken",
+      "command": "236+P",
+      "name": "Hadoken",
+      "kind": "keyword",
+      "status": "MISSING",
+      "match_count": 0,
+      "matches": [],
+      "extra_count": 0
+    },
+    {
+      "category": "special_super",
+      "moveId": "ryu_shoryuken",
+      "command": "623+P",
+      "name": "Shoryuken",
+      "kind": "keyword",
+      "status": "MISSING",
+      "match_count": 0,
+      "matches": [],
+      "extra_count": 0
+    },
+    {
+      "category": "special_super",
+      "moveId": "ryu_tatsu",
+      "command": "214+K",
+      "name": "Tatsumaki",
+      "kind": "keyword",
+      "status": "MISSING",
+      "match_count": 0,
+      "matches": [],
+      "extra_count": 0
+    },
+    {
+      "category": "special_super",
+      "moveId": "ryu_air_tatsu",
+      "command": "j.214+K",
+      "name": "Aerial Tatsumaki",
+      "kind": "keyword",
+      "status": "MISSING",
+      "match_count": 0,
+      "matches": [],
+      "extra_count": 0
+    },
+    {
+      "category": "special_super",
+      "moveId": "ryu_blade",
+      "command": "236+K",
+      "name": "High Blade Kick",
+      "kind": "keyword",
+      "status": "MISSING",
+      "match_count": 0,
+      "matches": [],
+      "extra_count": 0
+    },
+    {
+      "category": "special_super",
+      "moveId": "ryu_hashogeki",
+      "command": "214+P",
+      "name": "Hashogeki",
+      "kind": "keyword",
+      "status": "MISSING",
+      "match_count": 0,
+      "matches": [],
+      "extra_count": 0
+    },
+    {
+      "category": "special_super",
+      "moveId": "ryu_denjin_charge",
+      "command": "22+P",
+      "name": "Denjin Charge",
+      "kind": "keyword",
+      "status": "MISSING",
+      "match_count": 0,
+      "matches": [],
+      "extra_count": 0
+    },
+    {
+      "category": "special_super",
+      "moveId": "ryu_sa1",
+      "command": "236236+P",
+      "name": "Shinku Hadoken",
+      "kind": "keyword",
+      "status": "MISSING",
+      "match_count": 0,
+      "matches": [],
+      "extra_count": 0
+    },
+    {
+      "category": "special_super",
+      "moveId": "ryu_sa2",
+      "command": "214214+P",
+      "name": "Shin Hashogeki",
+      "kind": "keyword",
+      "status": "MISSING",
+      "match_count": 0,
+      "matches": [],
+      "extra_count": 0
+    },
+    {
+      "category": "special_super",
+      "moveId": "ryu_sa3",
+      "command": "236236+K",
+      "name": "Shin Shoryuken",
+      "kind": "keyword",
+      "status": "MISSING",
+      "match_count": 0,
+      "matches": [],
+      "extra_count": 0
+    },
+    {
+      "category": "movement_system",
+      "moveId": "idle",
+      "command": "—",
+      "name": "Stand idle",
+      "kind": "BAS/sys",
+      "status": "FOUND",
+      "match_count": 4,
+      "matches": [
+        {
+          "key": "STD_IDLING_Loop",
+          "path": "basic/esf001v00_idle/glb/003_esf001_BAS_STD_IDLING_Loop_id0035_f158.glb"
+        },
+        {
+          "key": "STD_Loop",
+          "path": "basic/esf001v00_idle/glb/000_esf001_BAS_STD_Loop_id0000_f396.glb"
+        },
+        {
+          "key": "5010_GRD_STD_Loop",
+          "path": "basic/esf001v00_idle_tired/glb/009_esf001_5010_GRD_STD_Loop_id0510_f190.glb"
+        },
+        {
+          "key": "DPA_STD_Loop",
+          "path": "basic/esf001v00_sabaki/glb/001_esf001_DPA_STD_Loop_id0410_f597.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "movement_system",
+      "moveId": "walk_fwd",
+      "command": "6 hold",
+      "name": "Walk forward",
+      "kind": "BAS/sys",
+      "status": "FOUND",
+      "match_count": 6,
+      "matches": [
+        {
+          "key": "FORWARD_START",
+          "path": "basic/esf001v00_move/glb/011_esf001_BAS_FORWARD_START_id5000_f19.glb"
+        },
+        {
+          "key": "FORWARD_Loop",
+          "path": "basic/esf001v00_move/glb/012_esf001_BAS_FORWARD_Loop_id5010_f114.glb"
+        },
+        {
+          "key": "FORWARD_END_tired",
+          "path": "basic/esf001v00_move/glb/016_esf001_BAS_FORWARD_END_tired_id5120_f47.glb"
+        },
+        {
+          "key": "FORWARD_END",
+          "path": "basic/esf001v00_move/glb/013_esf001_BAS_FORWARD_END_id5020_f47.glb"
+        },
+        {
+          "key": "FORWARD_Loop_tired",
+          "path": "basic/esf001v00_move/glb/015_esf001_BAS_FORWARD_Loop_tired_id5110_f181.glb"
+        },
+        {
+          "key": "FORWARD_START_tired",
+          "path": "basic/esf001v00_move/glb/014_esf001_BAS_FORWARD_START_tired_id5100_f23.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "movement_system",
+      "moveId": "walk_back",
+      "command": "4 hold",
+      "name": "Walk back",
+      "kind": "BAS/sys",
+      "status": "FOUND",
+      "match_count": 6,
+      "matches": [
+        {
+          "key": "BACKWARD_START",
+          "path": "basic/esf001v00_move/glb/017_esf001_BAS_BACKWARD_START_id5200_f15.glb"
+        },
+        {
+          "key": "BACKWARD_Loop_tired",
+          "path": "basic/esf001v00_move/glb/021_esf001_BAS_BACKWARD_Loop_tired_id5310_f199.glb"
+        },
+        {
+          "key": "BACKWARD_END",
+          "path": "basic/esf001v00_move/glb/019_esf001_BAS_BACKWARD_END_id5220_f47.glb"
+        },
+        {
+          "key": "BACKWARD_START_tired",
+          "path": "basic/esf001v00_move/glb/020_esf001_BAS_BACKWARD_START_tired_id5300_f23.glb"
+        },
+        {
+          "key": "BACKWARD_END_tired",
+          "path": "basic/esf001v00_move/glb/022_esf001_BAS_BACKWARD_END_tired_id5320_f46.glb"
+        },
+        {
+          "key": "BACKWARD_Loop",
+          "path": "basic/esf001v00_move/glb/018_esf001_BAS_BACKWARD_Loop_id5210_f118.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "movement_system",
+      "moveId": "crouch",
+      "command": "2",
+      "name": "Crouch",
+      "kind": "BAS/sys",
+      "status": "FOUND",
+      "match_count": 5,
+      "matches": [
+        {
+          "key": "CRH_STD_tired",
+          "path": "basic/esf001v00_idle_tired/glb/005_esf001_BAS_CRH_STD_tired_id0120_f38.glb"
+        },
+        {
+          "key": "STD_CRH_tired",
+          "path": "basic/esf001v00_idle_tired/glb/002_esf001_BAS_STD_CRH_tired_id0020_f60.glb"
+        },
+        {
+          "key": "CRH_Loop",
+          "path": "basic/esf001v00_idle/glb/004_esf001_BAS_CRH_Loop_id0100_f240.glb"
+        },
+        {
+          "key": "CRH_STD",
+          "path": "basic/esf001v00_idle/glb/006_esf001_BAS_CRH_STD_id0120_f38.glb"
+        },
+        {
+          "key": "STD_CRH",
+          "path": "basic/esf001v00_idle/glb/002_esf001_BAS_STD_CRH_id0020_f60.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "movement_system",
+      "moveId": "dash_fwd",
+      "command": "66",
+      "name": "Forward dash",
+      "kind": "BAS/sys",
+      "status": "FOUND",
+      "match_count": 1,
+      "matches": [
+        {
+          "key": "DASH_F",
+          "path": "basic/esf001v00_move/glb/000_esf001_BAS_DASH_F_id0100_f42.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "movement_system",
+      "moveId": "dash_back",
+      "command": "44",
+      "name": "Back dash",
+      "kind": "BAS/sys",
+      "status": "FOUND",
+      "match_count": 1,
+      "matches": [
+        {
+          "key": "DASH_B",
+          "path": "basic/esf001v00_move/glb/001_esf001_BAS_DASH_B_id0110_f40.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "movement_system",
+      "moveId": "jump_n",
+      "command": "8",
+      "name": "Neutral jump",
+      "kind": "BAS/sys",
+      "status": "FOUND",
+      "match_count": 3,
+      "matches": [
+        {
+          "key": "JUMP_N_AIR",
+          "path": "basic/esf001v00_move/glb/003_esf001_BAS_JUMP_N_AIR_id0205_f40.glb"
+        },
+        {
+          "key": "JUMP_N_LAND",
+          "path": "basic/esf001v00_move/glb/004_esf001_BAS_JUMP_N_LAND_id0210_f20.glb"
+        },
+        {
+          "key": "JUMP_N_START",
+          "path": "basic/esf001v00_move/glb/002_esf001_BAS_JUMP_N_START_id0200_f4.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "movement_system",
+      "moveId": "jump_f",
+      "command": "9",
+      "name": "Forward jump",
+      "kind": "BAS/sys",
+      "status": "FOUND",
+      "match_count": 3,
+      "matches": [
+        {
+          "key": "JUMP_F_START",
+          "path": "basic/esf001v00_move/glb/005_esf001_BAS_JUMP_F_START_id0300_f4.glb"
+        },
+        {
+          "key": "JUMP_F_LAND",
+          "path": "basic/esf001v00_move/glb/007_esf001_BAS_JUMP_F_LAND_id0310_f21.glb"
+        },
+        {
+          "key": "JUMP_F_AIR",
+          "path": "basic/esf001v00_move/glb/006_esf001_BAS_JUMP_F_AIR_id0305_f40.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "movement_system",
+      "moveId": "jump_b",
+      "command": "7",
+      "name": "Back jump",
+      "kind": "BAS/sys",
+      "status": "FOUND",
+      "match_count": 3,
+      "matches": [
+        {
+          "key": "JUMP_B_LAND",
+          "path": "basic/esf001v00_move/glb/010_esf001_BAS_JUMP_B_LAND_id0410_f23.glb"
+        },
+        {
+          "key": "JUMP_B_START",
+          "path": "basic/esf001v00_move/glb/008_esf001_BAS_JUMP_B_START_id0400_f4.glb"
+        },
+        {
+          "key": "JUMP_B_AIR",
+          "path": "basic/esf001v00_move/glb/009_esf001_BAS_JUMP_B_AIR_id0405_f40.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "movement_system",
+      "moveId": "throw",
+      "command": "LP+LK",
+      "name": "Throw",
+      "kind": "BAS/sys",
+      "status": "FOUND",
+      "match_count": 7,
+      "matches": [
+        {
+          "key": "NGF",
+          "path": "basic/esf001v00_idle/glb/008_esf001_NGF_id0210_f43.glb"
+        },
+        {
+          "key": "NGE",
+          "path": "basic/esf001v00_idle/glb/007_esf001_NGE_id0200_f43.glb"
+        },
+        {
+          "key": "NGD_6",
+          "path": "basic/esf001v00_throw/glb/003_esf001_NGD_6_id2100_f100.glb"
+        },
+        {
+          "key": "NGA_4",
+          "path": "basic/esf001v00_throw/glb/002_esf001_NGA_4_id0200_f127.glb"
+        },
+        {
+          "key": "NGA_6",
+          "path": "basic/esf001v00_throw/glb/001_esf001_NGA_6_id0100_f122.glb"
+        },
+        {
+          "key": "NGS",
+          "path": "basic/esf001v00_throw/glb/000_esf001_NGS_id0000_f52.glb"
+        },
+        {
+          "key": "NGD_4",
+          "path": "basic/esf001v00_throw/glb/004_esf001_NGD_4_id2200_f80.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "movement_system",
+      "moveId": "damage",
+      "command": "—",
+      "name": "Hitstun/damage family",
+      "kind": "BAS/sys",
+      "status": "FOUND",
+      "match_count": 100,
+      "matches": [
+        {
+          "key": "0350_DMG_CH_ST",
+          "path": "basic/esf001v00_damage/glb/022_esf001_0350_DMG_CH_ST_id0280_f69.glb"
+        },
+        {
+          "key": "0050_DMG_HH_ST",
+          "path": "basic/esf001v00_damage/glb/004_esf001_0050_DMG_HH_ST_id0050_f69.glb"
+        },
+        {
+          "key": "1060_DMG_HH_DN",
+          "path": "basic/esf001v00_damage/glb/034_esf001_1060_DMG_HH_DN_id0430_f45.glb"
+        },
+        {
+          "key": "0330_DMG_CM_LT",
+          "path": "basic/esf001v00_damage/glb/020_esf001_0330_DMG_CM_LT_id0230_f49.glb"
+        },
+        {
+          "key": "2070_DMG_BLOW_HEAD_START_0",
+          "path": "basic/esf001v00_damage/glb/058_esf001_2070_DMG_BLOW_HEAD_START_0_id1220_f1.glb"
+        },
+        {
+          "key": "2100_DMG_BLOW_BODY_START_90",
+          "path": "basic/esf001v00_damage/glb/061_esf001_2100_DMG_BLOW_BODY_START_90_id2010_f2.glb"
+        },
+        {
+          "key": "1020_DMG_HU_UP_H",
+          "path": "basic/esf001v00_damage/glb/030_esf001_1020_DMG_HU_UP_H_id0380_f70.glb"
+        },
+        {
+          "key": "1190_DMG_STUN_LAMDING",
+          "path": "basic/esf001v00_damage/glb/046_esf001_1190_DMG_STUN_LAMDING_id1100_f39.glb"
+        },
+        {
+          "key": "0160_DMG_MH_LT",
+          "path": "basic/esf001v00_damage/glb/012_esf001_0160_DMG_MH_LT_id0140_f69.glb"
+        },
+        {
+          "key": "1100_DMG_MC_ST",
+          "path": "basic/esf001v00_damage/glb/038_esf001_1100_DMG_MC_ST_id1020_f86.glb"
+        },
+        {
+          "key": "2030_DMG_BLOW_HEAD_FALL_90",
+          "path": "basic/esf001v00_damage/glb/054_esf001_2030_DMG_BLOW_HEAD_FALL_90_id1180_f24.glb"
+        },
+        {
+          "key": "2040_DMG_BLOW_HEAD_START_45",
+          "path": "basic/esf001v00_damage/glb/055_esf001_2040_DMG_BLOW_HEAD_START_45_id1190_f1.glb"
+        }
+      ],
+      "extra_count": 88
+    },
+    {
+      "category": "movement_system",
+      "moveId": "guard",
+      "command": "4/1",
+      "name": "Block/guard family",
+      "kind": "BAS/sys",
+      "status": "FOUND",
+      "match_count": 45,
+      "matches": [
+        {
+          "key": "5410_GRD_CH_LT",
+          "path": "basic/esf001v00_idle_tired/glb/040_esf001_5410_GRD_CH_LT_id5310_f49.glb"
+        },
+        {
+          "key": "5220_GRD_ML_ST",
+          "path": "basic/esf001v00_idle_tired/glb/021_esf001_5220_GRD_ML_ST_id5090_f29.glb"
+        },
+        {
+          "key": "5430_GRD_DL_ST",
+          "path": "basic/esf001v00_idle_tired/glb/042_esf001_5430_GRD_DL_ST_id5330_f29.glb"
+        },
+        {
+          "key": "5090_GRD_CRH_START",
+          "path": "basic/esf001v00_idle_tired/glb/011_esf001_5090_GRD_CRH_START_id0530_f24.glb"
+        },
+        {
+          "key": "5110_GRD_CRH_END",
+          "path": "basic/esf001v00_idle_tired/glb/013_esf001_5110_GRD_CRH_END_id0550_f50.glb"
+        },
+        {
+          "key": "5190_GRD_HH_ST",
+          "path": "basic/esf001v00_idle_tired/glb/018_esf001_5190_GRD_HH_ST_id5000_f49.glb"
+        },
+        {
+          "key": "5150_GRD_HL_ST",
+          "path": "basic/esf001v00_idle_tired/glb/014_esf001_5150_GRD_HL_ST_id0560_f29.glb"
+        },
+        {
+          "key": "5280_GRD_MH_RT",
+          "path": "basic/esf001v00_idle_tired/glb/027_esf001_5280_GRD_MH_RT_id5180_f49.glb"
+        },
+        {
+          "key": "5490_GRD_DH_RT",
+          "path": "basic/esf001v00_idle_tired/glb/048_esf001_5490_GRD_DH_RT_id5390_f49.glb"
+        },
+        {
+          "key": "5180_GRD_HM_RT",
+          "path": "basic/esf001v00_idle_tired/glb/017_esf001_5180_GRD_HM_RT_id0590_f39.glb"
+        },
+        {
+          "key": "5100_GRD_CRH_Loop",
+          "path": "basic/esf001v00_idle_tired/glb/012_esf001_5100_GRD_CRH_Loop_id0540_f190.glb"
+        },
+        {
+          "key": "5240_GRD_MM_LT",
+          "path": "basic/esf001v00_idle_tired/glb/023_esf001_5240_GRD_MM_LT_id5110_f39.glb"
+        }
+      ],
+      "extra_count": 33
+    },
+    {
+      "category": "movement_system",
+      "moveId": "drive_parry",
+      "command": "MP+MK",
+      "name": "Drive Parry family",
+      "kind": "BAS/sys",
+      "status": "FOUND",
+      "match_count": 13,
+      "matches": [
+        {
+          "key": "DPA_H_LT",
+          "path": "basic/esf001v00_sabaki/glb/005_esf001_DPA_H_LT_id0502_f33.glb"
+        },
+        {
+          "key": "DPA_STD_Loop",
+          "path": "basic/esf001v00_sabaki/glb/001_esf001_DPA_STD_Loop_id0410_f597.glb"
+        },
+        {
+          "key": "DPA_CRH_START",
+          "path": "basic/esf001v00_sabaki/glb/003_esf001_DPA_CRH_START_id0500_f150.glb"
+        },
+        {
+          "key": "DPA_STD_START",
+          "path": "basic/esf001v00_sabaki/glb/000_esf001_DPA_STD_START_id0400_f160.glb"
+        },
+        {
+          "key": "DPA_M_RT",
+          "path": "basic/esf001v00_sabaki/glb/009_esf001_DPA_M_RT_id5002_f33.glb"
+        },
+        {
+          "key": "DPA_L_ST",
+          "path": "basic/esf001v00_sabaki/glb/010_esf001_DPA_L_ST_id5010_f33.glb"
+        },
+        {
+          "key": "DPA_H_RT",
+          "path": "basic/esf001v00_sabaki/glb/006_esf001_DPA_H_RT_id0503_f33.glb"
+        },
+        {
+          "key": "DPA_STD_END",
+          "path": "basic/esf001v00_sabaki/glb/002_esf001_DPA_STD_END_id0420_f214.glb"
+        },
+        {
+          "key": "DPA_M_LT",
+          "path": "basic/esf001v00_sabaki/glb/008_esf001_DPA_M_LT_id5001_f33.glb"
+        },
+        {
+          "key": "DPA_M_ST",
+          "path": "basic/esf001v00_sabaki/glb/007_esf001_DPA_M_ST_id5000_f33.glb"
+        },
+        {
+          "key": "DPA_H_ST",
+          "path": "basic/esf001v00_sabaki/glb/004_esf001_DPA_H_ST_id0501_f33.glb"
+        },
+        {
+          "key": "DPA_L_RT",
+          "path": "basic/esf001v00_sabaki/glb/012_esf001_DPA_L_RT_id5012_f33.glb"
+        }
+      ],
+      "extra_count": 1
+    },
+    {
+      "category": "movement_system",
+      "moveId": "drive_related",
+      "command": "DI/DR",
+      "name": "Drive / DRD family",
+      "kind": "BAS/sys",
+      "status": "FOUND",
+      "match_count": 53,
+      "matches": [
+        {
+          "key": "ATK_CTA_DASH",
+          "path": "basic/esf001v00_counterattack/glb/002_esf001_ATK_CTA_DASH_id0140_f93.glb"
+        },
+        {
+          "key": "ATK_CTA_4",
+          "path": "basic/esf001v00_counterattack/glb/001_esf001_ATK_CTA_4_id0010_f79.glb"
+        },
+        {
+          "key": "ATK_CTA",
+          "path": "basic/esf001v00_counterattack/glb/000_esf001_ATK_CTA_id0000_f112.glb"
+        },
+        {
+          "key": "5180_DRD_HM_RT",
+          "path": "basic/esf001v00_idle/glb/027_esf001_5180_DRD_HM_RT_id5080_f25.glb"
+        },
+        {
+          "key": "5100_DRD_CRH_H_Loop",
+          "path": "basic/esf001v00_idle/glb/019_esf001_5100_DRD_CRH_H_Loop_id5000_f269.glb"
+        },
+        {
+          "key": "5260_DRD_MH_ST",
+          "path": "basic/esf001v00_idle/glb/035_esf001_5260_DRD_MH_ST_id5160_f35.glb"
+        },
+        {
+          "key": "5420_DRD_CH_RT",
+          "path": "basic/esf001v00_idle/glb/051_esf001_5420_DRD_CH_RT_id5320_f35.glb"
+        },
+        {
+          "key": "5400_DRD_CH_ST",
+          "path": "basic/esf001v00_idle/glb/049_esf001_5400_DRD_CH_ST_id5300_f35.glb"
+        },
+        {
+          "key": "5080_DRD_STD_L_END",
+          "path": "basic/esf001v00_idle/glb/017_esf001_5080_DRD_STD_L_END_id0580_f14.glb"
+        },
+        {
+          "key": "5240_DRD_MM_LT",
+          "path": "basic/esf001v00_idle/glb/033_esf001_5240_DRD_MM_LT_id5140_f25.glb"
+        },
+        {
+          "key": "5350_DRD_LH_RT",
+          "path": "basic/esf001v00_idle/glb/044_esf001_5350_DRD_LH_RT_id5250_f35.glb"
+        },
+        {
+          "key": "5110_DRD_CRH_H_END",
+          "path": "basic/esf001v00_idle/glb/020_esf001_5110_DRD_CRH_H_END_id5010_f14.glb"
+        }
+      ],
+      "extra_count": 41
+    },
+    {
+      "category": "movement_system",
+      "moveId": "counterattack",
+      "command": "—",
+      "name": "Counterattack pack",
+      "kind": "BAS/sys",
+      "status": "FOUND",
+      "match_count": 3,
+      "matches": [
+        {
+          "key": "ATK_CTA_DASH",
+          "path": "basic/esf001v00_counterattack/glb/002_esf001_ATK_CTA_DASH_id0140_f93.glb"
+        },
+        {
+          "key": "ATK_CTA_4",
+          "path": "basic/esf001v00_counterattack/glb/001_esf001_ATK_CTA_4_id0010_f79.glb"
+        },
+        {
+          "key": "ATK_CTA",
+          "path": "basic/esf001v00_counterattack/glb/000_esf001_ATK_CTA_id0000_f112.glb"
+        }
+      ],
+      "extra_count": 0
+    },
+    {
+      "category": "movement_system",
+      "moveId": "sabaki",
+      "command": "—",
+      "name": "Sabaki pack",
+      "kind": "BAS/sys",
+      "status": "MISSING",
+      "match_count": 0,
+      "matches": [],
+      "extra_count": 0
+    },
+    {
+      "category": "movement_system",
+      "moveId": "recovery",
+      "command": "—",
+      "name": "Recovery poses",
+      "kind": "BAS/sys",
+      "status": "FOUND",
+      "match_count": 2,
+      "matches": [
+        {
+          "key": "BAS_CRH_RECOVERY",
+          "path": "basic/esf001v00_idle_tired/glb/007_esf001_BAS_CRH_RECOVERY_id0210_f176.glb"
+        },
+        {
+          "key": "BAS_STD_RECOVERY",
+          "path": "basic/esf001v00_idle_tired/glb/006_esf001_BAS_STD_RECOVERY_id0200_f167.glb"
+        }
+      ],
+      "extra_count": 0
+    }
+  ],
+  "atk_all_keys": [
+    "2HK",
+    "2HK_G",
+    "2HP",
+    "2HP_H",
+    "2LK",
+    "2LK_B",
+    "2LK_C",
+    "2LP",
+    "2LP_B",
+    "2LP_C",
+    "2MK_Y2",
+    "2MP",
+    "3HK",
+    "4HK",
+    "4HP",
+    "4HP_H",
+    "5HK",
+    "5HK_2",
+    "5HK_G",
+    "5HP",
+    "5LK",
+    "5LP",
+    "5LP_B",
+    "5LP_C",
+    "5MK",
+    "5MP",
+    "6HP",
+    "6MP",
+    "8HK",
+    "8HP",
+    "8LK",
+    "8LP",
+    "8MK",
+    "8MP",
+    "CTA",
+    "CTA_4",
+    "CTA_DASH"
+  ],
+  "bas_all_keys": [
+    "BACKWARD_END",
+    "BACKWARD_END_tired",
+    "BACKWARD_Loop",
+    "BACKWARD_Loop_tired",
+    "BACKWARD_START",
+    "BACKWARD_START_tired",
+    "CRH_Loop",
+    "CRH_RECOVERY",
+    "CRH_STD",
+    "CRH_STD_tired",
+    "CRH_tired_Loop",
+    "DASH_B",
+    "DASH_F",
+    "FORWARD_END",
+    "FORWARD_END_tired",
+    "FORWARD_Loop",
+    "FORWARD_Loop_tired",
+    "FORWARD_START",
+    "FORWARD_START_tired",
+    "JUMP_B_AIR",
+    "JUMP_B_LAND",
+    "JUMP_B_START",
+    "JUMP_F_AIR",
+    "JUMP_F_LAND",
+    "JUMP_F_START",
+    "JUMP_N_AIR",
+    "JUMP_N_LAND",
+    "JUMP_N_START",
+    "STD_CRH",
+    "STD_CRH_tired",
+    "STD_IDLING_Loop",
+    "STD_Loop",
+    "STD_RECOVERY",
+    "STD_tired_Loop",
+    "TRN_CRH",
+    "TRN_CRH_tired",
+    "TRN_STD",
+    "TRN_STD_tired"
+  ],
+  "other_keys_sample": [
+    "0010_DMG_HL_ST",
+    "0020_DMG_HM_ST",
+    "0030_DMG_HM_LT",
+    "0040_DMG_HM_RT",
+    "0050_DMG_HH_ST",
+    "0060_DMG_HH_LT",
+    "0070_DMG_HH_RT",
+    "0110_DMG_ML_ST",
+    "0120_DMG_MM_ST",
+    "0130_DMG_MM_LT",
+    "0140_DMG_MM_RT",
+    "0150_DMG_MH_ST",
+    "0160_DMG_MH_LT",
+    "0170_DMG_MH_RT",
+    "0210_DMG_LL_ST",
+    "0220_DMG_LM_ST",
+    "0230_DMG_LM_LT",
+    "0240_DMG_LM_RT",
+    "0310_DMG_CL_ST",
+    "0320_DMG_CM_ST",
+    "0330_DMG_CM_LT",
+    "0340_DMG_CM_RT",
+    "0350_DMG_CH_ST",
+    "0360_DMG_CH_LT",
+    "0370_DMG_CH_RT",
+    "0410_DMG_DL_ST",
+    "0420_DMG_DM_ST",
+    "0430_DMG_DM_LT",
+    "0440_DMG_DM_RT",
+    "1010_DMG_HU_UP",
+    "1020_DMG_HU_UP_H",
+    "1030_DMG_MM_UP",
+    "1040_DMG_MH_UP",
+    "1050_DMG_HM_DN",
+    "1060_DMG_HH_DN",
+    "1070_DMG_CM_DN",
+    "1080_DMG_CH_DN",
+    "1090_DMG_HC_ST",
+    "1100_DMG_MC_ST",
+    "1110_DMG_CC_ST",
+    "1120_DMG_SPIN",
+    "1130_DMG_SPIN_RT",
+    "1150_DMG_KUZURE_STD",
+    "1160_DMG_KUZURE_AO",
+    "1170_DMG_STUN_WALL_BND",
+    "1180_DMG_STUN_WALL_BND_Loop",
+    "1190_DMG_STUN_LAMDING",
+    "1200_BAS_DN_STUN_UT",
+    "1210_DMG_Slide_Ground",
+    "1220_DMG_BND_H_AO",
+    "1250_DMG_Slam_STD",
+    "1300_DMG_Back_STD",
+    "2010_DMG_BLOW_HEAD_START_90",
+    "2020_DMG_BLOW_HEAD_RISE_90",
+    "2030_DMG_BLOW_HEAD_FALL_90",
+    "2040_DMG_BLOW_HEAD_START_45",
+    "2050_DMG_BLOW_HEAD_RISE_45",
+    "2060_DMG_BLOW_HEAD_FALL_45",
+    "2070_DMG_BLOW_HEAD_START_0",
+    "2080_DMG_BLOW_HEAD_RISE_0",
+    "2090_DMG_BLOW_HEAD_FALL_0",
+    "2100_DMG_BLOW_BODY_START_90",
+    "2110_DMG_BLOW_BODY_RISE_90",
+    "2120_DMG_BLOW_BODY_FALL_90",
+    "2130_DMG_BLOW_BODY_START_45",
+    "2140_DMG_BLOW_BODY_RISE_45",
+    "2150_DMG_BLOW_BODY_FALL_45",
+    "2160_DMG_BLOW_BODY_START_0",
+    "2170_DMG_BLOW_BODY_RISE_0",
+    "2180_DMG_BLOW_BODY_FALL_0",
+    "2190_DMG_BLOW_AIR_START_-45",
+    "2200_DMG_BLOW_AIR_FALL_-45",
+    "2210_DMG_FL_ST",
+    "2220_DMG_FM_ST",
+    "2225_DMG_FL_ST_Loop",
+    "2230_DMG_BLOW_AIR_START_-90",
+    "2240_DMG_BLOW_AIR_FALL_-90",
+    "2310_DMG_BND_L_AO_Light",
+    "2320_BAS_DN_AO_Loop_Light",
+    "2330_BAS_DN_STD_AO_Light"
+  ],
+  "other_keys_count": 232,
+  "packs": [
+    {
+      "category": "attack",
+      "pack": "esf001v00_attack_00",
+      "glb_count": 3
+    },
+    {
+      "category": "attack",
+      "pack": "esf001v00_attack_01",
+      "glb_count": 1
+    },
+    {
+      "category": "attack",
+      "pack": "esf001v00_attack_02",
+      "glb_count": 1
+    },
+    {
+      "category": "attack",
+      "pack": "esf001v00_attack_03",
+      "glb_count": 1
+    },
+    {
+      "category": "attack",
+      "pack": "esf001v00_attack_04",
+      "glb_count": 1
+    },
+    {
+      "category": "attack",
+      "pack": "esf001v00_attack_05",
+      "glb_count": 3
+    },
+    {
+      "category": "attack",
+      "pack": "esf001v00_attack_06",
+      "glb_count": 3
+    },
+    {
+      "category": "attack",
+      "pack": "esf001v00_attack_07",
+      "glb_count": 1
+    },
+    {
+      "category": "attack",
+      "pack": "esf001v00_attack_08",
+      "glb_count": 2
+    },
+    {
+      "category": "attack",
+      "pack": "esf001v00_attack_09",
+      "glb_count": 3
+    },
+    {
+      "category": "attack",
+      "pack": "esf001v00_attack_10",
+      "glb_count": 1
+    },
+    {
+      "category": "attack",
+      "pack": "esf001v00_attack_11",
+      "glb_count": 2
+    },
+    {
+      "category": "attack",
+      "pack": "esf001v00_attack_12",
+      "glb_count": 1
+    },
+    {
+      "category": "attack",
+      "pack": "esf001v00_attack_13",
+      "glb_count": 1
+    },
+    {
+      "category": "attack",
+      "pack": "esf001v00_attack_14",
+      "glb_count": 1
+    },
+    {
+      "category": "attack",
+      "pack": "esf001v00_attack_15",
+      "glb_count": 1
+    },
+    {
+      "category": "attack",
+      "pack": "esf001v00_attack_16",
+      "glb_count": 1
+    },
+    {
+      "category": "attack",
+      "pack": "esf001v00_attack_17",
+      "glb_count": 1
+    },
+    {
+      "category": "basic",
+      "pack": "esf001v00_counterattack",
+      "glb_count": 3
+    },
+    {
+      "category": "basic",
+      "pack": "esf001v00_damage",
+      "glb_count": 118
+    },
+    {
+      "category": "basic",
+      "pack": "esf001v00_idle",
+      "glb_count": 62
+    },
+    {
+      "category": "basic",
+      "pack": "esf001v00_idle_tired",
+      "glb_count": 49
+    },
+    {
+      "category": "basic",
+      "pack": "esf001v00_move",
+      "glb_count": 23
+    },
+    {
+      "category": "basic",
+      "pack": "esf001v00_sabaki",
+      "glb_count": 13
+    },
+    {
+      "category": "basic",
+      "pack": "esf001v00_skill_00",
+      "glb_count": 1
+    },
+    {
+      "category": "basic",
+      "pack": "esf001v00_skill_01",
+      "glb_count": 1
+    },
+    {
+      "category": "basic",
+      "pack": "esf001v00_skill_02",
+      "glb_count": 1
+    },
+    {
+      "category": "basic",
+      "pack": "esf001v00_skill_03",
+      "glb_count": 1
+    },
+    {
+      "category": "basic",
+      "pack": "esf001v00_skill_05",
+      "glb_count": 2
+    },
+    {
+      "category": "basic",
+      "pack": "esf001v00_throw",
+      "glb_count": 5
+    }
+  ],
+  "notes": [
+    "FOUND means at least one glb matched by name heuristic; not frame-data verified.",
+    "Special/Super keyword search on filenames only; SF6 may name specials without Hadoken text in file.",
+    "Variant suffixes _B/_C/_G/_H counted as FOUND for same normal.",
+    "Target combos FOUND if component normals exist (may not be dedicated TC clips)."
+  ]
+}

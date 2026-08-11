@@ -1,0 +1,20 @@
+{
+  "ACTION_BUFFER_STANDARD": 4,
+  "ACTION_BUFFER_DASH": 7,
+  "MOTION_STEP_GAP_MAX": 9,
+  "DASH_DIR_HOLD_MAX": 8,
+  "DASH_NEUTRAL_MAX": 8,
+  "MOTION_HISTORY_CAPACITY": 32,
+  "sources": [
+    {
+      "name": "SuperCombo SF6 Game Data Input Buffer",
+      "url": "https://wiki.supercombo.gg/w/Street_Fighter_6/Game_Data",
+      "note": "4f standard; 7f dash/wakeup"
+    },
+    {
+      "name": "Gelatin / research motion gap ~9f",
+      "via": "docs/research/sf6-character-control-research-2026-08-10.md"
+    }
+  ],
+  "wakeup_buffer_frames_note": "Defense page 10f vs Game Data 7f conflict → P0 uses ACTION_BUFFER_DASH=7; see plan O-WAKE"
+}

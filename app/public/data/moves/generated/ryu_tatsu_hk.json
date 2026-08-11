@@ -1,0 +1,105 @@
+{
+  "id": "ryu_tatsu_hk",
+  "characterId": "ryu",
+  "moveId": "ryu_tatsu_hk",
+  "displayName": "Tatsumaki Senpu-kyaku (Heavy)",
+  "displayNameJa": "竜巻旋風脚 (強)",
+  "input": {
+    "raw": "214hk",
+    "buttons": null,
+    "motion": null
+  },
+  "type": "special",
+  "guard": "high",
+  "hitCount": 3,
+  "frames": {
+    "startup": 16,
+    "active": 1,
+    "activeRaw": [
+      16,
+      17,
+      31,
+      32,
+      46,
+      47
+    ],
+    "recovery": 14,
+    "total": 30
+  },
+  "advantage": {
+    "onHit": null,
+    "onBlock": -13
+  },
+  "damage": 1200,
+  "cancel": {
+    "specialCancel": false,
+    "super": false,
+    "raw": null
+  },
+  "driveGauge": {
+    "onHit": 4000,
+    "onBlock": -2000,
+    "onPunishCounter": -5000
+  },
+  "superArtGauge": 1400,
+  "scaling": null,
+  "notes": [
+    "Unleash a series of roundhouse kicks while moving forward. A useful attack for knocking opponents away",
+    "Considered airborne from frames 10 - 61",
+    "Values listed for Super Art gauge increases and Parry or Drive Block induced Drive Gauge increases are per hit"
+  ],
+  "boxes": {
+    "hurt": [
+      {
+        "from": 0,
+        "to": 29,
+        "x": 0,
+        "y": 0.85,
+        "w": 0.7,
+        "h": 1.7,
+        "placeholder": true
+      }
+    ],
+    "hit": [
+      {
+        "from": 15,
+        "to": 15,
+        "x": 0.55,
+        "y": 1.15,
+        "w": 0.6,
+        "h": 0.4,
+        "placeholder": true
+      }
+    ],
+    "push": [
+      {
+        "from": 0,
+        "to": 29,
+        "x": 0,
+        "y": 0.7,
+        "w": 0.55,
+        "h": 1.4,
+        "placeholder": true
+      }
+    ]
+  },
+  "clipId": "tatsu_hk",
+  "glbPath": "specialskill/esf001v00_specialskill_02/glb/000_esf001_SPA_TATSUMAKI_START_id0200_f14.glb",
+  "facingRelative": true,
+  "sources": [
+    {
+      "name": "4rays/sf6-move-data",
+      "url": "https://github.com/4rays/sf6-move-data",
+      "file": "moves/ryu.toml",
+      "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+      "retrieved": "2026-08-10",
+      "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+    }
+  ],
+  "review": {
+    "status": "placeholder",
+    "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+  },
+  "slug": "ryu-tatsumaki-senpukyaku-heavy",
+  "abbreviation": null
+}

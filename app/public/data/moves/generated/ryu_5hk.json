@@ -1,0 +1,101 @@
+{
+  "id": "ryu_5hk",
+  "characterId": "ryu",
+  "moveId": "ryu_5hk",
+  "displayName": "Standing Heavy Kick",
+  "displayNameJa": "立ち強K",
+  "input": {
+    "raw": "5hk",
+    "buttons": null,
+    "motion": null
+  },
+  "type": "normal",
+  "guard": "high",
+  "hitCount": 1,
+  "frames": {
+    "startup": 12,
+    "active": 4,
+    "activeRaw": [
+      12,
+      15
+    ],
+    "recovery": 20,
+    "total": 35
+  },
+  "advantage": {
+    "onHit": 9,
+    "onBlock": 1
+  },
+  "damage": 900,
+  "cancel": {
+    "specialCancel": false,
+    "super": false,
+    "raw": null
+  },
+  "driveGauge": {
+    "onHit": 3000,
+    "onBlock": -6000,
+    "onPunishCounter": -10000
+  },
+  "superArtGauge": 1000,
+  "scaling": null,
+  "notes": [
+    "Forces a juggle state when hitting a mid-air opponent",
+    "Produces a crumple stun for 36 frames when the attack lands as a Punish Counter",
+    "Juggle state time is extended when attack hits a mid-air opponent as a Punish Counter"
+  ],
+  "boxes": {
+    "hurt": [
+      {
+        "from": 0,
+        "to": 34,
+        "x": 0,
+        "y": 0.85,
+        "w": 0.7,
+        "h": 1.7,
+        "placeholder": true
+      }
+    ],
+    "hit": [
+      {
+        "from": 11,
+        "to": 14,
+        "x": 0.55,
+        "y": 1.15,
+        "w": 0.6,
+        "h": 0.4,
+        "placeholder": true
+      }
+    ],
+    "push": [
+      {
+        "from": 0,
+        "to": 34,
+        "x": 0,
+        "y": 0.7,
+        "w": 0.55,
+        "h": 1.4,
+        "placeholder": true
+      }
+    ]
+  },
+  "clipId": "5hk",
+  "glbPath": "attack/esf001v00_attack_05/glb/000_esf001_ATK_5HK_id0000_f86.glb",
+  "facingRelative": true,
+  "sources": [
+    {
+      "name": "4rays/sf6-move-data",
+      "url": "https://github.com/4rays/sf6-move-data",
+      "file": "moves/ryu.toml",
+      "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+      "retrieved": "2026-08-10",
+      "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+    }
+  ],
+  "review": {
+    "status": "placeholder",
+    "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+  },
+  "slug": "ryu-stand-heavy-kick",
+  "abbreviation": "S.HK"
+}

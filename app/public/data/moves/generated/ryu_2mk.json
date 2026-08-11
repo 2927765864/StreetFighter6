@@ -1,0 +1,108 @@
+{
+  "id": "ryu_2mk",
+  "characterId": "ryu",
+  "moveId": "ryu_2mk",
+  "displayName": "Crouching Medium Kick",
+  "displayNameJa": "しゃがみ中K",
+  "input": {
+    "raw": "2mk",
+    "buttons": null,
+    "motion": null
+  },
+  "type": "normal",
+  "guard": "low",
+  "hitCount": 1,
+  "frames": {
+    "startup": 8,
+    "active": 3,
+    "activeRaw": [
+      8,
+      10
+    ],
+    "recovery": 19,
+    "total": 29
+  },
+  "advantage": {
+    "onHit": 1,
+    "onBlock": -6
+  },
+  "damage": 500,
+  "cancel": {
+    "specialCancel": true,
+    "superOnly": false,
+    "raw": "C",
+    "targetCombo": [],
+    "windows": [
+      {
+        "fromFrame": 7,
+        "toFrame": 28,
+        "into": "special|super|di|dr",
+        "placeholder": true
+      }
+    ]
+  },
+  "driveGauge": {
+    "onHit": 1000,
+    "onBlock": -2000,
+    "onPunishCounter": -4000
+  },
+  "superArtGauge": 500,
+  "scaling": [
+    "Starter scaling 20%"
+  ],
+  "notes": [],
+  "boxes": {
+    "hurt": [
+      {
+        "from": 0,
+        "to": 28,
+        "x": 0,
+        "y": 0.5,
+        "w": 0.75,
+        "h": 1.0,
+        "placeholder": true
+      }
+    ],
+    "hit": [
+      {
+        "from": 7,
+        "to": 9,
+        "x": 0.45,
+        "y": 0.35,
+        "w": 0.75,
+        "h": 0.45,
+        "placeholder": true
+      }
+    ],
+    "push": [
+      {
+        "from": 0,
+        "to": 28,
+        "x": 0,
+        "y": 0.7,
+        "w": 0.55,
+        "h": 1.4,
+        "placeholder": true
+      }
+    ]
+  },
+  "clipId": "2mk",
+  "glbPath": "attack/esf001v00_attack_10/glb/000_esf001_ATK_2MK_Y2_id2000_f58.glb",
+  "facingRelative": true,
+  "sources": [
+    {
+      "name": "4rays/sf6-move-data",
+      "url": "https://github.com/4rays/sf6-move-data",
+      "file": "moves/ryu.toml",
+      "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+      "retrieved": "2026-08-10",
+      "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+    }
+  ],
+  "review": {
+    "status": "placeholder",
+    "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+  },
+  "slug": "ryu-crouch-medium-kick",
+  "abbreviation": "C.MK"
+}

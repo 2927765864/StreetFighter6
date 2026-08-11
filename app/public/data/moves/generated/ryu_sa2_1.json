@@ -1,0 +1,105 @@
+{
+  "id": "ryu_sa2_1",
+  "characterId": "ryu",
+  "moveId": "ryu_sa2_1",
+  "displayName": "[Denjin Charge] Shin Hashogeki (Level 1)",
+  "displayNameJa": "[電刃錬気]真波掌撃 （Lv1）",
+  "input": {
+    "raw": "214214*p",
+    "buttons": null,
+    "motion": null
+  },
+  "type": "super2",
+  "guard": "high",
+  "hitCount": 1,
+  "frames": {
+    "startup": 12,
+    "active": 6,
+    "activeRaw": [
+      12,
+      17
+    ],
+    "recovery": 39,
+    "total": 56
+  },
+  "advantage": {
+    "onHit": null,
+    "onBlock": -20
+  },
+  "damage": 3000,
+  "cancel": {
+    "specialCancel": false,
+    "super": false,
+    "raw": null
+  },
+  "driveGauge": {
+    "onBlock": 4000,
+    "onPunishCounter": -10000
+  },
+  "superArtGauge": null,
+  "scaling": null,
+  "notes": [
+    "A Hashogeki enhanced through spiritual focus. Hold the button to charge the attack and increase its power",
+    "Completely invincible from frame 1 to frame 9",
+    "Hold down the button to change the properties of this move",
+    "Changes to Level 2 version if the button is held for more than 8 frames and then released",
+    "Changes to Level 3 version if the button is held for more than 38 frames and then released",
+    "Invincible to strikes and throws from frame 2 to frame 8",
+    "Values do not change when the attack lands as a counter or Punish Counter",
+    "The minimum guaranteed damage is 40%"
+  ],
+  "boxes": {
+    "hurt": [
+      {
+        "from": 0,
+        "to": 55,
+        "x": 0,
+        "y": 0.85,
+        "w": 0.7,
+        "h": 1.7,
+        "placeholder": true
+      }
+    ],
+    "hit": [
+      {
+        "from": 11,
+        "to": 16,
+        "x": 0.55,
+        "y": 1.15,
+        "w": 0.6,
+        "h": 0.4,
+        "placeholder": true
+      }
+    ],
+    "push": [
+      {
+        "from": 0,
+        "to": 55,
+        "x": 0,
+        "y": 0.7,
+        "w": 0.55,
+        "h": 1.4,
+        "placeholder": true
+      }
+    ]
+  },
+  "clipId": "sa2_1",
+  "glbPath": null,
+  "facingRelative": true,
+  "sources": [
+    {
+      "name": "4rays/sf6-move-data",
+      "url": "https://github.com/4rays/sf6-move-data",
+      "file": "moves/ryu.toml",
+      "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+      "retrieved": "2026-08-10",
+      "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+    }
+  ],
+  "review": {
+    "status": "placeholder",
+    "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+  },
+  "slug": "denjin-charge-shin-hashogeki-level-1",
+  "abbreviation": null
+}

@@ -1,0 +1,1453 @@
+{
+  "$schema_note": "Logic moveId → private/assets/ryu/anims glb paths. Runtime should resolve via this table; scrub by logic frames not full glb length.",
+  "version": 1,
+  "generated": "2026-08-10",
+  "assetRoot": "private/assets/ryu/anims",
+  "devFileUrlPattern": "/api/ryu-anims/file/{path}",
+  "policy": {
+    "missingSupers": "deferred",
+    "missing6hk": "deferred",
+    "strengthVariants": "share primary clip until separate takes exist",
+    "multiClipMoves": "use clips[].role order: start → loop → end",
+    "logicVsAnimFrames": "FighterView scrubs by move.frames.total @ 60Hz; do not wait for glb frameCount"
+  },
+  "summary": {
+    "entries": 48,
+    "mapped": 44,
+    "unmapped_or_deferred": 4
+  },
+  "aliasIndex": {
+    "ryu_5lp": "ryu_5lp",
+    "5lp": "ryu_5lp",
+    "attack_l": "ryu_5lp",
+    "attack_light": "ryu_5lp",
+    "ryu_5mp": "ryu_5mp",
+    "5mp": "ryu_5mp",
+    "ryu_5hp": "ryu_5hp",
+    "5hp": "ryu_5hp",
+    "ryu_5lk": "ryu_5lk",
+    "5lk": "ryu_5lk",
+    "ryu_5mk": "ryu_5mk",
+    "5mk": "ryu_5mk",
+    "ryu_5hk": "ryu_5hk",
+    "5hk": "ryu_5hk",
+    "ryu_2lp": "ryu_2lp",
+    "2lp": "ryu_2lp",
+    "ryu_2mp": "ryu_2mp",
+    "2mp": "ryu_2mp",
+    "ryu_2hp": "ryu_2hp",
+    "2hp": "ryu_2hp",
+    "ryu_2lk": "ryu_2lk",
+    "2lk": "ryu_2lk",
+    "ryu_2mk": "ryu_2mk",
+    "2mk": "ryu_2mk",
+    "ryu_2hk": "ryu_2hk",
+    "2hk": "ryu_2hk",
+    "ryu_jlp": "ryu_jlp",
+    "jlp": "ryu_jlp",
+    "8lp": "ryu_jlp",
+    "ryu_jmp": "ryu_jmp",
+    "jmp": "ryu_jmp",
+    "8mp": "ryu_jmp",
+    "ryu_jhp": "ryu_jhp",
+    "jhp": "ryu_jhp",
+    "8hp": "ryu_jhp",
+    "ryu_jlk": "ryu_jlk",
+    "jlk": "ryu_jlk",
+    "8lk": "ryu_jlk",
+    "ryu_jmk": "ryu_jmk",
+    "jmk": "ryu_jmk",
+    "8mk": "ryu_jmk",
+    "ryu_jhk": "ryu_jhk",
+    "jhk": "ryu_jhk",
+    "8hk": "ryu_jhk",
+    "ryu_6mp": "ryu_6mp",
+    "6mp": "ryu_6mp",
+    "ryu_6hp": "ryu_6hp",
+    "6hp": "ryu_6hp",
+    "ryu_4hp": "ryu_4hp",
+    "4hp": "ryu_4hp",
+    "ryu_4hk": "ryu_4hk",
+    "4hk": "ryu_4hk",
+    "ryu_3hk": "ryu_3hk",
+    "3hk": "ryu_3hk",
+    "ryu_6hk": "ryu_6hk",
+    "6hk": "ryu_6hk",
+    "ryu_hadoken": "ryu_hadoken",
+    "hadoken": "ryu_hadoken",
+    "236p": "ryu_hadoken",
+    "ryu_shoryuken": "ryu_shoryuken",
+    "shoryuken": "ryu_shoryuken",
+    "dp": "ryu_shoryuken",
+    "623p": "ryu_shoryuken",
+    "ryu_tatsu": "ryu_tatsu",
+    "tatsu": "ryu_tatsu",
+    "214k": "ryu_tatsu",
+    "ryu_air_tatsu": "ryu_air_tatsu",
+    "air_tatsu": "ryu_air_tatsu",
+    "j214k": "ryu_air_tatsu",
+    "ryu_blade": "ryu_blade",
+    "blade": "ryu_blade",
+    "236k": "ryu_blade",
+    "sokutou": "ryu_blade",
+    "ryu_hashogeki": "ryu_hashogeki",
+    "hashogeki": "ryu_hashogeki",
+    "214p": "ryu_hashogeki",
+    "ryu_denjin_charge": "ryu_denjin_charge",
+    "denjin": "ryu_denjin_charge",
+    "22p": "ryu_denjin_charge",
+    "denjin_charge": "ryu_denjin_charge",
+    "ryu_sa1": "ryu_sa1",
+    "sa1": "ryu_sa1",
+    "ryu_sa2": "ryu_sa2",
+    "sa2": "ryu_sa2",
+    "ryu_sa3": "ryu_sa3",
+    "sa3": "ryu_sa3",
+    "idle": "idle",
+    "walk_fwd": "walk_fwd",
+    "walk": "walk_fwd",
+    "walk_f": "walk_fwd",
+    "walk_back": "walk_back",
+    "walk_b": "walk_back",
+    "crouch": "crouch",
+    "dash_fwd": "dash_fwd",
+    "dash": "dash_fwd",
+    "66": "dash_fwd",
+    "dash_back": "dash_back",
+    "backdash": "dash_back",
+    "44": "dash_back",
+    "jump_n": "jump_n",
+    "jump": "jump_n",
+    "jump_f": "jump_f",
+    "jump_b": "jump_b",
+    "hitstun_light": "hitstun_light",
+    "hit": "hitstun_light",
+    "hitstun": "hitstun_light",
+    "block_stand": "block_stand",
+    "block": "block_stand",
+    "guard": "block_stand",
+    "drive_parry": "drive_parry",
+    "parry": "drive_parry",
+    "throw_fwd": "throw_fwd",
+    "throw": "throw_fwd",
+    "throw_back": "throw_back",
+    "throw_b": "throw_back"
+  },
+  "moves": [
+    {
+      "moveId": "ryu_5lp",
+      "command": "5LP",
+      "displayName": "Standing LP",
+      "category": "normal",
+      "status": "mapped",
+      "aliases": [
+        "5lp",
+        "attack_l",
+        "attack_light"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "ATK_5LP",
+          "path": "attack/esf001v00_attack_00/glb/000_esf001_ATK_5LP_id0000_f39.glb",
+          "stem": "000_esf001_ATK_5LP_id0000_f39",
+          "motionId": 0,
+          "frameCount": 39
+        }
+      ],
+      "primaryPath": "attack/esf001v00_attack_00/glb/000_esf001_ATK_5LP_id0000_f39.glb",
+      "notes": "Prefer base take; variants ATK_*_B/C exist for some lights.",
+      "variants": [
+        {
+          "role": "variant",
+          "assetKey": "ATK_5LP_B",
+          "path": "attack/esf001v00_attack_00/glb/001_esf001_ATK_5LP_B_id0001_f38.glb",
+          "stem": "001_esf001_ATK_5LP_B_id0001_f38",
+          "motionId": 1,
+          "frameCount": 38
+        },
+        {
+          "role": "variant",
+          "assetKey": "ATK_5LP_C",
+          "path": "attack/esf001v00_attack_00/glb/002_esf001_ATK_5LP_C_id0002_f38.glb",
+          "stem": "002_esf001_ATK_5LP_C_id0002_f38",
+          "motionId": 2,
+          "frameCount": 38
+        }
+      ]
+    },
+    {
+      "moveId": "ryu_5mp",
+      "command": "5MP",
+      "displayName": "Standing MP",
+      "category": "normal",
+      "status": "mapped",
+      "aliases": [
+        "5mp"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "ATK_5MP",
+          "path": "attack/esf001v00_attack_01/glb/000_esf001_ATK_5MP_id0000_f53.glb",
+          "stem": "000_esf001_ATK_5MP_id0000_f53",
+          "motionId": 0,
+          "frameCount": 53
+        }
+      ],
+      "primaryPath": "attack/esf001v00_attack_01/glb/000_esf001_ATK_5MP_id0000_f53.glb",
+      "notes": "Prefer base take; variants ATK_*_B/C exist for some lights."
+    },
+    {
+      "moveId": "ryu_5hp",
+      "command": "5HP",
+      "displayName": "Standing HP",
+      "category": "normal",
+      "status": "mapped",
+      "aliases": [
+        "5hp"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "ATK_5HP",
+          "path": "attack/esf001v00_attack_02/glb/000_esf001_ATK_5HP_id0000_f79.glb",
+          "stem": "000_esf001_ATK_5HP_id0000_f79",
+          "motionId": 0,
+          "frameCount": 79
+        }
+      ],
+      "primaryPath": "attack/esf001v00_attack_02/glb/000_esf001_ATK_5HP_id0000_f79.glb",
+      "notes": "Prefer base take; variants ATK_*_B/C exist for some lights."
+    },
+    {
+      "moveId": "ryu_5lk",
+      "command": "5LK",
+      "displayName": "Standing LK",
+      "category": "normal",
+      "status": "mapped",
+      "aliases": [
+        "5lk"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "ATK_5LK",
+          "path": "attack/esf001v00_attack_03/glb/000_esf001_ATK_5LK_id0000_f48.glb",
+          "stem": "000_esf001_ATK_5LK_id0000_f48",
+          "motionId": 0,
+          "frameCount": 48
+        }
+      ],
+      "primaryPath": "attack/esf001v00_attack_03/glb/000_esf001_ATK_5LK_id0000_f48.glb",
+      "notes": "Prefer base take; variants ATK_*_B/C exist for some lights."
+    },
+    {
+      "moveId": "ryu_5mk",
+      "command": "5MK",
+      "displayName": "Standing MK",
+      "category": "normal",
+      "status": "mapped",
+      "aliases": [
+        "5mk"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "ATK_5MK",
+          "path": "attack/esf001v00_attack_04/glb/000_esf001_ATK_5MK_id0000_f89.glb",
+          "stem": "000_esf001_ATK_5MK_id0000_f89",
+          "motionId": 0,
+          "frameCount": 89
+        }
+      ],
+      "primaryPath": "attack/esf001v00_attack_04/glb/000_esf001_ATK_5MK_id0000_f89.glb",
+      "notes": "Prefer base take; variants ATK_*_B/C exist for some lights."
+    },
+    {
+      "moveId": "ryu_5hk",
+      "command": "5HK",
+      "displayName": "Standing HK",
+      "category": "normal",
+      "status": "mapped",
+      "aliases": [
+        "5hk"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "ATK_5HK",
+          "path": "attack/esf001v00_attack_05/glb/000_esf001_ATK_5HK_id0000_f86.glb",
+          "stem": "000_esf001_ATK_5HK_id0000_f86",
+          "motionId": 0,
+          "frameCount": 86
+        }
+      ],
+      "primaryPath": "attack/esf001v00_attack_05/glb/000_esf001_ATK_5HK_id0000_f86.glb",
+      "notes": "Prefer base take; variants ATK_*_B/C exist for some lights.",
+      "variants": [
+        {
+          "role": "variant",
+          "assetKey": "ATK_5HK_G",
+          "path": "attack/esf001v00_attack_05/glb/001_esf001_ATK_5HK_G_id0005_f47.glb",
+          "stem": "001_esf001_ATK_5HK_G_id0005_f47",
+          "motionId": 5,
+          "frameCount": 47
+        },
+        {
+          "role": "variant",
+          "assetKey": "ATK_5HK_2",
+          "path": "attack/esf001v00_attack_05/glb/002_esf001_ATK_5HK_2_id0006_f114.glb",
+          "stem": "002_esf001_ATK_5HK_2_id0006_f114",
+          "motionId": 6,
+          "frameCount": 114
+        }
+      ]
+    },
+    {
+      "moveId": "ryu_2lp",
+      "command": "2LP",
+      "displayName": "Crouching LP",
+      "category": "normal",
+      "status": "mapped",
+      "aliases": [
+        "2lp"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "ATK_2LP",
+          "path": "attack/esf001v00_attack_06/glb/000_esf001_ATK_2LP_id2000_f58.glb",
+          "stem": "000_esf001_ATK_2LP_id2000_f58",
+          "motionId": 2000,
+          "frameCount": 58
+        }
+      ],
+      "primaryPath": "attack/esf001v00_attack_06/glb/000_esf001_ATK_2LP_id2000_f58.glb",
+      "notes": "Prefer base take; variants ATK_*_B/C exist for some lights.",
+      "variants": [
+        {
+          "role": "variant",
+          "assetKey": "ATK_2LP_B",
+          "path": "attack/esf001v00_attack_06/glb/001_esf001_ATK_2LP_B_id2001_f58.glb",
+          "stem": "001_esf001_ATK_2LP_B_id2001_f58",
+          "motionId": 2001,
+          "frameCount": 58
+        },
+        {
+          "role": "variant",
+          "assetKey": "ATK_2LP_C",
+          "path": "attack/esf001v00_attack_06/glb/002_esf001_ATK_2LP_C_id2002_f58.glb",
+          "stem": "002_esf001_ATK_2LP_C_id2002_f58",
+          "motionId": 2002,
+          "frameCount": 58
+        }
+      ]
+    },
+    {
+      "moveId": "ryu_2mp",
+      "command": "2MP",
+      "displayName": "Crouching MP",
+      "category": "normal",
+      "status": "mapped",
+      "aliases": [
+        "2mp"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "ATK_2MP",
+          "path": "attack/esf001v00_attack_07/glb/000_esf001_ATK_2MP_id2000_f46.glb",
+          "stem": "000_esf001_ATK_2MP_id2000_f46",
+          "motionId": 2000,
+          "frameCount": 46
+        }
+      ],
+      "primaryPath": "attack/esf001v00_attack_07/glb/000_esf001_ATK_2MP_id2000_f46.glb",
+      "notes": "Prefer base take; variants ATK_*_B/C exist for some lights."
+    },
+    {
+      "moveId": "ryu_2hp",
+      "command": "2HP",
+      "displayName": "Crouching HP",
+      "category": "normal",
+      "status": "mapped",
+      "aliases": [
+        "2hp"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "ATK_2HP",
+          "path": "attack/esf001v00_attack_08/glb/000_esf001_ATK_2HP_id2000_f76.glb",
+          "stem": "000_esf001_ATK_2HP_id2000_f76",
+          "motionId": 2000,
+          "frameCount": 76
+        }
+      ],
+      "primaryPath": "attack/esf001v00_attack_08/glb/000_esf001_ATK_2HP_id2000_f76.glb",
+      "notes": "Prefer base take; variants ATK_*_B/C exist for some lights.",
+      "variants": [
+        {
+          "role": "variant",
+          "assetKey": "ATK_2HP_H",
+          "path": "attack/esf001v00_attack_08/glb/001_esf001_ATK_2HP_H_id2005_f80.glb",
+          "stem": "001_esf001_ATK_2HP_H_id2005_f80",
+          "motionId": 2005,
+          "frameCount": 80
+        }
+      ]
+    },
+    {
+      "moveId": "ryu_2lk",
+      "command": "2LK",
+      "displayName": "Crouching LK",
+      "category": "normal",
+      "status": "mapped",
+      "aliases": [
+        "2lk"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "ATK_2LK",
+          "path": "attack/esf001v00_attack_09/glb/000_esf001_ATK_2LK_id2000_f83.glb",
+          "stem": "000_esf001_ATK_2LK_id2000_f83",
+          "motionId": 2000,
+          "frameCount": 83
+        }
+      ],
+      "primaryPath": "attack/esf001v00_attack_09/glb/000_esf001_ATK_2LK_id2000_f83.glb",
+      "notes": "Prefer base take; variants ATK_*_B/C exist for some lights.",
+      "variants": [
+        {
+          "role": "variant",
+          "assetKey": "ATK_2LK_B",
+          "path": "attack/esf001v00_attack_09/glb/001_esf001_ATK_2LK_B_id2001_f82.glb",
+          "stem": "001_esf001_ATK_2LK_B_id2001_f82",
+          "motionId": 2001,
+          "frameCount": 82
+        },
+        {
+          "role": "variant",
+          "assetKey": "ATK_2LK_C",
+          "path": "attack/esf001v00_attack_09/glb/002_esf001_ATK_2LK_C_id2002_f82.glb",
+          "stem": "002_esf001_ATK_2LK_C_id2002_f82",
+          "motionId": 2002,
+          "frameCount": 82
+        }
+      ]
+    },
+    {
+      "moveId": "ryu_2mk",
+      "command": "2MK",
+      "displayName": "Crouching MK",
+      "category": "normal",
+      "status": "mapped",
+      "aliases": [
+        "2mk"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "ATK_2MK_Y2",
+          "path": "attack/esf001v00_attack_10/glb/000_esf001_ATK_2MK_Y2_id2000_f58.glb",
+          "stem": "000_esf001_ATK_2MK_Y2_id2000_f58",
+          "motionId": 2000,
+          "frameCount": 58
+        }
+      ],
+      "primaryPath": "attack/esf001v00_attack_10/glb/000_esf001_ATK_2MK_Y2_id2000_f58.glb",
+      "notes": "Prefer base take; variants ATK_*_B/C exist for some lights."
+    },
+    {
+      "moveId": "ryu_2hk",
+      "command": "2HK",
+      "displayName": "Crouching HK",
+      "category": "normal",
+      "status": "mapped",
+      "aliases": [
+        "2hk"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "ATK_2HK",
+          "path": "attack/esf001v00_attack_11/glb/000_esf001_ATK_2HK_id2000_f145.glb",
+          "stem": "000_esf001_ATK_2HK_id2000_f145",
+          "motionId": 2000,
+          "frameCount": 145
+        }
+      ],
+      "primaryPath": "attack/esf001v00_attack_11/glb/000_esf001_ATK_2HK_id2000_f145.glb",
+      "notes": "Prefer base take; variants ATK_*_B/C exist for some lights.",
+      "variants": [
+        {
+          "role": "variant",
+          "assetKey": "ATK_2HK_G",
+          "path": "attack/esf001v00_attack_11/glb/001_esf001_ATK_2HK_G_id2005_f97.glb",
+          "stem": "001_esf001_ATK_2HK_G_id2005_f97",
+          "motionId": 2005,
+          "frameCount": 97
+        }
+      ]
+    },
+    {
+      "moveId": "ryu_jlp",
+      "command": "j.LP",
+      "displayName": "Jump LP",
+      "category": "normal",
+      "status": "mapped",
+      "aliases": [
+        "jlp",
+        "8lp"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "ATK_8LP",
+          "path": "attack/esf001v00_attack_12/glb/000_esf001_ATK_8LP_id3000_f47.glb",
+          "stem": "000_esf001_ATK_8LP_id3000_f47",
+          "motionId": 3000,
+          "frameCount": 47
+        }
+      ],
+      "primaryPath": "attack/esf001v00_attack_12/glb/000_esf001_ATK_8LP_id3000_f47.glb",
+      "notes": "Prefer base take; variants ATK_*_B/C exist for some lights."
+    },
+    {
+      "moveId": "ryu_jmp",
+      "command": "j.MP",
+      "displayName": "Jump MP",
+      "category": "normal",
+      "status": "mapped",
+      "aliases": [
+        "jmp",
+        "8mp"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "ATK_8MP",
+          "path": "attack/esf001v00_attack_13/glb/000_esf001_ATK_8MP_id3000_f49.glb",
+          "stem": "000_esf001_ATK_8MP_id3000_f49",
+          "motionId": 3000,
+          "frameCount": 49
+        }
+      ],
+      "primaryPath": "attack/esf001v00_attack_13/glb/000_esf001_ATK_8MP_id3000_f49.glb",
+      "notes": "Prefer base take; variants ATK_*_B/C exist for some lights."
+    },
+    {
+      "moveId": "ryu_jhp",
+      "command": "j.HP",
+      "displayName": "Jump HP",
+      "category": "normal",
+      "status": "mapped",
+      "aliases": [
+        "jhp",
+        "8hp"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "ATK_8HP",
+          "path": "attack/esf001v00_attack_14/glb/000_esf001_ATK_8HP_id3000_f48.glb",
+          "stem": "000_esf001_ATK_8HP_id3000_f48",
+          "motionId": 3000,
+          "frameCount": 48
+        }
+      ],
+      "primaryPath": "attack/esf001v00_attack_14/glb/000_esf001_ATK_8HP_id3000_f48.glb",
+      "notes": "Prefer base take; variants ATK_*_B/C exist for some lights."
+    },
+    {
+      "moveId": "ryu_jlk",
+      "command": "j.LK",
+      "displayName": "Jump LK",
+      "category": "normal",
+      "status": "mapped",
+      "aliases": [
+        "jlk",
+        "8lk"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "ATK_8LK",
+          "path": "attack/esf001v00_attack_15/glb/000_esf001_ATK_8LK_id3000_f52.glb",
+          "stem": "000_esf001_ATK_8LK_id3000_f52",
+          "motionId": 3000,
+          "frameCount": 52
+        }
+      ],
+      "primaryPath": "attack/esf001v00_attack_15/glb/000_esf001_ATK_8LK_id3000_f52.glb",
+      "notes": "Prefer base take; variants ATK_*_B/C exist for some lights."
+    },
+    {
+      "moveId": "ryu_jmk",
+      "command": "j.MK",
+      "displayName": "Jump MK",
+      "category": "normal",
+      "status": "mapped",
+      "aliases": [
+        "jmk",
+        "8mk"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "ATK_8MK",
+          "path": "attack/esf001v00_attack_16/glb/000_esf001_ATK_8MK_id3000_f60.glb",
+          "stem": "000_esf001_ATK_8MK_id3000_f60",
+          "motionId": 3000,
+          "frameCount": 60
+        }
+      ],
+      "primaryPath": "attack/esf001v00_attack_16/glb/000_esf001_ATK_8MK_id3000_f60.glb",
+      "notes": "Prefer base take; variants ATK_*_B/C exist for some lights."
+    },
+    {
+      "moveId": "ryu_jhk",
+      "command": "j.HK",
+      "displayName": "Jump HK",
+      "category": "normal",
+      "status": "mapped",
+      "aliases": [
+        "jhk",
+        "8hk"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "ATK_8HK",
+          "path": "attack/esf001v00_attack_17/glb/000_esf001_ATK_8HK_id3000_f82.glb",
+          "stem": "000_esf001_ATK_8HK_id3000_f82",
+          "motionId": 3000,
+          "frameCount": 82
+        }
+      ],
+      "primaryPath": "attack/esf001v00_attack_17/glb/000_esf001_ATK_8HK_id3000_f82.glb",
+      "notes": "Prefer base take; variants ATK_*_B/C exist for some lights."
+    },
+    {
+      "moveId": "ryu_6mp",
+      "command": "6+MP",
+      "displayName": "Collarbone Breaker",
+      "category": "unique",
+      "status": "mapped",
+      "aliases": [
+        "6mp"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "ATK_6MP",
+          "path": "basic/esf001v00_skill_00/glb/000_esf001_ATK_6MP_id0000_f115.glb",
+          "stem": "000_esf001_ATK_6MP_id0000_f115",
+          "motionId": 0,
+          "frameCount": 115
+        }
+      ],
+      "primaryPath": "basic/esf001v00_skill_00/glb/000_esf001_ATK_6MP_id0000_f115.glb",
+      "notes": ""
+    },
+    {
+      "moveId": "ryu_6hp",
+      "command": "6+HP",
+      "displayName": "Solar Plexus Strike",
+      "category": "unique",
+      "status": "mapped",
+      "aliases": [
+        "6hp"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "ATK_6HP",
+          "path": "basic/esf001v00_skill_01/glb/000_esf001_ATK_6HP_id0000_f90.glb",
+          "stem": "000_esf001_ATK_6HP_id0000_f90",
+          "motionId": 0,
+          "frameCount": 90
+        }
+      ],
+      "primaryPath": "basic/esf001v00_skill_01/glb/000_esf001_ATK_6HP_id0000_f90.glb",
+      "notes": ""
+    },
+    {
+      "moveId": "ryu_4hp",
+      "command": "4+HP",
+      "displayName": "Short Uppercut",
+      "category": "unique",
+      "status": "mapped",
+      "aliases": [
+        "4hp"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "ATK_4HP",
+          "path": "basic/esf001v00_skill_05/glb/000_esf001_ATK_4HP_id0000_f82.glb",
+          "stem": "000_esf001_ATK_4HP_id0000_f82",
+          "motionId": 0,
+          "frameCount": 82
+        }
+      ],
+      "primaryPath": "basic/esf001v00_skill_05/glb/000_esf001_ATK_4HP_id0000_f82.glb",
+      "notes": "",
+      "variants": [
+        {
+          "role": "variant",
+          "assetKey": "ATK_4HP_H",
+          "path": "basic/esf001v00_skill_05/glb/001_esf001_ATK_4HP_H_id0001_f100.glb",
+          "stem": "001_esf001_ATK_4HP_H_id0001_f100",
+          "motionId": 1,
+          "frameCount": 100
+        }
+      ]
+    },
+    {
+      "moveId": "ryu_4hk",
+      "command": "4+HK",
+      "displayName": "Axe Kick",
+      "category": "unique",
+      "status": "mapped",
+      "aliases": [
+        "4hk"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "ATK_4HK",
+          "path": "basic/esf001v00_skill_02/glb/000_esf001_ATK_4HK_id0000_f140.glb",
+          "stem": "000_esf001_ATK_4HK_id0000_f140",
+          "motionId": 0,
+          "frameCount": 140
+        }
+      ],
+      "primaryPath": "basic/esf001v00_skill_02/glb/000_esf001_ATK_4HK_id0000_f140.glb",
+      "notes": ""
+    },
+    {
+      "moveId": "ryu_3hk",
+      "command": "3HK",
+      "displayName": "3HK (disk)",
+      "category": "unique",
+      "status": "mapped",
+      "aliases": [
+        "3hk"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "ATK_3HK",
+          "path": "basic/esf001v00_skill_03/glb/000_esf001_ATK_3HK_id0000_f111.glb",
+          "stem": "000_esf001_ATK_3HK_id0000_f111",
+          "motionId": 0,
+          "frameCount": 111
+        }
+      ],
+      "primaryPath": "basic/esf001v00_skill_03/glb/000_esf001_ATK_3HK_id0000_f111.glb",
+      "notes": ""
+    },
+    {
+      "moveId": "ryu_6hk",
+      "command": "6+HK",
+      "displayName": "Whirlwind Kick",
+      "category": "unique",
+      "status": "unmapped",
+      "aliases": [
+        "6hk"
+      ],
+      "clips": [],
+      "primaryPath": null,
+      "notes": "Intentionally not filled; no glb. Deferred."
+    },
+    {
+      "moveId": "ryu_hadoken",
+      "command": "236+P",
+      "displayName": "Hadoken",
+      "category": "special",
+      "status": "mapped",
+      "aliases": [
+        "hadoken",
+        "236p"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "SPA_HADO",
+          "path": "specialskill/esf001v00_specialskill_00/glb/000_esf001_SPA_HADO_id0000_f110.glb",
+          "stem": "000_esf001_SPA_HADO_id0000_f110",
+          "motionId": 0,
+          "frameCount": 110
+        }
+      ],
+      "primaryPath": "specialskill/esf001v00_specialskill_00/glb/000_esf001_SPA_HADO_id0000_f110.glb",
+      "notes": "Single clip; L/M/H/OD share until variants exported."
+    },
+    {
+      "moveId": "ryu_shoryuken",
+      "command": "623+P",
+      "displayName": "Shoryuken",
+      "category": "special",
+      "status": "mapped",
+      "aliases": [
+        "shoryuken",
+        "dp",
+        "623p"
+      ],
+      "clips": [
+        {
+          "role": "start",
+          "assetKey": "SPA_SYORYU_START",
+          "path": "specialskill/esf001v00_specialskill_01/glb/000_esf001_SPA_SYORYU_START_id0200_f49.glb",
+          "stem": "000_esf001_SPA_SYORYU_START_id0200_f49",
+          "motionId": 200,
+          "frameCount": 49
+        },
+        {
+          "role": "end",
+          "assetKey": "SPA_SYORYU_END",
+          "path": "specialskill/esf001v00_specialskill_01/glb/001_esf001_SPA_SYORYU_END_id0210_f97.glb",
+          "stem": "001_esf001_SPA_SYORYU_END_id0210_f97",
+          "motionId": 210,
+          "frameCount": 97
+        }
+      ],
+      "primaryPath": "specialskill/esf001v00_specialskill_01/glb/000_esf001_SPA_SYORYU_START_id0200_f49.glb",
+      "notes": "Multi-clip: play start then end (or blend)."
+    },
+    {
+      "moveId": "ryu_tatsu",
+      "command": "214+K",
+      "displayName": "Tatsumaki",
+      "category": "special",
+      "status": "mapped",
+      "aliases": [
+        "tatsu",
+        "214k"
+      ],
+      "clips": [
+        {
+          "role": "start",
+          "assetKey": "SPA_TATSUMAKI_START",
+          "path": "specialskill/esf001v00_specialskill_02/glb/000_esf001_SPA_TATSUMAKI_START_id0200_f14.glb",
+          "stem": "000_esf001_SPA_TATSUMAKI_START_id0200_f14",
+          "motionId": 200,
+          "frameCount": 14
+        },
+        {
+          "role": "loop",
+          "assetKey": "SPA_TATSUMAKI_LOOP",
+          "path": "specialskill/esf001v00_specialskill_02/glb/001_esf001_SPA_TATSUMAKI_LOOP_id0210_f16.glb",
+          "stem": "001_esf001_SPA_TATSUMAKI_LOOP_id0210_f16",
+          "motionId": 210,
+          "frameCount": 16
+        },
+        {
+          "role": "end",
+          "assetKey": "SPA_TATSUMAKI_END",
+          "path": "specialskill/esf001v00_specialskill_02/glb/002_esf001_SPA_TATSUMAKI_END_id0220_f93.glb",
+          "stem": "002_esf001_SPA_TATSUMAKI_END_id0220_f93",
+          "motionId": 220,
+          "frameCount": 93
+        }
+      ],
+      "primaryPath": "specialskill/esf001v00_specialskill_02/glb/000_esf001_SPA_TATSUMAKI_START_id0200_f14.glb",
+      "notes": "Multi-clip ground tatsu."
+    },
+    {
+      "moveId": "ryu_air_tatsu",
+      "command": "j.214+K",
+      "displayName": "Aerial Tatsumaki",
+      "category": "special",
+      "status": "mapped",
+      "aliases": [
+        "air_tatsu",
+        "j214k"
+      ],
+      "clips": [
+        {
+          "role": "start",
+          "assetKey": "SPA_TATSUMAKI_AIR_START",
+          "path": "specialskill/esf001v00_specialskill_02/glb/003_esf001_SPA_TATSUMAKI_AIR_START_id0300_f9.glb",
+          "stem": "003_esf001_SPA_TATSUMAKI_AIR_START_id0300_f9",
+          "motionId": 300,
+          "frameCount": 9
+        },
+        {
+          "role": "end",
+          "assetKey": "SPA_TATSUMAKI_AIR_END",
+          "path": "specialskill/esf001v00_specialskill_02/glb/004_esf001_SPA_TATSUMAKI_AIR_END_id0310_f48.glb",
+          "stem": "004_esf001_SPA_TATSUMAKI_AIR_END_id0310_f48",
+          "motionId": 310,
+          "frameCount": 48
+        }
+      ],
+      "primaryPath": "specialskill/esf001v00_specialskill_02/glb/003_esf001_SPA_TATSUMAKI_AIR_START_id0300_f9.glb",
+      "notes": "Multi-clip air tatsu."
+    },
+    {
+      "moveId": "ryu_blade",
+      "command": "236+K",
+      "displayName": "High Blade Kick",
+      "category": "special",
+      "status": "mapped",
+      "aliases": [
+        "blade",
+        "236k",
+        "sokutou"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "SPA_SOKUTOU_L",
+          "path": "specialskill/esf001v00_specialskill_04/glb/000_esf001_SPA_SOKUTOU_L_id0000_f98.glb",
+          "stem": "000_esf001_SPA_SOKUTOU_L_id0000_f98",
+          "motionId": 0,
+          "frameCount": 98
+        }
+      ],
+      "primaryPath": "specialskill/esf001v00_specialskill_04/glb/000_esf001_SPA_SOKUTOU_L_id0000_f98.glb",
+      "notes": "Only L clip on disk; use for all strengths for now."
+    },
+    {
+      "moveId": "ryu_hashogeki",
+      "command": "214+P",
+      "displayName": "Hashogeki",
+      "category": "special",
+      "status": "mapped",
+      "aliases": [
+        "hashogeki",
+        "214p"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "SPA_HADOSHO",
+          "path": "specialskill/esf001v00_specialskill_03/glb/000_esf001_SPA_HADOSHO_id0200_f128.glb",
+          "stem": "000_esf001_SPA_HADOSHO_id0200_f128",
+          "motionId": 200,
+          "frameCount": 128
+        },
+        {
+          "role": "variant_l",
+          "assetKey": "SPA_HADOSHO_L",
+          "path": "specialskill/esf001v00_specialskill_03/glb/001_esf001_SPA_HADOSHO_L_id0210_f128.glb",
+          "stem": "001_esf001_SPA_HADOSHO_L_id0210_f128",
+          "motionId": 210,
+          "frameCount": 128
+        }
+      ],
+      "primaryPath": "specialskill/esf001v00_specialskill_03/glb/000_esf001_SPA_HADOSHO_id0200_f128.glb",
+      "notes": "Primary HADOSHO; L variant optional."
+    },
+    {
+      "moveId": "ryu_denjin_charge",
+      "command": "22+P",
+      "displayName": "Denjin Charge",
+      "category": "special",
+      "status": "mapped",
+      "aliases": [
+        "denjin",
+        "22p"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "SPA_KIAITAME",
+          "path": "specialskill/esf001v00_specialskill_05/glb/000_esf001_SPA_KIAITAME_id0000_f95.glb",
+          "stem": "000_esf001_SPA_KIAITAME_id0000_f95",
+          "motionId": 0,
+          "frameCount": 95
+        },
+        {
+          "role": "variant_2",
+          "assetKey": "SPA_KIAITAME_2",
+          "path": "specialskill/esf001v00_specialskill_05/glb/001_esf001_SPA_KIAITAME_2_id0100_f95.glb",
+          "stem": "001_esf001_SPA_KIAITAME_2_id0100_f95",
+          "motionId": 100,
+          "frameCount": 95
+        },
+        {
+          "role": "variant_3",
+          "assetKey": "SPA_KIAITAME_3",
+          "path": "specialskill/esf001v00_specialskill_05/glb/002_esf001_SPA_KIAITAME_3_id0110_f95.glb",
+          "stem": "002_esf001_SPA_KIAITAME_3_id0110_f95",
+          "motionId": 110,
+          "frameCount": 95
+        }
+      ],
+      "primaryPath": "specialskill/esf001v00_specialskill_05/glb/000_esf001_SPA_KIAITAME_id0000_f95.glb",
+      "notes": "3 variants; default main."
+    },
+    {
+      "moveId": "ryu_sa1",
+      "command": "236236+P",
+      "displayName": "Shinku Hadoken",
+      "category": "super",
+      "status": "deferred",
+      "aliases": [],
+      "clips": [],
+      "primaryPath": null,
+      "notes": "Deferred — no glb. Not mapping."
+    },
+    {
+      "moveId": "ryu_sa2",
+      "command": "214214+P",
+      "displayName": "Shin Hashogeki",
+      "category": "super",
+      "status": "deferred",
+      "aliases": [],
+      "clips": [],
+      "primaryPath": null,
+      "notes": "Deferred — no glb. Not mapping."
+    },
+    {
+      "moveId": "ryu_sa3",
+      "command": "236236+K",
+      "displayName": "Shin Shoryuken",
+      "category": "super",
+      "status": "deferred",
+      "aliases": [],
+      "clips": [],
+      "primaryPath": null,
+      "notes": "Deferred — no glb. Not mapping."
+    },
+    {
+      "moveId": "idle",
+      "command": "—",
+      "displayName": "Stand idle",
+      "category": "movement",
+      "status": "mapped",
+      "aliases": [
+        "idle"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "BAS_STD_Loop",
+          "path": "basic/esf001v00_idle/glb/000_esf001_BAS_STD_Loop_id0000_f396.glb",
+          "stem": "000_esf001_BAS_STD_Loop_id0000_f396",
+          "motionId": 0,
+          "frameCount": 396
+        },
+        {
+          "role": "idling",
+          "assetKey": "BAS_STD_IDLING_Loop",
+          "path": "basic/esf001v00_idle/glb/003_esf001_BAS_STD_IDLING_Loop_id0035_f158.glb",
+          "stem": "003_esf001_BAS_STD_IDLING_Loop_id0035_f158",
+          "motionId": 35,
+          "frameCount": 158
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle/glb/000_esf001_BAS_STD_Loop_id0000_f396.glb",
+      "notes": "Primary STD_Loop."
+    },
+    {
+      "moveId": "walk_fwd",
+      "command": "6",
+      "displayName": "Walk forward",
+      "category": "movement",
+      "status": "mapped",
+      "aliases": [
+        "walk",
+        "walk_f"
+      ],
+      "clips": [
+        {
+          "role": "start",
+          "assetKey": "BAS_FORWARD_START",
+          "path": "basic/esf001v00_move/glb/011_esf001_BAS_FORWARD_START_id5000_f19.glb",
+          "stem": "011_esf001_BAS_FORWARD_START_id5000_f19",
+          "motionId": 5000,
+          "frameCount": 19
+        },
+        {
+          "role": "loop",
+          "assetKey": "BAS_FORWARD_Loop",
+          "path": "basic/esf001v00_move/glb/012_esf001_BAS_FORWARD_Loop_id5010_f114.glb",
+          "stem": "012_esf001_BAS_FORWARD_Loop_id5010_f114",
+          "motionId": 5010,
+          "frameCount": 114
+        },
+        {
+          "role": "end",
+          "assetKey": "BAS_FORWARD_END",
+          "path": "basic/esf001v00_move/glb/013_esf001_BAS_FORWARD_END_id5020_f47.glb",
+          "stem": "013_esf001_BAS_FORWARD_END_id5020_f47",
+          "motionId": 5020,
+          "frameCount": 47
+        }
+      ],
+      "primaryPath": "basic/esf001v00_move/glb/011_esf001_BAS_FORWARD_START_id5000_f19.glb",
+      "notes": "Walk cycle FSM."
+    },
+    {
+      "moveId": "walk_back",
+      "command": "4",
+      "displayName": "Walk back",
+      "category": "movement",
+      "status": "mapped",
+      "aliases": [
+        "walk_b"
+      ],
+      "clips": [
+        {
+          "role": "start",
+          "assetKey": "BAS_BACKWARD_START",
+          "path": "basic/esf001v00_move/glb/017_esf001_BAS_BACKWARD_START_id5200_f15.glb",
+          "stem": "017_esf001_BAS_BACKWARD_START_id5200_f15",
+          "motionId": 5200,
+          "frameCount": 15
+        },
+        {
+          "role": "loop",
+          "assetKey": "BAS_BACKWARD_Loop",
+          "path": "basic/esf001v00_move/glb/018_esf001_BAS_BACKWARD_Loop_id5210_f118.glb",
+          "stem": "018_esf001_BAS_BACKWARD_Loop_id5210_f118",
+          "motionId": 5210,
+          "frameCount": 118
+        },
+        {
+          "role": "end",
+          "assetKey": "BAS_BACKWARD_END",
+          "path": "basic/esf001v00_move/glb/019_esf001_BAS_BACKWARD_END_id5220_f47.glb",
+          "stem": "019_esf001_BAS_BACKWARD_END_id5220_f47",
+          "motionId": 5220,
+          "frameCount": 47
+        }
+      ],
+      "primaryPath": "basic/esf001v00_move/glb/017_esf001_BAS_BACKWARD_START_id5200_f15.glb",
+      "notes": ""
+    },
+    {
+      "moveId": "crouch",
+      "command": "2",
+      "displayName": "Crouch idle",
+      "category": "movement",
+      "status": "mapped",
+      "aliases": [
+        "crouch"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "BAS_CRH_Loop",
+          "path": "basic/esf001v00_idle/glb/004_esf001_BAS_CRH_Loop_id0100_f240.glb",
+          "stem": "004_esf001_BAS_CRH_Loop_id0100_f240",
+          "motionId": 100,
+          "frameCount": 240
+        },
+        {
+          "role": "stand_to_crouch",
+          "assetKey": "BAS_STD_CRH",
+          "path": "basic/esf001v00_idle/glb/002_esf001_BAS_STD_CRH_id0020_f60.glb",
+          "stem": "002_esf001_BAS_STD_CRH_id0020_f60",
+          "motionId": 20,
+          "frameCount": 60
+        },
+        {
+          "role": "crouch_to_stand",
+          "assetKey": "BAS_CRH_STD",
+          "path": "basic/esf001v00_idle/glb/006_esf001_BAS_CRH_STD_id0120_f38.glb",
+          "stem": "006_esf001_BAS_CRH_STD_id0120_f38",
+          "motionId": 120,
+          "frameCount": 38
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle/glb/004_esf001_BAS_CRH_Loop_id0100_f240.glb",
+      "notes": ""
+    },
+    {
+      "moveId": "dash_fwd",
+      "command": "66",
+      "displayName": "Forward dash",
+      "category": "movement",
+      "status": "mapped",
+      "aliases": [
+        "dash",
+        "66"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "BAS_DASH_F",
+          "path": "basic/esf001v00_move/glb/000_esf001_BAS_DASH_F_id0100_f42.glb",
+          "stem": "000_esf001_BAS_DASH_F_id0100_f42",
+          "motionId": 100,
+          "frameCount": 42
+        }
+      ],
+      "primaryPath": "basic/esf001v00_move/glb/000_esf001_BAS_DASH_F_id0100_f42.glb",
+      "notes": ""
+    },
+    {
+      "moveId": "dash_back",
+      "command": "44",
+      "displayName": "Back dash",
+      "category": "movement",
+      "status": "mapped",
+      "aliases": [
+        "backdash",
+        "44"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "BAS_DASH_B",
+          "path": "basic/esf001v00_move/glb/001_esf001_BAS_DASH_B_id0110_f40.glb",
+          "stem": "001_esf001_BAS_DASH_B_id0110_f40",
+          "motionId": 110,
+          "frameCount": 40
+        }
+      ],
+      "primaryPath": "basic/esf001v00_move/glb/001_esf001_BAS_DASH_B_id0110_f40.glb",
+      "notes": ""
+    },
+    {
+      "moveId": "jump_n",
+      "command": "8",
+      "displayName": "Neutral jump",
+      "category": "movement",
+      "status": "mapped",
+      "aliases": [
+        "jump"
+      ],
+      "clips": [
+        {
+          "role": "prejump",
+          "assetKey": "BAS_JUMP_N_START",
+          "path": "basic/esf001v00_move/glb/002_esf001_BAS_JUMP_N_START_id0200_f4.glb",
+          "stem": "002_esf001_BAS_JUMP_N_START_id0200_f4",
+          "motionId": 200,
+          "frameCount": 4
+        },
+        {
+          "role": "air",
+          "assetKey": "BAS_JUMP_N_AIR",
+          "path": "basic/esf001v00_move/glb/003_esf001_BAS_JUMP_N_AIR_id0205_f40.glb",
+          "stem": "003_esf001_BAS_JUMP_N_AIR_id0205_f40",
+          "motionId": 205,
+          "frameCount": 40
+        },
+        {
+          "role": "land",
+          "assetKey": "BAS_JUMP_N_LAND",
+          "path": "basic/esf001v00_move/glb/004_esf001_BAS_JUMP_N_LAND_id0210_f20.glb",
+          "stem": "004_esf001_BAS_JUMP_N_LAND_id0210_f20",
+          "motionId": 210,
+          "frameCount": 20
+        }
+      ],
+      "primaryPath": "basic/esf001v00_move/glb/002_esf001_BAS_JUMP_N_START_id0200_f4.glb",
+      "notes": ""
+    },
+    {
+      "moveId": "jump_f",
+      "command": "9",
+      "displayName": "Forward jump",
+      "category": "movement",
+      "status": "mapped",
+      "aliases": [
+        "jump_f"
+      ],
+      "clips": [
+        {
+          "role": "prejump",
+          "assetKey": "BAS_JUMP_F_START",
+          "path": "basic/esf001v00_move/glb/005_esf001_BAS_JUMP_F_START_id0300_f4.glb",
+          "stem": "005_esf001_BAS_JUMP_F_START_id0300_f4",
+          "motionId": 300,
+          "frameCount": 4
+        },
+        {
+          "role": "air",
+          "assetKey": "BAS_JUMP_F_AIR",
+          "path": "basic/esf001v00_move/glb/006_esf001_BAS_JUMP_F_AIR_id0305_f40.glb",
+          "stem": "006_esf001_BAS_JUMP_F_AIR_id0305_f40",
+          "motionId": 305,
+          "frameCount": 40
+        },
+        {
+          "role": "land",
+          "assetKey": "BAS_JUMP_F_LAND",
+          "path": "basic/esf001v00_move/glb/007_esf001_BAS_JUMP_F_LAND_id0310_f21.glb",
+          "stem": "007_esf001_BAS_JUMP_F_LAND_id0310_f21",
+          "motionId": 310,
+          "frameCount": 21
+        }
+      ],
+      "primaryPath": "basic/esf001v00_move/glb/005_esf001_BAS_JUMP_F_START_id0300_f4.glb",
+      "notes": ""
+    },
+    {
+      "moveId": "jump_b",
+      "command": "7",
+      "displayName": "Back jump",
+      "category": "movement",
+      "status": "mapped",
+      "aliases": [
+        "jump_b"
+      ],
+      "clips": [
+        {
+          "role": "prejump",
+          "assetKey": "BAS_JUMP_B_START",
+          "path": "basic/esf001v00_move/glb/008_esf001_BAS_JUMP_B_START_id0400_f4.glb",
+          "stem": "008_esf001_BAS_JUMP_B_START_id0400_f4",
+          "motionId": 400,
+          "frameCount": 4
+        },
+        {
+          "role": "air",
+          "assetKey": "BAS_JUMP_B_AIR",
+          "path": "basic/esf001v00_move/glb/009_esf001_BAS_JUMP_B_AIR_id0405_f40.glb",
+          "stem": "009_esf001_BAS_JUMP_B_AIR_id0405_f40",
+          "motionId": 405,
+          "frameCount": 40
+        },
+        {
+          "role": "land",
+          "assetKey": "BAS_JUMP_B_LAND",
+          "path": "basic/esf001v00_move/glb/010_esf001_BAS_JUMP_B_LAND_id0410_f23.glb",
+          "stem": "010_esf001_BAS_JUMP_B_LAND_id0410_f23",
+          "motionId": 410,
+          "frameCount": 23
+        }
+      ],
+      "primaryPath": "basic/esf001v00_move/glb/008_esf001_BAS_JUMP_B_START_id0400_f4.glb",
+      "notes": ""
+    },
+    {
+      "moveId": "hitstun_light",
+      "command": "—",
+      "displayName": "Damage light stand (sample)",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [
+        "hit",
+        "hitstun"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "0010_DMG_HL_ST",
+          "path": "basic/esf001v00_damage/glb/000_esf001_0010_DMG_HL_ST_id0010_f29.glb",
+          "stem": "000_esf001_0010_DMG_HL_ST_id0010_f29",
+          "motionId": 10,
+          "frameCount": 29
+        }
+      ],
+      "primaryPath": "basic/esf001v00_damage/glb/000_esf001_0010_DMG_HL_ST_id0010_f29.glb",
+      "notes": "Sample hit react; full damage set is large — extend later."
+    },
+    {
+      "moveId": "block_stand",
+      "command": "4",
+      "displayName": "Guard stand start (sample)",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [
+        "block",
+        "guard"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5000_GRD_STD_START",
+          "path": "basic/esf001v00_idle_tired/glb/008_esf001_5000_GRD_STD_START_id0500_f24.glb",
+          "stem": "008_esf001_5000_GRD_STD_START_id0500_f24",
+          "motionId": 500,
+          "frameCount": 24
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/008_esf001_5000_GRD_STD_START_id0500_f24.glb",
+      "notes": "Sample; full GRD_* family available."
+    },
+    {
+      "moveId": "drive_parry",
+      "command": "MP+MK",
+      "displayName": "Drive Parry",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [
+        "parry",
+        "drive_parry"
+      ],
+      "clips": [
+        {
+          "role": "start",
+          "assetKey": "DPA_STD_START",
+          "path": "basic/esf001v00_sabaki/glb/000_esf001_DPA_STD_START_id0400_f160.glb",
+          "stem": "000_esf001_DPA_STD_START_id0400_f160",
+          "motionId": 400,
+          "frameCount": 160
+        },
+        {
+          "role": "loop",
+          "assetKey": "DPA_STD_Loop",
+          "path": "basic/esf001v00_sabaki/glb/001_esf001_DPA_STD_Loop_id0410_f597.glb",
+          "stem": "001_esf001_DPA_STD_Loop_id0410_f597",
+          "motionId": 410,
+          "frameCount": 597
+        },
+        {
+          "role": "end",
+          "assetKey": "DPA_STD_END",
+          "path": "basic/esf001v00_sabaki/glb/002_esf001_DPA_STD_END_id0420_f214.glb",
+          "stem": "002_esf001_DPA_STD_END_id0420_f214",
+          "motionId": 420,
+          "frameCount": 214
+        }
+      ],
+      "primaryPath": "basic/esf001v00_sabaki/glb/000_esf001_DPA_STD_START_id0400_f160.glb",
+      "notes": "From sabaki pack (DPA)."
+    },
+    {
+      "moveId": "throw_fwd",
+      "command": "LP+LK",
+      "displayName": "Throw forward (sample)",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [
+        "throw"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "NGA_6",
+          "path": "basic/esf001v00_throw/glb/001_esf001_NGA_6_id0100_f122.glb",
+          "stem": "001_esf001_NGA_6_id0100_f122",
+          "motionId": 100,
+          "frameCount": 122
+        }
+      ],
+      "primaryPath": "basic/esf001v00_throw/glb/001_esf001_NGA_6_id0100_f122.glb",
+      "notes": "Throw family NGA/NGD/… — pick refined later."
+    },
+    {
+      "moveId": "throw_back",
+      "command": "4+LP+LK",
+      "displayName": "Throw back (sample)",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [
+        "throw_b"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "NGA_4",
+          "path": "basic/esf001v00_throw/glb/002_esf001_NGA_4_id0200_f127.glb",
+          "stem": "002_esf001_NGA_4_id0200_f127",
+          "motionId": 200,
+          "frameCount": 127
+        }
+      ],
+      "primaryPath": "basic/esf001v00_throw/glb/002_esf001_NGA_4_id0200_f127.glb",
+      "notes": ""
+    }
+  ]
+}

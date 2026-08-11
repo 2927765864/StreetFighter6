@@ -1,0 +1,13 @@
+{
+  "id": "drive_stub",
+  "review": { "status": "placeholder" },
+  "maxBars": 6,
+  "startBars": 6,
+  "enabledSystems": {
+    "driveImpact": false,
+    "driveRush": false,
+    "overdrive": false,
+    "driveParry": false
+  },
+  "notes": "Consensus requires Drive systems for SF6 Ryu; MVP only exposes gauge HUD + flags"
+}

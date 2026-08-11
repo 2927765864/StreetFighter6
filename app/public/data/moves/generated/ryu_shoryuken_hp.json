@@ -1,0 +1,106 @@
+{
+  "id": "ryu_shoryuken_hp",
+  "characterId": "ryu",
+  "moveId": "ryu_shoryuken_hp",
+  "displayName": "Shoryuken (Heavy)",
+  "displayNameJa": "昇龍拳（強)",
+  "input": {
+    "raw": "623hp",
+    "buttons": null,
+    "motion": null
+  },
+  "type": "special",
+  "guard": "high",
+  "hitCount": 1,
+  "frames": {
+    "startup": 7,
+    "active": 10,
+    "activeRaw": [
+      7,
+      16
+    ],
+    "recovery": 34,
+    "total": 50
+  },
+  "advantage": {
+    "onHit": null,
+    "onBlock": -39
+  },
+  "damage": 1400,
+  "cancel": {
+    "specialCancel": false,
+    "superOnly": true,
+    "raw": "SA3",
+    "targetCombo": [],
+    "windows": []
+  },
+  "driveGauge": {
+    "onHit": 2000,
+    "onBlock": -4000,
+    "onPunishCounter": -5000
+  },
+  "superArtGauge": 1000,
+  "scaling": [
+    "Starter scaling 30%"
+  ],
+  "notes": [
+    "Leap into the air and perform a powerful uppercut. A Shoryuken is invincible to an opponent's jumping attacks, making it a great anti-air tool",
+    "Invincible against projectiles and strikes with mid-air hitboxes from frames 1 - 8",
+    "Considered airborne from frames 9 - 49",
+    "Note: After the 2nd active frame this move deals only 800 damage"
+  ],
+  "boxes": {
+    "hurt": [
+      {
+        "from": 0,
+        "to": 49,
+        "x": 0,
+        "y": 0.85,
+        "w": 0.7,
+        "h": 1.7,
+        "placeholder": true
+      }
+    ],
+    "hit": [
+      {
+        "from": 6,
+        "to": 15,
+        "x": 0.55,
+        "y": 1.15,
+        "w": 0.6,
+        "h": 0.4,
+        "placeholder": true
+      }
+    ],
+    "push": [
+      {
+        "from": 0,
+        "to": 49,
+        "x": 0,
+        "y": 0.7,
+        "w": 0.55,
+        "h": 1.4,
+        "placeholder": true
+      }
+    ]
+  },
+  "clipId": "shoryuken_hp",
+  "glbPath": "specialskill/esf001v00_specialskill_01/glb/000_esf001_SPA_SYORYU_START_id0200_f49.glb",
+  "facingRelative": true,
+  "sources": [
+    {
+      "name": "4rays/sf6-move-data",
+      "url": "https://github.com/4rays/sf6-move-data",
+      "file": "moves/ryu.toml",
+      "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+      "retrieved": "2026-08-10",
+      "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+    }
+  ],
+  "review": {
+    "status": "placeholder",
+    "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+  },
+  "slug": "ryu-shoryuken-hp",
+  "abbreviation": null
+}

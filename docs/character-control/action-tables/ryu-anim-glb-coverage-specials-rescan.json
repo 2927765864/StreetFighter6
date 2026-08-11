@@ -1,0 +1,266 @@
+{
+  "rescanned": "2026-08-10",
+  "total_glbs": 321,
+  "specialskill_glbs": 14,
+  "spa_keys": [
+    "SPA_HADO",
+    "SPA_HADOSHO",
+    "SPA_HADOSHO_L",
+    "SPA_KIAITAME",
+    "SPA_KIAITAME_2",
+    "SPA_KIAITAME_3",
+    "SPA_SOKUTOU_L",
+    "SPA_SYORYU_END",
+    "SPA_SYORYU_START",
+    "SPA_TATSUMAKI_AIR_END",
+    "SPA_TATSUMAKI_AIR_START",
+    "SPA_TATSUMAKI_END",
+    "SPA_TATSUMAKI_LOOP",
+    "SPA_TATSUMAKI_START"
+  ],
+  "special_checklist": [
+    {
+      "moveId": "ryu_hadoken",
+      "command": "236+P",
+      "name": "Hadoken 波动拳",
+      "status": "FOUND",
+      "count": 3,
+      "clips": [
+        {
+          "key": "SPA_HADOSHO",
+          "path": "specialskill/esf001v00_specialskill_03/glb/000_esf001_SPA_HADOSHO_id0200_f128.glb",
+          "frames": 128,
+          "motion_id": 200
+        },
+        {
+          "key": "SPA_HADOSHO_L",
+          "path": "specialskill/esf001v00_specialskill_03/glb/001_esf001_SPA_HADOSHO_L_id0210_f128.glb",
+          "frames": 128,
+          "motion_id": 210
+        },
+        {
+          "key": "SPA_HADO",
+          "path": "specialskill/esf001v00_specialskill_00/glb/000_esf001_SPA_HADO_id0000_f110.glb",
+          "frames": 110,
+          "motion_id": 0
+        }
+      ]
+    },
+    {
+      "moveId": "ryu_shoryuken",
+      "command": "623+P",
+      "name": "Shoryuken 升龙",
+      "status": "FOUND",
+      "count": 2,
+      "clips": [
+        {
+          "key": "SPA_SYORYU_END",
+          "path": "specialskill/esf001v00_specialskill_01/glb/001_esf001_SPA_SYORYU_END_id0210_f97.glb",
+          "frames": 97,
+          "motion_id": 210
+        },
+        {
+          "key": "SPA_SYORYU_START",
+          "path": "specialskill/esf001v00_specialskill_01/glb/000_esf001_SPA_SYORYU_START_id0200_f49.glb",
+          "frames": 49,
+          "motion_id": 200
+        }
+      ]
+    },
+    {
+      "moveId": "ryu_tatsu",
+      "command": "214+K",
+      "name": "Tatsumaki 龙卷",
+      "status": "FOUND",
+      "count": 3,
+      "clips": [
+        {
+          "key": "SPA_TATSUMAKI_END",
+          "path": "specialskill/esf001v00_specialskill_02/glb/002_esf001_SPA_TATSUMAKI_END_id0220_f93.glb",
+          "frames": 93,
+          "motion_id": 220
+        },
+        {
+          "key": "SPA_TATSUMAKI_START",
+          "path": "specialskill/esf001v00_specialskill_02/glb/000_esf001_SPA_TATSUMAKI_START_id0200_f14.glb",
+          "frames": 14,
+          "motion_id": 200
+        },
+        {
+          "key": "SPA_TATSUMAKI_LOOP",
+          "path": "specialskill/esf001v00_specialskill_02/glb/001_esf001_SPA_TATSUMAKI_LOOP_id0210_f16.glb",
+          "frames": 16,
+          "motion_id": 210
+        }
+      ]
+    },
+    {
+      "moveId": "ryu_air_tatsu",
+      "command": "j.214+K",
+      "name": "Aerial Tatsumaki",
+      "status": "FOUND",
+      "count": 2,
+      "clips": [
+        {
+          "key": "SPA_TATSUMAKI_AIR_END",
+          "path": "specialskill/esf001v00_specialskill_02/glb/004_esf001_SPA_TATSUMAKI_AIR_END_id0310_f48.glb",
+          "frames": 48,
+          "motion_id": 310
+        },
+        {
+          "key": "SPA_TATSUMAKI_AIR_START",
+          "path": "specialskill/esf001v00_specialskill_02/glb/003_esf001_SPA_TATSUMAKI_AIR_START_id0300_f9.glb",
+          "frames": 9,
+          "motion_id": 300
+        }
+      ]
+    },
+    {
+      "moveId": "ryu_blade",
+      "command": "236+K",
+      "name": "High Blade Kick 高刃/足刀",
+      "status": "FOUND",
+      "count": 1,
+      "clips": [
+        {
+          "key": "SPA_SOKUTOU_L",
+          "path": "specialskill/esf001v00_specialskill_04/glb/000_esf001_SPA_SOKUTOU_L_id0000_f98.glb",
+          "frames": 98,
+          "motion_id": 0
+        }
+      ]
+    },
+    {
+      "moveId": "ryu_hashogeki",
+      "command": "214+P",
+      "name": "Hashogeki 破障",
+      "status": "FOUND",
+      "count": 2,
+      "clips": [
+        {
+          "key": "SPA_HADOSHO",
+          "path": "specialskill/esf001v00_specialskill_03/glb/000_esf001_SPA_HADOSHO_id0200_f128.glb",
+          "frames": 128,
+          "motion_id": 200
+        },
+        {
+          "key": "SPA_HADOSHO_L",
+          "path": "specialskill/esf001v00_specialskill_03/glb/001_esf001_SPA_HADOSHO_L_id0210_f128.glb",
+          "frames": 128,
+          "motion_id": 210
+        }
+      ]
+    },
+    {
+      "moveId": "ryu_denjin_charge",
+      "command": "22+P",
+      "name": "Denjin Charge 电刃蓄力",
+      "status": "FOUND",
+      "count": 3,
+      "clips": [
+        {
+          "key": "SPA_KIAITAME_3",
+          "path": "specialskill/esf001v00_specialskill_05/glb/002_esf001_SPA_KIAITAME_3_id0110_f95.glb",
+          "frames": 95,
+          "motion_id": 110
+        },
+        {
+          "key": "SPA_KIAITAME",
+          "path": "specialskill/esf001v00_specialskill_05/glb/000_esf001_SPA_KIAITAME_id0000_f95.glb",
+          "frames": 95,
+          "motion_id": 0
+        },
+        {
+          "key": "SPA_KIAITAME_2",
+          "path": "specialskill/esf001v00_specialskill_05/glb/001_esf001_SPA_KIAITAME_2_id0100_f95.glb",
+          "frames": 95,
+          "motion_id": 100
+        }
+      ]
+    },
+    {
+      "moveId": "ryu_sa1",
+      "command": "236236+P",
+      "name": "Shinku Hadoken SA1",
+      "status": "MISSING",
+      "count": 0,
+      "clips": []
+    },
+    {
+      "moveId": "ryu_sa2",
+      "command": "214214+P",
+      "name": "Shin Hashogeki SA2",
+      "status": "MISSING",
+      "count": 0,
+      "clips": []
+    },
+    {
+      "moveId": "ryu_sa3",
+      "command": "236236+K",
+      "name": "Shin Shoryuken SA3",
+      "status": "MISSING",
+      "count": 0,
+      "clips": []
+    },
+    {
+      "moveId": "ryu_6hk",
+      "command": "6+HK",
+      "name": "Whirlwind Kick",
+      "status": "MISSING",
+      "count": 0,
+      "clips": []
+    }
+  ],
+  "packs": [
+    {
+      "pack": "esf001v00_specialskill_00",
+      "count": 1,
+      "files": [
+        "000_esf001_SPA_HADO_id0000_f110.glb"
+      ]
+    },
+    {
+      "pack": "esf001v00_specialskill_01",
+      "count": 2,
+      "files": [
+        "000_esf001_SPA_SYORYU_START_id0200_f49.glb",
+        "001_esf001_SPA_SYORYU_END_id0210_f97.glb"
+      ]
+    },
+    {
+      "pack": "esf001v00_specialskill_02",
+      "count": 5,
+      "files": [
+        "000_esf001_SPA_TATSUMAKI_START_id0200_f14.glb",
+        "001_esf001_SPA_TATSUMAKI_LOOP_id0210_f16.glb",
+        "002_esf001_SPA_TATSUMAKI_END_id0220_f93.glb",
+        "003_esf001_SPA_TATSUMAKI_AIR_START_id0300_f9.glb",
+        "004_esf001_SPA_TATSUMAKI_AIR_END_id0310_f48.glb"
+      ]
+    },
+    {
+      "pack": "esf001v00_specialskill_03",
+      "count": 2,
+      "files": [
+        "000_esf001_SPA_HADOSHO_id0200_f128.glb",
+        "001_esf001_SPA_HADOSHO_L_id0210_f128.glb"
+      ]
+    },
+    {
+      "pack": "esf001v00_specialskill_04",
+      "count": 1,
+      "files": [
+        "000_esf001_SPA_SOKUTOU_L_id0000_f98.glb"
+      ]
+    },
+    {
+      "pack": "esf001v00_specialskill_05",
+      "count": 3,
+      "files": [
+        "000_esf001_SPA_KIAITAME_id0000_f95.glb",
+        "001_esf001_SPA_KIAITAME_2_id0100_f95.glb",
+        "002_esf001_SPA_KIAITAME_3_id0110_f95.glb"
+      ]
+    }
+  ]
+}

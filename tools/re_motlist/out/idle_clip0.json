@@ -1,0 +1,6163 @@
+{
+  "source": "/Users/yangjianlin/Documents/SF6_export/stm/product/animation/esf/esf001/v00/motionlist/basic/esf001v00_idle.motlist.653",
+  "game": "SF6",
+  "motlist_name": "esf001v00_Idle",
+  "version": 653,
+  "bones": [
+    {
+      "index": 0,
+      "name": "Root",
+      "parent_index": -1,
+      "parent_name": null
+    },
+    {
+      "index": 1,
+      "name": "C_Hip",
+      "parent_index": 0,
+      "parent_name": "Root"
+    },
+    {
+      "index": 2,
+      "name": "C_Spine1",
+      "parent_index": 1,
+      "parent_name": "C_Hip"
+    },
+    {
+      "index": 3,
+      "name": "C_Spine2",
+      "parent_index": 2,
+      "parent_name": "C_Spine1"
+    },
+    {
+      "index": 4,
+      "name": "C_Chest",
+      "parent_index": 3,
+      "parent_name": "C_Spine2"
+    },
+    {
+      "index": 5,
+      "name": "C_Neck",
+      "parent_index": 4,
+      "parent_name": "C_Chest"
+    },
+    {
+      "index": 6,
+      "name": "C_Neck1",
+      "parent_index": 5,
+      "parent_name": "C_Neck"
+    },
+    {
+      "index": 7,
+      "name": "C_Head",
+      "parent_index": 6,
+      "parent_name": "C_Neck1"
+    },
+    {
+      "index": 8,
+      "name": "C_AdamApple",
+      "parent_index": 5,
+      "parent_name": "C_Neck"
+    },
+    {
+      "index": 9,
+      "name": "L_Shoulder",
+      "parent_index": 4,
+      "parent_name": "C_Chest"
+    },
+    {
+      "index": 10,
+      "name": "L_UpperArm",
+      "parent_index": 9,
+      "parent_name": "L_Shoulder"
+    },
+    {
+      "index": 11,
+      "name": "L_ForeArm",
+      "parent_index": 10,
+      "parent_name": "L_UpperArm"
+    },
+    {
+      "index": 12,
+      "name": "L_ForeArm_1",
+      "parent_index": 11,
+      "parent_name": "L_ForeArm"
+    },
+    {
+      "index": 13,
+      "name": "L_ForeArm_2",
+      "parent_index": 11,
+      "parent_name": "L_ForeArm"
+    },
+    {
+      "index": 14,
+      "name": "L_ForeArm_3",
+      "parent_index": 11,
+      "parent_name": "L_ForeArm"
+    },
+    {
+      "index": 15,
+      "name": "L_ForeArm_4",
+      "parent_index": 11,
+      "parent_name": "L_ForeArm"
+    },
+    {
+      "index": 16,
+      "name": "L_ForeArm_5",
+      "parent_index": 11,
+      "parent_name": "L_ForeArm"
+    },
+    {
+      "index": 17,
+      "name": "L_Hand",
+      "parent_index": 11,
+      "parent_name": "L_ForeArm"
+    },
+    {
+      "index": 18,
+      "name": "L_vfx_Hand_00",
+      "parent_index": 17,
+      "parent_name": "L_Hand"
+    },
+    {
+      "index": 19,
+      "name": "L_vfx_Hand_01",
+      "parent_index": 17,
+      "parent_name": "L_Hand"
+    },
+    {
+      "index": 20,
+      "name": "L_Thumb1",
+      "parent_index": 17,
+      "parent_name": "L_Hand"
+    },
+    {
+      "index": 21,
+      "name": "L_Thumb2",
+      "parent_index": 20,
+      "parent_name": "L_Thumb1"
+    },
+    {
+      "index": 22,
+      "name": "L_Thumb3",
+      "parent_index": 21,
+      "parent_name": "L_Thumb2"
+    },
+    {
+      "index": 23,
+      "name": "L_Index1",
+      "parent_index": 17,
+      "parent_name": "L_Hand"
+    },
+    {
+      "index": 24,
+      "name": "L_Index2",
+      "parent_index": 23,
+      "parent_name": "L_Index1"
+    },
+    {
+      "index": 25,
+      "name": "L_Index3",
+      "parent_index": 24,
+      "parent_name": "L_Index2"
+    },
+    {
+      "index": 26,
+      "name": "L_Middle1",
+      "parent_index": 17,
+      "parent_name": "L_Hand"
+    },
+    {
+      "index": 27,
+      "name": "L_Middle2",
+      "parent_index": 26,
+      "parent_name": "L_Middle1"
+    },
+    {
+      "index": 28,
+      "name": "L_Middle3",
+      "parent_index": 27,
+      "parent_name": "L_Middle2"
+    },
+    {
+      "index": 29,
+      "name": "L_Ring1",
+      "parent_index": 17,
+      "parent_name": "L_Hand"
+    },
+    {
+      "index": 30,
+      "name": "L_Ring2",
+      "parent_index": 29,
+      "parent_name": "L_Ring1"
+    },
+    {
+      "index": 31,
+      "name": "L_Ring3",
+      "parent_index": 30,
+      "parent_name": "L_Ring2"
+    },
+    {
+      "index": 32,
+      "name": "L_Ring4",
+      "parent_index": 31,
+      "parent_name": "L_Ring3"
+    },
+    {
+      "index": 33,
+      "name": "L_Pinky1",
+      "parent_index": 17,
+      "parent_name": "L_Hand"
+    },
+    {
+      "index": 34,
+      "name": "L_Pinky2",
+      "parent_index": 33,
+      "parent_name": "L_Pinky1"
+    },
+    {
+      "index": 35,
+      "name": "L_Pinky3",
+      "parent_index": 34,
+      "parent_name": "L_Pinky2"
+    },
+    {
+      "index": 36,
+      "name": "L_Pinky4",
+      "parent_index": 35,
+      "parent_name": "L_Pinky3"
+    },
+    {
+      "index": 37,
+      "name": "R_Shoulder",
+      "parent_index": 4,
+      "parent_name": "C_Chest"
+    },
+    {
+      "index": 38,
+      "name": "R_UpperArm",
+      "parent_index": 37,
+      "parent_name": "R_Shoulder"
+    },
+    {
+      "index": 39,
+      "name": "R_ForeArm",
+      "parent_index": 38,
+      "parent_name": "R_UpperArm"
+    },
+    {
+      "index": 40,
+      "name": "R_ForeArm_1",
+      "parent_index": 39,
+      "parent_name": "R_ForeArm"
+    },
+    {
+      "index": 41,
+      "name": "R_ForeArm_2",
+      "parent_index": 39,
+      "parent_name": "R_ForeArm"
+    },
+    {
+      "index": 42,
+      "name": "R_ForeArm_3",
+      "parent_index": 39,
+      "parent_name": "R_ForeArm"
+    },
+    {
+      "index": 43,
+      "name": "R_ForeArm_4",
+      "parent_index": 39,
+      "parent_name": "R_ForeArm"
+    },
+    {
+      "index": 44,
+      "name": "R_ForeArm_5",
+      "parent_index": 39,
+      "parent_name": "R_ForeArm"
+    },
+    {
+      "index": 45,
+      "name": "R_Hand",
+      "parent_index": 39,
+      "parent_name": "R_ForeArm"
+    },
+    {
+      "index": 46,
+      "name": "R_vfx_Hand_00",
+      "parent_index": 45,
+      "parent_name": "R_Hand"
+    },
+    {
+      "index": 47,
+      "name": "R_vfx_Hand_01",
+      "parent_index": 45,
+      "parent_name": "R_Hand"
+    },
+    {
+      "index": 48,
+      "name": "R_Thumb1",
+      "parent_index": 45,
+      "parent_name": "R_Hand"
+    },
+    {
+      "index": 49,
+      "name": "R_Thumb2",
+      "parent_index": 48,
+      "parent_name": "R_Thumb1"
+    },
+    {
+      "index": 50,
+      "name": "R_Thumb3",
+      "parent_index": 49,
+      "parent_name": "R_Thumb2"
+    },
+    {
+      "index": 51,
+      "name": "R_Index1",
+      "parent_index": 45,
+      "parent_name": "R_Hand"
+    },
+    {
+      "index": 52,
+      "name": "R_Index2",
+      "parent_index": 51,
+      "parent_name": "R_Index1"
+    },
+    {
+      "index": 53,
+      "name": "R_Index3",
+      "parent_index": 52,
+      "parent_name": "R_Index2"
+    },
+    {
+      "index": 54,
+      "name": "R_Middle1",
+      "parent_index": 45,
+      "parent_name": "R_Hand"
+    },
+    {
+      "index": 55,
+      "name": "R_Middle2",
+      "parent_index": 54,
+      "parent_name": "R_Middle1"
+    },
+    {
+      "index": 56,
+      "name": "R_Middle3",
+      "parent_index": 55,
+      "parent_name": "R_Middle2"
+    },
+    {
+      "index": 57,
+      "name": "R_Ring1",
+      "parent_index": 45,
+      "parent_name": "R_Hand"
+    },
+    {
+      "index": 58,
+      "name": "R_Ring2",
+      "parent_index": 57,
+      "parent_name": "R_Ring1"
+    },
+    {
+      "index": 59,
+      "name": "R_Ring3",
+      "parent_index": 58,
+      "parent_name": "R_Ring2"
+    },
+    {
+      "index": 60,
+      "name": "R_Ring4",
+      "parent_index": 59,
+      "parent_name": "R_Ring3"
+    },
+    {
+      "index": 61,
+      "name": "R_Pinky1",
+      "parent_index": 45,
+      "parent_name": "R_Hand"
+    },
+    {
+      "index": 62,
+      "name": "R_Pinky2",
+      "parent_index": 61,
+      "parent_name": "R_Pinky1"
+    },
+    {
+      "index": 63,
+      "name": "R_Pinky3",
+      "parent_index": 62,
+      "parent_name": "R_Pinky2"
+    },
+    {
+      "index": 64,
+      "name": "R_Pinky4",
+      "parent_index": 63,
+      "parent_name": "R_Pinky3"
+    },
+    {
+      "index": 65,
+      "name": "C_Lung",
+      "parent_index": 4,
+      "parent_name": "C_Chest"
+    },
+    {
+      "index": 66,
+      "name": "C_Chest_DirZ",
+      "parent_index": 4,
+      "parent_name": "C_Chest"
+    },
+    {
+      "index": 67,
+      "name": "C_Abs",
+      "parent_index": 3,
+      "parent_name": "C_Spine2"
+    },
+    {
+      "index": 68,
+      "name": "C_Abs1",
+      "parent_index": 2,
+      "parent_name": "C_Spine1"
+    },
+    {
+      "index": 69,
+      "name": "C_Abs_Under",
+      "parent_index": 2,
+      "parent_name": "C_Spine1"
+    },
+    {
+      "index": 70,
+      "name": "L_Thigh",
+      "parent_index": 1,
+      "parent_name": "C_Hip"
+    },
+    {
+      "index": 71,
+      "name": "L_Knee",
+      "parent_index": 70,
+      "parent_name": "L_Thigh"
+    },
+    {
+      "index": 72,
+      "name": "L_Knee_SCL",
+      "parent_index": 71,
+      "parent_name": "L_Knee"
+    },
+    {
+      "index": 73,
+      "name": "L_Shin_1",
+      "parent_index": 71,
+      "parent_name": "L_Knee"
+    },
+    {
+      "index": 74,
+      "name": "L_Shin_2",
+      "parent_index": 71,
+      "parent_name": "L_Knee"
+    },
+    {
+      "index": 75,
+      "name": "L_Shin_3",
+      "parent_index": 71,
+      "parent_name": "L_Knee"
+    },
+    {
+      "index": 76,
+      "name": "L_Shin_4",
+      "parent_index": 71,
+      "parent_name": "L_Knee"
+    },
+    {
+      "index": 77,
+      "name": "L_Shin_5",
+      "parent_index": 71,
+      "parent_name": "L_Knee"
+    },
+    {
+      "index": 78,
+      "name": "L_Foot",
+      "parent_index": 71,
+      "parent_name": "L_Knee"
+    },
+    {
+      "index": 79,
+      "name": "L_vfx_Foot",
+      "parent_index": 78,
+      "parent_name": "L_Foot"
+    },
+    {
+      "index": 80,
+      "name": "L_Ankle",
+      "parent_index": 78,
+      "parent_name": "L_Foot"
+    },
+    {
+      "index": 81,
+      "name": "L_Metatarsal",
+      "parent_index": 78,
+      "parent_name": "L_Foot"
+    },
+    {
+      "index": 82,
+      "name": "L_Innerfoot",
+      "parent_index": 81,
+      "parent_name": "L_Metatarsal"
+    },
+    {
+      "index": 83,
+      "name": "L_Innerfoot2",
+      "parent_index": 82,
+      "parent_name": "L_Innerfoot"
+    },
+    {
+      "index": 84,
+      "name": "L_Footthumb",
+      "parent_index": 83,
+      "parent_name": "L_Innerfoot2"
+    },
+    {
+      "index": 85,
+      "name": "L_Footthumb1",
+      "parent_index": 84,
+      "parent_name": "L_Footthumb"
+    },
+    {
+      "index": 86,
+      "name": "L_Footthumb2",
+      "parent_index": 85,
+      "parent_name": "L_Footthumb1"
+    },
+    {
+      "index": 87,
+      "name": "L_Toe",
+      "parent_index": 81,
+      "parent_name": "L_Metatarsal"
+    },
+    {
+      "index": 88,
+      "name": "L_Footindex",
+      "parent_index": 87,
+      "parent_name": "L_Toe"
+    },
+    {
+      "index": 89,
+      "name": "L_Footindex1",
+      "parent_index": 88,
+      "parent_name": "L_Footindex"
+    },
+    {
+      "index": 90,
+      "name": "L_Footindex2",
+      "parent_index": 89,
+      "parent_name": "L_Footindex1"
+    },
+    {
+      "index": 91,
+      "name": "L_Footmiddle",
+      "parent_index": 87,
+      "parent_name": "L_Toe"
+    },
+    {
+      "index": 92,
+      "name": "L_Footmiddle1",
+      "parent_index": 91,
+      "parent_name": "L_Footmiddle"
+    },
+    {
+      "index": 93,
+      "name": "L_Footmiddle2",
+      "parent_index": 92,
+      "parent_name": "L_Footmiddle1"
+    },
+    {
+      "index": 94,
+      "name": "L_Outerfoot",
+      "parent_index": 81,
+      "parent_name": "L_Metatarsal"
+    },
+    {
+      "index": 95,
+      "name": "L_Outerfoot2",
+      "parent_index": 94,
+      "parent_name": "L_Outerfoot"
+    },
+    {
+      "index": 96,
+      "name": "L_Footring",
+      "parent_index": 95,
+      "parent_name": "L_Outerfoot2"
+    },
+    {
+      "index": 97,
+      "name": "L_Footring1",
+      "parent_index": 96,
+      "parent_name": "L_Footring"
+    },
+    {
+      "index": 98,
+      "name": "L_Footring2",
+      "parent_index": 97,
+      "parent_name": "L_Footring1"
+    },
+    {
+      "index": 99,
+      "name": "L_Footpinky",
+      "parent_index": 95,
+      "parent_name": "L_Outerfoot2"
+    },
+    {
+      "index": 100,
+      "name": "L_Footpinky1",
+      "parent_index": 99,
+      "parent_name": "L_Footpinky"
+    },
+    {
+      "index": 101,
+      "name": "L_Footpinky2",
+      "parent_index": 100,
+      "parent_name": "L_Footpinky1"
+    },
+    {
+      "index": 102,
+      "name": "R_Thigh",
+      "parent_index": 1,
+      "parent_name": "C_Hip"
+    },
+    {
+      "index": 103,
+      "name": "R_Knee",
+      "parent_index": 102,
+      "parent_name": "R_Thigh"
+    },
+    {
+      "index": 104,
+      "name": "R_Knee_SCL",
+      "parent_index": 103,
+      "parent_name": "R_Knee"
+    },
+    {
+      "index": 105,
+      "name": "R_Shin_1",
+      "parent_index": 103,
+      "parent_name": "R_Knee"
+    },
+    {
+      "index": 106,
+      "name": "R_Shin_2",
+      "parent_index": 103,
+      "parent_name": "R_Knee"
+    },
+    {
+      "index": 107,
+      "name": "R_Shin_3",
+      "parent_index": 103,
+      "parent_name": "R_Knee"
+    },
+    {
+      "index": 108,
+      "name": "R_Shin_4",
+      "parent_index": 103,
+      "parent_name": "R_Knee"
+    },
+    {
+      "index": 109,
+      "name": "R_Shin_5",
+      "parent_index": 103,
+      "parent_name": "R_Knee"
+    },
+    {
+      "index": 110,
+      "name": "R_Foot",
+      "parent_index": 103,
+      "parent_name": "R_Knee"
+    },
+    {
+      "index": 111,
+      "name": "R_vfx_Foot",
+      "parent_index": 110,
+      "parent_name": "R_Foot"
+    },
+    {
+      "index": 112,
+      "name": "R_Ankle",
+      "parent_index": 110,
+      "parent_name": "R_Foot"
+    },
+    {
+      "index": 113,
+      "name": "R_Metatarsal",
+      "parent_index": 110,
+      "parent_name": "R_Foot"
+    },
+    {
+      "index": 114,
+      "name": "R_Innerfoot",
+      "parent_index": 113,
+      "parent_name": "R_Metatarsal"
+    },
+    {
+      "index": 115,
+      "name": "R_Innerfoot2",
+      "parent_index": 114,
+      "parent_name": "R_Innerfoot"
+    },
+    {
+      "index": 116,
+      "name": "R_Footthumb",
+      "parent_index": 115,
+      "parent_name": "R_Innerfoot2"
+    },
+    {
+      "index": 117,
+      "name": "R_Footthumb1",
+      "parent_index": 116,
+      "parent_name": "R_Footthumb"
+    },
+    {
+      "index": 118,
+      "name": "R_Footthumb2",
+      "parent_index": 117,
+      "parent_name": "R_Footthumb1"
+    },
+    {
+      "index": 119,
+      "name": "R_Toe",
+      "parent_index": 113,
+      "parent_name": "R_Metatarsal"
+    },
+    {
+      "index": 120,
+      "name": "R_Footindex",
+      "parent_index": 119,
+      "parent_name": "R_Toe"
+    },
+    {
+      "index": 121,
+      "name": "R_Footindex1",
+      "parent_index": 120,
+      "parent_name": "R_Footindex"
+    },
+    {
+      "index": 122,
+      "name": "R_Footindex2",
+      "parent_index": 121,
+      "parent_name": "R_Footindex1"
+    },
+    {
+      "index": 123,
+      "name": "R_Footmiddle",
+      "parent_index": 119,
+      "parent_name": "R_Toe"
+    },
+    {
+      "index": 124,
+      "name": "R_Footmiddle1",
+      "parent_index": 123,
+      "parent_name": "R_Footmiddle"
+    },
+    {
+      "index": 125,
+      "name": "R_Footmiddle2",
+      "parent_index": 124,
+      "parent_name": "R_Footmiddle1"
+    },
+    {
+      "index": 126,
+      "name": "R_Outerfoot",
+      "parent_index": 113,
+      "parent_name": "R_Metatarsal"
+    },
+    {
+      "index": 127,
+      "name": "R_Outerfoot2",
+      "parent_index": 126,
+      "parent_name": "R_Outerfoot"
+    },
+    {
+      "index": 128,
+      "name": "R_Footring",
+      "parent_index": 127,
+      "parent_name": "R_Outerfoot2"
+    },
+    {
+      "index": 129,
+      "name": "R_Footring1",
+      "parent_index": 128,
+      "parent_name": "R_Footring"
+    },
+    {
+      "index": 130,
+      "name": "R_Footring2",
+      "parent_index": 129,
+      "parent_name": "R_Footring1"
+    },
+    {
+      "index": 131,
+      "name": "R_Footpinky",
+      "parent_index": 127,
+      "parent_name": "R_Outerfoot2"
+    },
+    {
+      "index": 132,
+      "name": "R_Footpinky1",
+      "parent_index": 131,
+      "parent_name": "R_Footpinky"
+    },
+    {
+      "index": 133,
+      "name": "R_Footpinky2",
+      "parent_index": 132,
+      "parent_name": "R_Footpinky1"
+    },
+    {
+      "index": 134,
+      "name": "offset_root_S",
+      "parent_index": 0,
+      "parent_name": "Root"
+    },
+    {
+      "index": 135,
+      "name": "offset_root_M",
+      "parent_index": 0,
+      "parent_name": "Root"
+    },
+    {
+      "index": 136,
+      "name": "offset_root_L",
+      "parent_index": 0,
+      "parent_name": "Root"
+    },
+    {
+      "index": 137,
+      "name": "L_Foot_IK",
+      "parent_index": 0,
+      "parent_name": "Root"
+    },
+    {
+      "index": 138,
+      "name": "R_Foot_IK",
+      "parent_index": 0,
+      "parent_name": "Root"
+    },
+    {
+      "index": 139,
+      "name": "L_Arm_IK",
+      "parent_index": 0,
+      "parent_name": "Root"
+    },
+    {
+      "index": 140,
+      "name": "R_Arm_IK",
+      "parent_index": 0,
+      "parent_name": "Root"
+    },
+    {
+      "index": 141,
+      "name": "C_vfx_root",
+      "parent_index": 0,
+      "parent_name": "Root"
+    }
+  ],
+  "animations": [
+    {
+      "name": "esf001_BAS_STD_Loop (396 frames) ID: 0",
+      "frame_count": 396.0,
+      "frame_rate": 0,
+      "tracks": [
+        {
+          "bone": "Root",
+          "bone_index": 0,
+          "pos_keys": 1,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.0,
+                -0.0,
+                -0.0,
+                1.0
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "C_Hip",
+          "bone_index": 1,
+          "pos_keys": 128,
+          "rot_keys": 247,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.06441283039748669,
+                94.5734441280365,
+                0.0
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                -0.2616041339933872,
+                94.86188888549805,
+                -0.09945489000529051
+              ]
+            },
+            {
+              "t": 5.0,
+              "v": [
+                -0.7528165820986032,
+                96.10457420349121,
+                -0.39229406975209713
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.025608547031879425,
+                0.7049674674576404,
+                0.02525537937295203,
+                0.7083270699034486
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                0.026701892912387847,
+                0.7051039436284233,
+                0.027254166088852227,
+                0.7080767246741992
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                0.027521902322769163,
+                0.7049674674576404,
+                0.027920428327485626,
+                0.7081552544470079
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "offset_root_S",
+          "bone_index": 134,
+          "pos_keys": 1,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.0,
+                -0.0,
+                -0.0,
+                1.0
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "offset_root_M",
+          "bone_index": 135,
+          "pos_keys": 1,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.0,
+                -0.0,
+                -0.0,
+                1.0
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "offset_root_L",
+          "bone_index": 136,
+          "pos_keys": 1,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.0,
+                -0.0,
+                -0.0,
+                1.0
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Foot_IK",
+          "bone_index": 137,
+          "pos_keys": 94,
+          "rot_keys": 284,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                -5.656040087342262,
+                7.880031317472458,
+                42.71048903465271
+              ]
+            },
+            {
+              "t": 4.0,
+              "v": [
+                -5.823886767029762,
+                8.349879831075668,
+                42.63262152671814
+              ]
+            },
+            {
+              "t": 8.0,
+              "v": [
+                -6.25297948718071,
+                9.413772076368332,
+                42.40649938583374
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                4.572760794431963e-05,
+                0.6951184272766113,
+                4.693493429109262e-06,
+                0.7188952426796601
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                -0.0007063505155119028,
+                0.6947547155391436,
+                -0.001048407080389363,
+                0.7192456375590099
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                -0.0024253862262689826,
+                0.6941671811940033,
+                -0.003605937045377079,
+                0.7198006941319589
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Foot_IK",
+          "bone_index": 138,
+          "pos_keys": 80,
+          "rot_keys": 256,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                2.567768283188343,
+                8.35697427392006,
+                -26.88031792640686
+              ]
+            },
+            {
+              "t": 4.0,
+              "v": [
+                2.408824674785137,
+                8.723650127649307,
+                -26.873281598091125
+              ]
+            },
+            {
+              "t": 9.0,
+              "v": [
+                1.8912281841039658,
+                9.937474876642227,
+                -26.96094512939453
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.003442390152286895,
+                0.8605731453014609,
+                -0.010963889149783265,
+                0.5091972158905639
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                -0.003942432992236792,
+                0.8608538275939628,
+                -0.011536811340512855,
+                0.5087062479693157
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                -0.005242544376106526,
+                0.8612436641113266,
+                -0.013484746788993463,
+                0.5079862482002813
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Arm_IK",
+          "bone_index": 139,
+          "pos_keys": 194,
+          "rot_keys": 375,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                -16.940799355506897,
+                97.00161814689636,
+                29.22092378139496
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                -16.98732078075409,
+                96.99465036392212,
+                28.942403197288513
+              ]
+            },
+            {
+              "t": 3.0,
+              "v": [
+                -17.11147278547287,
+                97.73457646369934,
+                28.33598256111145
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.08531535704143899,
+                -0.783342059465152,
+                -0.612209465373269,
+                0.06554447522989446
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                0.08179938291929457,
+                -0.7769267109454138,
+                -0.6216725351117955,
+                0.05671865531936921
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                0.07815377306063225,
+                -0.7670922442269087,
+                -0.634332505738225,
+                0.05553151147930923
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Arm_IK",
+          "bone_index": 140,
+          "pos_keys": 184,
+          "rot_keys": 370,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                -27.57270038127899,
+                128.6688208580017,
+                -0.33944377209991217
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                -27.53646671772003,
+                128.45741510391235,
+                -0.4963070619851351
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                -27.488771080970764,
+                128.54348421096802,
+                -0.6559898611158133
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.48370216161974017,
+                -0.6992109148733078,
+                -0.12084487525205459,
+                0.5123795775513872
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                0.48329536568733955,
+                -0.6944763468157861,
+                -0.12711819244925576,
+                0.5176573754588789
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                0.48288856975493893,
+                -0.6928150948657784,
+                -0.12819361825449027,
+                0.5199925670285817
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "C_vfx_root",
+          "bone_index": 141,
+          "pos_keys": 1,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.0,
+                -0.0,
+                -0.0,
+                1.0
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "C_Spine1",
+          "bone_index": 2,
+          "pos_keys": 0,
+          "rot_keys": 235,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.03016132033046555,
+                -0.0046868499569302675,
+                0.018726626739782447,
+                0.999358615134904
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                -0.03133321084520396,
+                -0.003582964948944601,
+                0.019832015300498294,
+                0.9993058007584192
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                -0.03133321084520396,
+                -0.0026710599423477458,
+                0.02149009814157206,
+                0.9992743722415681
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Thigh",
+          "bone_index": 70,
+          "pos_keys": 0,
+          "rot_keys": 286,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.13822995097029442,
+                0.01643192864516202,
+                -0.19268125225515925,
+                0.9713374323092536
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                0.13486564772970536,
+                0.01403742593293096,
+                -0.1940400821321151,
+                0.9715774051828225
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                0.1315013444891163,
+                0.011813959128716411,
+                -0.19431184810750624,
+                0.972013751164203
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Thigh",
+          "bone_index": 102,
+          "pos_keys": 0,
+          "rot_keys": 291,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.1745532477603239,
+                0.2377241478246801,
+                0.1693071378212349,
+                0.940400705189088
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                0.1706663019516889,
+                0.23841661933590383,
+                0.16911801432862,
+                0.9409727021715978
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                0.167427180444493,
+                0.24026321003250048,
+                0.16911801432862,
+                0.9410849198573051
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Knee",
+          "bone_index": 103,
+          "pos_keys": 1,
+          "rot_keys": 239,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                0.0,
+                -44.49999928474426,
+                0.0
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.45001880436092034,
+                -0.0,
+                -0.0,
+                0.8930190791475665
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                -0.44832904830517006,
+                -0.0,
+                -0.0,
+                0.8938685946187954
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                -0.4452141731629576,
+                -0.0,
+                -0.0,
+                0.8954241118122875
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Shin_1",
+          "bone_index": 105,
+          "pos_keys": 1,
+          "rot_keys": 1,
+          "scl_keys": 1,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                -3.552713599391162e-15,
+                -6.749999523162842,
+                5.329070399086743e-15
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                6.938894731087841e-18,
+                2.407413004455896e-35,
+                -3.4694473655439205e-18,
+                1.0
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "R_Shin_2",
+          "bone_index": 106,
+          "pos_keys": 1,
+          "rot_keys": 1,
+          "scl_keys": 1,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                -3.552713599391162e-15,
+                -13.499999046325684,
+                5.329070399086743e-15
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                6.938894731087841e-18,
+                2.407413004455896e-35,
+                -3.4694473655439205e-18,
+                1.0
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "R_Shin_3",
+          "bone_index": 107,
+          "pos_keys": 1,
+          "rot_keys": 1,
+          "scl_keys": 1,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                -3.552713599391162e-15,
+                -20.250000059604645,
+                5.329070399086743e-15
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                6.938894731087841e-18,
+                2.407413004455896e-35,
+                -3.4694473655439205e-18,
+                1.0
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "R_Shin_4",
+          "bone_index": 108,
+          "pos_keys": 1,
+          "rot_keys": 1,
+          "scl_keys": 1,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                -7.105427198782324e-15,
+                -26.999998092651367,
+                7.105427198782324e-15
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                6.938894731087841e-18,
+                2.407413004455896e-35,
+                -3.4694473655439205e-18,
+                1.0
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "R_Shin_5",
+          "bone_index": 109,
+          "pos_keys": 1,
+          "rot_keys": 1,
+          "scl_keys": 1,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                -7.105427198782324e-15,
+                -33.75000059604645,
+                5.329070399086743e-15
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                6.938894731087841e-18,
+                2.407413004455896e-35,
+                -3.4694473655439205e-18,
+                1.0
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "R_Foot",
+          "bone_index": 110,
+          "pos_keys": 1,
+          "rot_keys": 319,
+          "scl_keys": 1,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                -7.105427198782324e-15,
+                -40.50000011920929,
+                5.329070399086743e-15
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.2076341168825694,
+                -0.04921117739593528,
+                -0.09350602444578127,
+                0.9724828825835683
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                0.20664215918160603,
+                -0.04983832729381317,
+                -0.09312177069288545,
+                0.9726990773123723
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                0.2032695029983306,
+                -0.05052249081877087,
+                -0.09246853931296256,
+                0.9734364675260558
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "R_vfx_Foot",
+          "bone_index": 111,
+          "pos_keys": 1,
+          "rot_keys": 256,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.3059929935261607,
+                -2.9843758791685104,
+                1.544483985149725e-07
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.0035425187366216193,
+                -0.8605653135541131,
+                0.011078467459680982,
+                0.5092072851278313
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                0.004042561139587314,
+                -0.8608459979441392,
+                0.011651389395503114,
+                0.508716100244671
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                0.005342671387298131,
+                -0.861235837374731,
+                0.013599323977298391,
+                0.5079954199313749
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Ankle",
+          "bone_index": 112,
+          "pos_keys": 1,
+          "rot_keys": 0,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.30598838347941637,
+                -2.9843544587492943,
+                2.2594772612853422e-15
+              ]
+            }
+          ],
+          "rot": [],
+          "scl": []
+        },
+        {
+          "bone": "R_Metatarsal",
+          "bone_index": 113,
+          "pos_keys": 1,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                -1.105988398194313,
+                -2.9843544587492943,
+                10.999999940395355
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                8.413409520232004e-17,
+                -5.551115784870273e-17,
+                -9.540979945053052e-18,
+                1.0
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Innerfoot",
+          "bone_index": 114,
+          "pos_keys": 1,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                2.79999990016222,
+                8.881783998477905e-16,
+                -7.105427198782324e-15
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                8.413409520232004e-17,
+                -5.551115784870273e-17,
+                -9.540979945053052e-18,
+                1.0
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Toe",
+          "bone_index": 119,
+          "pos_keys": 1,
+          "rot_keys": 244,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                -2.1316281596346973e-14,
+                -1.2999999336898327,
+                5.999999865889549
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                8.507958546877248e-05,
+                3.9176284101129916e-06,
+                7.756505041351877e-06,
+                0.9999999963429764
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                0.0008639572361231196,
+                -2.337367059244153e-06,
+                7.756505041351877e-06,
+                0.9999996267560641
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                0.003512141248347811,
+                -1.4847357997958442e-05,
+                7.756505041351877e-06,
+                0.9999938322726017
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Outerfoot",
+          "bone_index": 126,
+          "pos_keys": 1,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                -3.200000151991844,
+                -8.881783998477905e-16,
+                -3.552713599391162e-15
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                8.413409520232004e-17,
+                -5.551115784870273e-17,
+                -9.540979945053052e-18,
+                1.0
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Outerfoot2",
+          "bone_index": 127,
+          "pos_keys": 1,
+          "rot_keys": 244,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                3.200000151991844,
+                -1.2999999336898327,
+                5.999999865889549
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                8.507958546877248e-05,
+                3.9176284101129916e-06,
+                7.756505041351877e-06,
+                0.9999999963429764
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                0.0008639572361231196,
+                -2.337367059244153e-06,
+                7.756505041351877e-06,
+                0.9999996267560641
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                0.003512141248347811,
+                -1.4847357997958442e-05,
+                7.756505041351877e-06,
+                0.9999938322726017
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Footring",
+          "bone_index": 128,
+          "pos_keys": 1,
+          "rot_keys": 96,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                -5.299999564886093,
+                -0.9000000543892384,
+                -0.6999997887760401
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.013330510302501566,
+                0.03222537040710449,
+                -0.04000760801136494,
+                0.9985906139647062
+              ]
+            },
+            {
+              "t": 3.0,
+              "v": [
+                -0.01222415312248118,
+                0.033018446377679415,
+                -0.0397662549261369,
+                0.9985885024615455
+              ]
+            },
+            {
+              "t": 8.0,
+              "v": [
+                -0.006938224373494877,
+                0.036691640346658,
+                -0.0397662549261369,
+                0.9985110062189421
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Footpinky",
+          "bone_index": 131,
+          "pos_keys": 1,
+          "rot_keys": 96,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                -7.699999958276749,
+                -1.2999999336898327,
+                -1.9999999552965164
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.008212399203330278,
+                0.020487211644649506,
+                -0.06725425264779844,
+                0.9974917023008956
+              ]
+            },
+            {
+              "t": 3.0,
+              "v": [
+                -0.0072460934355416725,
+                0.022184810597522586,
+                -0.06725425264779844,
+                0.997462878411754
+              ]
+            },
+            {
+              "t": 7.0,
+              "v": [
+                -0.003810339594515516,
+                0.027740588988743577,
+                -0.06725425264779844,
+                0.9973428731060939
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Footpinky1",
+          "bone_index": 132,
+          "pos_keys": 0,
+          "rot_keys": 48,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.1383742243051529,
+                -0.0,
+                -0.0,
+                0.9903800149679653
+              ]
+            },
+            {
+              "t": 61.0,
+              "v": [
+                -0.13880236981853136,
+                -0.0,
+                -0.0,
+                0.9903201008425304
+              ]
+            },
+            {
+              "t": 63.0,
+              "v": [
+                -0.14196364549592966,
+                -0.0,
+                -0.0,
+                0.9898718721923085
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Footpinky2",
+          "bone_index": 133,
+          "pos_keys": 0,
+          "rot_keys": 137,
+          "scl_keys": 1,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.17158838783127134,
+                -0.0,
+                -0.0,
+                0.9851687292852251
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                0.16981662717113016,
+                -0.0,
+                -0.0,
+                0.985475678612223
+              ]
+            },
+            {
+              "t": 4.0,
+              "v": [
+                0.16506534617255225,
+                -0.0,
+                -0.0,
+                0.9862826326631405
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "R_Footring1",
+          "bone_index": 129,
+          "pos_keys": 0,
+          "rot_keys": 85,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.12644417583942413,
+                -0.0,
+                4.8318266557182516e-17,
+                0.9919737246501485
+              ]
+            },
+            {
+              "t": 60.0,
+              "v": [
+                -0.12644417583942413,
+                -0.0,
+                4.8318266557182516e-17,
+                0.9919737246501485
+              ]
+            },
+            {
+              "t": 61.0,
+              "v": [
+                -0.12752104571720954,
+                0.0001052729849169206,
+                -0.0001057565015606383,
+                0.9918358536735554
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Footring2",
+          "bone_index": 130,
+          "pos_keys": 0,
+          "rot_keys": 141,
+          "scl_keys": 1,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.11492591248325673,
+                -0.0,
+                -0.0,
+                0.9933740658180537
+              ]
+            },
+            {
+              "t": 3.0,
+              "v": [
+                0.11262955191939047,
+                -0.0,
+                -0.0,
+                0.9936370484409472
+              ]
+            },
+            {
+              "t": 6.0,
+              "v": [
+                0.10688865050972486,
+                -0.0,
+                -0.0,
+                0.9942709974610594
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "R_Footindex",
+          "bone_index": 120,
+          "pos_keys": 1,
+          "rot_keys": 98,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                -1.4210854397564648e-14,
+                -1.1546319032585154e-14,
+                0.6599999964237213
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.04561154544353485,
+                0.07221205532550812,
+                0.02787391487874237,
+                0.9959558478453002
+              ]
+            },
+            {
+              "t": 4.0,
+              "v": [
+                -0.04386011800345252,
+                0.07122193767743952,
+                0.02803501524761611,
+                0.9961012817792476
+              ]
+            },
+            {
+              "t": 15.0,
+              "v": [
+                -0.03422726708299974,
+                0.06429111414095935,
+                0.02851831635423735,
+                0.9969362328970006
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Footmiddle",
+          "bone_index": 123,
+          "pos_keys": 1,
+          "rot_keys": 70,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                -2.7000000700354576,
+                -0.4999999888241291,
+                0.23999998811632395
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.033114708960056305,
+                0.05766058713197708,
+                0.0031219273805618286,
+                0.9977820034013025
+              ]
+            },
+            {
+              "t": 7.0,
+              "v": [
+                -0.030743105022930636,
+                0.05766058713197708,
+                0.0032538340518287606,
+                0.9978574701574909
+              ]
+            },
+            {
+              "t": 16.0,
+              "v": [
+                -0.026862298580361342,
+                0.05766058713197708,
+                0.0035176473943626177,
+                0.9979685865614129
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Footmiddle1",
+          "bone_index": 124,
+          "pos_keys": 0,
+          "rot_keys": 105,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.12597879767417908,
+                4.409153500565914e-07,
+                9.574583330257406e-18,
+                0.9920329341994518
+              ]
+            },
+            {
+              "t": 60.0,
+              "v": [
+                -0.12597879767417908,
+                4.409153500565914e-07,
+                9.574583330257406e-18,
+                0.9920329341994518
+              ]
+            },
+            {
+              "t": 61.0,
+              "v": [
+                -0.1277132568879095,
+                -1.0202462987050995e-05,
+                -7.425295234541248e-05,
+                0.9918111304061331
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Footmiddle2",
+          "bone_index": 125,
+          "pos_keys": 0,
+          "rot_keys": 135,
+          "scl_keys": 1,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.16449437761566882,
+                -0.0,
+                -0.0,
+                0.9863780207064804
+              ]
+            },
+            {
+              "t": 3.0,
+              "v": [
+                0.16312852591933288,
+                -0.0,
+                -0.0,
+                0.9866048266815775
+              ]
+            },
+            {
+              "t": 8.0,
+              "v": [
+                0.15679984135777633,
+                -0.0,
+                -0.0,
+                0.9876304013902044
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "R_Footindex1",
+          "bone_index": 121,
+          "pos_keys": 0,
+          "rot_keys": 107,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.11343606561422348,
+                -0.0,
+                -0.0,
+                0.9935452979195089
+              ]
+            },
+            {
+              "t": 60.0,
+              "v": [
+                -0.11343606561422348,
+                -0.0,
+                -0.0,
+                0.9935452979195089
+              ]
+            },
+            {
+              "t": 61.0,
+              "v": [
+                -0.11583075382095676,
+                -0.0,
+                -0.0,
+                0.9932689648173192
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Footindex2",
+          "bone_index": 122,
+          "pos_keys": 0,
+          "rot_keys": 133,
+          "scl_keys": 1,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.14869488892442823,
+                -0.0,
+                -0.0,
+                0.9888831225214393
+              ]
+            },
+            {
+              "t": 5.0,
+              "v": [
+                0.1466295883294837,
+                -0.0,
+                -0.0,
+                0.9891914697500813
+              ]
+            },
+            {
+              "t": 15.0,
+              "v": [
+                0.13854435326496997,
+                -0.0,
+                -0.0,
+                0.990356229938698
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "R_Innerfoot2",
+          "bone_index": 115,
+          "pos_keys": 1,
+          "rot_keys": 244,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                -2.79999990016222,
+                -1.2999999336898327,
+                5.999999865889549
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                8.507958546877248e-05,
+                3.9176284101129916e-06,
+                7.756505041351877e-06,
+                0.9999999963429764
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                0.0008639572361231196,
+                -2.337367059244153e-06,
+                7.756505041351877e-06,
+                0.9999996267560641
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                0.003512141248347811,
+                -1.4847357997958442e-05,
+                7.756505041351877e-06,
+                0.9999938322726017
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Footthumb",
+          "bone_index": 116,
+          "pos_keys": 1,
+          "rot_keys": 115,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                3.999999910593033,
+                0.3000000026077032,
+                0.6999997887760401
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.09271277154193205,
+                0.08768898993730545,
+                0.07998471707105637,
+                0.9885936617599022
+              ]
+            },
+            {
+              "t": 3.0,
+              "v": [
+                -0.09216614009118547,
+                0.08654236054303599,
+                0.07973012307695314,
+                0.9887663677160875
+              ]
+            },
+            {
+              "t": 8.0,
+              "v": [
+                -0.08888635138670603,
+                0.08052255622312135,
+                0.07845715310643701,
+                0.989676618700718
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Footthumb1",
+          "bone_index": 117,
+          "pos_keys": 0,
+          "rot_keys": 101,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.08715575188398361,
+                -0.0,
+                -0.0,
+                0.9961946972924206
+              ]
+            },
+            {
+              "t": 60.0,
+              "v": [
+                -0.08715575188398361,
+                -0.0,
+                -0.0,
+                0.9961946972924206
+              ]
+            },
+            {
+              "t": 61.0,
+              "v": [
+                -0.08878573296264643,
+                -0.0,
+                -0.0,
+                0.9960507485175069
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Footthumb2",
+          "bone_index": 118,
+          "pos_keys": 0,
+          "rot_keys": 147,
+          "scl_keys": 1,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.1736496057471358,
+                -0.0,
+                -0.0,
+                0.9848075012020696
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                0.1724376389795595,
+                -0.0,
+                -0.0,
+                0.9850204366728413
+              ]
+            },
+            {
+              "t": 5.0,
+              "v": [
+                0.16697955087942562,
+                -0.0,
+                -0.0,
+                0.9859603590348374
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "L_Knee",
+          "bone_index": 71,
+          "pos_keys": 1,
+          "rot_keys": 295,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                0.0,
+                -44.49999928474426,
+                0.0
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.3056120049471876,
+                -0.0,
+                -0.0,
+                0.9521561334319913
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                -0.3042619133171595,
+                -0.0,
+                -0.0,
+                0.9525884148490267
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                -0.2996858132659066,
+                -0.0,
+                -0.0,
+                0.9540379517226514
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Shin_1",
+          "bone_index": 73,
+          "pos_keys": 1,
+          "rot_keys": 1,
+          "scl_keys": 1,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                0.0,
+                -6.749999523162842,
+                1.776356799695581e-15
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                3.4694473655439205e-18,
+                9.629652017823583e-35,
+                -2.7755578924351364e-17,
+                1.0
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "L_Shin_2",
+          "bone_index": 74,
+          "pos_keys": 1,
+          "rot_keys": 1,
+          "scl_keys": 1,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                0.0,
+                -13.499999046325684,
+                1.776356799695581e-15
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                3.4694473655439205e-18,
+                9.629652017823583e-35,
+                -2.7755578924351364e-17,
+                1.0
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "L_Shin_3",
+          "bone_index": 75,
+          "pos_keys": 1,
+          "rot_keys": 1,
+          "scl_keys": 1,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                0.0,
+                -20.250000059604645,
+                1.776356799695581e-15
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                3.4694473655439205e-18,
+                9.629652017823583e-35,
+                -2.7755578924351364e-17,
+                1.0
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "L_Shin_4",
+          "bone_index": 76,
+          "pos_keys": 1,
+          "rot_keys": 1,
+          "scl_keys": 1,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                0.0,
+                -26.999998092651367,
+                1.776356799695581e-15
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                3.4694473655439205e-18,
+                9.629652017823583e-35,
+                -2.7755578924351364e-17,
+                1.0
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "L_Shin_5",
+          "bone_index": 77,
+          "pos_keys": 1,
+          "rot_keys": 1,
+          "scl_keys": 1,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                -7.105427198782324e-15,
+                -33.75000059604645,
+                0.0
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                3.4694473655439205e-18,
+                9.629652017823583e-35,
+                -2.7755578924351364e-17,
+                1.0
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "L_Foot",
+          "bone_index": 78,
+          "pos_keys": 1,
+          "rot_keys": 354,
+          "scl_keys": 1,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                0.0,
+                -40.50000011920929,
+                1.776356799695581e-15
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.1282219012520064,
+                0.036144530777532685,
+                0.18890263218858724,
+                0.9729175260454588
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                0.1263199036072426,
+                0.03848545485606757,
+                0.18845160799292177,
+                0.9731639857506342
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                0.12115733857145525,
+                0.03981408744118198,
+                0.18754955960159078,
+                0.9739409121937311
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "L_vfx_Foot",
+          "bone_index": 79,
+          "pos_keys": 1,
+          "rot_keys": 284,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                0.7764569483697414,
+                -2.897787280380726,
+                5.979323258742397e-07
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                6.169873860574493e-05,
+                -0.6951184272766113,
+                0.0001457262773318091,
+                0.7188952267316902
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                0.0008137771679509048,
+                -0.6947267377131845,
+                0.0011988264432983564,
+                0.7192723131667699
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                0.0025328135778827088,
+                -0.6941392033680444,
+                0.0037563554177885428,
+                0.7198265353520469
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Ankle",
+          "bone_index": 80,
+          "pos_keys": 1,
+          "rot_keys": 0,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                0.7764571346342564,
+                -2.897777408361435,
+                2.3114880676189387e-06
+              ]
+            }
+          ],
+          "rot": [],
+          "scl": []
+        },
+        {
+          "bone": "L_Metatarsal",
+          "bone_index": 81,
+          "pos_keys": 1,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                1.5764571726322174,
+                -2.897777408361435,
+                11.000001430511475
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                2.878969696510801e-17,
+                -1.0408341683041455e-17,
+                -3.8163919780212206e-17,
+                1.0
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Innerfoot",
+          "bone_index": 82,
+          "pos_keys": 1,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                -2.79999990016222,
+                1.776356799695581e-15,
+                1.0658140798173486e-14
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                2.878969696510801e-17,
+                -1.0408341683041455e-17,
+                -3.8163919780212206e-17,
+                1.0
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Toe",
+          "bone_index": 87,
+          "pos_keys": 1,
+          "rot_keys": 268,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                2.8421708795129297e-14,
+                -1.2999999336898327,
+                5.999999865889549
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                6.333248414833181e-05,
+                2.603192257449871e-06,
+                4.923176876142632e-06,
+                0.9999999979789911
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                0.0015871971554304032,
+                1.2365941828588502e-05,
+                0.00020533183613247186,
+                0.999998719244735
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                0.004634926497994518,
+                3.1891440970864895e-05,
+                0.0006562513194592196,
+                0.9999890428267201
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Outerfoot",
+          "bone_index": 94,
+          "pos_keys": 1,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                3.200000151991844,
+                3.552713599391162e-15,
+                1.0658140798173486e-14
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                2.878969696510801e-17,
+                -1.0408341683041455e-17,
+                -3.8163919780212206e-17,
+                1.0
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Outerfoot2",
+          "bone_index": 95,
+          "pos_keys": 1,
+          "rot_keys": 268,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                -3.200000151991844,
+                -1.2999999336898327,
+                5.999999865889549
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                6.333248414833181e-05,
+                2.603192257449871e-06,
+                4.923176876142632e-06,
+                0.9999999979789911
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                0.0015871971554304032,
+                1.2365941828588502e-05,
+                0.00020533183613247186,
+                0.999998719244735
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                0.004634926497994518,
+                3.1891440970864895e-05,
+                0.0006562513194592196,
+                0.9999890428267201
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Footring",
+          "bone_index": 96,
+          "pos_keys": 1,
+          "rot_keys": 96,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                5.299999564886093,
+                -0.9000000543892384,
+                -0.6999997887760401
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.013453442603349686,
+                -0.03222537040710449,
+                0.04000760614871979,
+                0.9985889654079361
+              ]
+            },
+            {
+              "t": 3.0,
+              "v": [
+                -0.012227167466691898,
+                -0.03297670553712284,
+                0.04000760614871979,
+                0.9985802044492512
+              ]
+            },
+            {
+              "t": 8.0,
+              "v": [
+                -0.006954184379063401,
+                -0.036649899506101424,
+                0.04000760614871979,
+                0.99850278699464
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Footpinky",
+          "bone_index": 99,
+          "pos_keys": 1,
+          "rot_keys": 99,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                7.699999958276749,
+                -1.2999999336898327,
+                -1.9999999552965164
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.00821240758523345,
+                -0.020487213507294655,
+                0.06746947765350342,
+                0.9974771676732876
+              ]
+            },
+            {
+              "t": 3.0,
+              "v": [
+                -0.007243600263095954,
+                -0.02197658040505998,
+                0.06746947765350342,
+                0.9974529711991899
+              ]
+            },
+            {
+              "t": 7.0,
+              "v": [
+                -0.003798952006607079,
+                -0.027603077574395667,
+                0.06746947765350342,
+                0.997332195237493
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Footpinky1",
+          "bone_index": 100,
+          "pos_keys": 0,
+          "rot_keys": 48,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.1383742243051529,
+                -0.0,
+                -0.0,
+                0.9903800149679653
+              ]
+            },
+            {
+              "t": 61.0,
+              "v": [
+                -0.13880236981853136,
+                -0.0,
+                -0.0,
+                0.9903201008425304
+              ]
+            },
+            {
+              "t": 63.0,
+              "v": [
+                -0.14196364549592966,
+                -0.0,
+                -0.0,
+                0.9898718721923085
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Footpinky2",
+          "bone_index": 101,
+          "pos_keys": 0,
+          "rot_keys": 137,
+          "scl_keys": 1,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.17158838783127134,
+                -0.0,
+                -0.0,
+                0.9851687292852251
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                0.16981662717113016,
+                -0.0,
+                -0.0,
+                0.985475678612223
+              ]
+            },
+            {
+              "t": 4.0,
+              "v": [
+                0.16506534617255225,
+                -0.0,
+                -0.0,
+                0.9862826326631405
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "L_Footring1",
+          "bone_index": 97,
+          "pos_keys": 0,
+          "rot_keys": 85,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.12644417583942413,
+                1.201163691303155e-17,
+                -0.0,
+                0.9919737246501485
+              ]
+            },
+            {
+              "t": 60.0,
+              "v": [
+                -0.12644417583942413,
+                1.201163691303155e-17,
+                -0.0,
+                0.9919737246501485
+              ]
+            },
+            {
+              "t": 61.0,
+              "v": [
+                -0.12752104571720954,
+                -9.023398707163496e-05,
+                0.00012338258515413522,
+                0.9918358531197361
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Footring2",
+          "bone_index": 98,
+          "pos_keys": 0,
+          "rot_keys": 141,
+          "scl_keys": 1,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.11492591248325673,
+                -0.0,
+                -0.0,
+                0.9933740658180537
+              ]
+            },
+            {
+              "t": 3.0,
+              "v": [
+                0.11262955191939047,
+                -0.0,
+                -0.0,
+                0.9936370484409472
+              ]
+            },
+            {
+              "t": 6.0,
+              "v": [
+                0.10688865050972486,
+                -0.0,
+                -0.0,
+                0.9942709974610594
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "L_Footindex",
+          "bone_index": 88,
+          "pos_keys": 1,
+          "rot_keys": 108,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                -1.4210854397564648e-14,
+                -2.4424907071149036e-14,
+                0.6599999964237213
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.045611558482050896,
+                -0.07221205532550812,
+                -0.027712088078260422,
+                0.9959603631534977
+              ]
+            },
+            {
+              "t": 4.0,
+              "v": [
+                -0.0438657771795988,
+                -0.0709886912475614,
+                -0.027712088078260422,
+                0.996126718586411
+              ]
+            },
+            {
+              "t": 15.0,
+              "v": [
+                -0.03426398001611233,
+                -0.06413785241105976,
+                -0.02823256506931548,
+                0.9969529767402069
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Footmiddle",
+          "bone_index": 91,
+          "pos_keys": 1,
+          "rot_keys": 70,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                2.7000000700354576,
+                -0.4999999888241291,
+                0.23999998811632395
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.03311471454799175,
+                -0.05766058713197708,
+                -0.003121924353763461,
+                0.9977820032253188
+              ]
+            },
+            {
+              "t": 7.0,
+              "v": [
+                -0.030743110450167282,
+                -0.05757958709317095,
+                -0.003121924353763461,
+                0.9978625686427757
+              ]
+            },
+            {
+              "t": 16.0,
+              "v": [
+                -0.02686230374463633,
+                -0.05757958709317095,
+                -0.0033857376670793577,
+                0.9979737193774998
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Footmiddle1",
+          "bone_index": 92,
+          "pos_keys": 0,
+          "rot_keys": 105,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.12597879767417908,
+                1.3329373837156456e-06,
+                -0.0,
+                0.9920329341986543
+              ]
+            },
+            {
+              "t": 60.0,
+              "v": [
+                -0.12597879767417908,
+                1.3329373837156456e-06,
+                -0.0,
+                0.9920329341986543
+              ]
+            },
+            {
+              "t": 61.0,
+              "v": [
+                -0.1277132568879095,
+                1.1976315720823422e-05,
+                8.353457138859932e-05,
+                0.991811129647992
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Footmiddle2",
+          "bone_index": 93,
+          "pos_keys": 0,
+          "rot_keys": 135,
+          "scl_keys": 1,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.16449437761566882,
+                -0.0,
+                -0.0,
+                0.9863780207064804
+              ]
+            },
+            {
+              "t": 3.0,
+              "v": [
+                0.16312852591933288,
+                -0.0,
+                -0.0,
+                0.9866048266815775
+              ]
+            },
+            {
+              "t": 8.0,
+              "v": [
+                0.15679984135777633,
+                -0.0,
+                -0.0,
+                0.9876304013902044
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "L_Footindex1",
+          "bone_index": 89,
+          "pos_keys": 0,
+          "rot_keys": 107,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.11343606561422348,
+                -0.0,
+                -0.0,
+                0.9935452979195089
+              ]
+            },
+            {
+              "t": 60.0,
+              "v": [
+                -0.11343606561422348,
+                -0.0,
+                -0.0,
+                0.9935452979195089
+              ]
+            },
+            {
+              "t": 61.0,
+              "v": [
+                -0.11583075382095676,
+                -0.0,
+                -0.0,
+                0.9932689648173192
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Footindex2",
+          "bone_index": 90,
+          "pos_keys": 0,
+          "rot_keys": 133,
+          "scl_keys": 1,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.14869488892442823,
+                -0.0,
+                -0.0,
+                0.9888831225214393
+              ]
+            },
+            {
+              "t": 5.0,
+              "v": [
+                0.1466295883294837,
+                -0.0,
+                -0.0,
+                0.9891914697500813
+              ]
+            },
+            {
+              "t": 15.0,
+              "v": [
+                0.13854435326496997,
+                -0.0,
+                -0.0,
+                0.990356229938698
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "L_Innerfoot2",
+          "bone_index": 83,
+          "pos_keys": 1,
+          "rot_keys": 268,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                2.79999990016222,
+                -1.2999999336898327,
+                5.999999865889549
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                6.333248414833181e-05,
+                2.603192257449871e-06,
+                4.923176876142632e-06,
+                0.9999999979789911
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                0.0015871971554304032,
+                1.2365941828588502e-05,
+                0.00020533183613247186,
+                0.999998719244735
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                0.004634926497994518,
+                3.1891440970864895e-05,
+                0.0006562513194592196,
+                0.9999890428267201
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Footthumb",
+          "bone_index": 84,
+          "pos_keys": 1,
+          "rot_keys": 109,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                -3.999999910593033,
+                0.3000000026077032,
+                0.6999997887760401
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.09288287162780762,
+                -0.08756660830740835,
+                -0.07979487589761322,
+                0.9886038837917812
+              ]
+            },
+            {
+              "t": 3.0,
+              "v": [
+                -0.0920553107472027,
+                -0.08646503952788372,
+                -0.07979487589761322,
+                0.9887782332167118
+              ]
+            },
+            {
+              "t": 8.0,
+              "v": [
+                -0.08846921359791475,
+                -0.08095719563026055,
+                -0.07955639752395013,
+                0.9895907792284958
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Footthumb1",
+          "bone_index": 85,
+          "pos_keys": 0,
+          "rot_keys": 101,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.08715575188398361,
+                -0.0,
+                -0.0,
+                0.9961946972924206
+              ]
+            },
+            {
+              "t": 60.0,
+              "v": [
+                -0.08715575188398361,
+                -0.0,
+                -0.0,
+                0.9961946972924206
+              ]
+            },
+            {
+              "t": 61.0,
+              "v": [
+                -0.08878573296264643,
+                -0.0,
+                -0.0,
+                0.9960507485175069
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Footthumb2",
+          "bone_index": 86,
+          "pos_keys": 0,
+          "rot_keys": 147,
+          "scl_keys": 1,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.1736496057471358,
+                -0.0,
+                -0.0,
+                0.9848075012020696
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                0.1724376389795595,
+                -0.0,
+                -0.0,
+                0.9850204366728413
+              ]
+            },
+            {
+              "t": 5.0,
+              "v": [
+                0.16697955087942562,
+                -0.0,
+                -0.0,
+                0.9859603590348374
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "C_Spine2",
+          "bone_index": 3,
+          "pos_keys": 0,
+          "rot_keys": 147,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.02633414592813043,
+                -0.014682806932422167,
+                0.0016283367176120186,
+                0.9995440342768073
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                -0.024576530152676156,
+                -0.011582348618985099,
+                -6.245341991969154e-05,
+                0.9996308515975751
+              ]
+            },
+            {
+              "t": 5.0,
+              "v": [
+                -0.02201999811565175,
+                -0.007706775727188762,
+                -0.00017153665459915604,
+                0.9997278108895709
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "C_Abs1",
+          "bone_index": 68,
+          "pos_keys": 57,
+          "rot_keys": 80,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                -5.107025675047704e-15,
+                3.999999910593033,
+                11.430990151089517
+              ]
+            },
+            {
+              "t": 6.0,
+              "v": [
+                -5.107025675047704e-15,
+                3.999999910593033,
+                11.076576707087002
+              ]
+            },
+            {
+              "t": 14.0,
+              "v": [
+                -5.107025675047704e-15,
+                3.999999910593033,
+                10.226429156851621
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.012487625637759403,
+                -0.0,
+                -0.0,
+                0.9999220265630372
+              ]
+            },
+            {
+              "t": 4.0,
+              "v": [
+                0.01112239537816749,
+                -0.0,
+                -0.0,
+                0.9999381442474587
+              ]
+            },
+            {
+              "t": 13.0,
+              "v": [
+                0.002499581030757203,
+                -0.0,
+                -0.0,
+                0.9999968760424558
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "C_Abs_Under",
+          "bone_index": 69,
+          "pos_keys": 57,
+          "rot_keys": 80,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                -5.107025675047704e-15,
+                3.999999910593033,
+                11.430990151089517
+              ]
+            },
+            {
+              "t": 6.0,
+              "v": [
+                -5.107025675047704e-15,
+                3.999999910593033,
+                11.076576707087002
+              ]
+            },
+            {
+              "t": 14.0,
+              "v": [
+                -5.107025675047704e-15,
+                3.999999910593033,
+                10.226429156851621
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.012487625637759403,
+                -0.0,
+                -0.0,
+                0.9999220265630372
+              ]
+            },
+            {
+              "t": 4.0,
+              "v": [
+                0.01112239537816749,
+                -0.0,
+                -0.0,
+                0.9999381442474587
+              ]
+            },
+            {
+              "t": 13.0,
+              "v": [
+                0.002499581030757203,
+                -0.0,
+                -0.0,
+                0.9999968760424558
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "C_Chest",
+          "bone_index": 4,
+          "pos_keys": 0,
+          "rot_keys": 185,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.10259677557384267,
+                0.008710822273118826,
+                0.025332782169183093,
+                0.994362244539054
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                -0.10067258716798297,
+                0.012560137346679087,
+                0.024538808564345045,
+                0.9945376413273556
+              ]
+            },
+            {
+              "t": 4.0,
+              "v": [
+                -0.09874839876212327,
+                0.016694586870132706,
+                0.02580916633208593,
+                0.99463758799092
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "C_Abs",
+          "bone_index": 67,
+          "pos_keys": 1,
+          "rot_keys": 80,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                2.6645351995433716e-15,
+                3.999999910593033,
+                9.971380233764648
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.012487347342517597,
+                -0.0,
+                -0.0,
+                0.9999220300385162
+              ]
+            },
+            {
+              "t": 4.0,
+              "v": [
+                -0.011122117082925683,
+                -0.0,
+                -0.0,
+                0.9999381473429212
+              ]
+            },
+            {
+              "t": 13.0,
+              "v": [
+                -0.002499302735515394,
+                -0.0,
+                -0.0,
+                0.9999968767380407
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "C_Neck",
+          "bone_index": 5,
+          "pos_keys": 0,
+          "rot_keys": 116,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.09924573392844667,
+                -0.008029535690815572,
+                0.07161202062578763,
+                0.9924502654317171
+              ]
+            },
+            {
+              "t": 3.0,
+              "v": [
+                -0.1007168614396862,
+                -0.007848757838227732,
+                0.0698955453494016,
+                0.992425878120097
+              ]
+            },
+            {
+              "t": 6.0,
+              "v": [
+                -0.10122855796533473,
+                -0.006643572154308797,
+                0.06685270281398997,
+                0.9925922416217818
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Shoulder",
+          "bone_index": 9,
+          "pos_keys": 0,
+          "rot_keys": 280,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.0005297799055753163,
+                0.015555882806419036,
+                -0.08373189247044882,
+                0.9963667517669795
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                2.546474394021607e-05,
+                0.02094402797119592,
+                -0.08875926517001112,
+                0.9958328875320237
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                -0.0005797134500219025,
+                0.02681325752568501,
+                -0.09215274174221566,
+                0.995383637268852
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Shoulder",
+          "bone_index": 37,
+          "pos_keys": 0,
+          "rot_keys": 264,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.006877554058298176,
+                -0.0710436217779038,
+                0.0899956040814811,
+                0.9933812431795069
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                0.006585562649164714,
+                -0.07469093096899052,
+                0.0932774211846146,
+                0.9928127808870751
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                0.006001579830897789,
+                -0.07621064313194331,
+                0.09437136021899242,
+                0.9925975847660351
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "C_Lung",
+          "bone_index": 65,
+          "pos_keys": 1,
+          "rot_keys": 0,
+          "scl_keys": 1,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                3.552713599391162e-15,
+                7.462592972353469e-30,
+                0.9999999776482582
+              ]
+            }
+          ],
+          "rot": [],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "C_Chest_DirZ",
+          "bone_index": 66,
+          "pos_keys": 0,
+          "rot_keys": 237,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.12091669513314378,
+                -0.6932973980903625,
+                0.05321007163501253,
+                0.708439523823882
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                0.11886929530723422,
+                -0.6972350478172302,
+                0.05131315118541904,
+                0.7050534300632034
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                0.11704938435087017,
+                -0.7007094446350547,
+                0.04910007732755997,
+                0.7020647393429919
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_UpperArm",
+          "bone_index": 38,
+          "pos_keys": 0,
+          "rot_keys": 316,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.011801063588375217,
+                -0.5671219738347789,
+                -0.3688721816152888,
+                0.7363197099917297
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                0.005911690234875748,
+                -0.5657762362460587,
+                -0.3680291439489419,
+                0.737846089385869
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                0.0021256645076260863,
+                -0.5655199052767786,
+                -0.36730654023493026,
+                0.738423065584215
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_ForeArm",
+          "bone_index": 39,
+          "pos_keys": 1,
+          "rot_keys": 170,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                -26.999998092651367,
+                0.0,
+                0.0
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.0,
+                -0.8357441450962533,
+                -0.0,
+                0.5491190435027115
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                -0.0,
+                -0.8329648314110245,
+                -0.0,
+                0.553325934357322
+              ]
+            },
+            {
+              "t": 6.0,
+              "v": [
+                -0.0,
+                -0.8299479904769259,
+                -0.0,
+                0.5578407775551304
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_ForeArm_1",
+          "bone_index": 40,
+          "pos_keys": 1,
+          "rot_keys": 85,
+          "scl_keys": 1,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                -4.30000014603138,
+                -2.8421708795129297e-14,
+                -1.4210854397564648e-14
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.017081161502425,
+                -0.0,
+                -0.0,
+                0.9998541063183809
+              ]
+            },
+            {
+              "t": 5.0,
+              "v": [
+                0.017421525485425374,
+                -0.0,
+                -0.0,
+                0.9998482337083767
+              ]
+            },
+            {
+              "t": 11.0,
+              "v": [
+                0.024824192581971577,
+                -0.0,
+                -0.0,
+                0.9996918322476448
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "R_ForeArm_2",
+          "bone_index": 41,
+          "pos_keys": 1,
+          "rot_keys": 133,
+          "scl_keys": 1,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                -8.60000029206276,
+                -1.4210854397564648e-14,
+                -1.4210854397564648e-14
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.03415702221046971,
+                -0.0,
+                -0.0,
+                0.9994164786682844
+              ]
+            },
+            {
+              "t": 3.0,
+              "v": [
+                0.03473501575227787,
+                -0.0,
+                -0.0,
+                0.9993965572687796
+              ]
+            },
+            {
+              "t": 5.0,
+              "v": [
+                0.03483748276571373,
+                -0.0,
+                -0.0,
+                0.9993929906671092
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "R_ForeArm_3",
+          "bone_index": 42,
+          "pos_keys": 1,
+          "rot_keys": 165,
+          "scl_keys": 1,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                -12.89999932050705,
+                -1.4210854397564648e-14,
+                -2.1316281596346973e-14
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.05122315475244384,
+                -0.0,
+                -0.0,
+                0.9986872325293876
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                0.05237553313964563,
+                -0.0,
+                -0.0,
+                0.9986274598309111
+              ]
+            },
+            {
+              "t": 5.0,
+              "v": [
+                0.05224366149065505,
+                -0.0,
+                -0.0,
+                0.9986343674408816
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "R_ForeArm_4",
+          "bone_index": 43,
+          "pos_keys": 1,
+          "rot_keys": 188,
+          "scl_keys": 1,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                -17.20000058412552,
+                -1.4210854397564648e-14,
+                -2.1316281596346973e-14
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.06827445528850482,
+                -0.0,
+                -0.0,
+                0.9976665769459544
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                0.06980893339191811,
+                -0.0,
+                -0.0,
+                0.9975603805377812
+              ]
+            },
+            {
+              "t": 4.0,
+              "v": [
+                0.06916807483251594,
+                -0.0,
+                -0.0,
+                0.9976050207491758
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "R_ForeArm_5",
+          "bone_index": 44,
+          "pos_keys": 1,
+          "rot_keys": 223,
+          "scl_keys": 1,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                -21.49999737739563,
+                -1.4210854397564648e-14,
+                -7.105427198782324e-15
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.08530609030272274,
+                -0.0,
+                -0.0,
+                0.9963547917068818
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                0.08681593030893513,
+                -0.0,
+                -0.0,
+                0.9962243694291935
+              ]
+            },
+            {
+              "t": 3.0,
+              "v": [
+                0.08674515655864393,
+                -0.0,
+                -0.0,
+                0.9962305344716234
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "R_Hand",
+          "bone_index": 45,
+          "pos_keys": 1,
+          "rot_keys": 360,
+          "scl_keys": 1,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                -25.7999986410141,
+                -1.4210854397564648e-14,
+                -2.8421708795129297e-14
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.1056287465726628,
+                -0.051651201046565,
+                0.07652302454499638,
+                0.9901105736443891
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                0.10756938922054626,
+                -0.052156316868814764,
+                0.07917389247347327,
+                0.9896666306711555
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                0.10834564627969966,
+                -0.05518701180231338,
+                0.08094113775912454,
+                0.9892745558634488
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "R_vfx_Hand_00",
+          "bone_index": 46,
+          "pos_keys": 1,
+          "rot_keys": 370,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                -5.357904786507106e-07,
+                1.016652872998236e-07,
+                -2.2744828243048687e-08
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.48356654185470366,
+                0.6992939740914637,
+                0.12093446995855427,
+                0.5123730978241287
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                -0.4831597454853188,
+                0.6945594193182616,
+                0.12720779021464484,
+                0.5176505109507263
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                -0.482752949115934,
+                0.6928981720294188,
+                0.1282832165442604,
+                0.5199857014103529
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_vfx_Hand_01",
+          "bone_index": 47,
+          "pos_keys": 1,
+          "rot_keys": 1,
+          "scl_keys": 1,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                4.587121654742177e-09,
+                -1.17532294660605e-09,
+                9.35678201585688e-09
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.0,
+                -0.0,
+                -0.0,
+                1.0
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "R_Thumb1",
+          "bone_index": 48,
+          "pos_keys": 0,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.1645541787147522,
+                -0.2351648211479187,
+                -0.1553787738084793,
+                0.9452390522041259
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Index1",
+          "bone_index": 51,
+          "pos_keys": 0,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.016021788120269775,
+                -0.08782527595758438,
+                -0.5578323006629944,
+                0.8251382596543648
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Middle1",
+          "bone_index": 54,
+          "pos_keys": 0,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.11608771979808807,
+                -0.022566549479961395,
+                -0.5724013447761536,
+                0.8114006979631581
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Ring1",
+          "bone_index": 57,
+          "pos_keys": 0,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.08824089169502258,
+                -0.013628726825118065,
+                -0.017749348655343056,
+                0.9958477611865705
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Pinky1",
+          "bone_index": 61,
+          "pos_keys": 0,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.11478731036186218,
+                -0.0058484324254095554,
+                -0.0734594389796257,
+                0.9906530068812458
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Pinky2",
+          "bone_index": 62,
+          "pos_keys": 0,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.14764299988746643,
+                0.07396049797534943,
+                -0.31304824352264404,
+                0.9352711834280233
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Pinky3",
+          "bone_index": 63,
+          "pos_keys": 0,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.0,
+                -0.0,
+                -0.6994319558143616,
+                0.7146991948964941
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Pinky4",
+          "bone_index": 64,
+          "pos_keys": 0,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.0,
+                -0.0,
+                -0.5033724904060364,
+                0.8640695202947647
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Ring2",
+          "bone_index": 58,
+          "pos_keys": 0,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.10274360328912735,
+                0.041968073695898056,
+                -0.5058513879776001,
+                0.8554512295008744
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Ring3",
+          "bone_index": 59,
+          "pos_keys": 0,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.0,
+                -0.0,
+                -0.7165447473526001,
+                0.6975411278493896
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Ring4",
+          "bone_index": 60,
+          "pos_keys": 0,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.0,
+                -0.0,
+                -0.5327156186103821,
+                0.8462943162331636
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Middle2",
+          "bone_index": 55,
+          "pos_keys": 0,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.0,
+                -0.0,
+                -0.7769023180007935,
+                0.6296211466310467
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Middle3",
+          "bone_index": 56,
+          "pos_keys": 0,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.0,
+                -0.0,
+                -0.5418936610221863,
+                0.8404470596914311
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Index2",
+          "bone_index": 52,
+          "pos_keys": 0,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.0,
+                -0.0,
+                -0.8097031116485596,
+                0.5868397319427514
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Index3",
+          "bone_index": 53,
+          "pos_keys": 0,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.0,
+                -0.0,
+                -0.5022226572036743,
+                0.8647383434260797
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Thumb2",
+          "bone_index": 49,
+          "pos_keys": 0,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.02251276560127735,
+                0.236227348446846,
+                -0.04576242342591286,
+                0.9703584986142708
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "R_Thumb3",
+          "bone_index": 50,
+          "pos_keys": 0,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.02887815237045288,
+                0.12139538675546646,
+                0.04219919070601463,
+                0.9912862556768942
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_UpperArm",
+          "bone_index": 10,
+          "pos_keys": 0,
+          "rot_keys": 360,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.12995947568967778,
+                -0.00974162560564449,
+                0.6473686156151698,
+                0.7509524025699112
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                -0.13103168575732238,
+                -0.01969892893237802,
+                0.6557363951078026,
+                0.7432714374019328
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                -0.13532052602790084,
+                -0.028017688673699706,
+                0.660075243733612,
+                0.7383793313513918
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_ForeArm",
+          "bone_index": 11,
+          "pos_keys": 1,
+          "rot_keys": 271,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                26.999998092651367,
+                0.0,
+                0.0
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.0,
+                0.6959625995685754,
+                -0.0,
+                0.7180780319726754
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                -0.0,
+                0.694000231200137,
+                -0.0,
+                0.719974776706904
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                -0.0,
+                0.6959307650875116,
+                -0.0,
+                0.7181088846440425
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_ForeArm_1",
+          "bone_index": 12,
+          "pos_keys": 1,
+          "rot_keys": 80,
+          "scl_keys": 1,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                4.30000014603138,
+                7.105427198782324e-15,
+                -2.8421708795129297e-14
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.007963522904329548,
+                -0.0,
+                -0.0,
+                0.9999682906487346
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                -0.004826219346024468,
+                -0.0,
+                -0.0,
+                0.9999883537355944
+              ]
+            },
+            {
+              "t": 4.0,
+              "v": [
+                -0.0012166788479829969,
+                -0.0,
+                -0.0,
+                0.9999992598460166
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "L_ForeArm_2",
+          "bone_index": 13,
+          "pos_keys": 1,
+          "rot_keys": 126,
+          "scl_keys": 1,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                8.60000029206276,
+                7.105427198782324e-15,
+                -2.8421708795129297e-14
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.01592658666222793,
+                -0.0,
+                -0.0,
+                0.999873163874944
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                -0.013647200644436629,
+                -0.0,
+                -0.0,
+                0.9999068726209309
+              ]
+            },
+            {
+              "t": 3.0,
+              "v": [
+                -0.005468705769340086,
+                -0.0,
+                -0.0,
+                0.9999850465168009
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "L_ForeArm_3",
+          "bone_index": 14,
+          "pos_keys": 1,
+          "rot_keys": 164,
+          "scl_keys": 1,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                12.89999932050705,
+                7.105427198782324e-15,
+                -2.8421708795129297e-14
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.023888478784972494,
+                -0.0,
+                -0.0,
+                0.9997146295725295
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                -0.02046994195068389,
+                -0.0,
+                -0.0,
+                0.9997904687866032
+              ]
+            },
+            {
+              "t": 3.0,
+              "v": [
+                -0.008202789551670479,
+                -0.0,
+                -0.0,
+                0.9999663565558449
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "L_ForeArm_4",
+          "bone_index": 15,
+          "pos_keys": 1,
+          "rot_keys": 191,
+          "scl_keys": 1,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                17.20000058412552,
+                7.105427198782324e-15,
+                -1.4210854397564648e-14
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.03184904268297733,
+                -0.0,
+                -0.0,
+                0.9994926905586543
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                -0.027292006465892672,
+                -0.0,
+                -0.0,
+                0.9996275038148289
+              ]
+            },
+            {
+              "t": 3.0,
+              "v": [
+                -0.010937631049226057,
+                -0.0,
+                -0.0,
+                0.9999401823244384
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "L_ForeArm_5",
+          "bone_index": 16,
+          "pos_keys": 1,
+          "rot_keys": 215,
+          "scl_keys": 1,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                21.49999737739563,
+                7.105427198782324e-15,
+                -2.8421708795129297e-14
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.03980685983229697,
+                -0.0,
+                -0.0,
+                0.9992073928420926
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                -0.03411219214166523,
+                -0.0,
+                -0.0,
+                0.9994180098173587
+              ]
+            },
+            {
+              "t": 3.0,
+              "v": [
+                -0.013671676967421068,
+                -0.0,
+                -0.0,
+                0.9999065382569005
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "L_Hand",
+          "bone_index": 17,
+          "pos_keys": 1,
+          "rot_keys": 367,
+          "scl_keys": 1,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                25.7999986410141,
+                1.4210854397564648e-14,
+                -2.8421708795129297e-14
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.042807578565735444,
+                0.21703044082604203,
+                -0.026485005959722342,
+                0.9748660643552558
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                -0.03372111752191011,
+                0.220663428774067,
+                -0.035165536611834,
+                0.9741323947336663
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                -0.019741946685255744,
+                0.22611291069610445,
+                -0.041499977898510065,
+                0.973016422776119
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "L_vfx_Hand_00",
+          "bone_index": 18,
+          "pos_keys": 1,
+          "rot_keys": 375,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                4.147332788306812e-05,
+                -1.3089353956274863e-05,
+                -0.00011993370208074339
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.08531215188770712,
+                0.7833431849329061,
+                0.6122109848128546,
+                0.06552099994608061
+              ]
+            },
+            {
+              "t": 1.0,
+              "v": [
+                -0.08179617776556271,
+                0.7769278414354741,
+                0.621674054551381,
+                0.05669113160809062
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                -0.07815056790690038,
+                0.7670933824159593,
+                0.6343340251778105,
+                0.05550293587900291
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_vfx_Hand_01",
+          "bone_index": 19,
+          "pos_keys": 1,
+          "rot_keys": 1,
+          "scl_keys": 1,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                4.2089737917194725e-05,
+                -1.2773593027759489e-05,
+                -0.00011862167639264953
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.0,
+                -0.0,
+                -0.0,
+                1.0
+              ]
+            }
+          ],
+          "scl": [
+            {
+              "t": 0.0,
+              "v": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "bone": "L_Thumb1",
+          "bone_index": 20,
+          "pos_keys": 0,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.0635397657752037,
+                0.27676019072532654,
+                0.18944446742534637,
+                0.9399347257958076
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Index1",
+          "bone_index": 23,
+          "pos_keys": 0,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.034773748368024826,
+                0.07793202996253967,
+                0.5759438276290894,
+                0.813022811824065
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Middle1",
+          "bone_index": 26,
+          "pos_keys": 0,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.061756208539009094,
+                0.05497604236006737,
+                0.5853488445281982,
+                0.8065547319821599
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Ring1",
+          "bone_index": 29,
+          "pos_keys": 0,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.018270011991262436,
+                0.011496703140437603,
+                0.04726520553231239,
+                0.9986491039522981
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Pinky1",
+          "bone_index": 33,
+          "pos_keys": 0,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.05712330713868141,
+                0.025982873514294624,
+                0.07787021994590759,
+                0.9949864556420133
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Pinky2",
+          "bone_index": 34,
+          "pos_keys": 0,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.12323898077011108,
+                -0.10422929376363754,
+                0.44670823216438293,
+                0.8800000927595686
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Pinky3",
+          "bone_index": 35,
+          "pos_keys": 0,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.0,
+                -0.0,
+                0.7325706481933594,
+                0.6806910058209682
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Pinky4",
+          "bone_index": 36,
+          "pos_keys": 0,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.0,
+                -0.0,
+                0.6180979609489441,
+                0.7861010817132601
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Ring2",
+          "bone_index": 30,
+          "pos_keys": 0,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.11798059195280075,
+                -0.011169214732944965,
+                0.5488026142120361,
+                0.8275092260505323
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Ring3",
+          "bone_index": 31,
+          "pos_keys": 0,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.0,
+                -0.0,
+                0.7822459936141968,
+                0.6229696665765823
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Ring4",
+          "bone_index": 32,
+          "pos_keys": 0,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.0,
+                -0.0,
+                0.58612459897995,
+                0.8102209294202372
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Middle2",
+          "bone_index": 27,
+          "pos_keys": 0,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.005078764632344246,
+                0.009580662474036217,
+                0.7832527160644531,
+                0.6216088801119438
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Middle3",
+          "bone_index": 28,
+          "pos_keys": 0,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.0,
+                -0.0,
+                0.5564212203025818,
+                0.8309003704397933
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Index2",
+          "bone_index": 24,
+          "pos_keys": 0,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.0,
+                -0.0,
+                0.7879566550254822,
+                0.6157307120820378
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Index3",
+          "bone_index": 25,
+          "pos_keys": 0,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.0,
+                -0.0,
+                0.5383660793304443,
+                0.8427110801611462
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Thumb2",
+          "bone_index": 21,
+          "pos_keys": 0,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.018774382770061493,
+                -0.34740832448005676,
+                0.06375887244939804,
+                0.9353554323451295
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "L_Thumb3",
+          "bone_index": 22,
+          "pos_keys": 0,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.029037950560450554,
+                -0.4680873155593872,
+                0.025039101019501686,
+                0.882849990575857
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "C_Neck1",
+          "bone_index": 6,
+          "pos_keys": 0,
+          "rot_keys": 117,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                -0.08170616243984186,
+                -0.19108506160623887,
+                0.03813182875221851,
+                0.9774234322371781
+              ]
+            },
+            {
+              "t": 3.0,
+              "v": [
+                -0.08286374366166545,
+                -0.1908428984529832,
+                0.03614779856859469,
+                0.9774486813920629
+              ]
+            },
+            {
+              "t": 6.0,
+              "v": [
+                -0.08280586460057426,
+                -0.18981370505164652,
+                0.0330890853688413,
+                0.9777622710003548
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "C_AdamApple",
+          "bone_index": 8,
+          "pos_keys": 1,
+          "rot_keys": 1,
+          "scl_keys": 0,
+          "pos": [
+            {
+              "t": 0.0,
+              "v": [
+                0.0,
+                4.999999701976776,
+                4.999999701976776
+              ]
+            }
+          ],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                2.3852447794681098e-17,
+                -1.214306433183765e-17,
+                4.163336673216582e-17,
+                1.0
+              ]
+            }
+          ],
+          "scl": []
+        },
+        {
+          "bone": "C_Head",
+          "bone_index": 7,
+          "pos_keys": 0,
+          "rot_keys": 283,
+          "scl_keys": 0,
+          "pos": [],
+          "rot": [
+            {
+              "t": 0.0,
+              "v": [
+                0.16096122957327785,
+                -0.34599889072717405,
+                0.1379706211534201,
+                0.9139695607012102
+              ]
+            },
+            {
+              "t": 2.0,
+              "v": [
+                0.1556825107511352,
+                -0.35446264042573816,
+                0.13850931820331835,
+                0.9115560109831367
+              ]
+            },
+            {
+              "t": 3.0,
+              "v": [
+                0.1522513435167425,
+                -0.3580899617251228,
+                0.13779105547012066,
+                0.9108264009905933
+              ]
+            }
+          ],
+          "scl": []
+        }
+      ]
+    }
+  ]
+}

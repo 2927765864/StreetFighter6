@@ -1,0 +1,23 @@
+{
+  "$schema_note": "DEPRECATED for combat animation source. Combat uses ryu_logic_to_glb_map.json → private/assets/ryu/anims via /private-assets/. This file is kept only as a minimal fallback legend; do not add new attack_light / c1-only entries for gameplay.",
+  "source": {
+    "mesh": "/private-assets/ryu/ryu_c1_mesh_only.glb",
+    "anims": "private/assets/ryu/anims",
+    "map": "data/clips/ryu_logic_to_glb_map.json",
+    "character": "esf001 Ryu C1"
+  },
+  "target_fps_logic": 60,
+  "clips": {
+    "idle": {
+      "logicId": "idle",
+      "notes": "Resolved via logic map → basic/esf001v00_idle/..."
+    },
+    "5lp": {
+      "logicId": "ryu_5lp",
+      "notes": "Alias; map primaryPath attack ATK_5LP glb"
+    },
+    "ryu_5lp": {
+      "logicId": "ryu_5lp"
+    }
+  }
+}

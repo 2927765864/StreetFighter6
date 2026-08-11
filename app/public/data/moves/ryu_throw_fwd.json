@@ -1,0 +1,30 @@
+{
+  "id": "ryu_throw_fwd",
+  "characterId": "ryu",
+  "moveId": "ryu_throw_fwd",
+  "displayName": "Throw Forward (presentation)",
+  "type": "throw",
+  "frames": {
+    "startup": 5,
+    "active": 3,
+    "recovery": 114,
+    "total": 122
+  },
+  "advantage": { "onHit": 0, "onBlock": 0 },
+  "damage": 0,
+  "hitstun": 0,
+  "blockstun": 0,
+  "cancel": {
+    "specialCancel": false,
+    "targetCombo": [],
+    "windows": []
+  },
+  "boxes": { "hurt": [], "hit": [] },
+  "clipId": "throw_fwd",
+  "facingRelative": true,
+  "selfMovement": [],
+  "review": {
+    "status": "placeholder",
+    "notes": "Presentation only — no grab resolve. total from map frameCount 122."
+  }
+}

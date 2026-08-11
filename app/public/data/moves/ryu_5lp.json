@@ -1,0 +1,111 @@
+{
+  "id": "ryu_5lp",
+  "characterId": "ryu",
+  "moveId": "5LP",
+  "displayName": "Standing Light Punch",
+  "displayNameJa": "立ち弱P",
+  "input": {
+    "raw": "5lp",
+    "buttons": null,
+    "motion": null
+  },
+  "type": "normal",
+  "guard": "high",
+  "hitCount": 1,
+  "frames": {
+    "startup": 4,
+    "active": 3,
+    "activeRaw": [
+      4,
+      6
+    ],
+    "recovery": 7,
+    "total": 13
+  },
+  "advantage": {
+    "onHit": 4,
+    "onBlock": -1
+  },
+  "damage": 300,
+  "cancel": {
+    "specialCancel": true,
+    "superOnly": false,
+    "raw": "C",
+    "targetCombo": [],
+    "windows": [
+      {
+        "fromFrame": 3,
+        "toFrame": 12,
+        "into": "special|super|di|dr",
+        "placeholder": true
+      }
+    ]
+  },
+  "driveGauge": {
+    "onHit": 250,
+    "onBlock": -500,
+    "onPunishCounter": -2000
+  },
+  "superArtGauge": 300,
+  "scaling": [
+    "Starter scaling 20%"
+  ],
+  "notes": [
+    "Can be rapid canceled"
+  ],
+  "boxes": {
+    "hurt": [
+      {
+        "from": 0,
+        "to": 12,
+        "x": 0,
+        "y": 0.85,
+        "w": 0.7,
+        "h": 1.7,
+        "placeholder": true
+      }
+    ],
+    "hit": [
+      {
+        "from": 3,
+        "to": 5,
+        "x": 0.55,
+        "y": 1.15,
+        "w": 0.6,
+        "h": 0.4,
+        "placeholder": true
+      }
+    ],
+    "push": [
+      {
+        "from": 0,
+        "to": 12,
+        "x": 0,
+        "y": 0.7,
+        "w": 0.55,
+        "h": 1.4,
+        "placeholder": true
+      }
+    ]
+  },
+  "clipId": "ryu_5lp",
+  "glbPath": "attack/esf001v00_attack_00/glb/000_esf001_ATK_5LP_id0000_f39.glb",
+  "facingRelative": true,
+  "selfMovement": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  "sources": [
+    {
+      "name": "4rays/sf6-move-data",
+      "url": "https://github.com/4rays/sf6-move-data",
+      "file": "moves/ryu.toml",
+      "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+      "retrieved": "2026-08-10",
+      "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+    }
+  ],
+  "review": {
+    "status": "placeholder",
+    "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed. Overwrote MVP placeholder with 4rays conversion; boxes still placeholder."
+  },
+  "slug": "ryu-stand-light-punch",
+  "abbreviation": "S.LP"
+}

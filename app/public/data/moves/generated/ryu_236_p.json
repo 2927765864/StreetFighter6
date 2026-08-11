@@ -1,0 +1,101 @@
+{
+  "id": "ryu_236_p",
+  "characterId": "ryu",
+  "moveId": "ryu_236_p",
+  "displayName": "[Denjin Charge] Hadoken",
+  "displayNameJa": "[電刃錬気]波動拳",
+  "input": {
+    "raw": "236*p",
+    "buttons": null,
+    "motion": null
+  },
+  "type": "special",
+  "guard": "high",
+  "hitCount": 2,
+  "frames": {
+    "startup": 12,
+    "active": 1,
+    "activeRaw": null,
+    "recovery": null,
+    "total": 13
+  },
+  "advantage": {
+    "onHit": null,
+    "onBlock": -3
+  },
+  "damage": 800,
+  "cancel": {
+    "specialCancel": false,
+    "superOnly": true,
+    "raw": "SA3",
+    "targetCombo": [],
+    "windows": []
+  },
+  "driveGauge": {
+    "onHit": 1000,
+    "onBlock": -2500,
+    "onPunishCounter": -3000
+  },
+  "superArtGauge": 600,
+  "scaling": [
+    "Starter scaling 20％",
+    "Combo scaling 20％"
+  ],
+  "notes": [
+    "Envelop your fists with the Power of Nothingness, enhancing moves such as the Hadoken and Hashogeki. Leaves you wide open, making the timing of its usage critical"
+  ],
+  "boxes": {
+    "hurt": [
+      {
+        "from": 0,
+        "to": 12,
+        "x": 0,
+        "y": 0.85,
+        "w": 0.7,
+        "h": 1.7,
+        "placeholder": true
+      }
+    ],
+    "hit": [
+      {
+        "from": 11,
+        "to": 11,
+        "x": 0.55,
+        "y": 1.15,
+        "w": 0.6,
+        "h": 0.4,
+        "placeholder": true
+      }
+    ],
+    "push": [
+      {
+        "from": 0,
+        "to": 12,
+        "x": 0,
+        "y": 0.7,
+        "w": 0.55,
+        "h": 1.4,
+        "placeholder": true
+      }
+    ]
+  },
+  "clipId": "236_p",
+  "glbPath": null,
+  "facingRelative": true,
+  "sources": [
+    {
+      "name": "4rays/sf6-move-data",
+      "url": "https://github.com/4rays/sf6-move-data",
+      "file": "moves/ryu.toml",
+      "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+      "retrieved": "2026-08-10",
+      "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+    }
+  ],
+  "review": {
+    "status": "placeholder",
+    "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+  },
+  "slug": "denjin-charge-hadoken",
+  "abbreviation": null
+}

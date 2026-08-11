@@ -1,0 +1,44 @@
+{
+  "characterId": "ryu",
+  "retrieved": "2026-08-11",
+  "sources": [
+    {
+      "id": "SC-MOVE",
+      "url": "https://wiki.supercombo.gg/w/Street_Fighter_6/Movement",
+      "notes": "walk first frame 1/4 speed; prejump majority 4f; landing recovery 3f"
+    },
+    {
+      "id": "SC-RYU",
+      "url": "https://wiki.supercombo.gg/w/Street_Fighter_6/Ryu",
+      "notes": "Ryu walk/dash/jump numbers from character vitals"
+    }
+  ],
+  "units": {
+    "logicSpace": "SF6 wiki character units as published; same as combat x before worldScale",
+    "frameHz": 60
+  },
+  "walk": {
+    "forwardSpeed": 0.047,
+    "backSpeed": 0.032,
+    "firstFrameSpeedScale": 0.25,
+    "clipLogicFrames": {
+      "walk_fwd": { "start": 19, "loop": 114, "end": 47 },
+      "walk_back": { "start": 15, "loop": 118, "end": 47 }
+    }
+  },
+  "dash": {
+    "forward": { "frames": 19, "distance": 1.252 },
+    "back": { "frames": 23, "distance": 0.923 },
+    "approx": "uniform"
+  },
+  "jump": {
+    "prejumpFrames": 4,
+    "airFrames": 38,
+    "landingFrames": 3,
+    "apexHeight": 2.115,
+    "forwardDistance": 1.9,
+    "backDistance": 1.52,
+    "neutralDistance": 0,
+    "approx": "uniform horizontal on air; parabola y=4*apex*t*(1-t)"
+  }
+}

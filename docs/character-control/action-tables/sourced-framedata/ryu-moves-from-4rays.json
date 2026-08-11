@@ -1,0 +1,6670 @@
+{
+  "moves": [
+    {
+      "id": "ryu_5lp",
+      "characterId": "ryu",
+      "moveId": "ryu_5lp",
+      "displayName": "Standing Light Punch",
+      "displayNameJa": "立ち弱P",
+      "input": {
+        "raw": "5lp",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "normal",
+      "guard": "high",
+      "hitCount": 1,
+      "frames": {
+        "startup": 4,
+        "active": 3,
+        "activeRaw": [
+          4,
+          6
+        ],
+        "recovery": 7,
+        "total": 13
+      },
+      "advantage": {
+        "onHit": 4,
+        "onBlock": -1
+      },
+      "damage": 300,
+      "cancel": {
+        "specialCancel": true,
+        "superOnly": false,
+        "raw": "C",
+        "targetCombo": [],
+        "windows": [
+          {
+            "fromFrame": 3,
+            "toFrame": 12,
+            "into": "special|super|di|dr",
+            "placeholder": true
+          }
+        ]
+      },
+      "driveGauge": {
+        "onHit": 250,
+        "onBlock": -500,
+        "onPunishCounter": -2000
+      },
+      "superArtGauge": 300,
+      "scaling": [
+        "Starter scaling 20%"
+      ],
+      "notes": [
+        "Can be rapid canceled"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 12,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 3,
+            "to": 5,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 12,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "5lp",
+      "glbPath": "attack/esf001v00_attack_00/glb/000_esf001_ATK_5LP_id0000_f39.glb",
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "ryu-stand-light-punch",
+      "abbreviation": "S.LP"
+    },
+    {
+      "id": "ryu_5mp",
+      "characterId": "ryu",
+      "moveId": "ryu_5mp",
+      "displayName": "Standing Medium Punch",
+      "displayNameJa": "立ち中P",
+      "input": {
+        "raw": "5mp",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "normal",
+      "guard": "high",
+      "hitCount": 1,
+      "frames": {
+        "startup": 6,
+        "active": 4,
+        "activeRaw": [
+          6,
+          9
+        ],
+        "recovery": 11,
+        "total": 20
+      },
+      "advantage": {
+        "onHit": 7,
+        "onBlock": -1
+      },
+      "damage": 600,
+      "cancel": {
+        "specialCancel": true,
+        "superOnly": false,
+        "raw": "C",
+        "targetCombo": [],
+        "windows": [
+          {
+            "fromFrame": 5,
+            "toFrame": 19,
+            "into": "special|super|di|dr",
+            "placeholder": true
+          }
+        ]
+      },
+      "driveGauge": {
+        "onHit": 1500,
+        "onBlock": -3000,
+        "onPunishCounter": -4000
+      },
+      "superArtGauge": 500,
+      "scaling": null,
+      "notes": [],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 19,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 5,
+            "to": 8,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 19,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "5mp",
+      "glbPath": "attack/esf001v00_attack_01/glb/000_esf001_ATK_5MP_id0000_f53.glb",
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "ryu-stand-medium-punch",
+      "abbreviation": "S.MP"
+    },
+    {
+      "id": "ryu_5hp",
+      "characterId": "ryu",
+      "moveId": "ryu_5hp",
+      "displayName": "Standing Heavy Punch",
+      "displayNameJa": "立ち強P",
+      "input": {
+        "raw": "5hp",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "normal",
+      "guard": "high",
+      "hitCount": 1,
+      "frames": {
+        "startup": 10,
+        "active": 5,
+        "activeRaw": [
+          10,
+          14
+        ],
+        "recovery": 18,
+        "total": 32
+      },
+      "advantage": {
+        "onHit": 4,
+        "onBlock": -2
+      },
+      "damage": 800,
+      "cancel": {
+        "specialCancel": true,
+        "superOnly": false,
+        "raw": "C",
+        "targetCombo": [],
+        "windows": [
+          {
+            "fromFrame": 9,
+            "toFrame": 31,
+            "into": "special|super|di|dr",
+            "placeholder": true
+          }
+        ]
+      },
+      "driveGauge": {
+        "onHit": 2000,
+        "onBlock": -5000,
+        "onPunishCounter": -8000
+      },
+      "superArtGauge": 1000,
+      "scaling": null,
+      "notes": [
+        "Forces the opponent into a standing position"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 31,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 9,
+            "to": 13,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 31,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "5hp",
+      "glbPath": null,
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "ryu-stand-heavy-punch",
+      "abbreviation": "S.HP"
+    },
+    {
+      "id": "ryu_5lk",
+      "characterId": "ryu",
+      "moveId": "ryu_5lk",
+      "displayName": "Standing Light Kick",
+      "displayNameJa": "立ち弱K",
+      "input": {
+        "raw": "5lk",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "normal",
+      "guard": "high",
+      "hitCount": 1,
+      "frames": {
+        "startup": 5,
+        "active": 3,
+        "activeRaw": [
+          5,
+          7
+        ],
+        "recovery": 11,
+        "total": 18
+      },
+      "advantage": {
+        "onHit": 2,
+        "onBlock": -4
+      },
+      "damage": 300,
+      "cancel": {
+        "specialCancel": true,
+        "superOnly": false,
+        "raw": "C",
+        "targetCombo": [],
+        "windows": [
+          {
+            "fromFrame": 4,
+            "toFrame": 17,
+            "into": "special|super|di|dr",
+            "placeholder": true
+          }
+        ]
+      },
+      "driveGauge": {
+        "onHit": 250,
+        "onBlock": -500,
+        "onPunishCounter": -2000
+      },
+      "superArtGauge": 300,
+      "scaling": [
+        "Starter scaling 20%"
+      ],
+      "notes": [],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 17,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 4,
+            "to": 6,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 17,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "5lk",
+      "glbPath": "attack/esf001v00_attack_03/glb/000_esf001_ATK_5LK_id0000_f48.glb",
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "ryu-stand-light-kick",
+      "abbreviation": "S.LK"
+    },
+    {
+      "id": "ryu_5mk",
+      "characterId": "ryu",
+      "moveId": "ryu_5mk",
+      "displayName": "Standing Medium Kick",
+      "displayNameJa": "立ち中K",
+      "input": {
+        "raw": "5mk",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "normal",
+      "guard": "high",
+      "hitCount": 1,
+      "frames": {
+        "startup": 9,
+        "active": 3,
+        "activeRaw": [
+          9,
+          11
+        ],
+        "recovery": 18,
+        "total": 29
+      },
+      "advantage": {
+        "onHit": 4,
+        "onBlock": -4
+      },
+      "damage": 700,
+      "cancel": {
+        "specialCancel": false,
+        "super": false,
+        "raw": null
+      },
+      "driveGauge": {
+        "onHit": 2000,
+        "onBlock": -4000,
+        "onPunishCounter": -6000
+      },
+      "superArtGauge": 700,
+      "scaling": null,
+      "notes": [],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 28,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 8,
+            "to": 10,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 28,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "5mk",
+      "glbPath": "attack/esf001v00_attack_04/glb/000_esf001_ATK_5MK_id0000_f89.glb",
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "ryu-stand-medium-kick",
+      "abbreviation": "S.MK"
+    },
+    {
+      "id": "ryu_5hk",
+      "characterId": "ryu",
+      "moveId": "ryu_5hk",
+      "displayName": "Standing Heavy Kick",
+      "displayNameJa": "立ち強K",
+      "input": {
+        "raw": "5hk",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "normal",
+      "guard": "high",
+      "hitCount": 1,
+      "frames": {
+        "startup": 12,
+        "active": 4,
+        "activeRaw": [
+          12,
+          15
+        ],
+        "recovery": 20,
+        "total": 35
+      },
+      "advantage": {
+        "onHit": 9,
+        "onBlock": 1
+      },
+      "damage": 900,
+      "cancel": {
+        "specialCancel": false,
+        "super": false,
+        "raw": null
+      },
+      "driveGauge": {
+        "onHit": 3000,
+        "onBlock": -6000,
+        "onPunishCounter": -10000
+      },
+      "superArtGauge": 1000,
+      "scaling": null,
+      "notes": [
+        "Forces a juggle state when hitting a mid-air opponent",
+        "Produces a crumple stun for 36 frames when the attack lands as a Punish Counter",
+        "Juggle state time is extended when attack hits a mid-air opponent as a Punish Counter"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 34,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 11,
+            "to": 14,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 34,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "5hk",
+      "glbPath": "attack/esf001v00_attack_05/glb/000_esf001_ATK_5HK_id0000_f86.glb",
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "ryu-stand-heavy-kick",
+      "abbreviation": "S.HK"
+    },
+    {
+      "id": "ryu_2lp",
+      "characterId": "ryu",
+      "moveId": "ryu_2lp",
+      "displayName": "Crouching Light Punch",
+      "displayNameJa": "しゃがみ弱P",
+      "input": {
+        "raw": "2lp",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "normal",
+      "guard": "high",
+      "hitCount": 1,
+      "frames": {
+        "startup": 4,
+        "active": 2,
+        "activeRaw": [
+          4,
+          5
+        ],
+        "recovery": 9,
+        "total": 14
+      },
+      "advantage": {
+        "onHit": 4,
+        "onBlock": -1
+      },
+      "damage": 300,
+      "cancel": {
+        "specialCancel": true,
+        "superOnly": false,
+        "raw": "C",
+        "targetCombo": [],
+        "windows": [
+          {
+            "fromFrame": 3,
+            "toFrame": 13,
+            "into": "special|super|di|dr",
+            "placeholder": true
+          }
+        ]
+      },
+      "driveGauge": {
+        "onHit": 250,
+        "onBlock": -500,
+        "onPunishCounter": -2000
+      },
+      "superArtGauge": 300,
+      "scaling": [
+        "Starter scaling 20%"
+      ],
+      "notes": [
+        "Can be rapid canceled"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 13,
+            "x": 0,
+            "y": 0.5,
+            "w": 0.75,
+            "h": 1.0,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 3,
+            "to": 4,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 13,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "2lp",
+      "glbPath": "attack/esf001v00_attack_06/glb/000_esf001_ATK_2LP_id2000_f58.glb",
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "ryu-crouch-light-punch",
+      "abbreviation": "C.LP"
+    },
+    {
+      "id": "ryu_2mp",
+      "characterId": "ryu",
+      "moveId": "ryu_2mp",
+      "displayName": "Crouching Medium Punch",
+      "displayNameJa": "しゃがみ中P",
+      "input": {
+        "raw": "2mp",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "normal",
+      "guard": "high",
+      "hitCount": 1,
+      "frames": {
+        "startup": 6,
+        "active": 4,
+        "activeRaw": [
+          6,
+          9
+        ],
+        "recovery": 13,
+        "total": 22
+      },
+      "advantage": {
+        "onHit": 5,
+        "onBlock": 0
+      },
+      "damage": 600,
+      "cancel": {
+        "specialCancel": true,
+        "superOnly": false,
+        "raw": "C",
+        "targetCombo": [],
+        "windows": [
+          {
+            "fromFrame": 5,
+            "toFrame": 21,
+            "into": "special|super|di|dr",
+            "placeholder": true
+          }
+        ]
+      },
+      "driveGauge": {
+        "onHit": 1500,
+        "onBlock": -3000,
+        "onPunishCounter": -4000
+      },
+      "superArtGauge": 500,
+      "scaling": null,
+      "notes": [],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 21,
+            "x": 0,
+            "y": 0.5,
+            "w": 0.75,
+            "h": 1.0,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 5,
+            "to": 8,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 21,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "2mp",
+      "glbPath": "attack/esf001v00_attack_07/glb/000_esf001_ATK_2MP_id2000_f46.glb",
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "ryu-crouch-medium-punch",
+      "abbreviation": "C.MP"
+    },
+    {
+      "id": "ryu_2hp",
+      "characterId": "ryu",
+      "moveId": "ryu_2hp",
+      "displayName": "Crouching Heavy Punch",
+      "displayNameJa": "しゃがみ強P",
+      "input": {
+        "raw": "2hp",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "normal",
+      "guard": "high",
+      "hitCount": 1,
+      "frames": {
+        "startup": 9,
+        "active": 6,
+        "activeRaw": [
+          9,
+          14
+        ],
+        "recovery": 22,
+        "total": 36
+      },
+      "advantage": {
+        "onHit": 1,
+        "onBlock": -7
+      },
+      "damage": 800,
+      "cancel": {
+        "specialCancel": true,
+        "superOnly": false,
+        "raw": "C",
+        "targetCombo": [],
+        "windows": [
+          {
+            "fromFrame": 8,
+            "toFrame": 35,
+            "into": "special|super|di|dr",
+            "placeholder": true
+          }
+        ]
+      },
+      "driveGauge": {
+        "onHit": 3000,
+        "onBlock": -7500,
+        "onPunishCounter": -10000
+      },
+      "superArtGauge": 1200,
+      "scaling": null,
+      "notes": [
+        "Can only be canceled on the 1st active frame if the attack hits",
+        "Forces the opponent into a standing position"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 35,
+            "x": 0,
+            "y": 0.5,
+            "w": 0.75,
+            "h": 1.0,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 8,
+            "to": 13,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 35,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "2hp",
+      "glbPath": "attack/esf001v00_attack_08/glb/000_esf001_ATK_2HP_id2000_f76.glb",
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "ryu-crouch-heavy-punch",
+      "abbreviation": "C.HP"
+    },
+    {
+      "id": "ryu_2lk",
+      "characterId": "ryu",
+      "moveId": "ryu_2lk",
+      "displayName": "Crouching Light Kick",
+      "displayNameJa": "しゃがみ弱K",
+      "input": {
+        "raw": "2lk",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "normal",
+      "guard": "low",
+      "hitCount": 1,
+      "frames": {
+        "startup": 5,
+        "active": 2,
+        "activeRaw": [
+          5,
+          6
+        ],
+        "recovery": 10,
+        "total": 16
+      },
+      "advantage": {
+        "onHit": 3,
+        "onBlock": -3
+      },
+      "damage": 200,
+      "cancel": {
+        "specialCancel": false,
+        "super": false,
+        "raw": null
+      },
+      "driveGauge": {
+        "onHit": 250,
+        "onBlock": -500,
+        "onPunishCounter": -2000
+      },
+      "superArtGauge": 300,
+      "scaling": [
+        "Starter scaling 20%"
+      ],
+      "notes": [
+        "Can be rapid canceled"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 15,
+            "x": 0,
+            "y": 0.5,
+            "w": 0.75,
+            "h": 1.0,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 4,
+            "to": 5,
+            "x": 0.45,
+            "y": 0.35,
+            "w": 0.75,
+            "h": 0.45,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 15,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "2lk",
+      "glbPath": "attack/esf001v00_attack_09/glb/000_esf001_ATK_2LK_id2000_f83.glb",
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "ryu-crouch-light-kick",
+      "abbreviation": "C.LK"
+    },
+    {
+      "id": "ryu_2mk",
+      "characterId": "ryu",
+      "moveId": "ryu_2mk",
+      "displayName": "Crouching Medium Kick",
+      "displayNameJa": "しゃがみ中K",
+      "input": {
+        "raw": "2mk",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "normal",
+      "guard": "low",
+      "hitCount": 1,
+      "frames": {
+        "startup": 8,
+        "active": 3,
+        "activeRaw": [
+          8,
+          10
+        ],
+        "recovery": 19,
+        "total": 29
+      },
+      "advantage": {
+        "onHit": 1,
+        "onBlock": -6
+      },
+      "damage": 500,
+      "cancel": {
+        "specialCancel": true,
+        "superOnly": false,
+        "raw": "C",
+        "targetCombo": [],
+        "windows": [
+          {
+            "fromFrame": 7,
+            "toFrame": 28,
+            "into": "special|super|di|dr",
+            "placeholder": true
+          }
+        ]
+      },
+      "driveGauge": {
+        "onHit": 1000,
+        "onBlock": -2000,
+        "onPunishCounter": -4000
+      },
+      "superArtGauge": 500,
+      "scaling": [
+        "Starter scaling 20%"
+      ],
+      "notes": [],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 28,
+            "x": 0,
+            "y": 0.5,
+            "w": 0.75,
+            "h": 1.0,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 7,
+            "to": 9,
+            "x": 0.45,
+            "y": 0.35,
+            "w": 0.75,
+            "h": 0.45,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 28,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "2mk",
+      "glbPath": "attack/esf001v00_attack_10/glb/000_esf001_ATK_2MK_Y2_id2000_f58.glb",
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "ryu-crouch-medium-kick",
+      "abbreviation": "C.MK"
+    },
+    {
+      "id": "ryu_2hk",
+      "characterId": "ryu",
+      "moveId": "ryu_2hk",
+      "displayName": "Crouching Heavy Kick",
+      "displayNameJa": "しゃがみ強K",
+      "input": {
+        "raw": "2hk",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "normal",
+      "guard": "low",
+      "hitCount": 1,
+      "frames": {
+        "startup": 9,
+        "active": 3,
+        "activeRaw": [
+          9,
+          11
+        ],
+        "recovery": 23,
+        "total": 34
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": -12
+      },
+      "damage": 900,
+      "cancel": {
+        "specialCancel": false,
+        "super": false,
+        "raw": null
+      },
+      "driveGauge": {
+        "onHit": 3000,
+        "onBlock": -4000,
+        "onPunishCounter": -10000
+      },
+      "superArtGauge": 1000,
+      "scaling": null,
+      "notes": [
+        "Knockdown time extended when attack lands as a counter or Punish Counter"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 33,
+            "x": 0,
+            "y": 0.5,
+            "w": 0.75,
+            "h": 1.0,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 8,
+            "to": 10,
+            "x": 0.45,
+            "y": 0.35,
+            "w": 0.75,
+            "h": 0.45,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 33,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "2hk",
+      "glbPath": "attack/esf001v00_attack_11/glb/000_esf001_ATK_2HK_id2000_f145.glb",
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "ryu-crouch-heavy-kick",
+      "abbreviation": "C.HK"
+    },
+    {
+      "id": "ryu_j>lp",
+      "characterId": "ryu",
+      "moveId": "ryu_j>lp",
+      "displayName": "Jumping Light Punch",
+      "displayNameJa": "ジャンプ弱P",
+      "input": {
+        "raw": "j>lp",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "normal",
+      "guard": "mid",
+      "hitCount": 1,
+      "frames": {
+        "startup": 4,
+        "active": 10,
+        "activeRaw": [
+          4,
+          13
+        ],
+        "recovery": null,
+        "total": 13
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": null
+      },
+      "damage": 300,
+      "cancel": {
+        "specialCancel": false,
+        "super": false,
+        "raw": null
+      },
+      "driveGauge": {
+        "onHit": 500,
+        "onBlock": -1500,
+        "onPunishCounter": -2000
+      },
+      "superArtGauge": 300,
+      "scaling": null,
+      "notes": [],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 12,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 3,
+            "to": 12,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 12,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "j>lp",
+      "glbPath": null,
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "ryu-jump-light-punch",
+      "abbreviation": "J.LP"
+    },
+    {
+      "id": "ryu_j>mp",
+      "characterId": "ryu",
+      "moveId": "ryu_j>mp",
+      "displayName": "Jumping Medium Punch",
+      "displayNameJa": "ジャンプ中P",
+      "input": {
+        "raw": "j>mp",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "normal",
+      "guard": "midHigh",
+      "hitCount": 2,
+      "frames": {
+        "startup": 8,
+        "active": 5,
+        "activeRaw": [
+          8,
+          12
+        ],
+        "recovery": null,
+        "total": 12
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": null
+      },
+      "damage": 700,
+      "cancel": {
+        "specialCancel": true,
+        "superOnly": false,
+        "raw": "C",
+        "targetCombo": [],
+        "windows": [
+          {
+            "fromFrame": 7,
+            "toFrame": 11,
+            "into": "special|super|di|dr",
+            "placeholder": true
+          }
+        ]
+      },
+      "driveGauge": {
+        "onHit": 1000,
+        "onBlock": -3000,
+        "onPunishCounter": -5000
+      },
+      "superArtGauge": 500,
+      "scaling": null,
+      "notes": [
+        "Forces a juggle state when hitting a mid-air opponent"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 11,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 7,
+            "to": 11,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 11,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "j>mp",
+      "glbPath": null,
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "ryu-jump-medium-punch",
+      "abbreviation": "J.MP"
+    },
+    {
+      "id": "ryu_j>hp",
+      "characterId": "ryu",
+      "moveId": "ryu_j>hp",
+      "displayName": "Jumping Heavy Punch",
+      "displayNameJa": "ジャンプ強P",
+      "input": {
+        "raw": "j>hp",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "normal",
+      "guard": "mid",
+      "hitCount": 1,
+      "frames": {
+        "startup": 9,
+        "active": 6,
+        "activeRaw": [
+          9,
+          14
+        ],
+        "recovery": null,
+        "total": 14
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": null
+      },
+      "damage": 800,
+      "cancel": {
+        "specialCancel": false,
+        "super": false,
+        "raw": null
+      },
+      "driveGauge": {
+        "onHit": 2000,
+        "onBlock": -4000,
+        "onPunishCounter": -5000
+      },
+      "superArtGauge": 1000,
+      "scaling": null,
+      "notes": [
+        "Forces a slam knockdown on counter or Punish Counter when hitting a mid-air opponent"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 13,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 8,
+            "to": 13,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 13,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "j>hp",
+      "glbPath": null,
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "ryu-jump-heavy-punch",
+      "abbreviation": "J.HP"
+    },
+    {
+      "id": "ryu_j>lk",
+      "characterId": "ryu",
+      "moveId": "ryu_j>lk",
+      "displayName": "Jumping Light Kick",
+      "displayNameJa": "ジャンプ弱K",
+      "input": {
+        "raw": "j>lk",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "normal",
+      "guard": "mid",
+      "hitCount": 1,
+      "frames": {
+        "startup": 6,
+        "active": 10,
+        "activeRaw": [
+          6,
+          15
+        ],
+        "recovery": null,
+        "total": 15
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": null
+      },
+      "damage": 300,
+      "cancel": {
+        "specialCancel": false,
+        "super": false,
+        "raw": null
+      },
+      "driveGauge": {
+        "onHit": 500,
+        "onBlock": -1500,
+        "onPunishCounter": -2000
+      },
+      "superArtGauge": 300,
+      "scaling": null,
+      "notes": [
+        "Has cross-up attack properties"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 14,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 5,
+            "to": 14,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 14,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "j>lk",
+      "glbPath": null,
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "ryu-jump-light-kick",
+      "abbreviation": "J.LK"
+    },
+    {
+      "id": "ryu_j>mk",
+      "characterId": "ryu",
+      "moveId": "ryu_j>mk",
+      "displayName": "Jumping Medium Kick",
+      "displayNameJa": "ジャンプ中K",
+      "input": {
+        "raw": "j>mk",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "normal",
+      "guard": "mid",
+      "hitCount": 1,
+      "frames": {
+        "startup": 7,
+        "active": 6,
+        "activeRaw": [
+          7,
+          12
+        ],
+        "recovery": null,
+        "total": 12
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": null
+      },
+      "damage": 500,
+      "cancel": {
+        "specialCancel": false,
+        "super": false,
+        "raw": null
+      },
+      "driveGauge": {
+        "onHit": 1000,
+        "onBlock": -2500,
+        "onPunishCounter": -4000
+      },
+      "superArtGauge": 500,
+      "scaling": null,
+      "notes": [
+        "Has cross-up attack properties"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 11,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 6,
+            "to": 11,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 11,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "j>mk",
+      "glbPath": null,
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "ryu-jump-medium-kick",
+      "abbreviation": "J.MK"
+    },
+    {
+      "id": "ryu_j>hk",
+      "characterId": "ryu",
+      "moveId": "ryu_j>hk",
+      "displayName": "Jumping Heavy Kick",
+      "displayNameJa": "ジャンプ強K",
+      "input": {
+        "raw": "j>hk",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "normal",
+      "guard": "mid",
+      "hitCount": 1,
+      "frames": {
+        "startup": 12,
+        "active": 8,
+        "activeRaw": [
+          12,
+          19
+        ],
+        "recovery": null,
+        "total": 19
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": null
+      },
+      "damage": 800,
+      "cancel": {
+        "specialCancel": false,
+        "super": false,
+        "raw": null
+      },
+      "driveGauge": {
+        "onHit": 2000,
+        "onBlock": -4000,
+        "onPunishCounter": -5000
+      },
+      "superArtGauge": 1000,
+      "scaling": null,
+      "notes": [],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 18,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 11,
+            "to": 18,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 18,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "j>hk",
+      "glbPath": null,
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "ryu-jump-heavy-kick",
+      "abbreviation": "J.HK"
+    },
+    {
+      "id": "ryu_6mp",
+      "characterId": "ryu",
+      "moveId": "ryu_6mp",
+      "displayName": "Collarbone Breaker",
+      "displayNameJa": "鎖骨割り",
+      "input": {
+        "raw": "6mp",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "commandNormal",
+      "guard": "high",
+      "hitCount": 2,
+      "frames": {
+        "startup": 20,
+        "active": 22,
+        "activeRaw": [
+          2,
+          23
+        ],
+        "recovery": 19,
+        "total": 42
+      },
+      "advantage": {
+        "onHit": 3,
+        "onBlock": -1
+      },
+      "damage": 600,
+      "cancel": {
+        "specialCancel": false,
+        "super": false,
+        "raw": null
+      },
+      "driveGauge": {
+        "onHit": 1500,
+        "onBlock": -2500,
+        "onPunishCounter": -5000
+      },
+      "superArtGauge": 500,
+      "scaling": null,
+      "notes": [
+        "An overhead attack that cannot be blocked while crouching",
+        "Second attack becomes an overhead only if the first attack whiffs"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 41,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 19,
+            "to": 40,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 41,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "6mp",
+      "glbPath": "basic/esf001v00_skill_00/glb/000_esf001_ATK_6MP_id0000_f115.glb",
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "collarbone-breaker",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_6hp",
+      "characterId": "ryu",
+      "moveId": "ryu_6hp",
+      "displayName": "Solar Plexus Strike",
+      "displayNameJa": "鳩尾砕き",
+      "input": {
+        "raw": "6hp",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "commandNormal",
+      "guard": "high",
+      "hitCount": 2,
+      "frames": {
+        "startup": 20,
+        "active": 5,
+        "activeRaw": [
+          20,
+          24
+        ],
+        "recovery": 16,
+        "total": 40
+      },
+      "advantage": {
+        "onHit": 6,
+        "onBlock": 3
+      },
+      "damage": 800,
+      "cancel": {
+        "specialCancel": false,
+        "super": false,
+        "raw": null
+      },
+      "driveGauge": {
+        "onHit": 2500,
+        "onBlock": -5000,
+        "onPunishCounter": -8000
+      },
+      "superArtGauge": 1000,
+      "scaling": null,
+      "notes": [
+        "A forward-moving attack that allows you to act before an opponent even if blocked"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 39,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 19,
+            "to": 23,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 39,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "6hp",
+      "glbPath": "basic/esf001v00_skill_01/glb/000_esf001_ATK_6HP_id0000_f90.glb",
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "solar-plexus-strike",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_4hp",
+      "characterId": "ryu",
+      "moveId": "ryu_4hp",
+      "displayName": "Short Uppercut",
+      "displayNameJa": "上げ突き",
+      "input": {
+        "raw": "4hp",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "commandNormal",
+      "guard": "high",
+      "hitCount": 1,
+      "frames": {
+        "startup": 7,
+        "active": 4,
+        "activeRaw": [
+          7,
+          10
+        ],
+        "recovery": 26,
+        "total": 36
+      },
+      "advantage": {
+        "onHit": 1,
+        "onBlock": -13
+      },
+      "damage": 800,
+      "cancel": {
+        "specialCancel": true,
+        "superOnly": false,
+        "raw": "C",
+        "targetCombo": [],
+        "windows": [
+          {
+            "fromFrame": 6,
+            "toFrame": 35,
+            "into": "special|super|di|dr",
+            "placeholder": true
+          }
+        ]
+      },
+      "driveGauge": {
+        "onHit": 2000,
+        "onBlock": -5000,
+        "onPunishCounter": -8000
+      },
+      "superArtGauge": 1000,
+      "scaling": null,
+      "notes": [
+        "A quick strike that can be canceled into special moves",
+        "Can only be canceled on the 1st active frame if the attack hits",
+        "Forces the opponent into a standing position"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 35,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 6,
+            "to": 9,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 35,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "4hp",
+      "glbPath": "basic/esf001v00_skill_05/glb/000_esf001_ATK_4HP_id0000_f82.glb",
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "short-uppercut",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_6hk",
+      "characterId": "ryu",
+      "moveId": "ryu_6hk",
+      "displayName": "Whirlwind Kick",
+      "displayNameJa": "旋風脚",
+      "input": {
+        "raw": "6hk",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "commandNormal",
+      "guard": "high",
+      "hitCount": 1,
+      "frames": {
+        "startup": 16,
+        "active": 4,
+        "activeRaw": [
+          16,
+          19
+        ],
+        "recovery": 20,
+        "total": 39
+      },
+      "advantage": {
+        "onHit": 2,
+        "onBlock": -4
+      },
+      "damage": 800,
+      "cancel": {
+        "specialCancel": false,
+        "superOnly": false,
+        "raw": "*",
+        "targetCombo": [],
+        "windows": []
+      },
+      "driveGauge": {
+        "onHit": 2500,
+        "onBlock": -5000,
+        "onPunishCounter": -8000
+      },
+      "superArtGauge": 1000,
+      "scaling": null,
+      "notes": [
+        "A kick with long reach. Useful as a counter to an opponent's sweeps",
+        "Can only be canceled with an Overdrive Aerial Tatsumaki Senpu-kyaku"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 38,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 15,
+            "to": 18,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 38,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "6hk",
+      "glbPath": null,
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "whirlwind-kick",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_4hk",
+      "characterId": "ryu",
+      "moveId": "ryu_4hk",
+      "displayName": "Axe Kick",
+      "displayNameJa": "かかと落とし",
+      "input": {
+        "raw": "4hk",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "commandNormal",
+      "guard": "high",
+      "hitCount": 2,
+      "frames": {
+        "startup": 10,
+        "active": 1,
+        "activeRaw": [
+          10,
+          14,
+          20,
+          23
+        ],
+        "recovery": 21,
+        "total": 31
+      },
+      "advantage": {
+        "onHit": 0,
+        "onBlock": -4
+      },
+      "damage": 800,
+      "cancel": {
+        "specialCancel": true,
+        "superOnly": false,
+        "raw": "C",
+        "targetCombo": [],
+        "windows": [
+          {
+            "fromFrame": 9,
+            "toFrame": 30,
+            "into": "special|super|di|dr",
+            "placeholder": true
+          }
+        ]
+      },
+      "driveGauge": {
+        "onHit": 1500,
+        "onBlock": -3000,
+        "onPunishCounter": -6000
+      },
+      "superArtGauge": 1000,
+      "scaling": null,
+      "notes": [
+        "A multi-hit kick that can be canceled into special moves",
+        "First attack Forces the opponent into a standing position",
+        "Second attack produces a ground bound on a mid-air hit"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 30,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 9,
+            "to": 9,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 30,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "4hk",
+      "glbPath": "basic/esf001v00_skill_02/glb/000_esf001_ATK_4HK_id0000_f140.glb",
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "axe-kick",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_5hp_5hk",
+      "characterId": "ryu",
+      "moveId": "ryu_5hp_5hk",
+      "displayName": "High Double Strike",
+      "displayNameJa": "上段二連撃",
+      "input": {
+        "raw": "5hp>5hk",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "targetCombo",
+      "guard": "high",
+      "hitCount": 2,
+      "frames": {
+        "startup": 9,
+        "active": 4,
+        "activeRaw": [
+          9,
+          12
+        ],
+        "recovery": 20,
+        "total": 32
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": -8
+      },
+      "damage": 1000,
+      "cancel": {
+        "specialCancel": false,
+        "superOnly": false,
+        "raw": "*",
+        "targetCombo": [],
+        "windows": []
+      },
+      "driveGauge": {
+        "onHit": 2500,
+        "onBlock": -7000,
+        "onPunishCounter": -10000
+      },
+      "superArtGauge": 1000,
+      "scaling": null,
+      "notes": [
+        "A multi-hit attack with a lenient input window for follow-ups",
+        "Can only be canceled into Denjin Charge on hit."
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 31,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 8,
+            "to": 11,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 31,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "5hp_5hk",
+      "glbPath": null,
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "high-double-strike",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_5mp_5lk",
+      "characterId": "ryu",
+      "moveId": "ryu_5mp_5lk",
+      "displayName": "Fuwa Triple Strike (2)",
+      "displayNameJa": "不破三連撃（2段目）",
+      "input": {
+        "raw": "5mp>5lk",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "targetCombo",
+      "guard": "high",
+      "hitCount": 2,
+      "frames": {
+        "startup": 5,
+        "active": 3,
+        "activeRaw": [
+          5,
+          7
+        ],
+        "recovery": 16,
+        "total": 23
+      },
+      "advantage": {
+        "onHit": 1,
+        "onBlock": -4
+      },
+      "damage": 300,
+      "cancel": {
+        "specialCancel": false,
+        "super": false,
+        "raw": null
+      },
+      "driveGauge": {
+        "onHit": 1000,
+        "onBlock": -1000,
+        "onPunishCounter": 2000
+      },
+      "superArtGauge": 500,
+      "scaling": null,
+      "notes": [
+        "A multi-hit attack that doesn't leave you wide open even if stopped partway through"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 22,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 4,
+            "to": 6,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 22,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "5mp_5lk",
+      "glbPath": "attack/esf001v00_attack_01/glb/000_esf001_ATK_5MP_id0000_f53.glb",
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "fuwa-triple-strike-2",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_5mp_5lk_5hk",
+      "characterId": "ryu",
+      "moveId": "ryu_5mp_5lk_5hk",
+      "displayName": "Fuwa Triple Strike (3)",
+      "displayNameJa": "不破三連撃（3段目）",
+      "input": {
+        "raw": "5mp>5lk>5hk",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "targetCombo",
+      "guard": "high",
+      "hitCount": 3,
+      "frames": {
+        "startup": 17,
+        "active": 4,
+        "activeRaw": [
+          17,
+          20
+        ],
+        "recovery": 20,
+        "total": 40
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": -8
+      },
+      "damage": 900,
+      "cancel": {
+        "specialCancel": false,
+        "superOnly": false,
+        "raw": "*",
+        "targetCombo": [],
+        "windows": []
+      },
+      "driveGauge": {
+        "onHit": 2500,
+        "onBlock": -3000,
+        "onPunishCounter": -10000
+      },
+      "superArtGauge": 1000,
+      "scaling": null,
+      "notes": [
+        "A multi-hit attack that doesn't leave you wide open even if stopped partway through",
+        "Can only be canceled into Denjin Charge on hit."
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 39,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 16,
+            "to": 19,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 39,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "5mp_5lk_5hk",
+      "glbPath": "attack/esf001v00_attack_01/glb/000_esf001_ATK_5MP_id0000_f53.glb",
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "fuwa-triple-strike-3",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_hadoken_lp",
+      "characterId": "ryu",
+      "moveId": "ryu_hadoken_lp",
+      "displayName": "Hadoken (Light)",
+      "displayNameJa": "波動拳 (弱)",
+      "input": {
+        "raw": "236lp",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "special",
+      "guard": "high",
+      "hitCount": 1,
+      "frames": {
+        "startup": 16,
+        "active": 1,
+        "activeRaw": null,
+        "recovery": null,
+        "total": 17
+      },
+      "advantage": {
+        "onHit": 1,
+        "onBlock": -5
+      },
+      "damage": 600,
+      "cancel": {
+        "specialCancel": false,
+        "superOnly": true,
+        "raw": "SA3",
+        "targetCombo": [],
+        "windows": []
+      },
+      "driveGauge": {
+        "onHit": 1000,
+        "onBlock": -2500,
+        "onPunishCounter": -3000
+      },
+      "superArtGauge": 600,
+      "scaling": null,
+      "notes": [
+        "Fire a ki blast directly forward. Useful for attacking opponents at range"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 16,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 15,
+            "to": 15,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 16,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "hadoken_lp",
+      "glbPath": "specialskill/esf001v00_specialskill_00/glb/000_esf001_SPA_HADO_id0000_f110.glb",
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "ryu-hadoken-light",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_hadoken_mp",
+      "characterId": "ryu",
+      "moveId": "ryu_hadoken_mp",
+      "displayName": "Hadoken (Medium)",
+      "displayNameJa": "波動拳 (中)",
+      "input": {
+        "raw": "236mp",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "special",
+      "guard": "high",
+      "hitCount": 1,
+      "frames": {
+        "startup": 14,
+        "active": 1,
+        "activeRaw": null,
+        "recovery": null,
+        "total": 15
+      },
+      "advantage": {
+        "onHit": -1,
+        "onBlock": -7
+      },
+      "damage": 600,
+      "cancel": {
+        "specialCancel": false,
+        "superOnly": true,
+        "raw": "SA3",
+        "targetCombo": [],
+        "windows": []
+      },
+      "driveGauge": {
+        "onHit": 1000,
+        "onBlock": -2500,
+        "onPunishCounter": -3000
+      },
+      "superArtGauge": 600,
+      "scaling": null,
+      "notes": [
+        "Fire a ki blast directly forward. Useful for attacking opponents at range"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 14,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 13,
+            "to": 13,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 14,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "hadoken_mp",
+      "glbPath": "specialskill/esf001v00_specialskill_00/glb/000_esf001_SPA_HADO_id0000_f110.glb",
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "ryu-hadoken-medium",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_hadoken_hp",
+      "characterId": "ryu",
+      "moveId": "ryu_hadoken_hp",
+      "displayName": "Hadoken (Heavy)",
+      "displayNameJa": "波動拳 (強)",
+      "input": {
+        "raw": "236hp",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "special",
+      "guard": "high",
+      "hitCount": 1,
+      "frames": {
+        "startup": 12,
+        "active": 1,
+        "activeRaw": null,
+        "recovery": null,
+        "total": 13
+      },
+      "advantage": {
+        "onHit": -3,
+        "onBlock": -9
+      },
+      "damage": 600,
+      "cancel": {
+        "specialCancel": false,
+        "superOnly": true,
+        "raw": "SA3",
+        "targetCombo": [],
+        "windows": []
+      },
+      "driveGauge": {
+        "onHit": 1000,
+        "onBlock": -2500,
+        "onPunishCounter": -3000
+      },
+      "superArtGauge": 600,
+      "scaling": null,
+      "notes": [
+        "Fire a ki blast directly forward. Useful for attacking opponents at range"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 12,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 11,
+            "to": 11,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 12,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "hadoken_hp",
+      "glbPath": "specialskill/esf001v00_specialskill_00/glb/000_esf001_SPA_HADO_id0000_f110.glb",
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "ryu-hadoken-heavy",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_236_pp_",
+      "characterId": "ryu",
+      "moveId": "ryu_236_pp_",
+      "displayName": "Hadoken (OD)",
+      "displayNameJa": "波動拳 (OD)",
+      "input": {
+        "raw": "236(pp)",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "special",
+      "guard": "high",
+      "hitCount": 2,
+      "frames": {
+        "startup": 12,
+        "active": 1,
+        "activeRaw": null,
+        "recovery": null,
+        "total": 13
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": -1
+      },
+      "damage": 800,
+      "cancel": {
+        "specialCancel": false,
+        "superOnly": true,
+        "raw": "SA2",
+        "targetCombo": [],
+        "windows": []
+      },
+      "driveGauge": {
+        "onBlock": -2500,
+        "onPunishCounter": -5000
+      },
+      "superArtGauge": 600,
+      "scaling": [
+        "Starter scaling 20％",
+        "Combo scaling 20％"
+      ],
+      "notes": [
+        "Fire a ki blast directly forward. Useful for attacking opponents at range"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 12,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 11,
+            "to": 11,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 12,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "236_pp_",
+      "glbPath": null,
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "ryu-hadoken-od",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_236_p",
+      "characterId": "ryu",
+      "moveId": "ryu_236_p",
+      "displayName": "[Denjin Charge] Hadoken",
+      "displayNameJa": "[電刃錬気]波動拳",
+      "input": {
+        "raw": "236*p",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "special",
+      "guard": "high",
+      "hitCount": 2,
+      "frames": {
+        "startup": 12,
+        "active": 1,
+        "activeRaw": null,
+        "recovery": null,
+        "total": 13
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": -3
+      },
+      "damage": 800,
+      "cancel": {
+        "specialCancel": false,
+        "superOnly": true,
+        "raw": "SA3",
+        "targetCombo": [],
+        "windows": []
+      },
+      "driveGauge": {
+        "onHit": 1000,
+        "onBlock": -2500,
+        "onPunishCounter": -3000
+      },
+      "superArtGauge": 600,
+      "scaling": [
+        "Starter scaling 20％",
+        "Combo scaling 20％"
+      ],
+      "notes": [
+        "Envelop your fists with the Power of Nothingness, enhancing moves such as the Hadoken and Hashogeki. Leaves you wide open, making the timing of its usage critical"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 12,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 11,
+            "to": 11,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 12,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "236_p",
+      "glbPath": null,
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "denjin-charge-hadoken",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_236_pp__od",
+      "characterId": "ryu",
+      "moveId": "ryu_236_pp__od",
+      "displayName": "[Denjin Charge] Hadoken (OD)",
+      "displayNameJa": "[電刃錬気]波動拳 (OD)",
+      "input": {
+        "raw": "236(pp)",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "special",
+      "guard": "high",
+      "hitCount": 3,
+      "frames": {
+        "startup": 12,
+        "active": 1,
+        "activeRaw": null,
+        "recovery": null,
+        "total": 13
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": 2
+      },
+      "damage": 1000,
+      "cancel": {
+        "specialCancel": false,
+        "superOnly": true,
+        "raw": "SA2",
+        "targetCombo": [],
+        "windows": []
+      },
+      "driveGauge": {
+        "onBlock": 3750,
+        "onPunishCounter": -7000
+      },
+      "superArtGauge": 900,
+      "scaling": [
+        "Starter scaling 20％",
+        "Combo scaling 20％"
+      ],
+      "notes": [],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 12,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 11,
+            "to": 11,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 12,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "236_pp__od",
+      "glbPath": null,
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "denjin-charge-hadoken-od",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_shoryuken_lp",
+      "characterId": "ryu",
+      "moveId": "ryu_shoryuken_lp",
+      "displayName": "Shoryuken (Light)",
+      "displayNameJa": "昇龍拳（弱)",
+      "input": {
+        "raw": "623lp",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "special",
+      "guard": "high",
+      "hitCount": 1,
+      "frames": {
+        "startup": 5,
+        "active": 10,
+        "activeRaw": [
+          5,
+          14
+        ],
+        "recovery": 21,
+        "total": 35
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": -23
+      },
+      "damage": 1100,
+      "cancel": {
+        "specialCancel": false,
+        "superOnly": true,
+        "raw": "SA3",
+        "targetCombo": [],
+        "windows": []
+      },
+      "driveGauge": {
+        "onHit": 2000,
+        "onBlock": -4000,
+        "onPunishCounter": -5000
+      },
+      "superArtGauge": 1000,
+      "scaling": [
+        "Starter scaling 30%"
+      ],
+      "notes": [
+        "Leap into the air and perform a powerful uppercut. A Shoryuken is invincible to an opponent's jumping attacks, making it a great anti-air tool",
+        "Invincible against projectiles and strikes with mid-air hitboxes from frames 1 - 14",
+        "Considered airborne from frames 7 - 34",
+        "Note: After the 3rd active frame this move deals only 800 damage"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 34,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 4,
+            "to": 13,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 34,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "shoryuken_lp",
+      "glbPath": "specialskill/esf001v00_specialskill_01/glb/000_esf001_SPA_SYORYU_START_id0200_f49.glb",
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "ryu-shoryuken-light",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_shoryuken_mp",
+      "characterId": "ryu",
+      "moveId": "ryu_shoryuken_mp",
+      "displayName": "Shoryuken (Medium)",
+      "displayNameJa": "昇龍拳（中)",
+      "input": {
+        "raw": "623mp",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "special",
+      "guard": "high",
+      "hitCount": 1,
+      "frames": {
+        "startup": 6,
+        "active": 10,
+        "activeRaw": [
+          6,
+          15
+        ],
+        "recovery": 30,
+        "total": 45
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": -32
+      },
+      "damage": 1200,
+      "cancel": {
+        "specialCancel": false,
+        "superOnly": true,
+        "raw": "SA3",
+        "targetCombo": [],
+        "windows": []
+      },
+      "driveGauge": {
+        "onHit": 2000,
+        "onBlock": -4000,
+        "onPunishCounter": -5000
+      },
+      "superArtGauge": 1000,
+      "scaling": [
+        "Starter scaling 30%"
+      ],
+      "notes": [
+        "Leap into the air and perform a powerful uppercut. A Shoryuken is invincible to an opponent's jumping attacks, making it a great anti-air tool",
+        "Invincible against projectiles and strikes with mid-air hitboxes from frames 1 - 9",
+        "Considered airborne from frames 8 - 44",
+        "Note: After the 3rd active frame this move deals only 800 damage"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 44,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 5,
+            "to": 14,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 44,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "shoryuken_mp",
+      "glbPath": "specialskill/esf001v00_specialskill_01/glb/000_esf001_SPA_SYORYU_START_id0200_f49.glb",
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "ryu-shoryuken-medium",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_shoryuken_hp",
+      "characterId": "ryu",
+      "moveId": "ryu_shoryuken_hp",
+      "displayName": "Shoryuken (Heavy)",
+      "displayNameJa": "昇龍拳（強)",
+      "input": {
+        "raw": "623hp",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "special",
+      "guard": "high",
+      "hitCount": 1,
+      "frames": {
+        "startup": 7,
+        "active": 10,
+        "activeRaw": [
+          7,
+          16
+        ],
+        "recovery": 34,
+        "total": 50
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": -39
+      },
+      "damage": 1400,
+      "cancel": {
+        "specialCancel": false,
+        "superOnly": true,
+        "raw": "SA3",
+        "targetCombo": [],
+        "windows": []
+      },
+      "driveGauge": {
+        "onHit": 2000,
+        "onBlock": -4000,
+        "onPunishCounter": -5000
+      },
+      "superArtGauge": 1000,
+      "scaling": [
+        "Starter scaling 30%"
+      ],
+      "notes": [
+        "Leap into the air and perform a powerful uppercut. A Shoryuken is invincible to an opponent's jumping attacks, making it a great anti-air tool",
+        "Invincible against projectiles and strikes with mid-air hitboxes from frames 1 - 8",
+        "Considered airborne from frames 9 - 49",
+        "Note: After the 2nd active frame this move deals only 800 damage"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 49,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 6,
+            "to": 15,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 49,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "shoryuken_hp",
+      "glbPath": "specialskill/esf001v00_specialskill_01/glb/000_esf001_SPA_SYORYU_START_id0200_f49.glb",
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "ryu-shoryuken-hp",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_623_pp_",
+      "characterId": "ryu",
+      "moveId": "ryu_623_pp_",
+      "displayName": "Shoryuken (OD)",
+      "displayNameJa": "昇龍拳 (OD)",
+      "input": {
+        "raw": "623(pp)",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "special",
+      "guard": "high",
+      "hitCount": 2,
+      "frames": {
+        "startup": 6,
+        "active": 1,
+        "activeRaw": [
+          6,
+          7,
+          8,
+          15
+        ],
+        "recovery": 37,
+        "total": 43
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": -40
+      },
+      "damage": 1600,
+      "cancel": {
+        "specialCancel": false,
+        "super": false,
+        "raw": null
+      },
+      "driveGauge": {
+        "onBlock": -2000
+      },
+      "superArtGauge": 1000,
+      "scaling": null,
+      "notes": [
+        "Leap into the air and perform a powerful uppercut. A Shoryuken is invincible to an opponent's jumping attacks, making it a great anti-air tool",
+        "Completely invincible from frames 1 - 10",
+        "Considered airborne from frames 8 - 51"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 42,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 5,
+            "to": 5,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 42,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "623_pp_",
+      "glbPath": null,
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "ryu-shoryuken-od",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_tatsu_lk",
+      "characterId": "ryu",
+      "moveId": "ryu_tatsu_lk",
+      "displayName": "Tatsumaki Senpu-kyaku (Light)",
+      "displayNameJa": "竜巻旋風脚 (弱)",
+      "input": {
+        "raw": "214lk",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "special",
+      "guard": "high",
+      "hitCount": 1,
+      "frames": {
+        "startup": 12,
+        "active": 3,
+        "activeRaw": [
+          12,
+          14
+        ],
+        "recovery": 14,
+        "total": 28
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": -15
+      },
+      "damage": 900,
+      "cancel": {
+        "specialCancel": false,
+        "super": false,
+        "raw": null
+      },
+      "driveGauge": {
+        "onHit": 3000,
+        "onBlock": -4000,
+        "onPunishCounter": -5000
+      },
+      "superArtGauge": 1200,
+      "scaling": null,
+      "notes": [
+        "Unleash a series of roundhouse kicks while moving forward. A useful attack for knocking opponents away",
+        "Considered airborne from frames 5 - 28"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 27,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 11,
+            "to": 13,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 27,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "tatsu_lk",
+      "glbPath": "specialskill/esf001v00_specialskill_02/glb/000_esf001_SPA_TATSUMAKI_START_id0200_f14.glb",
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "ryu-tatsumaki-senpukyaku-light",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_tatsu_mk",
+      "characterId": "ryu",
+      "moveId": "ryu_tatsu_mk",
+      "displayName": "Tatsumaki Senpu-kyaku (Medium)",
+      "displayNameJa": "竜巻旋風脚 (中)",
+      "input": {
+        "raw": "214mk",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "special",
+      "guard": "high",
+      "hitCount": 1,
+      "frames": {
+        "startup": 14,
+        "active": 1,
+        "activeRaw": [
+          14,
+          15,
+          29,
+          30
+        ],
+        "recovery": 11,
+        "total": 25
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": -13
+      },
+      "damage": 1000,
+      "cancel": {
+        "specialCancel": false,
+        "super": false,
+        "raw": null
+      },
+      "driveGauge": {
+        "onHit": 3500,
+        "onBlock": -2500,
+        "onPunishCounter": -5000
+      },
+      "superArtGauge": 1300,
+      "scaling": null,
+      "notes": [
+        "Unleash a series of roundhouse kicks while moving forward. A useful attack for knocking opponents away",
+        "Considered airborne from frames 8 - 41",
+        "Values listed for Super Art gauge increases and Parry or Drive Block induced Drive Gauge increases are per hit"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 24,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 13,
+            "to": 13,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 24,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "tatsu_mk",
+      "glbPath": "specialskill/esf001v00_specialskill_02/glb/000_esf001_SPA_TATSUMAKI_START_id0200_f14.glb",
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "ryu-tatsumaki-senpukyaku-medium",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_tatsu_hk",
+      "characterId": "ryu",
+      "moveId": "ryu_tatsu_hk",
+      "displayName": "Tatsumaki Senpu-kyaku (Heavy)",
+      "displayNameJa": "竜巻旋風脚 (強)",
+      "input": {
+        "raw": "214hk",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "special",
+      "guard": "high",
+      "hitCount": 3,
+      "frames": {
+        "startup": 16,
+        "active": 1,
+        "activeRaw": [
+          16,
+          17,
+          31,
+          32,
+          46,
+          47
+        ],
+        "recovery": 14,
+        "total": 30
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": -13
+      },
+      "damage": 1200,
+      "cancel": {
+        "specialCancel": false,
+        "super": false,
+        "raw": null
+      },
+      "driveGauge": {
+        "onHit": 4000,
+        "onBlock": -2000,
+        "onPunishCounter": -5000
+      },
+      "superArtGauge": 1400,
+      "scaling": null,
+      "notes": [
+        "Unleash a series of roundhouse kicks while moving forward. A useful attack for knocking opponents away",
+        "Considered airborne from frames 10 - 61",
+        "Values listed for Super Art gauge increases and Parry or Drive Block induced Drive Gauge increases are per hit"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 29,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 15,
+            "to": 15,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 29,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "tatsu_hk",
+      "glbPath": "specialskill/esf001v00_specialskill_02/glb/000_esf001_SPA_TATSUMAKI_START_id0200_f14.glb",
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "ryu-tatsumaki-senpukyaku-heavy",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_214_kk_",
+      "characterId": "ryu",
+      "moveId": "ryu_214_kk_",
+      "displayName": "Tatsumaki Senpu-kyaku (OD)",
+      "displayNameJa": "竜巻旋風脚 (OD)",
+      "input": {
+        "raw": "214(kk)",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "special",
+      "guard": "high",
+      "hitCount": 5,
+      "frames": {
+        "startup": 13,
+        "active": 1,
+        "activeRaw": [
+          13,
+          14,
+          19,
+          20,
+          25,
+          26,
+          30,
+          31,
+          36,
+          37
+        ],
+        "recovery": 10,
+        "total": 23
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": -14
+      },
+      "damage": 1000,
+      "cancel": {
+        "specialCancel": false,
+        "super": false,
+        "raw": null
+      },
+      "driveGauge": {
+        "onBlock": -4000,
+        "onPunishCounter": -5000
+      },
+      "superArtGauge": 1000,
+      "scaling": null,
+      "notes": [
+        "Unleash a series of roundhouse kicks while moving forward. A useful attack for knocking opponents away"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 22,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 12,
+            "to": 12,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 22,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "214_kk_",
+      "glbPath": null,
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "ryu-tatsumaki-senpukyaku-od",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_9_214_k",
+      "characterId": "ryu",
+      "moveId": "ryu_9_214_k",
+      "displayName": "Aerial Tatsumaki Senpu-kyaku",
+      "displayNameJa": "空中竜巻旋風脚",
+      "input": {
+        "raw": "9>214*k",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "special",
+      "guard": "high",
+      "hitCount": 3,
+      "frames": {
+        "startup": 11,
+        "active": 1,
+        "activeRaw": [
+          11,
+          12,
+          18,
+          19,
+          26,
+          27
+        ],
+        "recovery": null,
+        "total": 12
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": null
+      },
+      "damage": 900,
+      "cancel": {
+        "specialCancel": false,
+        "super": false,
+        "raw": null
+      },
+      "driveGauge": {
+        "onHit": 2000,
+        "onBlock": -4000,
+        "onPunishCounter": -5000
+      },
+      "superArtGauge": 600,
+      "scaling": [
+        "Starter scaling 30%"
+      ],
+      "notes": [
+        "A Tatsumaki Senpu-kyaku performed while airborne. Useful for altering the trajectory of your jump, or for staging a surprise attack from above"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 11,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 10,
+            "to": 10,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 11,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "9_214_k",
+      "glbPath": null,
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "aerial-ryu-tatsumaki-senpukyaku",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_9_214_kk_",
+      "characterId": "ryu",
+      "moveId": "ryu_9_214_kk_",
+      "displayName": "Aerial Tatsumaki Senpu-kyaku (OD)",
+      "displayNameJa": "空中竜巻旋風脚 (OD)",
+      "input": {
+        "raw": "9>214(kk)",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "special",
+      "guard": "high",
+      "hitCount": 4,
+      "frames": {
+        "startup": 11,
+        "active": 1,
+        "activeRaw": [
+          11,
+          12,
+          14,
+          16,
+          18,
+          20,
+          22,
+          24,
+          27,
+          28
+        ],
+        "recovery": null,
+        "total": 12
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": null
+      },
+      "damage": 1500,
+      "cancel": {
+        "specialCancel": false,
+        "super": false,
+        "raw": null
+      },
+      "driveGauge": {
+        "onBlock": -4000,
+        "onPunishCounter": -5000
+      },
+      "superArtGauge": 600,
+      "scaling": [
+        "Combo scaling 25%"
+      ],
+      "notes": [
+        "A Tatsumaki Senpu-kyaku performed while airborne. Useful for altering the trajectory of your jump, or for staging a surprise attack from above"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 11,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 10,
+            "to": 10,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 11,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "9_214_kk_",
+      "glbPath": null,
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "aerial-ryu-tatsumaki-senpukyaku-od",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_blade_lk",
+      "characterId": "ryu",
+      "moveId": "ryu_blade_lk",
+      "displayName": "High Blade Kick (Light)",
+      "displayNameJa": "上段足刀蹴り (弱)",
+      "input": {
+        "raw": "236lk",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "special",
+      "guard": "high",
+      "hitCount": 1,
+      "frames": {
+        "startup": 14,
+        "active": 6,
+        "activeRaw": [
+          14,
+          19
+        ],
+        "recovery": 22,
+        "total": 41
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": -11
+      },
+      "damage": 1100,
+      "cancel": {
+        "specialCancel": false,
+        "superOnly": true,
+        "raw": "SA3",
+        "targetCombo": [],
+        "windows": []
+      },
+      "driveGauge": {
+        "onHit": 3000,
+        "onBlock": -6000,
+        "onPunishCounter": -5000
+      },
+      "superArtGauge": 1400,
+      "scaling": null,
+      "notes": [
+        "A thrust kick that quickly closes distance, and can be used to surprise an opponent between their attacks. Strike with the tip of the foot for maximum effectiveness"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 40,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 13,
+            "to": 18,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 40,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "blade_lk",
+      "glbPath": "specialskill/esf001v00_specialskill_04/glb/000_esf001_SPA_SOKUTOU_L_id0000_f98.glb",
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "high-blade-kick-light",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_blade_mk",
+      "characterId": "ryu",
+      "moveId": "ryu_blade_mk",
+      "displayName": "High Blade Kick (Medium)",
+      "displayNameJa": "上段足刀蹴り (中)",
+      "input": {
+        "raw": "236mk",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "special",
+      "guard": "high",
+      "hitCount": 1,
+      "frames": {
+        "startup": 18,
+        "active": 9,
+        "activeRaw": [
+          18,
+          26
+        ],
+        "recovery": 19,
+        "total": 45
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": -8
+      },
+      "damage": 1200,
+      "cancel": {
+        "specialCancel": false,
+        "superOnly": true,
+        "raw": "SA3",
+        "targetCombo": [],
+        "windows": []
+      },
+      "driveGauge": {
+        "onHit": 3500,
+        "onBlock": -6000,
+        "onPunishCounter": -7000
+      },
+      "superArtGauge": 1400,
+      "scaling": null,
+      "notes": [
+        "A thrust kick that quickly closes distance, and can be used to surprise an opponent between their attacks. Strike with the tip of the foot for maximum effectiveness"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 44,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 17,
+            "to": 25,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 44,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "blade_mk",
+      "glbPath": "specialskill/esf001v00_specialskill_04/glb/000_esf001_SPA_SOKUTOU_L_id0000_f98.glb",
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "high-blade-kick-medium",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_blade_hk",
+      "characterId": "ryu",
+      "moveId": "ryu_blade_hk",
+      "displayName": "High Blade Kick (Heavy)",
+      "displayNameJa": "上段足刀蹴り (強)",
+      "input": {
+        "raw": "236hk",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "special",
+      "guard": "high",
+      "hitCount": 1,
+      "frames": {
+        "startup": 29,
+        "active": 9,
+        "activeRaw": [
+          29,
+          37
+        ],
+        "recovery": 16,
+        "total": 53
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": -5
+      },
+      "damage": 1300,
+      "cancel": {
+        "specialCancel": false,
+        "superOnly": true,
+        "raw": "SA3",
+        "targetCombo": [],
+        "windows": []
+      },
+      "driveGauge": {
+        "onHit": 5000,
+        "onBlock": -8000,
+        "onPunishCounter": -10000
+      },
+      "superArtGauge": 1400,
+      "scaling": null,
+      "notes": [
+        "A thrust kick that quickly closes distance, and can be used to surprise an opponent between their attacks. Strike with the tip of the foot for maximum effectiveness",
+        "Juggle state time is extended when attack lands as a Punish Counter"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 52,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 28,
+            "to": 36,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 52,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "blade_hk",
+      "glbPath": "specialskill/esf001v00_specialskill_04/glb/000_esf001_SPA_SOKUTOU_L_id0000_f98.glb",
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "high-blade-kick-heavy",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_236_kk_",
+      "characterId": "ryu",
+      "moveId": "ryu_236_kk_",
+      "displayName": "High Blade Kick (OD)",
+      "displayNameJa": "上段足刀蹴り (OD)",
+      "input": {
+        "raw": "236(kk)",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "special",
+      "guard": "high",
+      "hitCount": 1,
+      "frames": {
+        "startup": 17,
+        "active": 5,
+        "activeRaw": [
+          17,
+          21
+        ],
+        "recovery": 33,
+        "total": 54
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": -18
+      },
+      "damage": 800,
+      "cancel": {
+        "specialCancel": false,
+        "superOnly": true,
+        "raw": "SA2",
+        "targetCombo": [],
+        "windows": []
+      },
+      "driveGauge": {
+        "onBlock": -4000,
+        "onPunishCounter": -5000
+      },
+      "superArtGauge": 1200,
+      "scaling": [
+        "Combo scaling 15%"
+      ],
+      "notes": [
+        "A thrust kick that quickly closes distance, and can be used to surprise an opponent between their attacks. Strike with the tip of the foot for maximum effectiveness"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 53,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 16,
+            "to": 20,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 53,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "236_kk_",
+      "glbPath": null,
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "high-blade-kick-od",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_hashogeki_lp",
+      "characterId": "ryu",
+      "moveId": "ryu_hashogeki_lp",
+      "displayName": "Hashogeki (Light)",
+      "displayNameJa": "波掌撃（弱)",
+      "input": {
+        "raw": "214lp",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "special",
+      "guard": "high",
+      "hitCount": 1,
+      "frames": {
+        "startup": 12,
+        "active": 6,
+        "activeRaw": [
+          12,
+          17
+        ],
+        "recovery": 18,
+        "total": 35
+      },
+      "advantage": {
+        "onHit": 2,
+        "onBlock": -3
+      },
+      "damage": 700,
+      "cancel": {
+        "specialCancel": false,
+        "superOnly": true,
+        "raw": "SA3",
+        "targetCombo": [],
+        "windows": []
+      },
+      "driveGauge": {
+        "onHit": 2000,
+        "onBlock": -4000,
+        "onPunishCounter": -5000
+      },
+      "superArtGauge": 800,
+      "scaling": null,
+      "notes": [
+        "Concentrate ki in the palm and unleash it directly forward. Useful as a follow-up after blocks and combos",
+        "Forces a juggle state when the attack lands as a counter or Punish Counter"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 34,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 11,
+            "to": 16,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 34,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "hashogeki_lp",
+      "glbPath": "specialskill/esf001v00_specialskill_03/glb/000_esf001_SPA_HADOSHO_id0200_f128.glb",
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "hashogeki-light",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_hashogeki_mp",
+      "characterId": "ryu",
+      "moveId": "ryu_hashogeki_mp",
+      "displayName": "Hashogeki (Medium)",
+      "displayNameJa": "波掌撃（中)",
+      "input": {
+        "raw": "214mp",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "special",
+      "guard": "high",
+      "hitCount": 1,
+      "frames": {
+        "startup": 19,
+        "active": 6,
+        "activeRaw": [
+          19,
+          24
+        ],
+        "recovery": 17,
+        "total": 41
+      },
+      "advantage": {
+        "onHit": 2,
+        "onBlock": -6
+      },
+      "damage": 800,
+      "cancel": {
+        "specialCancel": false,
+        "superOnly": true,
+        "raw": "SA3",
+        "targetCombo": [],
+        "windows": []
+      },
+      "driveGauge": {
+        "onHit": 2000,
+        "onBlock": -6000,
+        "onPunishCounter": -5000
+      },
+      "superArtGauge": 800,
+      "scaling": null,
+      "notes": [
+        "Concentrate ki in the palm and unleash it directly forward. Useful as a follow-up after blocks and combos",
+        "Forces a juggle state when the attack lands as a counter or Punish Counter"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 40,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 18,
+            "to": 23,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 40,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "hashogeki_mp",
+      "glbPath": "specialskill/esf001v00_specialskill_03/glb/000_esf001_SPA_HADOSHO_id0200_f128.glb",
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "hashogeki-medium",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_hashogeki_hp",
+      "characterId": "ryu",
+      "moveId": "ryu_hashogeki_hp",
+      "displayName": "Hashogeki (Heavy)",
+      "displayNameJa": "波掌撃（強)",
+      "input": {
+        "raw": "214hp",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "special",
+      "guard": "high",
+      "hitCount": 2,
+      "frames": {
+        "startup": 18,
+        "active": 6,
+        "activeRaw": [
+          18,
+          23
+        ],
+        "recovery": 19,
+        "total": 42
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": 4
+      },
+      "damage": 600,
+      "cancel": {
+        "specialCancel": false,
+        "superOnly": true,
+        "raw": "SA2",
+        "targetCombo": [],
+        "windows": []
+      },
+      "driveGauge": {
+        "onBlock": -6000,
+        "onPunishCounter": -5000
+      },
+      "superArtGauge": 1100,
+      "scaling": null,
+      "notes": [
+        "Concentrate ki in the palm and unleash it directly forward. Useful as a follow-up after blocks and combos",
+        "Produces a crumple stun for 39 frames when the attack lands"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 41,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 17,
+            "to": 22,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 41,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "hashogeki_hp",
+      "glbPath": "specialskill/esf001v00_specialskill_03/glb/000_esf001_SPA_HADOSHO_id0200_f128.glb",
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "hashogeki-heavy",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_214_pp_",
+      "characterId": "ryu",
+      "moveId": "ryu_214_pp_",
+      "displayName": "Hashogeki (OD)",
+      "displayNameJa": "波掌撃 (OD)",
+      "input": {
+        "raw": "214(pp)",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "special",
+      "guard": "high",
+      "hitCount": 2,
+      "frames": {
+        "startup": 18,
+        "active": 5,
+        "activeRaw": [
+          18,
+          22
+        ],
+        "recovery": 20,
+        "total": 42
+      },
+      "advantage": {
+        "onHit": 3,
+        "onBlock": 3
+      },
+      "damage": 900,
+      "cancel": {
+        "specialCancel": false,
+        "superOnly": true,
+        "raw": "SA2",
+        "targetCombo": [],
+        "windows": []
+      },
+      "driveGauge": {
+        "onBlock": -6000,
+        "onPunishCounter": -5000
+      },
+      "superArtGauge": 900,
+      "scaling": [
+        "Combo scaling 20％"
+      ],
+      "notes": [
+        "Concentrate ki in the palm and unleash it directly forward. Useful as a follow-up after blocks and combos"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 41,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 17,
+            "to": 21,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 41,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "214_pp_",
+      "glbPath": null,
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "hashogeki-od",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_214_p",
+      "characterId": "ryu",
+      "moveId": "ryu_214_p",
+      "displayName": "[Denjin Charge] Hashogeki",
+      "displayNameJa": "[電刃錬気]波掌撃",
+      "input": {
+        "raw": "214*p",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "special",
+      "guard": "high",
+      "hitCount": 2,
+      "frames": {
+        "startup": 20,
+        "active": 5,
+        "activeRaw": [
+          20,
+          24
+        ],
+        "recovery": 19,
+        "total": 43
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": 3
+      },
+      "damage": 800,
+      "cancel": {
+        "specialCancel": false,
+        "superOnly": true,
+        "raw": "SA3",
+        "targetCombo": [],
+        "windows": []
+      },
+      "driveGauge": {
+        "onHit": 2000,
+        "onBlock": -6000,
+        "onPunishCounter": -5000
+      },
+      "superArtGauge": 1100,
+      "scaling": null,
+      "notes": [],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 42,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 19,
+            "to": 23,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 42,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "214_p",
+      "glbPath": null,
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "denjin-charge-hashogeki",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_214_pp__od",
+      "characterId": "ryu",
+      "moveId": "ryu_214_pp__od",
+      "displayName": "[Denjin Charge] Hashogeki (OD)",
+      "displayNameJa": "[電刃錬気]波掌撃 (OD)",
+      "input": {
+        "raw": "214(pp)",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "special",
+      "guard": "high",
+      "hitCount": 1,
+      "frames": {
+        "startup": 18,
+        "active": 6,
+        "activeRaw": [
+          18,
+          23
+        ],
+        "recovery": 19,
+        "total": 42
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": 4
+      },
+      "damage": 800,
+      "cancel": {
+        "specialCancel": false,
+        "superOnly": true,
+        "raw": "SA2",
+        "targetCombo": [],
+        "windows": []
+      },
+      "driveGauge": {
+        "onBlock": -6000,
+        "onPunishCounter": -5000
+      },
+      "superArtGauge": 1100,
+      "scaling": null,
+      "notes": [
+        "Produces a crumple stun for 39 frames when the attack lands"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 41,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 17,
+            "to": 22,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 41,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "214_pp__od",
+      "glbPath": null,
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "denjin-charge-hashogeki-od",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_sa1",
+      "characterId": "ryu",
+      "moveId": "ryu_sa1",
+      "displayName": "Shinku Hadoken",
+      "displayNameJa": "真空波動拳",
+      "input": {
+        "raw": "236236*p",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "super1",
+      "guard": "high",
+      "hitCount": 5,
+      "frames": {
+        "startup": 7,
+        "active": 1,
+        "activeRaw": null,
+        "recovery": null,
+        "total": 8
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": -24
+      },
+      "damage": 2000,
+      "cancel": {
+        "specialCancel": false,
+        "super": false,
+        "raw": null
+      },
+      "driveGauge": {
+        "onBlock": 2500,
+        "onPunishCounter": 5000
+      },
+      "superArtGauge": null,
+      "scaling": null,
+      "notes": [
+        "A Hadoken in which the body's ki is concentrated and condensed into your palms before firing. Its swift speed and invulnerability can quickly turn the tables on an opponent",
+        "Invincible to strikes and throws from frame 1 to frame 8.",
+        "Values do not change when the attack lands as a counter or Punish Counter",
+        "The minimum guaranteed damage is 30%"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 7,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 6,
+            "to": 6,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 7,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "sa1",
+      "glbPath": null,
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "shinku-hadoken",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_sa1_hadoken",
+      "characterId": "ryu",
+      "moveId": "ryu_sa1_hadoken",
+      "displayName": "[Denjin Charge] Shinku Hadoken",
+      "displayNameJa": "[電刃錬気]真空波動拳",
+      "input": {
+        "raw": "236236*p",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "super1",
+      "guard": "high",
+      "hitCount": 4,
+      "frames": {
+        "startup": 7,
+        "active": 1,
+        "activeRaw": null,
+        "recovery": null,
+        "total": 8
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": -24
+      },
+      "damage": 2400,
+      "cancel": {
+        "specialCancel": false,
+        "super": false,
+        "raw": null
+      },
+      "driveGauge": {
+        "onBlock": 2500,
+        "onPunishCounter": 5000
+      },
+      "superArtGauge": null,
+      "scaling": null,
+      "notes": [
+        "A Hadoken in which the body's ki is concentrated and condensed into your palms before firing. Its swift speed and invulnerability can quickly turn the tables on an opponent",
+        "Invincible to strikes and throws from frame 1 to frame 8.",
+        "Values do not change when the attack lands as a counter or Punish Counter",
+        "The minimum guaranteed damage is 30%"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 7,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 6,
+            "to": 6,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 7,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "sa1_hadoken",
+      "glbPath": null,
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "denjin-charge-shinku-hadoken",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_sa2",
+      "characterId": "ryu",
+      "moveId": "ryu_sa2",
+      "displayName": "Shin Hashogeki (Level 1)",
+      "displayNameJa": "真波掌撃 （Lv1）",
+      "input": {
+        "raw": "214214*p",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "super2",
+      "guard": "high",
+      "hitCount": 1,
+      "frames": {
+        "startup": 12,
+        "active": 6,
+        "activeRaw": [
+          12,
+          17
+        ],
+        "recovery": 39,
+        "total": 56
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": -20
+      },
+      "damage": 2800,
+      "cancel": {
+        "specialCancel": false,
+        "super": false,
+        "raw": null
+      },
+      "driveGauge": {
+        "onBlock": 4000,
+        "onPunishCounter": -10000
+      },
+      "superArtGauge": null,
+      "scaling": null,
+      "notes": [
+        "A Hashogeki enhanced through spiritual focus. Hold the button to charge the attack and increase its power",
+        "Completely invincible from frame 1 to frame 13",
+        "Hold down the button to change the properties of this move",
+        "Changes to Level 2 version if the button is held for more than 8 frames and then released",
+        "Changes to Level 3 version if the button is held for more than 38 frames and then released",
+        "Invincible to strikes and throws from frame 2 to frame 8",
+        "Values do not change when the attack lands as a counter or Punish Counter",
+        "The minimum guaranteed damage is 40%"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 55,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 11,
+            "to": 16,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 55,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "sa2",
+      "glbPath": null,
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "shin-hashogeki-level-1",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_sa2_2",
+      "characterId": "ryu",
+      "moveId": "ryu_sa2_2",
+      "displayName": "Shin Hashogeki (Level 2)",
+      "displayNameJa": "真波掌撃 （Lv2）",
+      "input": {
+        "raw": "214214*p",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "super2",
+      "guard": "high",
+      "hitCount": 1,
+      "frames": {
+        "startup": 20,
+        "active": 6,
+        "activeRaw": [
+          20,
+          25
+        ],
+        "recovery": 39,
+        "total": 64
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": -20
+      },
+      "damage": 2900,
+      "cancel": {
+        "specialCancel": false,
+        "super": false,
+        "raw": null
+      },
+      "driveGauge": {
+        "onBlock": 6000,
+        "onPunishCounter": -10000
+      },
+      "superArtGauge": null,
+      "scaling": null,
+      "notes": [
+        "A Hashogeki enhanced through spiritual focus. Hold the button to charge the attack and increase its power",
+        "Completely invincible from frame 1 to frame 9",
+        "Hold down the button to change the properties of this move",
+        "Changes to Level 2 version if the button is held for more than 8 frames and then released",
+        "Changes to Level 3 version if the button is held for more than 38 frames and then released",
+        "Invincible to strikes and throws from frame 2 to frame 8",
+        "Values do not change when the attack lands as a counter or Punish Counter",
+        "The minimum guaranteed damage is 40%"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 63,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 19,
+            "to": 24,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 63,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "sa2_2",
+      "glbPath": null,
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "shin-hashogeki-level-2",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_sa2_3",
+      "characterId": "ryu",
+      "moveId": "ryu_sa2_3",
+      "displayName": "Shin Hashogeki (Level 3)",
+      "displayNameJa": "真波掌撃（Lv3）",
+      "input": {
+        "raw": "214214*p",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "super2",
+      "guard": "high",
+      "hitCount": 1,
+      "frames": {
+        "startup": 70,
+        "active": 6,
+        "activeRaw": [
+          70,
+          75
+        ],
+        "recovery": 39,
+        "total": 114
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": -20
+      },
+      "damage": 3200,
+      "cancel": {
+        "specialCancel": false,
+        "super": false,
+        "raw": null
+      },
+      "driveGauge": {
+        "onBlock": 10000,
+        "onPunishCounter": -10000
+      },
+      "superArtGauge": null,
+      "scaling": null,
+      "notes": [
+        "A Hashogeki enhanced through spiritual focus. Hold the button to charge the attack and increase its power",
+        "Completely invincible from frame 1 to frame 13",
+        "Hold down the button to change the properties of this move",
+        "Changes to Level 2 version if the button is held for more than 8 frames and then released",
+        "Changes to Level 3 version if the button is held for more than 38 frames and then released",
+        "Invincible to strikes and throws from frame 2 to frame 8",
+        "Values do not change when the attack lands as a counter or Punish Counter",
+        "The minimum guaranteed damage is 40%"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 113,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 69,
+            "to": 74,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 113,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "sa2_3",
+      "glbPath": null,
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "shin-hashogeki-level-3",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_sa2_1",
+      "characterId": "ryu",
+      "moveId": "ryu_sa2_1",
+      "displayName": "[Denjin Charge] Shin Hashogeki (Level 1)",
+      "displayNameJa": "[電刃錬気]真波掌撃 （Lv1）",
+      "input": {
+        "raw": "214214*p",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "super2",
+      "guard": "high",
+      "hitCount": 1,
+      "frames": {
+        "startup": 12,
+        "active": 6,
+        "activeRaw": [
+          12,
+          17
+        ],
+        "recovery": 39,
+        "total": 56
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": -20
+      },
+      "damage": 3000,
+      "cancel": {
+        "specialCancel": false,
+        "super": false,
+        "raw": null
+      },
+      "driveGauge": {
+        "onBlock": 4000,
+        "onPunishCounter": -10000
+      },
+      "superArtGauge": null,
+      "scaling": null,
+      "notes": [
+        "A Hashogeki enhanced through spiritual focus. Hold the button to charge the attack and increase its power",
+        "Completely invincible from frame 1 to frame 9",
+        "Hold down the button to change the properties of this move",
+        "Changes to Level 2 version if the button is held for more than 8 frames and then released",
+        "Changes to Level 3 version if the button is held for more than 38 frames and then released",
+        "Invincible to strikes and throws from frame 2 to frame 8",
+        "Values do not change when the attack lands as a counter or Punish Counter",
+        "The minimum guaranteed damage is 40%"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 55,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 11,
+            "to": 16,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 55,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "sa2_1",
+      "glbPath": null,
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "denjin-charge-shin-hashogeki-level-1",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_sa2_2",
+      "characterId": "ryu",
+      "moveId": "ryu_sa2_2",
+      "displayName": "[Denjin Charge] Shin Hashogeki (Level 2)",
+      "displayNameJa": "[電刃錬気]真波掌撃 （Lv2）",
+      "input": {
+        "raw": "214214*p",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "super2",
+      "guard": "high",
+      "hitCount": 1,
+      "frames": {
+        "startup": 20,
+        "active": 6,
+        "activeRaw": [
+          20,
+          25
+        ],
+        "recovery": 39,
+        "total": 64
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": -20
+      },
+      "damage": 3300,
+      "cancel": {
+        "specialCancel": false,
+        "super": false,
+        "raw": null
+      },
+      "driveGauge": {
+        "onBlock": 6000,
+        "onPunishCounter": -10000
+      },
+      "superArtGauge": null,
+      "scaling": null,
+      "notes": [
+        "Completely invincible from frame 1 to frame 9",
+        "Hold down the button to change the properties of this move",
+        "Changes to Level 2 version if the button is held for more than 8 frames and then released",
+        "Changes to Level 3 version if the button is held for more than 38 frames and then released",
+        "Invincible to strikes and throws from frame 2 to frame 8",
+        "Values do not change when the attack lands as a counter or Punish Counter",
+        "The minimum guaranteed damage is 40%"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 63,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 19,
+            "to": 24,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 63,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "sa2_2",
+      "glbPath": null,
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "denjin-charge-shin-hashogeki-level-2",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_sa2_3",
+      "characterId": "ryu",
+      "moveId": "ryu_sa2_3",
+      "displayName": "[Denjin Charge] Hashogeki (Level 3)",
+      "displayNameJa": "[電刃錬気]真波掌撃（Lv3）",
+      "input": {
+        "raw": "214214*p",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "super2",
+      "guard": "high",
+      "hitCount": 1,
+      "frames": {
+        "startup": 70,
+        "active": 6,
+        "activeRaw": [
+          70,
+          75
+        ],
+        "recovery": 39,
+        "total": 114
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": -20
+      },
+      "damage": 3400,
+      "cancel": {
+        "specialCancel": false,
+        "super": false,
+        "raw": null
+      },
+      "driveGauge": {
+        "onBlock": 10000,
+        "onPunishCounter": -10000
+      },
+      "superArtGauge": null,
+      "scaling": null,
+      "notes": [
+        "Completely invincible from frame 1 to frame 9",
+        "Hold down the button to change the properties of this move",
+        "Changes to Level 2 version if the button is held for more than 8 frames and then released",
+        "Changes to Level 3 version if the button is held for more than 38 frames and then released",
+        "Invincible to strikes and throws from frame 2 to frame 8",
+        "Values do not change when the attack lands as a counter or Punish Counter",
+        "The minimum guaranteed damage is 40%"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 113,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 69,
+            "to": 74,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 113,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "sa2_3",
+      "glbPath": null,
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "denjin-charge-shin-hashogeki-level-3",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_sa1_shoryuken",
+      "characterId": "ryu",
+      "moveId": "ryu_sa1_shoryuken",
+      "displayName": "Shin Shoryuken",
+      "displayNameJa": "真昇竜拳",
+      "input": {
+        "raw": "236236*k",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "super3",
+      "guard": "high",
+      "hitCount": 1,
+      "frames": {
+        "startup": 5,
+        "active": 1,
+        "activeRaw": [
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ],
+        "recovery": 71,
+        "total": 76
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": -52
+      },
+      "damage": 4000,
+      "cancel": {
+        "specialCancel": false,
+        "super": false,
+        "raw": null
+      },
+      "driveGauge": {
+        "onBlock": -7500,
+        "onPunishCounter": -15000
+      },
+      "superArtGauge": null,
+      "scaling": [
+        "Immediate scaling 10%"
+      ],
+      "notes": [
+        "A powerful Shoryuken unleashed at short range. An overwhelming technique that aims for an opponent's vitals",
+        "Completely invincible from frame 1 to frame 16",
+        "Values do not change when the attack lands as a counter or Punish Counter",
+        "The minimum guaranteed damage is 50%",
+        "Note: Can only be canceled into from special moves"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 75,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 4,
+            "to": 4,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 75,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "sa1_shoryuken",
+      "glbPath": null,
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "shin-shoryuken",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_sa1_ca",
+      "characterId": "ryu",
+      "moveId": "ryu_sa1_ca",
+      "displayName": "Shin Shoryuken (Critical Art)",
+      "displayNameJa": "真昇竜拳 (CA)",
+      "input": {
+        "raw": "236236*k",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "super3",
+      "guard": "high",
+      "hitCount": 1,
+      "frames": {
+        "startup": 5,
+        "active": 1,
+        "activeRaw": [
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ],
+        "recovery": 71,
+        "total": 76
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": -52
+      },
+      "damage": 4500,
+      "cancel": {
+        "specialCancel": false,
+        "super": false,
+        "raw": null
+      },
+      "driveGauge": {
+        "onBlock": -10000,
+        "onPunishCounter": -20000
+      },
+      "superArtGauge": null,
+      "scaling": [
+        "Immediate scaling 10%"
+      ],
+      "notes": [
+        "When under 25% vitality",
+        "A powerful Shoryuken unleashed at short range. An overwhelming technique that aims for an opponent's vitals",
+        "Completely invincible from frame 1 to frame 16",
+        "Values do not change when the attack lands as a counter or Punish Counter",
+        "The minimum guaranteed damage is 50%",
+        "Note: Can only be canceled into from special moves"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 75,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [
+          {
+            "from": 4,
+            "to": 4,
+            "x": 0.55,
+            "y": 1.15,
+            "w": 0.6,
+            "h": 0.4,
+            "placeholder": true
+          }
+        ],
+        "push": [
+          {
+            "from": 0,
+            "to": 75,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "sa1_ca",
+      "glbPath": null,
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "shin-shoryuken-ca",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu__lplk_",
+      "characterId": "ryu",
+      "moveId": "ryu__lplk_",
+      "displayName": "Shoulder Throw",
+      "displayNameJa": "背負い投げ",
+      "input": {
+        "raw": "(lplk)",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "throw",
+      "guard": null,
+      "hitCount": null,
+      "frames": {
+        "startup": 5,
+        "active": 3,
+        "activeRaw": [
+          5,
+          7
+        ],
+        "recovery": 23,
+        "total": 30
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": null
+      },
+      "damage": 1200,
+      "cancel": {
+        "specialCancel": false,
+        "super": false,
+        "raw": null
+      },
+      "driveGauge": {
+        "onHit": 2000,
+        "onPunishCounter": -10000
+      },
+      "superArtGauge": 2000,
+      "scaling": [
+        "Immediate scaling 20%"
+      ],
+      "notes": [
+        "When near opponent",
+        "Grab your opponent and—bearing the brunt of their weight with your arm and back—toss them forward. Throws your opponent without switching places with them",
+        "Properties change to the following when the attack lands as a Punish Counter:",
+        "- Deals 2040 damage",
+        "- Super Art gauge increases by 4000",
+        "- Forces a hard knockdown"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 29,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [],
+        "push": [
+          {
+            "from": 0,
+            "to": 29,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "_lplk_",
+      "glbPath": null,
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "shoulder-throw",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu__4lplk_",
+      "characterId": "ryu",
+      "moveId": "ryu__4lplk_",
+      "displayName": "Somersault Throw",
+      "displayNameJa": "巴投げ",
+      "input": {
+        "raw": "(4lplk)",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "throw",
+      "guard": null,
+      "hitCount": null,
+      "frames": {
+        "startup": 5,
+        "active": 3,
+        "activeRaw": [
+          5,
+          7
+        ],
+        "recovery": 23,
+        "total": 30
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": null
+      },
+      "damage": 1200,
+      "cancel": {
+        "specialCancel": false,
+        "super": false,
+        "raw": null
+      },
+      "driveGauge": {
+        "onHit": 2000,
+        "onPunishCounter": -10000
+      },
+      "superArtGauge": 2000,
+      "scaling": [
+        "Immediate scaling 20%"
+      ],
+      "notes": [
+        "When near opponent",
+        "Grab your opponent, place your foot on their torso, and throw them behind you as you fall backwards. Throws your opponent while switching places with them",
+        "Properties change to the following when the attack lands as a Punish Counter:",
+        "- Deals 2040 damage",
+        "- Super Art gauge increases by 4000",
+        "- Forces a hard knockdown"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 29,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [],
+        "push": [
+          {
+            "from": 0,
+            "to": 29,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "_4lplk_",
+      "glbPath": null,
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "somersault-throw",
+      "abbreviation": null
+    },
+    {
+      "id": "ryu_22_p",
+      "characterId": "ryu",
+      "moveId": "ryu_22_p",
+      "displayName": "Denjin Charge",
+      "displayNameJa": "電刃錬気",
+      "input": {
+        "raw": "22*p",
+        "buttons": null,
+        "motion": null
+      },
+      "type": "special",
+      "guard": null,
+      "hitCount": null,
+      "frames": {
+        "startup": null,
+        "active": 1,
+        "activeRaw": null,
+        "recovery": null,
+        "total": 2
+      },
+      "advantage": {
+        "onHit": null,
+        "onBlock": null
+      },
+      "damage": null,
+      "cancel": {
+        "specialCancel": false,
+        "super": false,
+        "raw": null
+      },
+      "driveGauge": null,
+      "superArtGauge": null,
+      "scaling": null,
+      "notes": [
+        "Envelop your fists with the Power of Nothingness, enhancing moves such as the Hadoken and Hashogeki. Leaves you wide open, making the timing of its usage critical",
+        "Denjin Charge stock added on the 51st frame. Only 1 Denjin Charge stock can be held at a time",
+        "Hadoken, Hashogeki, Shinku Hadoken, and Shin Hashogeki’s properties are enhanced when a Denjin Charge is held"
+      ],
+      "boxes": {
+        "hurt": [
+          {
+            "from": 0,
+            "to": 1,
+            "x": 0,
+            "y": 0.85,
+            "w": 0.7,
+            "h": 1.7,
+            "placeholder": true
+          }
+        ],
+        "hit": [],
+        "push": [
+          {
+            "from": 0,
+            "to": 1,
+            "x": 0,
+            "y": 0.7,
+            "w": 0.55,
+            "h": 1.4,
+            "placeholder": true
+          }
+        ]
+      },
+      "clipId": "22_p",
+      "glbPath": null,
+      "facingRelative": true,
+      "sources": [
+        {
+          "name": "4rays/sf6-move-data",
+          "url": "https://github.com/4rays/sf6-move-data",
+          "file": "moves/ryu.toml",
+          "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+          "retrieved": "2026-08-10",
+          "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+        }
+      ],
+      "review": {
+        "status": "placeholder",
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+      },
+      "slug": "denjin-charge",
+      "abbreviation": null
+    }
+  ]
+}

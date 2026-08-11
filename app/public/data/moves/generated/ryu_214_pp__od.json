@@ -1,0 +1,100 @@
+{
+  "id": "ryu_214_pp__od",
+  "characterId": "ryu",
+  "moveId": "ryu_214_pp__od",
+  "displayName": "[Denjin Charge] Hashogeki (OD)",
+  "displayNameJa": "[電刃錬気]波掌撃 (OD)",
+  "input": {
+    "raw": "214(pp)",
+    "buttons": null,
+    "motion": null
+  },
+  "type": "special",
+  "guard": "high",
+  "hitCount": 1,
+  "frames": {
+    "startup": 18,
+    "active": 6,
+    "activeRaw": [
+      18,
+      23
+    ],
+    "recovery": 19,
+    "total": 42
+  },
+  "advantage": {
+    "onHit": null,
+    "onBlock": 4
+  },
+  "damage": 800,
+  "cancel": {
+    "specialCancel": false,
+    "superOnly": true,
+    "raw": "SA2",
+    "targetCombo": [],
+    "windows": []
+  },
+  "driveGauge": {
+    "onBlock": -6000,
+    "onPunishCounter": -5000
+  },
+  "superArtGauge": 1100,
+  "scaling": null,
+  "notes": [
+    "Produces a crumple stun for 39 frames when the attack lands"
+  ],
+  "boxes": {
+    "hurt": [
+      {
+        "from": 0,
+        "to": 41,
+        "x": 0,
+        "y": 0.85,
+        "w": 0.7,
+        "h": 1.7,
+        "placeholder": true
+      }
+    ],
+    "hit": [
+      {
+        "from": 17,
+        "to": 22,
+        "x": 0.55,
+        "y": 1.15,
+        "w": 0.6,
+        "h": 0.4,
+        "placeholder": true
+      }
+    ],
+    "push": [
+      {
+        "from": 0,
+        "to": 41,
+        "x": 0,
+        "y": 0.7,
+        "w": 0.55,
+        "h": 1.4,
+        "placeholder": true
+      }
+    ]
+  },
+  "clipId": "214_pp__od",
+  "glbPath": null,
+  "facingRelative": true,
+  "sources": [
+    {
+      "name": "4rays/sf6-move-data",
+      "url": "https://github.com/4rays/sf6-move-data",
+      "file": "moves/ryu.toml",
+      "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+      "retrieved": "2026-08-10",
+      "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+    }
+  ],
+  "review": {
+    "status": "placeholder",
+    "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+  },
+  "slug": "denjin-charge-hashogeki-od",
+  "abbreviation": null
+}

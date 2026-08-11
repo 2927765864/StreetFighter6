@@ -1,0 +1,99 @@
+{
+  "id": "ryu_5mp_5lk",
+  "characterId": "ryu",
+  "moveId": "ryu_5mp_5lk",
+  "displayName": "Fuwa Triple Strike (2)",
+  "displayNameJa": "不破三連撃（2段目）",
+  "input": {
+    "raw": "5mp>5lk",
+    "buttons": null,
+    "motion": null
+  },
+  "type": "targetCombo",
+  "guard": "high",
+  "hitCount": 2,
+  "frames": {
+    "startup": 5,
+    "active": 3,
+    "activeRaw": [
+      5,
+      7
+    ],
+    "recovery": 16,
+    "total": 23
+  },
+  "advantage": {
+    "onHit": 1,
+    "onBlock": -4
+  },
+  "damage": 300,
+  "cancel": {
+    "specialCancel": false,
+    "super": false,
+    "raw": null
+  },
+  "driveGauge": {
+    "onHit": 1000,
+    "onBlock": -1000,
+    "onPunishCounter": 2000
+  },
+  "superArtGauge": 500,
+  "scaling": null,
+  "notes": [
+    "A multi-hit attack that doesn't leave you wide open even if stopped partway through"
+  ],
+  "boxes": {
+    "hurt": [
+      {
+        "from": 0,
+        "to": 22,
+        "x": 0,
+        "y": 0.85,
+        "w": 0.7,
+        "h": 1.7,
+        "placeholder": true
+      }
+    ],
+    "hit": [
+      {
+        "from": 4,
+        "to": 6,
+        "x": 0.55,
+        "y": 1.15,
+        "w": 0.6,
+        "h": 0.4,
+        "placeholder": true
+      }
+    ],
+    "push": [
+      {
+        "from": 0,
+        "to": 22,
+        "x": 0,
+        "y": 0.7,
+        "w": 0.55,
+        "h": 1.4,
+        "placeholder": true
+      }
+    ]
+  },
+  "clipId": "5mp_5lk",
+  "glbPath": "attack/esf001v00_attack_01/glb/000_esf001_ATK_5MP_id0000_f53.glb",
+  "facingRelative": true,
+  "sources": [
+    {
+      "name": "4rays/sf6-move-data",
+      "url": "https://github.com/4rays/sf6-move-data",
+      "file": "moves/ryu.toml",
+      "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+      "retrieved": "2026-08-10",
+      "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+    }
+  ],
+  "review": {
+    "status": "placeholder",
+    "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+  },
+  "slug": "fuwa-triple-strike-2",
+  "abbreviation": null
+}

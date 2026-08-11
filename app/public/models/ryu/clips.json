@@ -1,0 +1,31 @@
+{
+  "characterId": "esf001",
+  "costume": "001",
+  "glb": "ryu_c1.glb",
+  "logicFps": 60,
+  "displayScale": 1.0,
+  "notes": "Extracted SF6 Ryu via Noesis FBX + Blender glTF. Served from app/public/models/ryu/.",
+  "clips": {
+    "idle": {
+      "gltfClip": "idle",
+      "loop": true,
+      "frameLength": 330
+    },
+    "attack_light": {
+      "gltfClip": "attack_light",
+      "loop": false,
+      "frameLength": 96,
+      "logicAliases": ["5lp", "attack_l"],
+      "notes": "3 Noesis takes concatenated; runtime scrubs first third only for 5LP"
+    }
+  },
+  "logicMap": {
+    "idle": "idle",
+    "walk": "idle",
+    "crouch": "idle",
+    "5lp": "attack_light",
+    "attack_l": "attack_light",
+    "hit": "idle",
+    "block": "idle"
+  }
+}

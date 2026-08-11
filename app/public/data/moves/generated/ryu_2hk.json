@@ -1,0 +1,107 @@
+{
+  "id": "ryu_2hk",
+  "characterId": "ryu",
+  "moveId": "ryu_2hk",
+  "displayName": "Crouching Heavy Kick",
+  "displayNameJa": "しゃがみ強K",
+  "input": {
+    "raw": "2hk",
+    "buttons": null,
+    "motion": null
+  },
+  "type": "normal",
+  "guard": "low",
+  "hitCount": 1,
+  "frames": {
+    "startup": 9,
+    "active": 3,
+    "activeRaw": [
+      9,
+      11
+    ],
+    "recovery": 23,
+    "total": 34
+  },
+  "advantage": {
+    "onHit": null,
+    "onBlock": -12
+  },
+  "damage": 900,
+  "cancel": {
+    "specialCancel": false,
+    "super": false,
+    "raw": null
+  },
+  "driveGauge": {
+    "onHit": 3000,
+    "onBlock": -4000,
+    "onPunishCounter": -10000
+  },
+  "superArtGauge": 1000,
+  "scaling": null,
+  "notes": [
+    "Knockdown time extended when attack lands as a counter or Punish Counter"
+  ],
+  "boxes": {
+    "hurt": [
+      {
+        "from": 0,
+        "to": 33,
+        "x": 0,
+        "y": 0.5,
+        "w": 0.75,
+        "h": 1.0,
+        "placeholder": true
+      }
+    ],
+    "hit": [
+      {
+        "from": 8,
+        "to": 10,
+        "x": 0.45,
+        "y": 0.35,
+        "w": 0.75,
+        "h": 0.45,
+        "placeholder": true
+      }
+    ],
+    "push": [
+      {
+        "from": 0,
+        "to": 33,
+        "x": 0,
+        "y": 0.7,
+        "w": 0.55,
+        "h": 1.4,
+        "placeholder": true
+      }
+    ]
+  },
+  "clipId": "ryu_2hk",
+  "glbPath": "attack/esf001v00_attack_11/glb/000_esf001_ATK_2HK_id2000_f145.glb",
+  "facingRelative": true,
+  "selfMovement": [
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0.008, 0.012, 0.014, 0.014, 0.012, 0.01, 0.008, 0.006,
+    0.005, 0.004, 0.003, 0.003, 0.002, 0.002, 0.001, 0.001,
+    0.001, 0, 0, 0, 0, 0
+  ],
+  "plant": { "foot": "L", "fromFrame": 0, "toFrame": 20 },
+  "review_selfMovement": "placeholder estimate until tools/estimate_root_motion; tune with selfMovementScale",
+  "sources": [
+    {
+      "name": "4rays/sf6-move-data",
+      "url": "https://github.com/4rays/sf6-move-data",
+      "file": "moves/ryu.toml",
+      "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+      "retrieved": "2026-08-10",
+      "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+    }
+  ],
+  "review": {
+    "status": "placeholder",
+    "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+  },
+  "slug": "ryu-crouch-heavy-kick",
+  "abbreviation": "C.HK"
+}

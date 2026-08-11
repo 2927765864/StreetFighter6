@@ -1,0 +1,398 @@
+{
+  "characterId": "ryu",
+  "source": "4rays/sf6-move-data ryu.toml",
+  "retrieved": "2026-08-10",
+  "count": 65,
+  "moves": [
+    {
+      "id": "ryu_5lp",
+      "input": "5lp",
+      "file": "generated/ryu_5lp.json",
+      "startup": 4
+    },
+    {
+      "id": "ryu_5mp",
+      "input": "5mp",
+      "file": "generated/ryu_5mp.json",
+      "startup": 6
+    },
+    {
+      "id": "ryu_5hp",
+      "input": "5hp",
+      "file": "generated/ryu_5hp.json",
+      "startup": 10
+    },
+    {
+      "id": "ryu_5lk",
+      "input": "5lk",
+      "file": "generated/ryu_5lk.json",
+      "startup": 5
+    },
+    {
+      "id": "ryu_5mk",
+      "input": "5mk",
+      "file": "generated/ryu_5mk.json",
+      "startup": 9
+    },
+    {
+      "id": "ryu_5hk",
+      "input": "5hk",
+      "file": "generated/ryu_5hk.json",
+      "startup": 12
+    },
+    {
+      "id": "ryu_2lp",
+      "input": "2lp",
+      "file": "generated/ryu_2lp.json",
+      "startup": 4
+    },
+    {
+      "id": "ryu_2mp",
+      "input": "2mp",
+      "file": "generated/ryu_2mp.json",
+      "startup": 6
+    },
+    {
+      "id": "ryu_2hp",
+      "input": "2hp",
+      "file": "generated/ryu_2hp.json",
+      "startup": 9
+    },
+    {
+      "id": "ryu_2lk",
+      "input": "2lk",
+      "file": "generated/ryu_2lk.json",
+      "startup": 5
+    },
+    {
+      "id": "ryu_2mk",
+      "input": "2mk",
+      "file": "generated/ryu_2mk.json",
+      "startup": 8
+    },
+    {
+      "id": "ryu_2hk",
+      "input": "2hk",
+      "file": "generated/ryu_2hk.json",
+      "startup": 9
+    },
+    {
+      "id": "ryu_j>lp",
+      "input": "j>lp",
+      "file": "generated/ryu_j>lp.json",
+      "startup": 4
+    },
+    {
+      "id": "ryu_j>mp",
+      "input": "j>mp",
+      "file": "generated/ryu_j>mp.json",
+      "startup": 8
+    },
+    {
+      "id": "ryu_j>hp",
+      "input": "j>hp",
+      "file": "generated/ryu_j>hp.json",
+      "startup": 9
+    },
+    {
+      "id": "ryu_j>lk",
+      "input": "j>lk",
+      "file": "generated/ryu_j>lk.json",
+      "startup": 6
+    },
+    {
+      "id": "ryu_j>mk",
+      "input": "j>mk",
+      "file": "generated/ryu_j>mk.json",
+      "startup": 7
+    },
+    {
+      "id": "ryu_j>hk",
+      "input": "j>hk",
+      "file": "generated/ryu_j>hk.json",
+      "startup": 12
+    },
+    {
+      "id": "ryu_6mp",
+      "input": "6mp",
+      "file": "generated/ryu_6mp.json",
+      "startup": 20
+    },
+    {
+      "id": "ryu_6hp",
+      "input": "6hp",
+      "file": "generated/ryu_6hp.json",
+      "startup": 20
+    },
+    {
+      "id": "ryu_4hp",
+      "input": "4hp",
+      "file": "generated/ryu_4hp.json",
+      "startup": 7
+    },
+    {
+      "id": "ryu_6hk",
+      "input": "6hk",
+      "file": "generated/ryu_6hk.json",
+      "startup": 16
+    },
+    {
+      "id": "ryu_4hk",
+      "input": "4hk",
+      "file": "generated/ryu_4hk.json",
+      "startup": 10
+    },
+    {
+      "id": "ryu_5hp_5hk",
+      "input": "5hp>5hk",
+      "file": "generated/ryu_5hp_5hk.json",
+      "startup": 9
+    },
+    {
+      "id": "ryu_5mp_5lk",
+      "input": "5mp>5lk",
+      "file": "generated/ryu_5mp_5lk.json",
+      "startup": 5
+    },
+    {
+      "id": "ryu_5mp_5lk_5hk",
+      "input": "5mp>5lk>5hk",
+      "file": "generated/ryu_5mp_5lk_5hk.json",
+      "startup": 17
+    },
+    {
+      "id": "ryu_hadoken_lp",
+      "input": "236lp",
+      "file": "generated/ryu_hadoken_lp.json",
+      "startup": 16
+    },
+    {
+      "id": "ryu_hadoken_mp",
+      "input": "236mp",
+      "file": "generated/ryu_hadoken_mp.json",
+      "startup": 14
+    },
+    {
+      "id": "ryu_hadoken_hp",
+      "input": "236hp",
+      "file": "generated/ryu_hadoken_hp.json",
+      "startup": 12
+    },
+    {
+      "id": "ryu_236_pp_",
+      "input": "236(pp)",
+      "file": "generated/ryu_236_pp_.json",
+      "startup": 12
+    },
+    {
+      "id": "ryu_236_p",
+      "input": "236*p",
+      "file": "generated/ryu_236_p.json",
+      "startup": 12
+    },
+    {
+      "id": "ryu_236_pp__od",
+      "input": "236(pp)",
+      "file": "generated/ryu_236_pp__od.json",
+      "startup": 12
+    },
+    {
+      "id": "ryu_shoryuken_lp",
+      "input": "623lp",
+      "file": "generated/ryu_shoryuken_lp.json",
+      "startup": 5
+    },
+    {
+      "id": "ryu_shoryuken_mp",
+      "input": "623mp",
+      "file": "generated/ryu_shoryuken_mp.json",
+      "startup": 6
+    },
+    {
+      "id": "ryu_shoryuken_hp",
+      "input": "623hp",
+      "file": "generated/ryu_shoryuken_hp.json",
+      "startup": 7
+    },
+    {
+      "id": "ryu_623_pp_",
+      "input": "623(pp)",
+      "file": "generated/ryu_623_pp_.json",
+      "startup": 6
+    },
+    {
+      "id": "ryu_tatsu_lk",
+      "input": "214lk",
+      "file": "generated/ryu_tatsu_lk.json",
+      "startup": 12
+    },
+    {
+      "id": "ryu_tatsu_mk",
+      "input": "214mk",
+      "file": "generated/ryu_tatsu_mk.json",
+      "startup": 14
+    },
+    {
+      "id": "ryu_tatsu_hk",
+      "input": "214hk",
+      "file": "generated/ryu_tatsu_hk.json",
+      "startup": 16
+    },
+    {
+      "id": "ryu_214_kk_",
+      "input": "214(kk)",
+      "file": "generated/ryu_214_kk_.json",
+      "startup": 13
+    },
+    {
+      "id": "ryu_9_214_k",
+      "input": "9>214*k",
+      "file": "generated/ryu_9_214_k.json",
+      "startup": 11
+    },
+    {
+      "id": "ryu_9_214_kk_",
+      "input": "9>214(kk)",
+      "file": "generated/ryu_9_214_kk_.json",
+      "startup": 11
+    },
+    {
+      "id": "ryu_blade_lk",
+      "input": "236lk",
+      "file": "generated/ryu_blade_lk.json",
+      "startup": 14
+    },
+    {
+      "id": "ryu_blade_mk",
+      "input": "236mk",
+      "file": "generated/ryu_blade_mk.json",
+      "startup": 18
+    },
+    {
+      "id": "ryu_blade_hk",
+      "input": "236hk",
+      "file": "generated/ryu_blade_hk.json",
+      "startup": 29
+    },
+    {
+      "id": "ryu_236_kk_",
+      "input": "236(kk)",
+      "file": "generated/ryu_236_kk_.json",
+      "startup": 17
+    },
+    {
+      "id": "ryu_hashogeki_lp",
+      "input": "214lp",
+      "file": "generated/ryu_hashogeki_lp.json",
+      "startup": 12
+    },
+    {
+      "id": "ryu_hashogeki_mp",
+      "input": "214mp",
+      "file": "generated/ryu_hashogeki_mp.json",
+      "startup": 19
+    },
+    {
+      "id": "ryu_hashogeki_hp",
+      "input": "214hp",
+      "file": "generated/ryu_hashogeki_hp.json",
+      "startup": 18
+    },
+    {
+      "id": "ryu_214_pp_",
+      "input": "214(pp)",
+      "file": "generated/ryu_214_pp_.json",
+      "startup": 18
+    },
+    {
+      "id": "ryu_214_p",
+      "input": "214*p",
+      "file": "generated/ryu_214_p.json",
+      "startup": 20
+    },
+    {
+      "id": "ryu_214_pp__od",
+      "input": "214(pp)",
+      "file": "generated/ryu_214_pp__od.json",
+      "startup": 18
+    },
+    {
+      "id": "ryu_sa1",
+      "input": "236236*p",
+      "file": "generated/ryu_sa1.json",
+      "startup": 7
+    },
+    {
+      "id": "ryu_sa1_hadoken",
+      "input": "236236*p",
+      "file": "generated/ryu_sa1_hadoken.json",
+      "startup": 7
+    },
+    {
+      "id": "ryu_sa2",
+      "input": "214214*p",
+      "file": "generated/ryu_sa2.json",
+      "startup": 12
+    },
+    {
+      "id": "ryu_sa2_2",
+      "input": "214214*p",
+      "file": "generated/ryu_sa2_2.json",
+      "startup": 20
+    },
+    {
+      "id": "ryu_sa2_3",
+      "input": "214214*p",
+      "file": "generated/ryu_sa2_3.json",
+      "startup": 70
+    },
+    {
+      "id": "ryu_sa2_1",
+      "input": "214214*p",
+      "file": "generated/ryu_sa2_1.json",
+      "startup": 12
+    },
+    {
+      "id": "ryu_sa2_2",
+      "input": "214214*p",
+      "file": "generated/ryu_sa2_2.json",
+      "startup": 20
+    },
+    {
+      "id": "ryu_sa2_3",
+      "input": "214214*p",
+      "file": "generated/ryu_sa2_3.json",
+      "startup": 70
+    },
+    {
+      "id": "ryu_sa1_shoryuken",
+      "input": "236236*k",
+      "file": "generated/ryu_sa1_shoryuken.json",
+      "startup": 5
+    },
+    {
+      "id": "ryu_sa1_ca",
+      "input": "236236*k",
+      "file": "generated/ryu_sa1_ca.json",
+      "startup": 5
+    },
+    {
+      "id": "ryu__lplk_",
+      "input": "(lplk)",
+      "file": "generated/ryu__lplk_.json",
+      "startup": 5
+    },
+    {
+      "id": "ryu__4lplk_",
+      "input": "(4lplk)",
+      "file": "generated/ryu__4lplk_.json",
+      "startup": 5
+    },
+    {
+      "id": "ryu_22_p",
+      "input": "22*p",
+      "file": "generated/ryu_22_p.json",
+      "startup": null
+    }
+  ]
+}

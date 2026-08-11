@@ -1,0 +1,65 @@
+{
+  "id": "ryu_hadoken_lp",
+  "characterId": "ryu",
+  "moveId": "ryu_hadoken_lp",
+  "displayName": "Hadoken (Light)",
+  "displayNameJa": "波動拳 (弱)",
+  "frames": {
+    "startup": 16,
+    "active": 1,
+    "recovery": 33,
+    "total": 50
+  },
+  "advantage": {
+    "onHit": 1,
+    "onBlock": -5
+  },
+  "damage": 600,
+  "hitstun": 20,
+  "blockstun": 14,
+  "cancel": {
+    "specialCancel": false,
+    "superOnly": true,
+    "raw": "SA3",
+    "targetCombo": [],
+    "windows": []
+  },
+  "boxes": {
+    "hurt": [
+      {
+        "from": 0,
+        "to": 49,
+        "x": 0,
+        "y": 0.85,
+        "w": 0.7,
+        "h": 1.7,
+        "placeholder": true
+      }
+    ],
+    "hit": [
+      {
+        "from": 15,
+        "to": 15,
+        "x": 0.9,
+        "y": 1.15,
+        "w": 0.7,
+        "h": 0.4,
+        "placeholder": true
+      }
+    ]
+  },
+  "clipId": "ryu_hadoken",
+  "glbPath": "specialskill/esf001v00_specialskill_00/glb/000_esf001_SPA_HADO_id0000_f110.glb",
+  "facingRelative": true,
+  "review": {
+    "status": "placeholder",
+    "notes": "P0 runtime copy from generated/4rays; recovery normalized (generated had recovery null / total 17). Boxes placeholder. Cross-check SuperCombo before reviewed."
+  },
+  "sources": [
+    {
+      "name": "4rays/sf6-move-data",
+      "url": "https://github.com/4rays/sf6-move-data",
+      "retrieved": "2026-08-10"
+    }
+  ]
+}

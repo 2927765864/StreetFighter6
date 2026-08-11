@@ -1,0 +1,84 @@
+{
+  "id": "ryu_22_p",
+  "characterId": "ryu",
+  "moveId": "ryu_22_p",
+  "displayName": "Denjin Charge",
+  "displayNameJa": "電刃錬気",
+  "input": {
+    "raw": "22*p",
+    "buttons": null,
+    "motion": null
+  },
+  "type": "special",
+  "guard": null,
+  "hitCount": null,
+  "frames": {
+    "startup": null,
+    "active": 1,
+    "activeRaw": null,
+    "recovery": null,
+    "total": 2
+  },
+  "advantage": {
+    "onHit": null,
+    "onBlock": null
+  },
+  "damage": null,
+  "cancel": {
+    "specialCancel": false,
+    "super": false,
+    "raw": null
+  },
+  "driveGauge": null,
+  "superArtGauge": null,
+  "scaling": null,
+  "notes": [
+    "Envelop your fists with the Power of Nothingness, enhancing moves such as the Hadoken and Hashogeki. Leaves you wide open, making the timing of its usage critical",
+    "Denjin Charge stock added on the 51st frame. Only 1 Denjin Charge stock can be held at a time",
+    "Hadoken, Hashogeki, Shinku Hadoken, and Shin Hashogeki’s properties are enhanced when a Denjin Charge is held"
+  ],
+  "boxes": {
+    "hurt": [
+      {
+        "from": 0,
+        "to": 1,
+        "x": 0,
+        "y": 0.85,
+        "w": 0.7,
+        "h": 1.7,
+        "placeholder": true
+      }
+    ],
+    "hit": [],
+    "push": [
+      {
+        "from": 0,
+        "to": 1,
+        "x": 0,
+        "y": 0.7,
+        "w": 0.55,
+        "h": 1.4,
+        "placeholder": true
+      }
+    ]
+  },
+  "clipId": "22_p",
+  "glbPath": null,
+  "facingRelative": true,
+  "sources": [
+    {
+      "name": "4rays/sf6-move-data",
+      "url": "https://github.com/4rays/sf6-move-data",
+      "file": "moves/ryu.toml",
+      "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+      "retrieved": "2026-08-10",
+      "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+    }
+  ],
+  "review": {
+    "status": "placeholder",
+    "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+  },
+  "slug": "denjin-charge",
+  "abbreviation": null
+}

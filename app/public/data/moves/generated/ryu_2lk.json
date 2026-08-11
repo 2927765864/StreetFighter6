@@ -1,0 +1,101 @@
+{
+  "id": "ryu_2lk",
+  "characterId": "ryu",
+  "moveId": "ryu_2lk",
+  "displayName": "Crouching Light Kick",
+  "displayNameJa": "しゃがみ弱K",
+  "input": {
+    "raw": "2lk",
+    "buttons": null,
+    "motion": null
+  },
+  "type": "normal",
+  "guard": "low",
+  "hitCount": 1,
+  "frames": {
+    "startup": 5,
+    "active": 2,
+    "activeRaw": [
+      5,
+      6
+    ],
+    "recovery": 10,
+    "total": 16
+  },
+  "advantage": {
+    "onHit": 3,
+    "onBlock": -3
+  },
+  "damage": 200,
+  "cancel": {
+    "specialCancel": false,
+    "super": false,
+    "raw": null
+  },
+  "driveGauge": {
+    "onHit": 250,
+    "onBlock": -500,
+    "onPunishCounter": -2000
+  },
+  "superArtGauge": 300,
+  "scaling": [
+    "Starter scaling 20%"
+  ],
+  "notes": [
+    "Can be rapid canceled"
+  ],
+  "boxes": {
+    "hurt": [
+      {
+        "from": 0,
+        "to": 15,
+        "x": 0,
+        "y": 0.5,
+        "w": 0.75,
+        "h": 1.0,
+        "placeholder": true
+      }
+    ],
+    "hit": [
+      {
+        "from": 4,
+        "to": 5,
+        "x": 0.45,
+        "y": 0.35,
+        "w": 0.75,
+        "h": 0.45,
+        "placeholder": true
+      }
+    ],
+    "push": [
+      {
+        "from": 0,
+        "to": 15,
+        "x": 0,
+        "y": 0.7,
+        "w": 0.55,
+        "h": 1.4,
+        "placeholder": true
+      }
+    ]
+  },
+  "clipId": "2lk",
+  "glbPath": "attack/esf001v00_attack_09/glb/000_esf001_ATK_2LK_id2000_f83.glb",
+  "facingRelative": true,
+  "sources": [
+    {
+      "name": "4rays/sf6-move-data",
+      "url": "https://github.com/4rays/sf6-move-data",
+      "file": "moves/ryu.toml",
+      "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+      "retrieved": "2026-08-10",
+      "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+    }
+  ],
+  "review": {
+    "status": "placeholder",
+    "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+  },
+  "slug": "ryu-crouch-light-kick",
+  "abbreviation": "C.LK"
+}
