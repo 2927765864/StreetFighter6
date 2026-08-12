@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   LogicGlbMap,
+  RYU_MESH_FBX_URL,
   RYU_MESH_ONLY_URL,
   RYU_MESH_PUBLIC_FALLBACK_URL,
 } from '../../src/data/logicGlbMap';
@@ -83,7 +84,10 @@ describe('LogicGlbMap', () => {
     expect(map.primaryPath('ryu_sa1')).toBeNull();
   });
 
-  it('mesh URLs point at runtime prefix not missing assets path', () => {
+  it('mesh URLs: esf001_TPose.fbx is target; glb are fallbacks', () => {
+    expect(RYU_MESH_FBX_URL.endsWith('esf001_TPose.fbx')).toBe(true);
+    expect(RYU_MESH_FBX_URL.startsWith('/private-runtime/')).toBe(true);
+    expect(RYU_MESH_ONLY_URL.endsWith('ryu_c1_mesh_only.glb')).toBe(true);
     expect(RYU_MESH_ONLY_URL.startsWith('/private-runtime/')).toBe(true);
     expect(RYU_MESH_PUBLIC_FALLBACK_URL.startsWith('/models/')).toBe(true);
   });

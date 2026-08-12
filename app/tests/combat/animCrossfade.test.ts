@@ -9,6 +9,7 @@ import {
 const d = defaultCrossfadeDurations({
   locoSec: 0.12,
   residualToMoveSec: 0.1,
+  residualToStanceSec: 0.1,
   residualToAttackSec: 0,
 });
 
@@ -20,6 +21,10 @@ describe('AnimCrossfade §3.11', () => {
     expect(categorizeBinding('5lp::main')).toBe('attack');
     expect(categorizeBinding('ryu_5lk::main')).toBe('attack');
     expect(categorizeBinding('stand_to_crouch::main')).toBe('stance');
+    // Runtime uses crouch + role for stance transitions
+    expect(categorizeBinding('crouch::stand_to_crouch')).toBe('stance');
+    expect(categorizeBinding('crouch::crouch_to_stand')).toBe('stance');
+    expect(categorizeBinding('crouch::main')).toBe('loco');
     expect(categorizeBinding('hitstun::main')).toBe('hit');
   });
 
@@ -47,15 +52,33 @@ describe('AnimCrossfade §3.11', () => {
     expect(resolveCrossfadeSec('5lp::main', '5lk::main', short)).toBe(0.03);
   });
 
+  it('attack residual → stand↔crouch transition: residualToStanceSec', () => {
+    // 2LK residual + release down → crouch::crouch_to_stand
+    expect(
+      resolveCrossfadeSec('2lk::main', 'crouch::crouch_to_stand', d),
+    ).toBe(0.1);
+    expect(
+      resolveCrossfadeSec('ryu_2lk::main', 'crouch::crouch_to_stand', d),
+    ).toBe(0.1);
+    // stand attack residual → stand_to_crouch
+    expect(
+      resolveCrossfadeSec('5lp::main', 'crouch::stand_to_crouch', d),
+    ).toBe(0.1);
+    // crouch idle → stance still hard (姿势接近)
+    expect(
+      resolveCrossfadeSec('crouch::main', 'crouch::crouch_to_stand', d),
+    ).toBe(0);
+  });
+
   it('move → attack: hard cut (跟手)', () => {
     expect(resolveCrossfadeSec('idle::main', '5lp::main', d)).toBe(0);
     expect(resolveCrossfadeSec('walk_fwd::loop', '5lp::main', d)).toBe(0);
   });
 
-  it('stance / jump / dash / hit: no sol', () => {
-    expect(resolveCrossfadeSec('idle::main', 'stand_to_crouch::main', d)).toBe(0);
+  it('jump / into-dash / hit: no sol; dash residual → idle can sol', () => {
     expect(resolveCrossfadeSec('5lp::main', 'jump_f::main', d)).toBe(0);
     expect(resolveCrossfadeSec('idle::main', 'dash_fwd::main', d)).toBe(0);
+    expect(resolveCrossfadeSec('dash_fwd::main', 'idle::main', d)).toBe(0.1);
     expect(resolveCrossfadeSec('idle::main', 'hitstun::main', d)).toBe(0);
   });
 });

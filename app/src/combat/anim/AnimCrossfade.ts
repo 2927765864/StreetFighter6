@@ -16,6 +16,11 @@ export type CrossfadeDurations = {
   locoSec: number;
   /** Attack residual (or any attack clip) → walk / idle-like move (可稍长). */
   residualToMoveSec: number;
+  /**
+   * Attack residual → stand↔crouch transition clip (可稍长).
+   * Softens hard cut into crouch_to_stand / stand_to_crouch; does not replace the clip.
+   */
+  residualToStanceSec: number;
   /** Attack residual → another attack (短或不溶; default 0). */
   residualToAttackSec: number;
 };
@@ -30,16 +35,34 @@ export type ClipCategory =
   | 'hit'
   | 'other';
 
-function logicIdFromBinding(bindingKey: string): string {
-  return (bindingKey.split('::')[0] ?? bindingKey).toLowerCase();
+function bindingParts(bindingKey: string): { id: string; role: string } {
+  const raw = bindingKey.toLowerCase();
+  const [idPart, rolePart] = raw.split('::');
+  return {
+    id: idPart ?? raw,
+    role: rolePart ?? 'main',
+  };
 }
 
 /**
  * Classify a logic binding key (`logicId::role`) for the §3.11 table.
+ * Stance roles live under clipId `crouch` (e.g. crouch::crouch_to_stand).
  */
 export function categorizeBinding(bindingKey: string): ClipCategory {
   if (!bindingKey) return 'other';
-  const id = logicIdFromBinding(bindingKey);
+  const { id, role } = bindingParts(bindingKey);
+
+  // Role takes priority: stand↔crouch transition clips
+  if (
+    role === 'stand_to_crouch' ||
+    role === 'crouch_to_stand' ||
+    id === 'stand_to_crouch' ||
+    id === 'crouch_to_stand' ||
+    id.includes('stand_to_crouch') ||
+    id.includes('crouch_to_stand')
+  ) {
+    return 'stance';
+  }
 
   if (
     id === 'idle' ||
@@ -50,15 +73,6 @@ export function categorizeBinding(bindingKey: string): ClipCategory {
   ) {
     if (id.startsWith('walk')) return 'walk';
     return 'loco';
-  }
-
-  if (
-    id === 'stand_to_crouch' ||
-    id === 'crouch_to_stand' ||
-    id.includes('stand_to_crouch') ||
-    id.includes('crouch_to_stand')
-  ) {
-    return 'stance';
   }
 
   if (
@@ -107,15 +121,28 @@ export function resolveCrossfadeSec(
   // 受击等：通常不溶
   if (from === 'hit' || to === 'hit') return 0;
 
-  // 逻辑过渡片 / 跳冲：不靠溶图冒充
-  if (
-    from === 'stance' ||
-    to === 'stance' ||
-    from === 'jump' ||
-    to === 'jump' ||
-    from === 'dash' ||
-    to === 'dash'
-  ) {
+  // 跳：不溶
+  if (from === 'jump' || to === 'jump') {
+    return 0;
+  }
+
+  // 冲刺残留 → 待机/移动：可溶（§3.11 次要）
+  if (from === 'dash' && isMoveLike(to)) {
+    return Math.max(0, d.residualToMoveSec);
+  }
+
+  // 进/出冲刺其它边：硬切（跟手）
+  if (from === 'dash' || to === 'dash') {
+    return 0;
+  }
+
+  // 攻击残留 → 站↔蹲过渡（必接片仍播；只软化切入）
+  if (from === 'attack' && to === 'stance') {
+    return Math.max(0, d.residualToStanceSec);
+  }
+
+  // 其它涉及 stance 的边：默认可硬切（idle↔过渡姿势接近）
+  if (from === 'stance' || to === 'stance') {
     return 0;
   }
 
@@ -163,10 +190,13 @@ export function shouldLocoSoftBlendCompat(
   return isLocoSoftBinding(fromKey) && isLocoSoftBinding(toKey);
 }
 
-export function defaultCrossfadeDurations(partial?: Partial<CrossfadeDurations>): CrossfadeDurations {
+export function defaultCrossfadeDurations(
+  partial?: Partial<CrossfadeDurations>,
+): CrossfadeDurations {
   return {
     locoSec: partial?.locoSec ?? 0.12,
     residualToMoveSec: partial?.residualToMoveSec ?? 0.1,
+    residualToStanceSec: partial?.residualToStanceSec ?? 0.1,
     residualToAttackSec: partial?.residualToAttackSec ?? 0,
   };
 }

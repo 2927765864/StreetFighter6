@@ -3,6 +3,85 @@ import * as THREE from 'three/webgpu';
 /** Max texture edge after load — SF6 interim glb ships multiple 4K maps (~293MB). */
 const MAX_TEX_SIZE = 1024;
 
+/**
+ * External Ryu albedo pack — NOT embedded in esf001_TPose.fbx.
+ * Source on disk:
+ *   private/interim/characters/SF6 Ryu Model/SF6 Ryu textures/*_albdout.png
+ * Served by Vite middleware as /private-interim/...
+ *
+ * The TPose FBX only has media *names* (esf_Body00, …) with no image bytes
+ * and no real RelativeFilename paths, so FBXLoader cannot load textures from it.
+ */
+const RYU_ALBEDO_BASE =
+  '/private-interim/characters/SF6 Ryu Model/SF6 Ryu textures';
+
+const RYU_ALBEDO_FILES: Record<string, string> = {
+  head: 'esf001_000_00_head_albdout.png',
+  body: 'esf001_000_01_body_albdout.png',
+  hair: 'esf001_000_02_hair_albdout.png',
+  clotha: 'esf001_001_01_clotha_albdout.png',
+  clothb: 'esf001_001_01_clothb_albdout.png',
+  eye: 'esf001_000_00_eye_albdout.png',
+};
+
+let ryuAlbedoCatalog: Map<string, THREE.Texture> | null = null;
+let ryuAlbedoLoad: Promise<Map<string, THREE.Texture>> | null = null;
+
+/** Preload external Ryu albedo maps for mesh without embedded textures. */
+export async function ensureRyuFallbackAlbedoCatalog(): Promise<
+  Map<string, THREE.Texture>
+> {
+  if (ryuAlbedoCatalog) return ryuAlbedoCatalog;
+  if (!ryuAlbedoLoad) {
+    ryuAlbedoLoad = (async () => {
+      const map = new Map<string, THREE.Texture>();
+      const loader = new THREE.TextureLoader();
+      const entries = Object.entries(RYU_ALBEDO_FILES);
+      await Promise.all(
+        entries.map(async ([key, file]) => {
+          // Spaces in path must be encoded for fetch
+          const url = encodeURI(`${RYU_ALBEDO_BASE}/${file}`);
+          try {
+            const tex = await loader.loadAsync(url);
+            if (!isUsableTexture(tex)) {
+              console.warn(`[mat] albedo unusable after load ${url}`);
+              return;
+            }
+            tex.colorSpace = THREE.SRGBColorSpace;
+            tex.wrapS = THREE.ClampToEdgeWrapping;
+            tex.wrapT = THREE.ClampToEdgeWrapping;
+            // TextureLoader default flipY=true matches most PNG packs in Three
+            tex.flipY = true;
+            tex.name = `ryu_albd_${key}`;
+            tex.needsUpdate = true;
+            downscaleTexture(tex, MAX_TEX_SIZE);
+            if (!isUsableTexture(tex)) {
+              console.warn(`[mat] albedo unusable after downscale ${url}`);
+              return;
+            }
+            map.set(key, tex);
+          } catch (e) {
+            console.warn(`[mat] failed to load Ryu albedo ${url}`, e);
+          }
+        }),
+      );
+      const any =
+        map.get('clotha') ?? map.get('body') ?? map.get('head') ?? null;
+      if (any) map.set('__any_albd', any);
+      console.info(
+        `[mat] Ryu external albedos loaded: ${[...map.keys()].join(', ') || '(NONE — check /private-interim and restart vite)'}`,
+      );
+      ryuAlbedoCatalog = map;
+      return map;
+    })();
+  }
+  return ryuAlbedoLoad;
+}
+
+export function getRyuFallbackAlbedoCatalog(): Map<string, THREE.Texture> {
+  return ryuAlbedoCatalog ?? new Map();
+}
+
 /** Humanoid submesh AABB gate (meters in asset bind units, pre-normalize). */
 const OUTLIER_MAX_EXTENT = 4;
 const OUTLIER_MAX_CENTER = 6;
@@ -14,7 +93,13 @@ const OUTLIER_MAX_CENTER = 6;
  */
 export function sanitizeObjectMaterials(root: THREE.Object3D): void {
   const albedoByKey = collectAlbedoTextures(root);
+  // Prefer external interim pack (FBX has no embedded images)
+  for (const [k, tex] of getRyuFallbackAlbedoCatalog()) {
+    albedoByKey.set(k, tex);
+  }
 
+  let withMap = 0;
+  let solid = 0;
   root.traverse((o) => {
     const mesh = o as THREE.Mesh;
     if (!mesh.isMesh || !mesh.material) return;
@@ -27,7 +112,14 @@ export function sanitizeObjectMaterials(root: THREE.Object3D): void {
     const list = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
     const next = list.map((mat) => sanitizeOne(mat, mesh.name, albedoByKey));
     mesh.material = Array.isArray(mesh.material) ? next : next[0]!;
+    const m0 = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
+    const std = m0 as THREE.MeshStandardMaterial;
+    if (std?.map) withMap++;
+    else solid++;
   });
+  console.info(
+    `[mat] sanitize done maps=${withMap} solid=${solid} catalog=${albedoByKey.size}`,
+  );
 }
 
 /** Harvest every texture whose name looks like albedo, keyed by part hints. */
@@ -93,15 +185,37 @@ function pickAlbedo(
 ): THREE.Texture | null {
   const n = `${meshName} ${matName}`.toLowerCase();
   const order: string[] = [];
-  if (n.includes('hair') || n.includes('beard') || n.includes('brow') || n.includes('lash')) {
+  // HeadBand must win before bare "head" (name is esf_HeadBand).
+  if (n.includes('headband') || n.includes('head_band')) {
+    order.push('clotha', 'clothb');
+  } else if (
+    n.includes('hair') ||
+    n.includes('beard') ||
+    n.includes('brow') ||
+    n.includes('lash')
+  ) {
     order.push('hair');
-  } else if (n.includes('head') || n.includes('mouth')) {
+  } else if (n.includes('mouth')) {
+    order.push('head');
+  } else if (n.includes('head') || n.includes('face')) {
     order.push('head');
   } else if (n.includes('body') || n.includes('skin')) {
     order.push('body', 'head');
-  } else if (n.includes('waraji') || n.includes('pants') || n.includes('dougi') || n.includes('obi') || n.includes('sarashi') || n.includes('glove')) {
+  } else if (
+    n.includes('waraji') ||
+    n.includes('pants') ||
+    n.includes('dougi') ||
+    n.includes('obi') ||
+    n.includes('sarashi') ||
+    n.includes('glove')
+  ) {
     order.push('clothb', 'clotha');
-  } else if (n.includes('cloth') || n.includes('costume') || n.includes('headband') || n.includes('ring')) {
+  } else if (
+    n.includes('cloth') ||
+    n.includes('costume') ||
+    n.includes('ring') ||
+    n.includes('thread')
+  ) {
     order.push('clotha', 'clothb');
   } else if (n.includes('eye')) {
     order.push('eye', 'head');
@@ -127,6 +241,47 @@ function textureName(tex: THREE.Texture | null | undefined): string {
   ).toLowerCase();
 }
 
+/** FBX missing-media stand-ins (data:image/… 1×1) must not be used as albedo. */
+function isPlaceholderTexture(tex: THREE.Texture): boolean {
+  const label = textureName(tex);
+  if (label.includes('data:image') || label.includes('data:application')) {
+    return true;
+  }
+  const img = tex.image as { width?: number; height?: number } | undefined;
+  if (img && img.width === 1 && img.height === 1) return true;
+  return false;
+}
+
+/**
+ * WebGPU Textures.updateTexture reads `image.complete` — null image throws and
+ * blacks the canvas. Only pass fully-decoded bitmaps/canvases through.
+ */
+export function isUsableTexture(
+  tex: THREE.Texture | null | undefined,
+): tex is THREE.Texture {
+  if (!tex) return false;
+  const img = tex.image as
+    | HTMLImageElement
+    | ImageBitmap
+    | HTMLCanvasElement
+    | { width?: number; height?: number; complete?: boolean }
+    | null
+    | undefined;
+  if (img == null) return false;
+  if (typeof HTMLImageElement !== 'undefined' && img instanceof HTMLImageElement) {
+    return img.complete && img.naturalWidth > 0 && img.naturalHeight > 0;
+  }
+  if (typeof ImageBitmap !== 'undefined' && img instanceof ImageBitmap) {
+    return img.width > 0 && img.height > 0;
+  }
+  if (typeof HTMLCanvasElement !== 'undefined' && img instanceof HTMLCanvasElement) {
+    return img.width > 0 && img.height > 0;
+  }
+  const w = (img as { width?: number }).width ?? 0;
+  const h = (img as { height?: number }).height ?? 0;
+  return w > 0 && h > 0;
+}
+
 function isDataMapName(name: string): boolean {
   if (!name) return false;
   if (name.includes('albd')) return false;
@@ -141,46 +296,113 @@ function isDataMapName(name: string): boolean {
   );
 }
 
-function fallbackColor(meshName: string, matName: string): THREE.Color {
+/**
+ * Capcom RE albedos are often *neutral* (gray hair, undyed cloth). In-engine
+ * dyes come from cmask + costume params. Without that shader, multiply a part
+ * tint so MeshStandardMaterial looks like SF6 Ryu C1 defaults.
+ *
+ * When `hasMap`, body/head stay white (albedo already has skin/face color);
+ * hair/headband/belt still need a strong tint.
+ */
+function partColorTint(
+  meshName: string,
+  matName: string,
+  hasMap: boolean,
+): THREE.Color {
   const n = `${meshName} ${matName}`.toLowerCase();
-  if (n.includes('hair') || n.includes('beard') || n.includes('brow') || n.includes('lash')) {
-    return new THREE.Color(0x2a2420);
+
+  // --- always tint these (albedos are gray / undyed) ---
+  if (
+    n.includes('hair') ||
+    n.includes('beard') ||
+    n.includes('brow') ||
+    n.includes('lash')
+  ) {
+    // RE hair_albd is light gray; darken toward black/brown
+    return new THREE.Color(0x1a1410);
   }
-  if (n.includes('eye') && !n.includes('brow') && !n.includes('lash') && !n.includes('shadow')) {
-    return new THREE.Color(0xf5f5f5);
+  if (n.includes('headband') || n.includes('head_band')) {
+    // Classic Ryu red hachimaki (cmask dye slot, not in albedo)
+    return new THREE.Color(0xc41e1e);
   }
-  if (n.includes('body') || n.includes('head') || n.includes('mouth') || n.includes('skin')) {
-    return new THREE.Color(0xc68642);
+  if (n.includes('obisign') || n.includes('obi_sign')) {
+    return new THREE.Color(0x141414);
   }
-  if (n.includes('waraji') || n.includes('glove') || n.includes('ring')) {
-    return new THREE.Color(0x3d2b1f);
+  if (n.includes('obi') && !n.includes('sign')) {
+    // black belt
+    return new THREE.Color(hasMap ? 0x2a2a2a : 0x1a1a1a);
   }
-  if (n.includes('obi') || n.includes('sign') || n.includes('belt')) {
-    return new THREE.Color(0x1a1a1a);
+  if (n.includes('waraji')) {
+    return new THREE.Color(hasMap ? 0xb07a45 : 0x3d2b1f);
   }
-  // dougi — slightly warm off-white
-  return new THREE.Color(0xf2efe6);
+  if (n.includes('eyeshadow') || n.includes('eyetear')) {
+    return new THREE.Color(0x2a2220);
+  }
+  if (
+    n.includes('eye') &&
+    !n.includes('brow') &&
+    !n.includes('lash') &&
+    !n.includes('shadow')
+  ) {
+    return new THREE.Color(0xffffff);
+  }
+
+  // --- solid fallbacks when no map ---
+  if (!hasMap) {
+    if (
+      n.includes('body') ||
+      n.includes('head') ||
+      n.includes('mouth') ||
+      n.includes('skin') ||
+      n.includes('face')
+    ) {
+      return new THREE.Color(0xc68642);
+    }
+    if (n.includes('glove') || n.includes('ring')) {
+      return new THREE.Color(0x3d2b1f);
+    }
+    if (n.includes('sign') || n.includes('belt')) {
+      return new THREE.Color(0x1a1a1a);
+    }
+    // dougi / wraps
+    return new THREE.Color(0xf2efe6);
+  }
+
+  // textured skin / cloth / gloves: albedo carries detail
+  if (
+    n.includes('body') ||
+    n.includes('head') ||
+    n.includes('mouth') ||
+    n.includes('skin') ||
+    n.includes('face')
+  ) {
+    return new THREE.Color(0xffffff);
+  }
+  // gloves / hand wraps / pants / costume — keep fabric albedo
+  return new THREE.Color(0xffffff);
 }
 
 function prepareTexture(
   tex: THREE.Texture | null | undefined,
   colorSpace: THREE.ColorSpace,
 ): THREE.Texture | null {
-  if (!tex) return null;
+  if (!isUsableTexture(tex)) return null;
+  if (isPlaceholderTexture(tex)) return null;
   tex.colorSpace = colorSpace;
   tex.needsUpdate = true;
   downscaleTexture(tex, MAX_TEX_SIZE);
+  // downscale must not leave a broken image
+  if (!isUsableTexture(tex)) return null;
   return tex;
 }
 
 function downscaleTexture(tex: THREE.Texture, maxSize: number): void {
+  if (!isUsableTexture(tex)) return;
   const img = tex.image as
     | HTMLImageElement
     | ImageBitmap
     | HTMLCanvasElement
-    | { width: number; height: number }
-    | undefined;
-  if (!img || !('width' in img) || !('height' in img)) return;
+    | { width: number; height: number };
   const w = img.width;
   const h = img.height;
   if (!w || !h || (w <= maxSize && h <= maxSize)) return;
@@ -227,9 +449,13 @@ function sanitizeOne(
 
   let map = anyMat.map ?? null;
   const mapLabel = textureName(map);
+  // Drop broken / stub maps — null image kills WebGPU (image.complete)
+  if (map && (!isUsableTexture(map) || isPlaceholderTexture(map))) {
+    map = null;
+  }
   if (map && isDataMapName(mapLabel)) {
     const remapped = pickAlbedo(meshName, mat.name || '', albedoCatalog);
-    if (remapped) {
+    if (remapped && isUsableTexture(remapped)) {
       console.info(
         `[mat] ${meshName}/${mat.name}: remap data-map → albedo "${textureName(remapped).trim()}"`,
       );
@@ -244,30 +470,40 @@ function sanitizeOne(
 
   // If still no map, try catalog for this part
   if (!map) {
-    map = pickAlbedo(meshName, mat.name || '', albedoCatalog);
+    const picked = pickAlbedo(meshName, mat.name || '', albedoCatalog);
+    map = isUsableTexture(picked) ? picked : null;
   }
+  if (map && !isUsableTexture(map)) map = null;
 
   let normalMap = anyMat.normalMap ?? null;
   const nLabel = textureName(normalMap);
-  if (normalMap && (nLabel.includes('nrrc') || nLabel.includes('dmask') || nLabel.includes('msk'))) {
+  if (
+    !isUsableTexture(normalMap) ||
+    (normalMap != null && isPlaceholderTexture(normalMap)) ||
+    nLabel.includes('nrrc') ||
+    nLabel.includes('dmask') ||
+    nLabel.includes('msk')
+  ) {
     normalMap = null;
   }
-
-  const color =
-    map != null
-      ? new THREE.Color(0xffffff)
-      : fallbackColor(meshName, mat.name || '');
 
   map = prepareTexture(map, THREE.SRGBColorSpace);
   normalMap = prepareTexture(normalMap, THREE.NoColorSpace);
 
+  const matLabel = mat.name || '';
+  const color = partColorTint(meshName, matLabel, map != null);
+
   let transparent = Boolean(anyMat.transparent || (mat.opacity ?? 1) < 0.99);
   let opacity = typeof mat.opacity === 'number' ? mat.opacity : 1;
-  const n = `${meshName} ${mat.name}`.toLowerCase();
-  const isHair = n.includes('hair') || n.includes('lash') || n.includes('beard');
+  const n = `${meshName} ${matLabel}`.toLowerCase();
+  const isHair =
+    n.includes('hair') || n.includes('lash') || n.includes('beard');
+  const isHeadband = n.includes('headband') || n.includes('head_band');
   if (isHair) {
+    // Hair albedo is often fully opaque gray; alpha-test helps strand edges
+    // when alpha exists, and double-side fills thin cards.
     transparent = true;
-    opacity = Math.max(opacity, 0.9);
+    opacity = Math.max(opacity, 0.95);
   }
   if (opacity < 0.05) {
     opacity = 1;
@@ -275,7 +511,13 @@ function sanitizeOne(
   }
 
   const metalness = 0.05;
-  const roughness = isHair ? 0.55 : 0.72;
+  // Cloth slightly rougher; hair a bit shinier; headband fabric mid
+  let roughness = 0.72;
+  if (isHair) roughness = 0.58;
+  else if (isHeadband) roughness = 0.68;
+  else if (n.includes('body') || n.includes('head') || n.includes('skin')) {
+    roughness = 0.62;
+  }
 
   const out = new THREE.MeshStandardMaterial({
     name: mat.name ? `${mat.name}_safe` : 'sanitized',
@@ -294,11 +536,11 @@ function sanitizeOne(
     side: THREE.DoubleSide,
     depthWrite: !transparent,
     vertexColors: false,
-    alphaTest: transparent && isHair ? 0.2 : 0,
-    envMapIntensity: 0.3,
+    alphaTest: transparent && isHair ? 0.15 : 0,
+    envMapIntensity: 0.35,
   });
-  // Tiny emissive so dark maps never go pure black
-  out.emissive = color.clone().multiplyScalar(map ? 0.02 : 0.06);
+  // Tiny emissive so dark maps never go pure black under dim lights
+  out.emissive = color.clone().multiplyScalar(map ? 0.015 : 0.05);
   out.needsUpdate = true;
 
   mat.dispose();
@@ -342,16 +584,276 @@ export function looksLikeReExtractedModel(root: THREE.Object3D): boolean {
   return hit;
 }
 
-/** Reset FBX unit scales (0.01) on nodes and bones. Call again after skeleton.pose(). */
+/**
+ * Reset FBX unit scales on nodes and bones. Call again after skeleton.pose().
+ * - 0.01: classic RE/Noesis UnitScaleFactor (cm embedded as scale)
+ * - 100: Blender FBX export often stamps 100 on every mesh/armature/light
+ *
+ * Skips `root` itself (no intentional unit factor is stored there anymore).
+ */
 export function resetFbxUnitScales(root: THREE.Object3D): number {
   let n = 0;
   root.traverse((o) => {
+    if (o === root) return;
     if (isUniformNear(o.scale, 0.01)) {
+      o.scale.setScalar(1);
+      n++;
+      return;
+    }
+    // Blender binary FBX: scale is often exactly 100 (or 99.999…)
+    if (isUniformNear(o.scale, 100, 0.5)) {
       o.scale.setScalar(1);
       n++;
     }
   });
   return n;
+}
+
+/**
+ * Max local (geometry-space) extent across meshes. RE TPose body is ~160 "cm";
+ * meter glbs are ~1–2. Used for cm→m detection.
+ */
+export function maxLocalMeshExtent(root: THREE.Object3D): number {
+  let maxE = 0;
+  root.traverse((o) => {
+    const mesh = o as THREE.Mesh;
+    if (!mesh.isMesh || !mesh.geometry) return;
+    mesh.geometry.computeBoundingBox();
+    const bb = mesh.geometry.boundingBox;
+    if (!bb || bb.isEmpty()) return;
+    const s = bb.getSize(new THREE.Vector3());
+    maxE = Math.max(maxE, s.x, s.y, s.z);
+  });
+  return maxE;
+}
+
+/**
+ * Some RE FBX (e.g. esf001_TPose) store vertices + bone locals in centimeters
+ * while node scale is 1. Scaling only `root.scale *= 0.01` makes the bind pose
+ * look OK, but combat clips (meters on C_Hip.position) explode the skin:
+ * bind inverse expects hip ~105 while tracks set hip ~0.95.
+ *
+ * Bake ×0.01 into geometry + **all** node positions and rebind skeletons so
+ * anim tracks and bind pose share meter space. Idempotent via
+ * `userData.reMeterBaked`.
+ *
+ * **Call once on the loaded template before cloning P1/P2** (see
+ * {@link bakeRyuMeshTemplate}). Baking each clone separately breaks the second
+ * fighter.
+ */
+export function applyReCentimeterToMeterIfNeeded(root: THREE.Object3D): boolean {
+  if (root.userData?.reMeterBaked) return true;
+
+  const maxLocal = maxLocalMeshExtent(root);
+  // Local body ~1.5–2m (glb) vs ~80–200cm (TPose FBX). Threshold 20 separates them.
+  if (!(maxLocal >= 20 && maxLocal <= 500)) return false;
+
+  const s = 0.01;
+  /** Scale each unique BufferGeometry once (meshes often share geo). */
+  const scaledGeo = new Set<string>();
+  /** Scale each Bone/Object once (multi-mesh FBX duplicates bone objects). */
+  const scaledNode = new Set<string>();
+
+  root.traverse((o) => {
+    if (o === root) return;
+    if (!scaledNode.has(o.uuid)) {
+      scaledNode.add(o.uuid);
+      o.position.multiplyScalar(s);
+      // Keep matrix in sync when loaders left matrix stale vs position
+      o.updateMatrix();
+    }
+
+    const mesh = o as THREE.Mesh;
+    if (!mesh.isMesh || !mesh.geometry) return;
+    const id = mesh.geometry.uuid;
+    if (scaledGeo.has(id)) return;
+    scaledGeo.add(id);
+    // In-place: call {@link bakeRyuMeshTemplate} once on the loaded scene
+    // *before* SkeletonUtils.clone for P1/P2. Per-clone bake corrupts the
+    // second fighter (pose/boneInverses interact badly across clones).
+    mesh.geometry.scale(s, s, s);
+    mesh.geometry.computeBoundingBox();
+    mesh.geometry.computeBoundingSphere();
+  });
+
+  const seenSkel = new Set<THREE.Skeleton>();
+  root.updateMatrixWorld(true);
+  root.traverse((o) => {
+    const sm = o as THREE.SkinnedMesh;
+    if (!sm.isSkinnedMesh || !sm.skeleton) return;
+
+    if (!seenSkel.has(sm.skeleton)) {
+      seenSkel.add(sm.skeleton);
+      for (const bone of sm.skeleton.bones) {
+        bone.updateMatrix();
+      }
+      sm.skeleton.calculateInverses();
+    }
+    // Rebind so boneInverses match scaled bind pose
+    sm.bind(sm.skeleton, sm.bindMatrix);
+  });
+
+  root.scale.set(1, 1, 1);
+  root.userData.reMeterBaked = true;
+  delete root.userData.reMeterScale;
+  root.updateMatrixWorld(true);
+
+  console.info(
+    `[re-extract] cm→m baked geo+positions (maxLocal was ${maxLocal.toFixed(2)}) ` +
+      `nodes=${scaledNode.size} skeletons=${seenSkel.size}`,
+  );
+  return true;
+}
+
+/**
+ * FBXLoader often builds **one Skeleton per SkinnedMesh**, each with its own
+ * Bone objects (same names, different UUIDs). AnimationMixer tracks resolve
+ * `C_Hip.position` to a single node — only one mesh deforms; the rest stay at
+ * bind or partially follow a broken parent chain → visible explosion.
+ *
+ * Rebind every mesh so skin indices still match order, but bone *objects* are
+ * the primary armature's bones (by name). Safe no-op when already shared.
+ *
+ * Call **after** cm→m bake / pose, **before** SkeletonUtils.clone.
+ */
+export function unifySkinnedMeshSkeletons(root: THREE.Object3D): number {
+  if (root.userData?.reSkeletonsUnified) return 0;
+
+  const meshes: THREE.SkinnedMesh[] = [];
+  root.traverse((o) => {
+    const sm = o as THREE.SkinnedMesh;
+    if (sm.isSkinnedMesh && sm.skeleton?.bones?.length) meshes.push(sm);
+  });
+  if (meshes.length < 2) {
+    root.userData.reSkeletonsUnified = true;
+    return 0;
+  }
+
+  // Prefer the fullest body rig (most bones); ties → first.
+  let primary = meshes[0]!;
+  for (const m of meshes) {
+    if (m.skeleton.bones.length > primary.skeleton.bones.length) primary = m;
+  }
+
+  const byName = new Map<string, THREE.Bone>();
+  for (const b of primary.skeleton.bones) {
+    if (!byName.has(b.name)) byName.set(b.name, b);
+  }
+
+  let rebound = 0;
+  for (const mesh of meshes) {
+    if (mesh === primary) continue;
+    const srcBones = mesh.skeleton.bones;
+    const ordered: THREE.Bone[] = [];
+    const inverses: THREE.Matrix4[] = [];
+    let mapped = 0;
+    for (let i = 0; i < srcBones.length; i++) {
+      const src = srcBones[i]!;
+      const shared = byName.get(src.name);
+      if (shared) {
+        ordered.push(shared);
+        const pi = primary.skeleton.bones.indexOf(shared);
+        inverses.push(
+          (pi >= 0
+            ? primary.skeleton.boneInverses[pi]
+            : mesh.skeleton.boneInverses[i]
+          )!.clone(),
+        );
+        mapped++;
+      } else {
+        // Mesh-only helper bone (rare): keep private bone + inverse
+        ordered.push(src);
+        inverses.push(mesh.skeleton.boneInverses[i]!.clone());
+      }
+    }
+    // Only rebind when we actually point at primary bones
+    if (mapped === 0) continue;
+    const alreadyShared = srcBones.every((b, i) => b === ordered[i]);
+    if (alreadyShared) continue;
+    mesh.bind(new THREE.Skeleton(ordered, inverses), mesh.bindMatrix);
+    rebound++;
+  }
+
+  root.userData.reSkeletonsUnified = true;
+  if (rebound > 0) {
+    console.info(
+      `[re-extract] unified skeletons: primaryBones=${primary.skeleton.bones.length} ` +
+        `meshes=${meshes.length} rebound=${rebound}`,
+    );
+  }
+  return rebound;
+}
+
+/**
+ * One-shot template prepare for Ryu FBX/glb: clutter strip, unit fix, cm→m bake,
+ * skeleton unify. Run on the scene returned by the mesh loader **before**
+ * installFromTemplate clones for P1/P2.
+ */
+export function bakeRyuMeshTemplate(root: THREE.Object3D): void {
+  if (root.userData?.ryuTemplateBaked) return;
+  const prepared = prepareReExtractedFighter(root, []);
+  // FBX multi-mesh: share one armature so mixer tracks drive every SkinnedMesh
+  unifySkinnedMeshSkeletons(root);
+  // Assign external albedos on the template so SkeletonUtils.clone shares
+  // textured materials (FBX itself has no image embeds).
+  sanitizeObjectMaterials(root);
+  root.userData.ryuTemplateBaked = true;
+  // Only mark meter-baked when prepare actually did (or mesh already meters)
+  if (prepared.applied || root.userData?.reMeterBaked) {
+    root.userData.reMeterBaked = true;
+  } else if (maxLocalMeshExtent(root) < 20) {
+    // Already meter-scale glb
+    root.userData.reMeterBaked = true;
+  }
+  console.info(
+    `[re-extract] mesh template baked (clone-safe for P1/P2) reExtract=${prepared.applied ? 1 : 0} ` +
+      `reMeterBaked=${root.userData.reMeterBaked ? 1 : 0}`,
+  );
+}
+
+/**
+ * Drop Blender/FBX scene clutter that inflates world bounds:
+ * lights, cameras, non-skinned helper meshes (e.g. leftover 棱角球 / icosphere).
+ * Keeps SkinnedMesh + Armature/bones only.
+ */
+export function stripFbxSceneClutter(root: THREE.Object3D): number {
+  const doomed: THREE.Object3D[] = [];
+  root.traverse((o) => {
+    if (o === root) return;
+    const any = o as THREE.Object3D & {
+      isLight?: boolean;
+      isCamera?: boolean;
+    };
+    if (any.isLight || any.isCamera) {
+      doomed.push(o);
+      return;
+    }
+    const mesh = o as THREE.Mesh;
+    const skinned = o as THREE.SkinnedMesh;
+    if (mesh.isMesh && !skinned.isSkinnedMesh) {
+      doomed.push(o);
+    }
+  });
+  // Remove deepest-first so parent walks stay valid
+  doomed.sort((a, b) => {
+    let da = 0;
+    let db = 0;
+    for (let p = a.parent; p; p = p.parent) da++;
+    for (let p = b.parent; p; p = p.parent) db++;
+    return db - da;
+  });
+  const names: string[] = [];
+  for (const o of doomed) {
+    names.push(o.name || o.type);
+    o.parent?.remove(o);
+  }
+  if (names.length > 0) {
+    console.info(
+      `[re-extract] stripped ${names.length} FBX clutter: ${names.slice(0, 12).join(', ')}` +
+        (names.length > 12 ? '…' : ''),
+    );
+  }
+  return doomed.length;
 }
 
 /**
@@ -528,6 +1030,10 @@ export function prepareReExtractedFighter(
   const isRe = looksLikeReExtractedModel(model) || hasToxicPos;
   if (!isRe) return { animations, applied: false, unitScalesFixed: 0 };
 
+  // Blender FBX often includes lights/cameras + helper meshes (棱角球) that
+  // make isReasonableFighter fail (height > 4 or depth spikes).
+  stripFbxSceneClutter(model);
+
   const poseModel = opts?.poseModel !== false;
   let unitScalesFixed = 0;
 
@@ -550,6 +1056,18 @@ export function prepareReExtractedFighter(
       if (sm.isSkinnedMesh && sm.skeleton) sm.skeleton.update();
     });
     model.updateMatrixWorld(true);
+
+    // esf001_TPose-style: vertices + bone locals in cm, node scale already 1
+    if (applyReCentimeterToMeterIfNeeded(model)) {
+      unitScalesFixed += 1;
+      model.traverse((o) => {
+        const sm = o as THREE.SkinnedMesh;
+        if (sm.isSkinnedMesh && sm.skeleton) sm.skeleton.update();
+      });
+    }
+
+    // After units are stable, collapse per-mesh FBX skeletons onto one armature
+    unifySkinnedMeshSkeletons(model);
   }
 
   const cleaned = sanitizeReAnimationClips(animations);
@@ -561,7 +1079,13 @@ export function prepareReExtractedFighter(
 }
 
 /**
- * Detach meshes with absurd local bounds (Eye Tear at z≈-163).
+ * Detach meshes with absurd **world** bounds (e.g. Eye Tear floating far away).
+ * Uses world AABB so cm-space geometry is safe after root ×0.01 (see
+ * {@link applyReCentimeterToMeterIfNeeded}); local-only checks would delete
+ * the whole TPose body (extent ~160 "cm").
+ *
+ * Safety: if the rule would remove ≥ half of skinned meshes, abort (unit-scale
+ * still wrong) rather than leaving an empty fighter.
  * Returns number of meshes removed.
  */
 export function pruneOutlierMeshes(
@@ -569,28 +1093,59 @@ export function pruneOutlierMeshes(
   maxExtent = OUTLIER_MAX_EXTENT,
   maxCenter = OUTLIER_MAX_CENTER,
 ): number {
+  // Ensure intentional cm→m root scale survived pose/reset.
+  applyReCentimeterToMeterIfNeeded(root);
+
   const doomed: THREE.Mesh[] = [];
+  let skinnedTotal = 0;
   root.updateMatrixWorld(true);
+  const worldBb = new THREE.Box3();
   root.traverse((o) => {
     const mesh = o as THREE.Mesh;
     if (!mesh.isMesh || !mesh.geometry) return;
+    const sm = o as THREE.SkinnedMesh;
+    if (sm.isSkinnedMesh) skinnedTotal++;
+
     mesh.geometry.computeBoundingBox();
     const bb = mesh.geometry.boundingBox;
     if (!bb || bb.isEmpty()) return;
-    const size = bb.getSize(new THREE.Vector3());
-    const center = bb.getCenter(new THREE.Vector3());
+    worldBb.copy(bb).applyMatrix4(mesh.matrixWorld);
+    if (worldBb.isEmpty()) return;
+    const size = worldBb.getSize(new THREE.Vector3());
+    const center = worldBb.getCenter(new THREE.Vector3());
     const extent = Math.max(size.x, size.y, size.z);
     const far = Math.max(Math.abs(center.x), Math.abs(center.y), Math.abs(center.z));
     if (extent > maxExtent || far > maxCenter) {
-      console.warn(
-        `[prune] remove outlier "${mesh.name}" extent=${extent.toFixed(2)} ` +
-          `centerFar=${far.toFixed(2)} center=(${center.x.toFixed(2)},${center.y.toFixed(2)},${center.z.toFixed(2)})`,
-      );
       doomed.push(mesh);
     }
   });
 
+  const doomedSkinned = doomed.filter((m) => (m as THREE.SkinnedMesh).isSkinnedMesh)
+    .length;
+  if (skinnedTotal > 0 && doomedSkinned >= Math.max(1, Math.ceil(skinnedTotal * 0.5))) {
+    console.warn(
+      `[prune] aborted: would remove ${doomedSkinned}/${skinnedTotal} skinned ` +
+        `(unit scale still wrong?). Keep meshes; check reMeterScale.`,
+    );
+    return 0;
+  }
+
   for (const mesh of doomed) {
+    const size = new THREE.Vector3();
+    const center = new THREE.Vector3();
+    mesh.geometry.computeBoundingBox();
+    const bb = mesh.geometry.boundingBox;
+    if (bb) {
+      worldBb.copy(bb).applyMatrix4(mesh.matrixWorld);
+      worldBb.getSize(size);
+      worldBb.getCenter(center);
+    }
+    const extent = Math.max(size.x, size.y, size.z);
+    const far = Math.max(Math.abs(center.x), Math.abs(center.y), Math.abs(center.z));
+    console.warn(
+      `[prune] remove outlier "${mesh.name}" extent=${extent.toFixed(2)} ` +
+        `centerFar=${far.toFixed(2)} center=(${center.x.toFixed(2)},${center.y.toFixed(2)},${center.z.toFixed(2)})`,
+    );
     mesh.parent?.remove(mesh);
     // do not dispose shared materials/geo still referenced by template clones
   }

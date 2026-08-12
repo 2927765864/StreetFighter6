@@ -62,8 +62,8 @@ export class Fighter {
   /** Last selfMovement dx applied (debug). */
   lastSelfDx = 0;
   /**
-   * After logic total ends: keep attack clip on a 60Hz visual timeline until
-   * animFrameCount or player interrupts (consensus §3.7.1).
+   * After logic total ends: keep attack/dash clip on a 60Hz visual timeline until
+   * animFrameCount or player interrupts (consensus §3.7.1, incl. dash residual).
    */
   animTail: {
     clipId: string;
@@ -74,6 +74,10 @@ export class Fighter {
     /** Posture family of the finished move (compatibility vs hold). */
     stance: MoveStance;
   } | null = null;
+  /** Logic dash length for residual (set in startDash). */
+  private dashLogicFrames = 0;
+  /** glb/map frame count for dash residual; 0 = use logic only. */
+  private dashAnimFrameCount = 0;
   /** Stand↔crouch transition machine (§3.7.2). */
   stanceState: StanceState = initialStanceState(false);
   stanceCfg: StanceFrameConfig = { ...DEFAULT_STANCE_FRAMES };
@@ -139,7 +143,7 @@ export class Fighter {
     return this.stanceState.seg !== 'none';
   }
 
-  /** True while presentation is finishing attack clip after logic total. */
+  /** True while presentation is finishing attack/dash clip after logic total. */
   get hasAnimTail(): boolean {
     return this.animTail != null;
   }
@@ -176,33 +180,57 @@ export class Fighter {
     return null;
   }
 
-  private beginAnimTail(move: MoveDefinition): void {
-    const logicTotal = Math.max(1, move.frames.total);
+  /**
+   * Shared residual start for attack / dash (§3.7.1).
+   * visualFrame starts at logicTotal (first residual sample).
+   */
+  private beginClipAnimTail(
+    clipId: string,
+    logicTotal: number,
+    animFrameCount: number | null | undefined,
+    stance: MoveStance,
+  ): void {
+    const total = Math.max(1, Math.floor(logicTotal));
     const animN = Math.max(
-      logicTotal,
-      move.animFrameCount != null && move.animFrameCount > 0
-        ? Math.floor(move.animFrameCount)
-        : logicTotal,
+      total,
+      animFrameCount != null && animFrameCount > 0
+        ? Math.floor(animFrameCount)
+        : total,
     );
-    const moveStance = inferMoveStance(move);
-    const crouch = moveStance === 'crouch';
-    if (animN <= logicTotal) {
+    const crouch = stance === 'crouch';
+    if (animN <= total) {
       this.animTail = null;
       this.stanceState = clearStanceTo(crouch);
       this.applyStancePresentation();
       return;
     }
     this.animTail = {
-      clipId: move.clipId,
-      visualFrame: logicTotal,
+      clipId,
+      visualFrame: total,
       animFrameCount: animN,
-      logicTotal,
-      stance: moveStance,
+      logicTotal: total,
+      stance,
     };
-    this.clipId = move.clipId;
+    this.clipId = clipId;
     this.animRole = 'main';
     this.stanceState = clearStanceTo(crouch);
     this.phase = crouch ? 'crouch' : 'idle';
+  }
+
+  private beginAnimTail(move: MoveDefinition): void {
+    this.beginClipAnimTail(
+      move.clipId,
+      move.frames.total,
+      move.animFrameCount,
+      inferMoveStance(move),
+    );
+  }
+
+  private beginDashAnimTail(): void {
+    const logic = Math.max(1, this.dashLogicFrames);
+    const anim =
+      this.dashAnimFrameCount > 0 ? this.dashAnimFrameCount : logic;
+    this.beginClipAnimTail(this.clipId, logic, anim, 'stand');
   }
 
   /** Advance residual one logic tick; clear when done → stance idle clip. */
@@ -286,11 +314,21 @@ export class Fighter {
     this.lastSelfDx = 0;
   }
 
-  startDash(fwd: boolean, frames: number): void {
+  /**
+   * @param frames logic dash length (19/23) — displacement & canAct gate
+   * @param animFrameCount glb/map frames for residual; omit/≤frames → no residual
+   */
+  startDash(fwd: boolean, frames: number, animFrameCount?: number): void {
     this.clearAnimTail();
     this.stanceState = clearStanceTo(false);
     this.phase = 'dash';
-    this.stateTimer = frames;
+    const logic = Math.max(1, Math.floor(frames));
+    this.stateTimer = logic;
+    this.dashLogicFrames = logic;
+    this.dashAnimFrameCount =
+      animFrameCount != null && animFrameCount > 0
+        ? Math.floor(animFrameCount)
+        : logic;
     this.dashDir = (fwd ? this.facing : ((-this.facing) as Facing));
     this.mover.move = null;
     this.clipId = fwd ? 'dash_fwd' : 'dash_back';
@@ -366,7 +404,10 @@ export class Fighter {
   advance(opts: {
     airFrames: number;
     landingFrames: number;
+    /** Fallback average step if dashDx missing. */
     dashSpeed: number;
+    /** Per-frame |dx| for current dash (front-heavy profile). */
+    dashDx?: number[];
     applySelfMovement?: boolean;
     selfMovementScale?: number;
     jumpApex?: number;
@@ -418,16 +459,26 @@ export class Fighter {
       return;
     }
     if (this.phase === 'dash') {
-      this.x += this.dashDir * opts.dashSpeed;
+      // Frame index 0..N-1 while stateTimer counts N..1 (A=B movement window)
+      const total = Math.max(1, this.dashLogicFrames);
+      const fi = Math.min(
+        total - 1,
+        Math.max(0, total - this.stateTimer),
+      );
+      const table = opts.dashDx;
+      const step =
+        table && table.length > 0
+          ? (table[fi] ?? table[table.length - 1] ?? opts.dashSpeed)
+          : opts.dashSpeed;
+      this.x += this.dashDir * step;
+      this.lastSelfDx = this.dashDir * step;
       this.stateTimer -= 1;
-      this.jumpFrame = Math.max(0, (opts as { dashFrames?: number }).dashFrames
-        ? 0
-        : this.jumpFrame);
-      // dash local frame for scrub: use remaining inverted in view
+      this.jumpFrame = 0;
+      // Logic dash ends: canAct + stop displacement; optional anim residual
       if (this.stateTimer <= 0) {
         this.phase = 'idle';
-        this.clipId = 'idle';
-        this.animRole = 'main';
+        this.y = 0;
+        this.beginDashAnimTail();
       }
       return;
     }

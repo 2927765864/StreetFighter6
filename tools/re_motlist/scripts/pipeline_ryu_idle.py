@@ -8,13 +8,14 @@ CRITICAL:
 
 Stages:
   mesh  — import 00/01/02 with materials, save mesh-only blend (validate look)
-  full  — mesh + one or more idle motlist clips + blend/fbx/glb per clip
+  full  — mesh + idle motlist clips (default 0,1,3) + blend/fbx/glb per clip
 
 Usage examples (do not run full until mesh stage is approved):
 
   Blender --background --python pipeline_ryu_idle.py -- --stage mesh
   Blender --background --python pipeline_ryu_idle.py -- --stage full
-  Blender --background --python pipeline_ryu_idle.py -- --stage full --clips 0,1
+  Blender --background --python pipeline_ryu_idle.py -- --stage full --clips 0
+  Blender --background --python pipeline_ryu_idle.py -- --stage full --compare-noesis
 """
 
 from __future__ import annotations
@@ -39,6 +40,9 @@ NOESIS_SOURCE_FPS = 25
 # Special idle pipeline default clips (motlist esf001v00_idle):
 #   0 BAS_STD_Loop, 1 BAS_TRN_STD, 3 BAS_STD_IDLING_Loop
 DEFAULT_CLIPS = (0, 1, 3)
+DEFAULT_NOESIS_FBX = Path(
+    "/Users/yangjianlin/Documents/SF6_export/noesis_out/noesis_idle_out.fbx"
+)
 
 
 def _parse_args(argv):
@@ -59,14 +63,14 @@ def _parse_args(argv):
         "--clip",
         type=int,
         default=None,
-        help="Single clip index (legacy). Prefer --clips for multi-clip.",
+        help="Single clip index (default 0 = BAS_STD_Loop).",
     )
     ap.add_argument(
         "--clips",
         type=str,
         default=None,
         help="Comma-separated clip indices, e.g. 0,1,3 "
-        f"(default: {','.join(str(i) for i in DEFAULT_CLIPS)} if neither --clips nor --clip).",
+        f"(default: {','.join(str(i) for i in DEFAULT_CLIPS)}).",
     )
     ap.add_argument(
         "--parts",
@@ -81,11 +85,8 @@ def _parse_args(argv):
     ap.add_argument(
         "--noesis-fbx",
         type=Path,
-        default=Path(
-            "/Users/yangjianlin/Documents/SF6_export/noesis_out/"
-            "esf001v00_idle_00_1animationtest.fbx"
-        ),
-        help="Noesis ground-truth FBX for optional bake or --compare-noesis.",
+        default=DEFAULT_NOESIS_FBX,
+        help="Noesis ground-truth FBX (default: noesis_idle_out.fbx).",
     )
     ap.add_argument(
         "--noesis-clip",
@@ -96,13 +97,18 @@ def _parse_args(argv):
     ap.add_argument(
         "--use-noesis-fbx",
         action="store_true",
-        help="OPT-IN: bake --noesis-clip from Noesis FBX (skips mot bind). "
-        "Default is always mot absolute full-chain (real pipeline).",
+        help="Bake from Noesis FBX via swing-align (experimental; default OFF).",
+    )
+    ap.add_argument(
+        "--mot-bind",
+        action="store_true",
+        default=True,
+        help="Mot absolute full-chain dense lerp (default ON for RE Mesh skin).",
     )
     ap.add_argument(
         "--no-noesis-fbx",
         action="store_true",
-        help="Deprecated alias: mot-only (now the default). Kept for scripts.",
+        help="Force mot-only (same as default).",
     )
     ap.add_argument(
         "--compare-noesis",
@@ -173,6 +179,43 @@ def _iter_action_fcurves(action):
             for bag in bags:
                 for fc in bag.fcurves:
                     yield fc
+
+
+def _remap_action_keys_to_logical_60(
+    action,
+    *,
+    logical_frames: int,
+    export_fps: int = EXPORT_FPS,
+) -> tuple:
+    """
+    Noesis FBX often stores ~N dense keys on a wrong scene clock (e.g. 25fps,
+    frame_range ~1..330 for a 396-frame @60 idle → looks like 13.2s).
+
+    Re-time by **key index** so key i → frame i, duration = logical_frames/export_fps.
+    """
+    n = max(1, int(logical_frames))
+    # Collect per-fcurve sorted points; reassign frames 0..n-1 (or 0..n if n+1 keys)
+    for fc in _iter_action_fcurves(action):
+        pts = list(fc.keyframe_points)
+        if not pts:
+            continue
+        pts.sort(key=lambda k: k.co[0])
+        m = len(pts)
+        for i, kp in enumerate(pts):
+            # Map first..last key onto 0..n (inclusive end like mot frame_count)
+            if m == 1:
+                fr = 0.0
+            else:
+                fr = (i / (m - 1)) * float(n)
+            kp.co[0] = fr
+            kp.handle_left[0] = fr
+            kp.handle_right[0] = fr
+            kp.interpolation = "LINEAR"
+        try:
+            fc.update()
+        except Exception:
+            pass
+    return 0, n
 
 
 def _rescale_action_frames(action, scale: float, *, origin: float = 0.0) -> None:
@@ -812,22 +855,39 @@ def main():
                 f"clip index {idx} out of range 0..{n_mots - 1} for {motlist.name}"
             )
 
-    # Default: ALWAYS mot absolute full-chain (real pipeline).
-    # --use-noesis-fbx is opt-in only (copies GT; does not test bind).
+    # Special idle default: bake from Noesis GT (noesis_idle_out.fbx) so delivery
+    # matches the known-good export. --mot-bind / --no-noesis-fbx uses mot path.
     noesis_fbx = Path(os.path.normpath(str(args.noesis_fbx.expanduser())))
     if not noesis_fbx.is_file():
         print(f"[pipeline] Noesis FBX not found: {noesis_fbx}")
         noesis_fbx = None
 
+    # Default: mot dense lerp. Noesis bake only if explicitly --use-noesis-fbx
+    # and not forced mot.
+    want_noesis = bool(args.use_noesis_fbx) and not bool(args.no_noesis_fbx)
+    # argparse store_true default True on mot_bind is awkward if both flags;
+    # explicit --use-noesis-fbx wins only when set.
+    if getattr(args, "use_noesis_fbx", False) and "--use-noesis-fbx" in (
+        sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else sys.argv
+    ):
+        want_noesis = True
+    else:
+        want_noesis = False
+    if want_noesis and noesis_fbx is None:
+        print("[pipeline] WARN: Noesis bake requested but FBX missing → fall back to mot")
+        want_noesis = False
+
     multi = len(clip_indices) > 1
     clip_summaries: List[str] = []
-    # Legacy single-clip names when only clip 0 is requested (compat with docs)
+    # Only pure single-clip runs use the short ryu_c1_idle.* stem for every file.
+    # Multi (default 0,1,3): per-clip stems + alias clip0 → ryu_c1_idle.*.
     legacy_single = clip_indices == [0]
     compare_reports: List[dict] = []
 
     for n_done, idx in enumerate(clip_indices):
         mot = mlist.mots[idx]
         base = mot.base_name or f"clip{idx}"
+        logical_frames = max(1, int(round(float(mot.frame_count or 1))))
         print(
             f"\n[pipeline] === clip {idx} ({n_done + 1}/{len(clip_indices)}) "
             f"{base} frames={mot.frame_count} ==="
@@ -842,24 +902,37 @@ def main():
         bpy.context.view_layer.objects.active = arm
         arm.select_set(True)
 
-        use_noesis = (
-            bool(args.use_noesis_fbx)
-            and not args.no_noesis_fbx
-            and noesis_fbx is not None
-            and idx == args.noesis_clip
-        )
+        use_noesis = want_noesis and noesis_fbx is not None and idx == args.noesis_clip
         if use_noesis:
             print(f"[pipeline] baking animation from Noesis FBX: {noesis_fbx}")
+            # Disconnect driven bones so hip location from Noesis evaluates
+            try:
+                bpy.ops.object.mode_set(mode="EDIT")
+                n_disc = 0
+                for eb in arm.data.edit_bones:
+                    if eb.use_connect and eb.name != "Root":
+                        eb.use_connect = False
+                        n_disc += 1
+                bpy.ops.object.mode_set(mode="OBJECT")
+                if n_disc:
+                    print(f"[pipeline] disconnected {n_disc} bones before Noesis bake")
+            except Exception as e:
+                print(f"[pipeline] WARN disconnect: {e}")
+                try:
+                    bpy.ops.object.mode_set(mode="OBJECT")
+                except Exception:
+                    pass
             action, stats = bi.apply_action_from_noesis_fbx(
                 arm,
                 str(noesis_fbx),
                 action_name=(base or "Noesis_Idle")[:63],
+                logical_frames=logical_frames,
             )
             bind_mode = "noesis_fbx"
         else:
             print(
                 "[pipeline] mot absolute full-chain "
-                f"(quat=mot_conjugate; use_noesis={bool(args.use_noesis_fbx)})"
+                "(quat=mot_conjugate; dense_lerp_slerp)"
             )
             action, stats = bi.apply_animation_mot_absolute_full_chain(
                 arm,
@@ -876,25 +949,22 @@ def main():
             f"[pipeline] action={action.name} bind={bind_mode} stats={stats}"
         )
 
-        # Delivery clock is always EXPORT_FPS (60). Mot keys are already in
-        # logical frames at 60. Noesis bake keys are at NOESIS_SOURCE_FPS — remap.
+        # Delivery clock is always EXPORT_FPS (60).
         export_fps = int(EXPORT_FPS)
-        if bind_mode == "noesis_fbx" and stats.get("frame_start") is not None:
-            f0 = int(stats["frame_start"])
-            f1 = int(stats["frame_end"])
-            scale = float(export_fps) / float(NOESIS_SOURCE_FPS)
+        if bind_mode == "noesis_fbx":
+            # World-bake already keys 0..logical_frames
+            frame_start = int(stats.get("frame_start", 0))
+            frame_end = int(stats.get("frame_end", logical_frames))
             print(
-                f"[pipeline] remap Noesis keys {f0}..{f1} @{NOESIS_SOURCE_FPS}fps "
-                f"→ ×{scale:.4f} for {export_fps}fps export"
+                f"[pipeline] Noesis world-bake timeline "
+                f"frames {frame_start}..{frame_end} @{export_fps}fps "
+                f"(duration {frame_end / export_fps:.3f}s)"
             )
-            _rescale_action_frames(action, scale, origin=float(f0))
-            frame_start = int(round(f0 * scale)) if f0 else 0
-            frame_end = int(round(f1 * scale))
         else:
             frame_start = 0
-            frame_end = max(1, int(round(float(anim.frame_count))))
+            frame_end = logical_frames
 
-        # Optional quantitative compare BEFORE stripping other actions / export
+        # Optional quantitative compare (mot path only; noesis bake is GT copy)
         if (
             args.compare_noesis
             and noesis_fbx is not None
@@ -911,7 +981,6 @@ def main():
                 frames=(0, 1, 30, 60, 120),
                 mot_frame_count=float(mot.frame_count or 1),
             )
-            # Re-bind our action after compare FBX import side effects
             if arm.animation_data:
                 arm.animation_data.action = action
             cmp["clip"] = idx
@@ -932,6 +1001,28 @@ def main():
             frame_end=frame_end,
         )
         scene = bpy.context.scene
+
+        # FBX exporters often re-encode connected bones and drop hip location.
+        # Keep C_Hip (and any driven bone) disconnected so location keys survive.
+        try:
+            bpy.context.view_layer.objects.active = arm
+            bpy.ops.object.mode_set(mode="EDIT")
+            n_disc = 0
+            for eb in arm.data.edit_bones:
+                if eb.name == "Root":
+                    continue
+                if eb.use_connect:
+                    eb.use_connect = False
+                    n_disc += 1
+            bpy.ops.object.mode_set(mode="OBJECT")
+            if n_disc:
+                print(f"[pipeline] pre-export disconnected {n_disc} bones (FBX hip loc)")
+        except Exception as e:
+            print(f"[pipeline] WARN pre-export disconnect: {e}")
+            try:
+                bpy.ops.object.mode_set(mode="OBJECT")
+            except Exception:
+                pass
 
         bpy.ops.object.select_all(action="DESELECT")
         arm.select_set(True)

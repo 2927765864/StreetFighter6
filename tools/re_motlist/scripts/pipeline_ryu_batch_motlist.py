@@ -3,7 +3,9 @@ Batch Ryu pipeline: RE Mesh (once) + every clip in a motlist → named GLBs.
 
 Parity with the validated special idle pipeline (pipeline_ryu_idle.py):
   • bind: mot absolute full-chain + Mot quaternion conjugate
-  • export: locked 60 fps, single Action per GLB
+  • sample: dense 0..N logical frames + lerp/slerp (no sparse hold)
+  • connect: disconnect driven/connected bones so hip location survives
+  • export: locked 60 fps, single Action per GLB; pre-export disconnect
   • Noesis FBX: OPT-IN only (--use-noesis-fbx), not the default
 
 Usage (Blender headless):
@@ -29,7 +31,7 @@ import re
 import sys
 import traceback
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence
 
 
 DEFAULT_EXPORT_ROOT = Path("/Users/yangjianlin/Documents/SF6_export")
@@ -38,13 +40,15 @@ DEFAULT_IDLE_MOTLIST = (
     DEFAULT_NATIVES_STM
     / "product/animation/esf/esf001/v00/motionlist/basic/esf001v00_idle.motlist.653"
 )
+# Same GT as special idle pipeline (compare / optional bake only)
 DEFAULT_NOESIS_IDLE = (
-    DEFAULT_EXPORT_ROOT / "noesis_out" / "esf001v00_idle_00_1animationtest.fbx"
+    DEFAULT_EXPORT_ROOT / "noesis_out" / "noesis_idle_out.fbx"
 )
 
 # Delivery contract (must match pipeline_ryu_idle.EXPORT_FPS / bind)
 BIND_MODE_DEFAULT = "mot_absolute_full_chain"
 QUAT_CONVENTION = "mot_conjugate"
+SAMPLE_MODE = "dense_lerp_slerp"
 PIPELINE_PARITY = "pipeline_ryu_idle"
 
 
@@ -126,7 +130,10 @@ def _parse_args(argv: List[str]):
         "--noesis-fbx",
         type=Path,
         default=DEFAULT_NOESIS_IDLE,
-        help="Noesis FBX path used only with --use-noesis-fbx",
+        help=(
+            "Noesis GT FBX (default: noesis_idle_out.fbx). "
+            "Used only with --use-noesis-fbx (optional A/B bake)."
+        ),
     )
     ap.add_argument(
         "--noesis-clip",
@@ -138,8 +145,9 @@ def _parse_args(argv: List[str]):
         "--use-noesis-fbx",
         action="store_true",
         help=(
-            "OPT-IN: bake --noesis-clip from Noesis FBX (skips mot bind for that clip). "
-            "Default is pure mot full-chain for ALL clips (parity with special pipeline)."
+            "OPT-IN: world-bake --noesis-clip from Noesis FBX onto RE Mesh "
+            "(skips mot bind for that clip). Default is pure mot dense full-chain "
+            "for ALL clips (parity with special pipeline)."
         ),
     )
     ap.add_argument(
@@ -248,6 +256,36 @@ def _clear_actions(arm) -> None:
                 pass
 
 
+def _disconnect_connected_bones(arm, *, skip_names: Sequence[str] = ("Root",)) -> int:
+    """
+    Clear use_connect on driven bones so location keys (esp. C_Hip) evaluate.
+
+    RE Mesh often has C_Hip.use_connect=True under Root; Blender then discards
+    hip translation. Matches special idle pre-export disconnect.
+    """
+    import bpy
+
+    skip = {n.lower() for n in skip_names}
+    n_disc = 0
+    try:
+        bpy.context.view_layer.objects.active = arm
+        bpy.ops.object.mode_set(mode="EDIT")
+        for eb in arm.data.edit_bones:
+            if eb.name.lower() in skip:
+                continue
+            if eb.use_connect:
+                eb.use_connect = False
+                n_disc += 1
+        bpy.ops.object.mode_set(mode="OBJECT")
+    except Exception as e:
+        print(f"[batch] WARN disconnect: {e}")
+        try:
+            bpy.ops.object.mode_set(mode="OBJECT")
+        except Exception:
+            pass
+    return n_disc
+
+
 def _export_selection(
     arm,
     meshes,
@@ -271,6 +309,11 @@ def _export_selection(
         frame_start=int(frame_start),
         frame_end=int(frame_end),
     )
+
+    # FBX (and some glTF paths) re-encode connected bones and drop hip location.
+    n_disc = _disconnect_connected_bones(arm, skip_names=("Root",))
+    if n_disc:
+        print(f"[batch] pre-export disconnected {n_disc} bones (hip loc / connect)")
 
     bpy.ops.object.select_all(action="DESELECT")
     arm.select_set(True)
@@ -355,7 +398,7 @@ def main():
     print(f"[batch] motlist: {motlist_path}")
     print(
         f"[batch] bind contract: {BIND_MODE_DEFAULT} + {QUAT_CONVENTION} "
-        f"(parity={PIPELINE_PARITY})"
+        f"+ {SAMPLE_MODE} (parity={PIPELINE_PARITY})"
     )
     mlist = load_motlist(motlist_path)
     records = build_clip_records(mlist)
@@ -378,13 +421,15 @@ def main():
 
     idle_pl = _load_idle_pipeline()
     export_fps_lock = int(getattr(idle_pl, "EXPORT_FPS", 60))
-    noesis_src_fps = int(getattr(idle_pl, "NOESIS_SOURCE_FPS", 25))
     if abs(float(args.fps) - float(export_fps_lock)) > 1e-6:
         print(
             f"[batch] WARN: --fps {args.fps} overridden → {export_fps_lock} (delivery lock)"
         )
     args.fps = float(export_fps_lock)
-    print(f"[batch] export_fps locked to {export_fps_lock}")
+    print(
+        f"[batch] export_fps locked to {export_fps_lock}; "
+        f"sample_mode={SAMPLE_MODE}"
+    )
 
     natives_stm = Path(os.path.normpath(str(args.natives_stm.expanduser())))
     if not natives_stm.is_dir():
@@ -456,6 +501,7 @@ def main():
             "validate_soft": soft,
             "bind_default": BIND_MODE_DEFAULT,
             "quat_convention": QUAT_CONVENTION,
+            "sample_mode": SAMPLE_MODE,
             "export_fps": export_fps_lock,
         }
         (out_dir / "catalog.json").write_text(
@@ -464,7 +510,7 @@ def main():
         print("[batch] MESH STAGE OK")
         return
 
-    # Wipe stale GLBs from the broken pre-conjugate era when re-exporting
+    # Wipe stale GLBs from the broken pre-conjugate / hold-sample era when re-exporting
     if args.clean_glb and not args.skip_existing:
         removed = 0
         for p in glb_dir.glob("*.glb"):
@@ -473,7 +519,7 @@ def main():
         print(f"[batch] --clean-glb removed {removed} old glb file(s)")
 
     # ---- full: per-clip bake + export ----
-    # Default = pure mot (special-pipeline parity). Noesis only if explicitly opted in.
+    # Default = pure mot dense (special-pipeline parity). Noesis only if opted in.
     noesis_fbx = None
     if args.use_noesis_fbx and not args.no_noesis_fbx:
         noesis_fbx = Path(os.path.normpath(str(args.noesis_fbx.expanduser())))
@@ -484,7 +530,8 @@ def main():
         # Old scripts passed --noesis-fbx without knowing it was auto-applied.
         print(
             "[batch] NOTE: Noesis FBX is no longer applied by default. "
-            "Pass --use-noesis-fbx to opt in for --noesis-clip only."
+            "Pass --use-noesis-fbx to opt in for --noesis-clip only. "
+            f"Default GT path: {DEFAULT_NOESIS_IDLE.name}"
         )
 
     results: List[Dict[str, Any]] = []
@@ -522,35 +569,32 @@ def main():
             arm.select_set(True)
 
             export_fps = export_fps_lock
+            logical_frames = max(1, int(round(float(anim.frame_count or 1))))
 
             if use_noesis:
-                print(f"[batch] Noesis FBX bake (opt-in): {noesis_fbx}")
+                # Optional A/B only. World-bake remaps onto 0..logical_frames @60
+                # (do NOT apply legacy 25→60 key rescale — Noesis clock is wrong).
+                print(
+                    f"[batch] Noesis FBX world-bake (opt-in): {noesis_fbx} "
+                    f"logical_frames={logical_frames}"
+                )
+                n_disc = _disconnect_connected_bones(arm, skip_names=("Root",))
+                if n_disc:
+                    print(f"[batch] disconnected {n_disc} bones before Noesis bake")
                 action, stats = bi.apply_action_from_noesis_fbx(
                     arm,
                     str(noesis_fbx),
                     action_name=mot.base_name[:63],
+                    logical_frames=logical_frames,
                 )
-                if stats.get("frame_start") is not None:
-                    f0 = int(stats["frame_start"])
-                    f1 = int(stats["frame_end"])
-                    scale = float(export_fps) / float(noesis_src_fps)
-                    print(
-                        f"[batch] remap Noesis keys {f0}..{f1} @{noesis_src_fps}fps "
-                        f"→ ×{scale:.4f} for {export_fps}fps"
-                    )
-                    idle_pl._rescale_action_frames(
-                        action, scale, origin=float(f0)
-                    )
-                    frame_start = int(round(f0 * scale)) if f0 else 0
-                    frame_end = int(round(f1 * scale))
-                else:
-                    frame_start = 0
-                    frame_end = max(1, int(anim.frame_count))
+                frame_start = int(stats.get("frame_start", 0))
+                frame_end = int(stats.get("frame_end", logical_frames))
                 bind_mode = "noesis_fbx"
             else:
                 print(
                     f"[batch] mot absolute full-chain "
-                    f"(quat={QUAT_CONVENTION}; parity={PIPELINE_PARITY})"
+                    f"(quat={QUAT_CONVENTION}; sample={SAMPLE_MODE}; "
+                    f"parity={PIPELINE_PARITY})"
                 )
                 action, stats = bi.apply_animation_mot_absolute_full_chain(
                     arm,
@@ -562,12 +606,18 @@ def main():
                     skip_bones=("Root",),
                 )
                 frame_start = 0
-                frame_end = max(1, int(round(float(anim.frame_count))))
+                frame_end = logical_frames
                 bind_mode = BIND_MODE_DEFAULT
-                # Sanity: shared implementation must report conjugate convention
+                # Sanity: shared implementation must report conjugate + dense sample
                 if stats.get("quat_convention") not in (None, QUAT_CONVENTION):
                     print(
-                        f"[batch] WARN unexpected quat_convention={stats.get('quat_convention')}"
+                        f"[batch] WARN unexpected quat_convention="
+                        f"{stats.get('quat_convention')}"
+                    )
+                if stats.get("sample_mode") not in (None, SAMPLE_MODE):
+                    print(
+                        f"[batch] WARN unexpected sample_mode="
+                        f"{stats.get('sample_mode')}"
                     )
 
             print(
@@ -605,6 +655,11 @@ def main():
                         stats.get("quat_convention")
                         if bind_mode == BIND_MODE_DEFAULT
                         else None
+                    ),
+                    "sample_mode": (
+                        stats.get("sample_mode", SAMPLE_MODE)
+                        if bind_mode == BIND_MODE_DEFAULT
+                        else stats.get("bake_mode")
                     ),
                     "anim_stats": stats,
                     "frame_start": frame_start,
@@ -649,14 +704,18 @@ def main():
         },
         "bind_default": BIND_MODE_DEFAULT,
         "quat_convention": QUAT_CONVENTION,
+        "sample_mode": SAMPLE_MODE,
         "export_fps": export_fps_lock,
         "use_noesis_fbx": bool(args.use_noesis_fbx) and noesis_fbx is not None,
         "noesis_clip": args.noesis_clip if (args.use_noesis_fbx and noesis_fbx) else None,
+        "noesis_fbx_default": str(DEFAULT_NOESIS_IDLE),
         "bind_note": (
             f"Default for ALL clips: {BIND_MODE_DEFAULT} with {QUAT_CONVENTION} "
-            f"(same as {PIPELINE_PARITY} / PIPELINE_RYU_IDLE.md). "
+            f"+ {SAMPLE_MODE} (same as {PIPELINE_PARITY} / PIPELINE_RYU_IDLE.md). "
+            "Disconnect use_connect before drive/export (C_Hip location). "
             "Noesis FBX only if --use-noesis-fbx and clip == --noesis-clip "
-            "(keys remapped 25→60 fps). glTF duration_sec ≈ frames/60."
+            "(world-bake → 0..logical_frames @60; do not trust Noesis file fps). "
+            "glTF duration_sec ≈ frames/60."
         ),
         "selected_indices": indices,
         "ok_count": sum(1 for r in results if r.get("status") == "ok"),
@@ -675,6 +734,7 @@ def main():
         f"pipeline_parity={PIPELINE_PARITY}",
         f"bind_default={BIND_MODE_DEFAULT}",
         f"quat_convention={QUAT_CONVENTION}",
+        f"sample_mode={SAMPLE_MODE}",
         f"export_fps={export_fps_lock}",
         f"use_noesis_fbx={catalog['use_noesis_fbx']}",
         f"motlist={motlist_path}",
@@ -687,9 +747,10 @@ def main():
     for r in results:
         st = r.get("status")
         if st == "ok":
+            sm = (r.get("anim_stats") or {}).get("sample_mode", SAMPLE_MODE)
             manifest_lines.append(
                 f"OK  {r['stem']}.glb  {r.get('glb_bytes', 0)}  "
-                f"bind={r.get('bind_mode')} fps={r.get('fps')} "
+                f"bind={r.get('bind_mode')} sample={sm} fps={r.get('fps')} "
                 f"frames={r.get('frame_start')}..{r.get('frame_end')}"
             )
         elif st == "skipped_existing":

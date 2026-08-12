@@ -15,6 +15,8 @@ Mot quat → Blender:  conjugate  (w, -x, -y, -z)   # NoeQuat.transpose()
 Mot pos  → engine:   × 0.01
 basis    = MeshRestLocal⁻¹ @ MotLocal(t)         # 所有 Mot bone header
 skip     = Root                                   # RE Mesh Root 含 rotate90
+采样     = 逻辑帧 0..N dense + lerp/slerp         # 禁止 sparse hold（阶梯抖）
+连骨     = 驱动前/导出前 disconnect use_connect  # 保留 C_Hip 位移
 时间轴   = 60 fps 逻辑帧 → glTF 秒 = frame/60
 ```
 
@@ -23,7 +25,8 @@ skip     = Root                                   # RE Mesh Root 含 rotate90
 - RE Mesh rest locals **==** Noesis mesh rest（bone 数据 /100）
 - Mot header rest **≠** Mesh rest（旋转差可很大）— 不能当「相对 idle 叠在 T-pose 上」
 - 未共轭时手臂世界坐标相对 Noesis 偏 **~80–120°**；共轭后 joint world **Δ ≈ 0**
-- 特殊管线 clip0 vs Noesis：`mean_world_dpos ~ 4e-3`，`mean_basis_dang ~ 0.1°`
+- 特殊管线 clip0 vs Noesis：`mean_world_dpos ~ 3–4e-3`，jerk 比接近 1，`ok=True`
+- sparse Mot 键 + hold → 可见 Y/脚抖；dense 后消除
 
 ---
 
@@ -92,12 +95,30 @@ full-chain：所有 Mot header 都采样（缺轨用 header rest）。
 
 ---
 
+## 历史问题 5：hold 阶梯抖 + 连骨丢髋（2026-08 dense 整改）
+
+### Cause
+
+- 只在 Mot **稀疏键**上 key，中间用 **hold** → 脚/髋 jerk 尖峰（阶梯）。
+- RE Mesh `C_Hip.use_connect=True` → Blender 忽略 location → 髋位移丢。
+
+### Fix
+
+- `apply_animation_mot_absolute_full_chain`：逐逻辑帧 dense + lerp/slerp。
+- 驱动前（及 idle/batch 导出前）`use_connect = False`。
+- 批量管线与特殊管线共用该实现；重建旧 GLB 时 `--clean-glb`。
+
+---
+
 ## Noesis GT 文件（对照用）
 
 | 文件 | 说明 |
 |------|------|
-| `noesis_out/esf001v00_idle_00_1animationtest.fbx` | mesh+anim，clip0 对照 |
+| `noesis_out/noesis_idle_out.fbx` | **默认 GT**（特殊 / 批量对照；按 6.6s@60 理解，不信文件 25fps） |
+| `noesis_out/esf001v00_idle_00_1animationtest.fbx` | 旧对照 FBX |
 | `noesis_out/idle_test.fbx` | 骨骼调试 |
+
+对照脚本：`scripts/compare_idle_vs_noesis.py`（世界坐标误差 + jerk）。
 
 Noesis 侧常见：object scale **0.01**、rot **X 90°**、无 Root 骨（C_Hip 为根）。  
 对照时：mesh 世界坐标与 Noesis（含 object 变换）对齐；basis 对照 Noesis `location×0.01` + quat。

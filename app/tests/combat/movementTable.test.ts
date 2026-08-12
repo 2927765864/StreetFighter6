@@ -26,10 +26,16 @@ describe('ryu_movement table', () => {
     );
   });
 
-  it('uniform dash speed = distance / frames', () => {
+  it('average dash speed = distance / frames (for GUI)', () => {
     expect(dashSpeedFromTable({ frames: 19, distance: 1.252 })).toBeCloseTo(
       1.252 / 19,
       10,
     );
+  });
+
+  it('table loads front_heavy profile power', () => {
+    const t = parseRyuMovement(raw);
+    expect(t.dash.profile).toBe('front_heavy');
+    expect(t.dash.frontHeavyPower).toBe(1.5);
   });
 });

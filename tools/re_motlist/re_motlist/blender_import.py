@@ -783,22 +783,26 @@ def apply_action_from_noesis_fbx(
     action_name: Optional[str] = None,
     clear_existing: bool = True,
     frame_step: int = 1,
+    logical_frames: Optional[int] = None,
 ) -> Tuple[object, Dict[str, int]]:
     """
     Bake animation from a Noesis-exported FBX onto an RE Mesh armature.
 
-    Hard facts (SF6 Ryu esf001):
-      • RE Mesh rest locals == Noesis mesh rest locals (Noesis bone data /100).
-      • Homemade Mot absolute FK does **not** match Noesis arm worlds; the FBX
-        Action is ground truth for combat idle.
-      • Noesis has no Root bone (object is Root, scale 0.01, rot X 90); leave
-        RE Mesh Root at rest.
+    Critical (noesis_idle_out.fbx / SF6 Ryu):
+      • Noesis armature object: scale 0.01 + rot X90; **no Root bone** (C_Hip root).
+      • Noesis **bind/rest is combat stance**; keys near identity at f0 are NOT T-pose.
+      • RE Mesh rest is different (often near T/A-pose + Root rotate90).
+      • Therefore **copying pose.location/rotation (basis) is WRONG** — it yields T-pose
+        on the mesh. Must transfer **world (or armature-space) matrices**.
 
-    Method: import FBX, per-frame copy pose basis (loc/rot/scale) for matching
-    bone names onto the mesh armature, keyframe, delete imported objects.
+    Method:
+      Per frame, for each matching bone name:
+        src_world = noe_arm.matrix_world @ src.matrix
+        dst.matrix = mesh_arm.matrix_world.inverted() @ src_world
+      Key location / rotation_quaternion / scale. Leave RE Mesh Root unkeyed.
     """
     import bpy
-    from mathutils import Vector
+    from mathutils import Matrix
 
     path = str(noesis_fbx_path)
     before_obj = set(bpy.data.objects)
@@ -819,7 +823,6 @@ def apply_action_from_noesis_fbx(
         raise RuntimeError(f"No armature in Noesis FBX: {path}")
     noe_arm = sorted(noe_arms, key=lambda a: len(a.data.bones), reverse=True)[0]
 
-    # Hide imported meshes so they don't pollute export selection
     for o in imported:
         if o.type == "MESH":
             o.hide_viewport = True
@@ -829,9 +832,31 @@ def apply_action_from_noesis_fbx(
     pairs: List[Tuple[str, str]] = []
     for pb in noe_arm.pose.bones:
         key = clean_bone_name(pb.name).lower()
+        if key == "root":
+            continue
         dst = lookup.get(key)
-        if dst:
+        if dst and clean_bone_name(dst).lower() != "root":
             pairs.append((pb.name, dst))
+
+    # Disconnect so location from world bake is not discarded
+    try:
+        bpy.context.view_layer.objects.active = mesh_armature_obj
+        bpy.ops.object.mode_set(mode="EDIT")
+        n_disc = 0
+        for _, dst in pairs:
+            eb = mesh_armature_obj.data.edit_bones.get(dst)
+            if eb is not None and eb.use_connect:
+                eb.use_connect = False
+                n_disc += 1
+        bpy.ops.object.mode_set(mode="OBJECT")
+        if n_disc:
+            print(f"[re_motlist] Noesis bake: disconnected {n_disc} bones")
+    except Exception as e:
+        print(f"[re_motlist] WARN disconnect for Noesis bake: {e}")
+        try:
+            bpy.ops.object.mode_set(mode="OBJECT")
+        except Exception:
+            pass
 
     if mesh_armature_obj.animation_data is None:
         mesh_armature_obj.animation_data_create()
@@ -846,55 +871,84 @@ def apply_action_from_noesis_fbx(
         mesh_armature_obj.pose.bones[dst].rotation_mode = "QUATERNION"
 
     scene = bpy.context.scene
-    # Frame range: prefer Noesis action, else scene after import
     noe_action = (
         noe_arm.animation_data.action
         if noe_arm.animation_data and noe_arm.animation_data.action
         else None
     )
     if noe_action is not None and hasattr(noe_action, "frame_range"):
-        f0, f1 = int(noe_action.frame_range[0]), int(noe_action.frame_range[1])
+        f0, f1 = int(noe_action.frame_range[0]), int(round(float(noe_action.frame_range[1])))
     else:
         f0, f1 = int(scene.frame_start), int(scene.frame_end)
     if f1 <= f0:
         f1 = f0 + 1
 
-    scene.frame_start = f0
-    scene.frame_end = f1
+    # Delivery keys on 0..logical_frames @ 60fps; sample Noesis timeline by u∈[0,1].
+    n_out = int(logical_frames) if logical_frames is not None else max(1, f1 - f0)
+    n_out = max(1, n_out)
+    scene.frame_start = 0
+    scene.frame_end = n_out
     keys = 0
     max_loc = 0.0
-    # Noesis FBX stores bone data in Noesis ×100 space; object scale is 0.01.
-    # RE Mesh is engine units. Rest locals match after /100 → scale basis *location*.
-    loc_scale = 0.01
-    try:
-        # Prefer actual object uniform scale if present
-        sx = abs(float(noe_arm.scale[0]))
-        if 1e-6 < sx < 0.5:
-            loc_scale = sx
-    except Exception:
-        pass
 
-    for frame in range(f0, f1 + 1, max(1, frame_step)):
-        scene.frame_set(frame)
+    # Parent-before-child so matrix assignment is stable
+    def _depth(bname: str) -> int:
+        b = mesh_armature_obj.data.bones.get(bname)
+        d = 0
+        while b and b.parent:
+            d += 1
+            b = b.parent
+        return d
+
+    pairs.sort(key=lambda p: _depth(p[1]))
+
+    from mathutils import Vector
+
+    # Mesh rest world (armature space → world) for swing-align roll preservation.
+    # Clear pose first so rest is clean.
+    for pb in mesh_armature_obj.pose.bones:
+        pb.matrix_basis.identity()
+    bpy.context.view_layer.update()
+    mesh_rest_world: Dict[str, object] = {}
+    for _, dst_name in pairs:
+        db = mesh_armature_obj.data.bones[dst_name]
+        mesh_rest_world[dst_name] = mesh_armature_obj.matrix_world @ db.matrix_local
+
+    skipped_bad = 0
+    for i in range(n_out + 1):
+        u = 0.0 if n_out <= 0 else (i / float(n_out))
+        src_frame = f0 + u * (f1 - f0)
+        scene.frame_set(int(round(src_frame)))
         bpy.context.view_layer.update()
+        noe_mw = noe_arm.matrix_world.copy()
+        mesh_inv = mesh_armature_obj.matrix_world.inverted()
+        out_frame = float(i)
         for src_name, dst_name in pairs:
             src = noe_arm.pose.bones[src_name]
             dst = mesh_armature_obj.pose.bones[dst_name]
-            # Rests match (mesh == noe/100) → copy rot/scale; scale location ×0.01
-            dst.location = src.location * loc_scale
-            dst.rotation_quaternion = src.rotation_quaternion.copy()
-            dst.scale = src.scale.copy()
-            max_loc = max(max_loc, dst.location.length)
-            dst.keyframe_insert(data_path="location", frame=frame)
-            dst.keyframe_insert(data_path="rotation_quaternion", frame=frame)
-            dst.keyframe_insert(data_path="scale", frame=frame)
+            src_world = noe_mw @ src.matrix
+            # Skin-safe: Mot/Noesis joint position + aim, keep RE Mesh bone roll.
+            target_world = _swing_align_world(mesh_rest_world[dst_name], src_world)
+            if target_world.translation.length > 5.0:
+                skipped_bad += 1
+                continue
+            target_arm = mesh_inv @ target_world
+            dst.matrix = target_arm
+            dst.scale = Vector((1.0, 1.0, 1.0))
+            loc = dst.location.copy()
+            if loc.length > 5.0:
+                skipped_bad += 1
+                continue
+            max_loc = max(max_loc, float(loc.length))
+            dst.keyframe_insert(data_path="location", frame=out_frame)
+            dst.keyframe_insert(data_path="rotation_quaternion", frame=out_frame)
+            dst.keyframe_insert(data_path="scale", frame=out_frame)
             keys += 1
 
     for fc in _iter_action_fcurves(action):
         for kp in fc.keyframe_points:
             kp.interpolation = "LINEAR"
 
-    # Remove imported objects and orphaned noesis actions
     for o in imported:
         try:
             bpy.data.objects.remove(o, do_unlink=True)
@@ -907,22 +961,29 @@ def apply_action_from_noesis_fbx(
             except Exception:
                 pass
 
-    scene.frame_set(f0)
+    scene.frame_set(0)
     bpy.context.view_layer.update()
     stats = {
         "matched_tracks": len(pairs),
         "missing_bones": 0,
         "keys_written": keys,
-        "rest_space": "noesis_fbx_bake",
+        "rest_space": "noesis_fbx_world_matrix",
         "max_basis_loc": float(max_loc),
-        "warn_large_basis": max_loc > 50.0,  # Noesis uses ×100 space on hip loc
+        "warn_large_basis": max_loc > 2.0,
         "source_fbx": path,
-        "frame_start": f0,
-        "frame_end": f1,
+        "frame_start": 0,
+        "frame_end": n_out,
+        "noesis_frame_start": f0,
+        "noesis_frame_end": f1,
+        "bake_mode": "world_swing_align",
+        "logical_frames": n_out,
+        "remap": "baked_to_logical_60",
+        "skipped_bad_samples": skipped_bad,
     }
     print(
-        f"[re_motlist] Noesis FBX bake: bones={stats['matched_tracks']} "
-        f"frames={f0}..{f1} keys={keys} max_basis_loc={max_loc:.4f}"
+        f"[re_motlist] Noesis FBX world-bake: bones={stats['matched_tracks']} "
+        f"out_frames=0..{n_out} (src {f0}..{f1}) keys={keys} "
+        f"max_basis_loc={max_loc:.4f} skipped_bad={skipped_bad}"
     )
     return action, stats
 
@@ -955,10 +1016,15 @@ def apply_animation_mot_absolute_full_chain(
       For every Mot bone header (except skip_bones, default Root):
         MotLocal(t) from keys, or Mot header rest if channel missing
         basis = MeshRestLocal^{-1} @ MotLocal(t)   # pos already * pos_scale
-      Key all those bones at the **union** of all key times (and 0 / end).
+      Key every integer logical frame 0..frame_count with **lerp/slerp**
+      between Mot keys (Noesis-style dense bake; hold sampling jitters).
 
     Skip Root: RE Mesh Root holds baked rotate90; Mot Root is I (Noesis folds
     Root into the armature object transform).
+
+    Connected bones: RE Mesh often has C_Hip.use_connect=True under Root, which
+    makes Blender ignore location — disconnect driven bones so Mot hip translation
+    is not discarded (Noesis has C_Hip as a free root).
     """
     import bpy
     from mathutils import Matrix, Quaternion, Vector
@@ -980,6 +1046,38 @@ def apply_animation_mot_absolute_full_chain(
     bones_data = armature_obj.data.bones
     skip_set = {clean_bone_name(n).lower() for n in (skip_bones or ("Root",))}
 
+    # Disconnect bones we will drive so location keys evaluate (esp. C_Hip).
+    try:
+        import bpy as _bpy
+
+        prev_mode = _bpy.context.object.mode if _bpy.context.object else "OBJECT"
+        _bpy.context.view_layer.objects.active = armature_obj
+        _bpy.ops.object.mode_set(mode="EDIT")
+        ebones = armature_obj.data.edit_bones
+        n_disc = 0
+        for h in mot.bone_headers:
+            key = clean_bone_name(h.name).lower()
+            if key in skip_set or h.name.lower() in skip_set:
+                continue
+            dst = lookup.get(key) or lookup.get(h.name.lower())
+            if not dst or dst not in ebones:
+                continue
+            eb = ebones[dst]
+            if eb.use_connect:
+                eb.use_connect = False
+                n_disc += 1
+        _bpy.ops.object.mode_set(mode="OBJECT")
+        if n_disc:
+            print(f"[re_motlist] disconnected {n_disc} connected bones for Mot location")
+    except Exception as e:
+        print(f"[re_motlist] WARN: could not disconnect bones: {e}")
+        try:
+            import bpy as _bpy
+
+            _bpy.ops.object.mode_set(mode="OBJECT")
+        except Exception:
+            pass
+
     def blender_rest_local(bone_name: str) -> Matrix:
         bone = bones_data[bone_name]
         if bone.parent:
@@ -997,34 +1095,55 @@ def apply_animation_mot_absolute_full_chain(
             kf_by_name[anim.bones[kf.bone_index].name] = kf
 
     def sample_vec(keys, t, default: Vector) -> Vector:
+        """Linear interpolate Mot vector keys (hold was causing staircase jitter)."""
         if not keys:
             return default.copy()
-        last = Vector(keys[0].value.as_tuple())
-        for kv in keys:
-            if kv.time > t:
-                break
-            last = Vector(kv.value.as_tuple())
-        return last
+        if t <= float(keys[0].time):
+            return Vector(keys[0].value.as_tuple())
+        if t >= float(keys[-1].time):
+            return Vector(keys[-1].value.as_tuple())
+        for i in range(1, len(keys)):
+            t1 = float(keys[i].time)
+            if t1 < t:
+                continue
+            t0 = float(keys[i - 1].time)
+            v0 = Vector(keys[i - 1].value.as_tuple())
+            v1 = Vector(keys[i].value.as_tuple())
+            if t1 <= t0:
+                return v1
+            a = (t - t0) / (t1 - t0)
+            return v0.lerp(v1, a)
+        return Vector(keys[-1].value.as_tuple())
 
     def sample_quat(keys, t, default: Quaternion) -> Quaternion:
+        """Slerp Mot rotation keys (conjugate already applied via mot_quat_to_blender)."""
         if not keys:
             return default.copy()
-        last = mot_quat_to_blender(keys[0].value)
-        for kv in keys:
-            if kv.time > t:
-                break
-            last = mot_quat_to_blender(kv.value)
-        return last
+        if t <= float(keys[0].time):
+            return mot_quat_to_blender(keys[0].value)
+        if t >= float(keys[-1].time):
+            return mot_quat_to_blender(keys[-1].value)
+        for i in range(1, len(keys)):
+            t1 = float(keys[i].time)
+            if t1 < t:
+                continue
+            t0 = float(keys[i - 1].time)
+            q0 = mot_quat_to_blender(keys[i - 1].value)
+            q1 = mot_quat_to_blender(keys[i].value)
+            if t1 <= t0:
+                return q1
+            # Same-hemisphere for slerp stability
+            if q0.dot(q1) < 0.0:
+                q1 = Quaternion((-q1.w, -q1.x, -q1.y, -q1.z))
+            a = (t - t0) / (t1 - t0)
+            return q0.slerp(q1, a)
+        return mot_quat_to_blender(keys[-1].value)
 
-    # Union of times so every bone is keyed on the same frames
-    times: Set[float] = {0.0}
-    if anim.frame_count:
-        times.add(float(int(anim.frame_count)))
-    for kf in anim.kf_bones:
-        for ch in (kf.translations, kf.rotations, kf.scales):
-            for kv in ch:
-                times.add(float(kv.time))
-    sorted_times = sorted(times)
+    # Dense logical frames (matches Noesis per-frame bake). Sparse union+hold
+    # caused visible Y/foot jitter (max step == Mot key jump).
+    max_frame = int(round(float(anim.frame_count))) if anim.frame_count else 1
+    max_frame = max(1, max_frame)
+    sorted_times = [float(i) for i in range(0, max_frame + 1)]
 
     for pb in armature_obj.pose.bones:
         pb.rotation_mode = "QUATERNION"
@@ -1041,6 +1160,7 @@ def apply_animation_mot_absolute_full_chain(
         "warn_large_basis": False,
         "pos_scale": pos_scale,
         "n_times": len(sorted_times),
+        "sample_mode": "dense_lerp_slerp",
     }
     missing: List[str] = []
     # (src_name, dst_name, mesh_rest_local, kf|None, default_pos_x100, default_rot)

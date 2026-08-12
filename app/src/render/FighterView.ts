@@ -28,6 +28,7 @@ import {
   pruneOutlierMeshes,
   resetFbxUnitScales,
   resetReArmatureTransform,
+  applyReCentimeterToMeterIfNeeded,
   sanitizeObjectMaterials,
   worldBox,
 } from './materialUtils';
@@ -54,13 +55,14 @@ type PoseBlend = {
 const HARD_CUT: CrossfadeDurations = {
   locoSec: 0,
   residualToMoveSec: 0,
+  residualToStanceSec: 0,
   residualToAttackSec: 0,
 };
 
 /**
  * Skinned fighter view.
- * Combat path: mesh-only glb + AnimationClips from private/assets/ryu/anims
- * via LogicGlbMap (no dependency on ryu_c1 merged test clips).
+ * Combat path: esf001_TPose.fbx (target) or glb fallback + AnimationClips from
+ * private/assets/ryu/anims via LogicGlbMap.
  */
 export class FighterView {
   root = new THREE.Group();
@@ -77,6 +79,8 @@ export class FighterView {
   private plantWorldXZ: { x: number; z: number } | null = null;
   private footDebug: THREE.Mesh | null = null;
   private attackHipsLockLocal: THREE.Vector3 | null = null;
+  /** Last fighter.phase seen by plant policy (one-shot snaps on land). */
+  private lastPlantPolicyPhase: string | null = null;
   private placeholder: THREE.Mesh;
   private procedural = new ProceduralRyuAnim();
   private useProcedural = false;
@@ -89,9 +93,11 @@ export class FighterView {
   private previewMode = false;
   private previewClipName = '';
   private previewStatus = 'idle';
-  /** Clips bound before the first anim-test rebind (restored on exit). */
-  private stashedClips: THREE.AnimationClip[] | null = null;
-  private stashedUseProcedural = false;
+  /**
+   * Preview-only action key in `actions` / mixer. Combat `logicActions` stay
+   * on the same mixer and are restored by stopping this action on exit.
+   */
+  private previewActionKey: string | null = null;
   modelUnitScale = 1;
   /** Debug: last world AABB size after sync */
   lastWorldSize = new THREE.Vector3();
@@ -176,6 +182,8 @@ export class FighterView {
     if (prepared.applied) {
       resetFbxUnitScales(model);
       resetReArmatureTransform(model);
+      // cm→m lives on root.userData.reMeterScale — re-assert after bone resets
+      applyReCentimeterToMeterIfNeeded(model);
       model.traverse((o) => {
         const sm = o as THREE.SkinnedMesh;
         if (sm.isSkinnedMesh && sm.skeleton) sm.skeleton.update();
@@ -256,6 +264,9 @@ export class FighterView {
 
     this.modelRoot = model;
     this.root.add(model);
+    // One-shot sole align after stance pose (not per-frame; trust idle clip after this).
+    this.plantFeetOnGround();
+    this.lastPlantPolicyPhase = 'idle';
 
     console.info(
       `[FighterView] install pruned=${pruned} baked=${baked} procedural=${this.useProcedural} ` +
@@ -418,8 +429,9 @@ export class FighterView {
 
   /**
    * Lowest sole contact height in world Y.
-   * RE rig: `L_Foot`/`R_Foot` are ankle (~+8cm); distal toe bones sit near the
-   * sandal sole and stay almost flat in idle (span ~7mm) — safe for per-frame align.
+   * RE rig: ankle `L_Foot`/`R_Foot` sit above the sandal; distal toe bones sit
+   * nearer the sole. Used only for rare full snaps (install / hard cut / land),
+   * never to chase the idle breathing loop every frame.
    */
   private measureContactSoleY(): number | null {
     if (!this.modelRoot) return null;
@@ -455,8 +467,9 @@ export class FighterView {
   }
 
   /**
-   * Translate modelRoot so sole contact sits on STAGE_GROUND_Y.
-   * Uses toe-tip bones (stable), not ankle Foot — avoids L/R Y jitter from §3.9.
+   * One-shot: translate modelRoot so sole contact sits on STAGE_GROUND_Y.
+   * Trust authored idle/walk foot motion after this — do not call every frame
+   * on grounded loops (that turns heel rise into whole-body Y jitter).
    * @param maxAbsDeltaWorld cap |ΔY| this call (slew); omit for full snap.
    */
   private plantFeetOnGround(maxAbsDeltaWorld?: number): void {
@@ -479,6 +492,10 @@ export class FighterView {
     }
     const sy = this.root.scale.y || 1;
     this.modelRoot.position.y += deltaWorld / sy;
+  }
+
+  private isAirborneLogicPhase(phase: string): boolean {
+    return phase === 'prejump' || phase === 'airborne';
   }
 
   private findFootBone(side: 'L' | 'R'): THREE.Bone | null {
@@ -595,28 +612,45 @@ export class FighterView {
     cfg: MutableSimConfig,
     wallDtSec = 1 / 60,
   ): void {
+    // A/B: old per-frame whole-body chase (will reintroduce idle Y jitter).
     if (cfg.plantMode === 'legacy') {
-      this.plantFeetOnGround();
-      return;
-    }
-    // consensus §3.9: do NOT plant by min(L/R ankle) every frame (that jitters).
-    // Toe-tip sole height is stable (~7mm idle span) — safe soft ground align for
-    // ground phases. Attack still uses support-foot XZ window only.
-    const grounded =
-      fighter.phase === 'idle' ||
-      fighter.phase === 'walk' ||
-      fighter.phase === 'crouch' ||
-      fighter.phase === 'dash' ||
-      fighter.phase === 'landing' ||
-      fighter.phase === 'hitstun' ||
-      fighter.phase === 'blockstun';
-    if (grounded) {
       const slew =
         (cfg.plantSlewPerSec ?? 0.55) * Math.min(Math.max(wallDtSec, 0), 0.1);
       this.plantFeetOnGround(Math.max(slew, 0.002));
+      this.lastPlantPolicyPhase = fighter.phase;
       return;
     }
-    this.applyFootPlant(fighter, cfg);
+
+    // Trust authored clips on the ground (§3.9): no per-frame sole chase on
+    // idle/walk/crouch/dash. Ball plant + heel rise stay in the animation.
+    // One-shot vertical snap only when returning from air (landing, or any
+    // grounded phase entered from prejump/airborne). Hard clip cuts still snap
+    // in switchToLogicAction. Attack uses support-foot XZ window only.
+    const phase = fighter.phase;
+    const prev = this.lastPlantPolicyPhase;
+    const grounded =
+      phase === 'idle' ||
+      phase === 'walk' ||
+      phase === 'crouch' ||
+      phase === 'dash' ||
+      phase === 'landing' ||
+      phase === 'hitstun' ||
+      phase === 'blockstun';
+    const fromAir =
+      prev != null &&
+      this.isAirborneLogicPhase(prev) &&
+      !this.isAirborneLogicPhase(phase);
+    const enterLanding = phase === 'landing' && prev !== 'landing';
+    if (grounded && (fromAir || enterLanding)) {
+      this.plantFeetOnGround();
+    }
+    this.lastPlantPolicyPhase = phase;
+
+    if (phase === 'attack') {
+      this.applyFootPlant(fighter, cfg);
+    } else {
+      this.plantWorldXZ = null;
+    }
   }
 
   /**
@@ -808,6 +842,7 @@ export class FighterView {
         ? defaultCrossfadeDurations({
             locoSec: durations,
             residualToMoveSec: durations,
+            residualToStanceSec: durations,
             residualToAttackSec: 0,
           })
         : durations;
@@ -884,65 +919,44 @@ export class FighterView {
 
   /**
    * Exit animation test mode and resume logic-driven clips (idle fallback).
+   * Does not recreate the mixer — combat `logicActions` stay valid.
    */
   exitPreviewMode(): void {
     this.previewMode = false;
     this.previewClipName = '';
     this.previewStatus = 'idle';
     this.currentClip = '';
+    this.currentBinding = '';
+    this.clearPoseBlend(true);
 
-    if (this.stashedClips && this.modelRoot) {
-      this.rebindClips(this.stashedClips, this.stashedUseProcedural);
-      this.stashedClips = null;
+    if (this.previewActionKey && this.mixer) {
+      const prev = this.actions.get(this.previewActionKey);
+      if (prev) {
+        prev.stop();
+        prev.setEffectiveWeight(0);
+        this.actions.delete(this.previewActionKey);
+      }
+      this.previewActionKey = null;
     }
+    this.mixer?.stopAllAction();
 
     if (this.useProcedural) {
       this.procedural.setMode('idle');
       this.currentClip = 'idle';
       return;
     }
+    // Re-enable anims path if mesh reinstall cleared backend flags
     this.playBest('idle');
-  }
-
-  private stashClipsIfNeeded(): void {
-    if (this.stashedClips != null) return;
-    const clips: THREE.AnimationClip[] = [];
-    for (const action of this.actions.values()) {
-      clips.push(action.getClip());
-    }
-    this.stashedClips = clips;
-    this.stashedUseProcedural = this.useProcedural;
-  }
-
-  private rebindClips(
-    animations: THREE.AnimationClip[],
-    useProcedural: boolean,
-  ): void {
-    if (!this.modelRoot) return;
-    this.mixer?.stopAllAction();
-    this.actions.clear();
-    this.clipNames = animations.map((c) => c.name);
-    this.profile =
-      animations.length === 0 ? 'ryu' : detectProfile(this.clipNames);
-    this.clipMap = mapForProfile(this.profile);
-    this.mixer = new THREE.AnimationMixer(this.modelRoot);
-    for (const clip of animations) {
-      this.actions.set(clip.name, this.mixer.clipAction(clip));
-    }
-    this.useProcedural = useProcedural && animations.length === 0;
-    if (this.useProcedural) {
-      this.procedural.bind(this.modelRoot);
-    }
-    this.currentClip = '';
   }
 
   /**
    * Load a single-action (or multi-clip) glb and loop the first / named clip
    * on the current skeleton. If no model is installed yet, installs the glb mesh.
    *
-   * Prefer clip-only rebinding when a skinned model is already loaded so we do
-   * not re-download multi-MB meshes more than once per session for mesh assets
-   * that share the same RE rig as the boot character.
+   * Default path is **clip-only** on the boot mesh (same as combat): do not
+   * skeleton.pose() or recreate the mixer — that invalidates logicActions and
+   * can corrupt a live bind. Prefer mesh-only boot + anim GLB tracks that share
+   * rest pose (see ryu_c1_mesh_only vs esf001_TPose).
    */
   async loadAndLoopClipFromUrl(
     url: string,
@@ -961,37 +975,78 @@ export class FighterView {
       opts?.reinstallMesh === true || !this.modelRoot || !this.loaded;
 
     if (reinstall) {
-      // Full mesh swap — original boot clips are gone; stash nothing useful
-      this.stashedClips = null;
+      // Full mesh swap — combat bindings are gone; anims backend must re-preload
+      this.logicActions.clear();
+      this.logicLoadInflight.clear();
+      this.previewActionKey = null;
       this.installModel(gltf.scene, animations, {
         targetHeight: opts?.targetHeight ?? 1.85,
       });
       // installModel already plays idle via playBest; override with preview loop
-    } else {
-      this.stashClipsIfNeeded();
-      // Re-sanitize tracks for RE exports, bind onto existing skeleton
-      const prepared = prepareReExtractedFighter(this.modelRoot!, animations);
-      animations = prepared.animations;
-      this.rebindClips(animations, false);
+      const preferred =
+        opts?.clipName && this.actions.has(opts.clipName)
+          ? opts.clipName
+          : this.clipNames[0]!;
+      this.previewMode = true;
+      this.previewActionKey = preferred;
+      this.playPreviewLoop(preferred);
+      const action = this.actions.get(preferred);
+      const duration = action?.getClip().duration ?? 0;
+      this.previewStatus = `playing ${preferred} (${duration.toFixed(2)}s loop)`;
+      console.info(
+        `[FighterView] preview(reinstall) clip="${preferred}" duration=${duration.toFixed(3)}s url=${url}`,
+      );
+      return {
+        clipName: preferred,
+        duration,
+        clipCount: this.clipNames.length,
+      };
     }
 
-    const preferred =
-      opts?.clipName && this.actions.has(opts.clipName)
-        ? opts.clipName
-        : this.clipNames[0]!;
+    // Clip-only: sanitize tracks, keep live skeleton + combat mixer intact.
+    const prepared = prepareReExtractedFighter(this.modelRoot!, animations, {
+      poseModel: false,
+    });
+    animations = prepared.animations;
+
+    let clip =
+      (opts?.clipName
+        ? animations.find((c) => c.name === opts.clipName)
+        : undefined) ?? animations[0]!;
+    clip = clip.clone();
+    const previewKey = `__preview__${clip.name || 'clip'}`;
+    clip.name = previewKey;
+
+    // Drop previous preview action if any
+    if (this.previewActionKey && this.actions.has(this.previewActionKey)) {
+      const old = this.actions.get(this.previewActionKey)!;
+      old.stop();
+      this.actions.delete(this.previewActionKey);
+    }
+
+    if (!this.mixer) {
+      this.mixer = new THREE.AnimationMixer(this.modelRoot!);
+    }
+    this.clearPoseBlend(true);
+    this.mixer.stopAllAction();
+
+    const action = this.mixer.clipAction(clip);
+    this.actions.set(previewKey, action);
+    this.previewActionKey = previewKey;
+    if (!this.clipNames.includes(previewKey)) this.clipNames.push(previewKey);
+
     this.previewMode = true;
-    this.playPreviewLoop(preferred);
-    const action = this.actions.get(preferred);
-    const duration = action?.getClip().duration ?? 0;
-    this.previewStatus = `playing ${preferred} (${duration.toFixed(2)}s loop)`;
+    this.playPreviewLoop(previewKey);
+    const duration = action.getClip().duration ?? 0;
+    this.previewStatus = `playing ${clip.name} (${duration.toFixed(2)}s loop)`;
     console.info(
-      `[FighterView] preview clip="${preferred}" duration=${duration.toFixed(3)}s ` +
-        `clips=${this.clipNames.join('|')} url=${url}`,
+      `[FighterView] preview clip="${previewKey}" duration=${duration.toFixed(3)}s ` +
+        `tracks=${clip.tracks.length} url=${url}`,
     );
     return {
-      clipName: preferred,
+      clipName: previewKey,
       duration,
-      clipCount: this.clipNames.length,
+      clipCount: animations.length,
     };
   }
 
@@ -1048,6 +1103,7 @@ export class FighterView {
     const fadePolicy = defaultCrossfadeDurations({
       locoSec: cfg.locoBlendSec ?? 0.12,
       residualToMoveSec: cfg.residualToMoveBlendSec ?? 0.1,
+      residualToStanceSec: cfg.residualToStanceBlendSec ?? 0.1,
       residualToAttackSec: cfg.residualToAttackBlendSec ?? 0,
     });
 
@@ -1126,22 +1182,25 @@ export class FighterView {
       return;
     }
 
-    // Stance transition: stand_to_crouch / crouch_to_stand scrub (§3.7.2) — 必接片, no sol
+    // Stance transition scrub (§3.7.2 必接片). Residual→stance may freeze-old (§3.11).
     if (
       fighter.inStanceTransition &&
       (fighter.phase === 'idle' || fighter.phase === 'crouch')
     ) {
-      this.clearPoseBlend(true);
       const stRole = fighter.animRole || 'main';
-      this.playBest(fighter.clipId, stRole, HARD_CUT);
+      this.playBest(fighter.clipId, stRole, fadePolicy);
       const action = this.resolveAction(fighter.clipId, stRole);
       if (action && this.mixer) {
-        // 60Hz prefix along transition clip (same as attack residual timeline)
         const t = visualFrameToClipTime(
           fighter.stanceState.frame,
           action.getClip().duration,
         );
-        this.scrubActionTo(action, t);
+        if (this.poseBlend && this.poseBlend.to === action) {
+          const w = this.stepPoseBlend(wallDtSec);
+          this.scrubActionTo(action, t, w, true);
+        } else {
+          this.scrubActionTo(action, t);
+        }
       }
       this.maybePlantAfterPose(fighter, cfg, wallDtSec);
       return;
@@ -1188,7 +1247,7 @@ export class FighterView {
       return;
     }
 
-    // Dash: hard cut
+    // Dash lock: 60Hz prefix scrub (same timeline as residual §3.7.1)
     if (fighter.phase === 'dash') {
       this.clearPoseBlend(true);
       this.playBest(fighter.clipId, 'main', HARD_CUT);
@@ -1197,7 +1256,11 @@ export class FighterView {
         const total =
           fighter.clipId === 'dash_back' ? cfg.dashBackFrames : cfg.dashFrames;
         const elapsed = Math.max(0, total - fighter.stateTimer);
-        scrubTo(action, elapsed, total);
+        const t = visualFrameToClipTime(
+          elapsed,
+          action.getClip().duration,
+        );
+        this.scrubActionTo(action, t);
       }
       this.maybePlantAfterPose(fighter, cfg, wallDtSec);
       return;

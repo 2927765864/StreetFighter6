@@ -132,13 +132,22 @@ export class LogicGlbMap {
 }
 
 /**
- * Boot mesh (skinned). Actual file lives at private/runtime/ryu/ryu_c1_mesh_only.glb
- * (not under private/assets — only anims packs live there).
- * Served by Vite plugin as /private-runtime/*
+ * **Target runtime mesh**: RE Ryu T-pose bind (`esf001_TPose.fbx`).
+ * Served as `/private-runtime/ryu/esf001_TPose.fbx`.
+ *
+ * Runtime prep (see `bakeRyuMeshTemplate`): cm→m bake into geo+bone locals,
+ * unify per-mesh FBX skeletons so anim tracks drive every SkinnedMesh.
+ * Combat clips from private/assets/ryu/anims are authored in meters.
+ */
+export const RYU_MESH_FBX_URL = '/private-runtime/ryu/esf001_TPose.fbx';
+
+/**
+ * Fallback mesh-only glb (already meters). Used if FBX fails to load.
+ * private/runtime/ryu/ryu_c1_mesh_only.glb
  */
 export const RYU_MESH_ONLY_URL = '/private-runtime/ryu/ryu_c1_mesh_only.glb';
 
-/** Fallback mesh if runtime mesh_only missing (has test clips; anims backend still preferred). */
+/** Last-resort public mesh if runtime files missing (embedded clips discarded). */
 export const RYU_MESH_PUBLIC_FALLBACK_URL = '/models/ryu/ryu_c1.glb';
 
 /**

@@ -29,7 +29,9 @@
   "dash": {
     "forward": { "frames": 19, "distance": 1.252 },
     "back": { "frames": 23, "distance": 0.923 },
-    "approx": "uniform"
+    "profile": "front_heavy",
+    "frontHeavyPower": 1.5,
+    "notes": "Logic frames = movement frames (A=B). Per-frame dx from w=(1-t)^power, t=0..1 over the dash, normalized so sum=distance. Not uniform."
   },
   "jump": {
     "prejumpFrames": 4,

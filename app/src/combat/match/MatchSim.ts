@@ -14,6 +14,7 @@ import { DummyController } from './DummyController';
 import { stepWalk } from '../loco/WalkController';
 import type { RyuMovementTable } from '../../data/loadRyuMovement';
 import { parseRyuMovement } from '../../data/loadRyuMovement';
+import { buildFrontHeavyDashDx } from '../loco/DashProfile';
 
 export type MatchSimOptions = {
   actionBufferStandard: number;
@@ -28,8 +29,16 @@ export type MatchSimOptions = {
   enableActionBuffer: boolean;
   dashFrames: number;
   dashBackFrames: number;
+  /** Presentation residual length (map/glb); default 42/40. */
+  dashAnimFrames: number;
+  dashBackAnimFrames: number;
+  /** Average |dx| (GUI); per-frame tables preferred. */
   dashSpeed: number;
   dashBackSpeed: number;
+  /** Front-heavy per-frame |dx|; sum ≈ distance. */
+  dashDxFwd: number[];
+  dashDxBack: number[];
+  dashFrontHeavyPower: number;
   prejumpFrames: number;
   airFrames: number;
   landingFrames: number;
@@ -59,8 +68,14 @@ const DEFAULT_OPTS: MatchSimOptions = {
   enableActionBuffer: true,
   dashFrames: 19,
   dashBackFrames: 23,
+  dashAnimFrames: 42,
+  dashBackAnimFrames: 40,
   dashSpeed: 1.252 / 19,
   dashBackSpeed: 0.923 / 23,
+  // Filled in constructor if empty — see ensureDashDx
+  dashDxFwd: [],
+  dashDxBack: [],
+  dashFrontHeavyPower: 1.5,
   prejumpFrames: 4,
   airFrames: 38,
   landingFrames: 3,
@@ -149,6 +164,7 @@ export class MatchSim {
 
   constructor(move5lp: MoveDefinition, catalog?: MoveCatalog, opts?: Partial<MatchSimOptions>) {
     this.opts = { ...DEFAULT_OPTS, ...opts };
+    this.ensureDashDxTables();
     this.move5lp = cloneMove(move5lp);
     this.catalog = catalog ?? MoveCatalog.fromMoves([this.move5lp]);
     if (!this.catalog.has(this.move5lp.id)) {
@@ -157,7 +173,28 @@ export class MatchSim {
     this.history = new InputHistory(this.opts.motionHistoryCapacity);
     this.p1 = new Fighter('p1', -1.2, 1, DEFAULT_HP);
     this.p2 = new Fighter('p2', 1.2, -1, DEFAULT_HP);
+    this.p1.setStanceConfig({
+      standToCrouchFrames: this.opts.standToCrouchFrames,
+      crouchToStandFrames: this.opts.crouchToStandFrames,
+    });
     this.debugProbe.catalogCount = this.catalog.size;
+  }
+
+  /** Rebuild front-heavy |dx| tables from frames × avg speed (= distance). */
+  ensureDashDxTables(): void {
+    const p = this.opts.dashFrontHeavyPower ?? 1.5;
+    const nf = Math.max(1, this.opts.dashFrames);
+    const nb = Math.max(1, this.opts.dashBackFrames);
+    this.opts.dashDxFwd = buildFrontHeavyDashDx(
+      nf,
+      this.opts.dashSpeed * nf,
+      p,
+    );
+    this.opts.dashDxBack = buildFrontHeavyDashDx(
+      nb,
+      this.opts.dashBackSpeed * nb,
+      p,
+    );
   }
 
   get walkSpeed(): number {
@@ -289,13 +326,21 @@ export class MatchSim {
       return true;
     }
     if (intent.kind === 'dash_fwd') {
-      this.p1.startDash(true, this.opts.dashFrames);
+      this.p1.startDash(
+        true,
+        this.opts.dashFrames,
+        this.opts.dashAnimFrames,
+      );
       this.actionBuffer.clear();
       this.skipP1Advance = true;
       return true;
     }
     if (intent.kind === 'dash_back') {
-      this.p1.startDash(false, this.opts.dashBackFrames);
+      this.p1.startDash(
+        false,
+        this.opts.dashBackFrames,
+        this.opts.dashBackAnimFrames,
+      );
       this.actionBuffer.clear();
       this.skipP1Advance = true;
       return true;
@@ -474,14 +519,14 @@ export class MatchSim {
 
     this.markWhiffIfNeeded();
 
-    const dashSpeed =
-      this.p1.phase === 'dash' && this.p1.clipId === 'dash_back'
-        ? this.opts.dashBackSpeed
-        : this.opts.dashSpeed;
+    const dashBack = this.p1.clipId === 'dash_back';
+    const dashSpeed = dashBack ? this.opts.dashBackSpeed : this.opts.dashSpeed;
+    const dashDx = dashBack ? this.opts.dashDxBack : this.opts.dashDxFwd;
     const adv = {
       airFrames: this.opts.airFrames,
       landingFrames: this.opts.landingFrames,
       dashSpeed,
+      dashDx,
       applySelfMovement: this.opts.applySelfMovement,
       selfMovementScale: this.opts.selfMovementScale,
       jumpApex: this.opts.jumpApex,

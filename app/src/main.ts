@@ -1,6 +1,5 @@
 import './style.css';
 import * as THREE from 'three/webgpu';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import {
   applyConfigToMatchOpts,
   createDefaultSimConfig,
@@ -17,14 +16,20 @@ import { DebugDraw } from './render/DebugDraw';
 import { HudDom } from './render/HudDom';
 import { createDebugGui, reloadMoveFromPublic } from './debug/DebugGui';
 import type { MoveDefinition } from './combat/move/MoveDefinition';
-import { worldBox } from './render/materialUtils';
+import {
+  bakeRyuMeshTemplate,
+  ensureRyuFallbackAlbedoCatalog,
+  worldBox,
+} from './render/materialUtils';
 import {
   BOOT_PRELOAD_LOGIC_IDS,
   LogicGlbMap,
+  RYU_MESH_FBX_URL,
   RYU_MESH_ONLY_URL,
   RYU_MESH_PUBLIC_FALLBACK_URL,
 } from './data/logicGlbMap';
 import { AnimClipLibrary } from './render/AnimClipLibrary';
+import { loadFighterMeshFromUrl } from './render/loadFighterMesh';
 
 // Mesh-only skinned Ryu; combat clips from private/assets/ryu/anims via map
 import stageUrl from '@interim/SF6 Training Stage/SF6 Training Stage.glb?url';
@@ -190,12 +195,24 @@ async function boot(): Promise<void> {
   const p2View = new FighterView(scene, 0xd94a4a);
 
   async function loadFighters(): Promise<void> {
-    const loader = new GLTFLoader();
-
-    /** Mesh candidates: runtime mesh-only → public c1 (mesh only, ignore clips). */
+    /**
+     * Mesh candidates (first success wins):
+     * 1) esf001_TPose.fbx — project target mesh (cm→m + skeleton unify at bake)
+     * 2) runtime mesh-only glb fallback
+     * 3) public ryu_c1 glb (mesh only; clips discarded)
+     *
+     * Combat clips always come from private/assets/ryu/anims via LogicGlbMap.
+     */
     async function loadRyuMeshScene(): Promise<THREE.Object3D> {
       const candidates = [
-        { url: RYU_MESH_ONLY_URL, label: 'private/runtime mesh-only' },
+        {
+          url: RYU_MESH_FBX_URL,
+          label: 'private/runtime esf001_TPose.fbx (target)',
+        },
+        {
+          url: RYU_MESH_ONLY_URL,
+          label: 'private/runtime mesh-only glb fallback',
+        },
         {
           url: RYU_MESH_PUBLIC_FALLBACK_URL,
           label: 'public/models/ryu_c1 mesh (clips discarded)',
@@ -206,14 +223,14 @@ async function boot(): Promise<void> {
         try {
           setBootStatus(`Loading Ryu mesh (${c.label})…`);
           console.info('[boot] mesh try', c.url);
-          const gltf = await loader.loadAsync(c.url);
+          const loaded = await loadFighterMeshFromUrl(c.url);
           console.info(
-            `[boot] mesh OK ${c.label} meshes=`,
-            countMeshes(gltf.scene),
+            `[boot] mesh OK ${c.label} format=${loaded.format} meshes=`,
+            countMeshes(loaded.scene),
             'embeddedAnimsIgnored=',
-            gltf.animations.length,
+            loaded.embeddedAnimCount,
           );
-          return gltf.scene;
+          return loaded.scene;
         } catch (e) {
           lastErr = e;
           console.warn('[boot] mesh candidate failed', c.url, e);
@@ -223,14 +240,19 @@ async function boot(): Promise<void> {
     }
 
     try {
-      setBootStatus('Loading Ryu mesh + anims map…');
+      setBootStatus('Loading Ryu mesh + textures + anims map…');
       const t0 = performance.now();
-      const meshScene = await loadRyuMeshScene();
+      const [meshScene] = await Promise.all([
+        loadRyuMeshScene(),
+        ensureRyuFallbackAlbedoCatalog(),
+      ]);
+      // cm→m + rebind once on the template, then clone for P1/P2 (do not bake per clone)
+      bakeRyuMeshTemplate(meshScene);
       console.info(
         `[boot] mesh ready in ${((performance.now() - t0) / 1000).toFixed(1)}s`,
       );
 
-      // Combat clips come from private/assets/ryu/anims — never use c1 test tracks
+      // Combat clips come from private/assets/ryu/anims — never use c1 test tracks.
       p1View.installFromTemplate(meshScene, [], { targetHeight: 1.85 });
       p2View.installFromTemplate(meshScene, [], { targetHeight: 1.85 });
 

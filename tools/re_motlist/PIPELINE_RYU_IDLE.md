@@ -11,12 +11,14 @@
 
 | 项 | 约定 |
 |----|------|
-| 绑定 | `mot_absolute_full_chain` + **Mot 四元数共轭**（`mot_quat_to_blender`） |
+| 绑定 | `mot_absolute_full_chain` + **Mot 四元数共轭** + **dense lerp/slerp** |
 | 公式 | `basis = MeshRestLocal⁻¹ @ MotLocal(t)`，`pos × 0.01`，**跳过 Root** |
 | 时间轴 | 交付锁定 **60 fps**（glTF 存秒：`t = frame / 60`） |
-| 默认 clips | **0, 1, 3** |
-| Noesis FBX | **可选**：`--compare-noesis` 数值对照；`--use-noesis-fbx` 仅 A/B，**非交付默认** |
-| 批量管线 | 同一 `apply_animation_mot_absolute_full_chain`；特殊管线验证通过后批量应同质 |
+| 默认 clips | **0, 1, 3**（`BAS_STD_Loop` / `BAS_TRN_STD` / `BAS_STD_IDLING_Loop`） |
+| Mot 采样 | **逐逻辑帧 0..N dense + lerp/slerp**（禁止 hold 阶梯 → 抖） |
+| Noesis GT | `noesis_out/noesis_idle_out.fbx`（验收）；默认 **不** bake FBX 到 mesh |
+| 验收 | `scripts/compare_idle_vs_noesis.py`：mean 世界误差 &lt;2cm、jerk 比 &lt;2.5 |
+| 批量管线 | 其它 motlist 走 batch（**同** dense+conjugate+disconnect）；本特殊管线默认导出 idle 三片 |
 
 **历史坑（勿再引入）：**  
 早期 clip0「看起来对」是因为默认 **整段拷贝 Noesis FBX pose basis**，未走 mot。clip1+ / 批量走未共轭的 mot → 拧臂。现已统一为 mot + conjugate。

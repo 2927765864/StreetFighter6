@@ -2,11 +2,14 @@
  * Dev-server helpers for SF6 Ryu assets:
  * - GET /api/ryu-anims → list + auto-categorized tree under private/assets/ryu/anims
  * - GET /private-assets/* → static serve of private/assets (anims packs)
- * - GET /private-runtime/* → static serve of private/runtime (mesh-only glb etc.)
+ * - GET /private-runtime/* → static serve of private/runtime (mesh fbx/glb etc.)
+ * - GET /private-interim/* → static serve of private/interim (Ryu textures etc.)
  *
  * Directory layout (auto-discovered, no hard-coded category names):
  *   private/assets/ryu/anims/<category>/<pack>/catalog.json | glb/*.glb
- *   private/runtime/ryu/ryu_c1_mesh_only.glb
+ *   private/runtime/ryu/esf001_TPose.fbx (preferred skinned mesh)
+ *   private/runtime/ryu/ryu_c1_mesh_only.glb (legacy fallback)
+ *   private/interim/characters/SF6 Ryu Model/SF6 Ryu textures/*_albdout.png
  *
  * Production builds do not embed private/ assets; this is a local preview tool.
  */
@@ -67,8 +70,13 @@ function contentType(file: string): string {
   const ext = path.extname(file).toLowerCase();
   if (ext === '.glb') return 'model/gltf-binary';
   if (ext === '.gltf') return 'model/gltf+json';
+  if (ext === '.fbx') return 'application/octet-stream';
   if (ext === '.json') return 'application/json';
   if (ext === '.bin') return 'application/octet-stream';
+  if (ext === '.png') return 'image/png';
+  if (ext === '.jpg' || ext === '.jpeg') return 'image/jpeg';
+  if (ext === '.webp') return 'image/webp';
+  if (ext === '.dds') return 'application/octet-stream';
   return 'application/octet-stream';
 }
 
@@ -325,6 +333,7 @@ function attachMiddleware(
   server: ViteDevServer,
   assetsRoot: string,
   runtimeRoot: string,
+  interimRoot: string,
 ): void {
   server.middlewares.use(
     (req: IncomingMessage, res: ServerResponse, next: () => void) => {
@@ -338,6 +347,7 @@ function attachMiddleware(
             categoryCount: categories.length,
             assetsRootHint: 'private/assets',
             runtimeRootHint: 'private/runtime',
+            interimRootHint: 'private/interim',
             sources,
             categories,
             clips: entries,
@@ -368,6 +378,16 @@ function attachMiddleware(
         return;
       }
 
+      // Ryu textures / interim community assets
+      if (url.startsWith('/private-interim/')) {
+        const rel = url.slice('/private-interim/'.length);
+        if (!serveStaticFile(res, interimRoot, rel)) {
+          res.statusCode = 404;
+          res.end(`Not found under private/interim: ${rel}`);
+        }
+        return;
+      }
+
       next();
     },
   );
@@ -376,13 +396,15 @@ function attachMiddleware(
 export function ryuAnimAssetsPlugin(projectRoot: string): Plugin {
   const assetsRoot = path.resolve(projectRoot, '../private/assets');
   const runtimeRoot = path.resolve(projectRoot, '../private/runtime');
+  const interimRoot = path.resolve(projectRoot, '../private/interim');
   return {
     name: 'ryu-anim-assets',
     configureServer(server) {
-      attachMiddleware(server, assetsRoot, runtimeRoot);
+      attachMiddleware(server, assetsRoot, runtimeRoot, interimRoot);
       console.info(
         `[ryu-anim-assets] /private-assets → ${assetsRoot}` +
-          ` | /private-runtime → ${runtimeRoot}`,
+          ` | /private-runtime → ${runtimeRoot}` +
+          ` | /private-interim → ${interimRoot}`,
       );
     },
     configurePreviewServer(server) {
@@ -390,6 +412,7 @@ export function ryuAnimAssetsPlugin(projectRoot: string): Plugin {
         server as unknown as ViteDevServer,
         assetsRoot,
         runtimeRoot,
+        interimRoot,
       );
     },
   };

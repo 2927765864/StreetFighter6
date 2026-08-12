@@ -32,7 +32,7 @@ Always import via paths under `…/natives/stm/product/...`.
 **完整说明：[`PIPELINE_RYU_IDLE.md`](./PIPELINE_RYU_IDLE.md)**  
 绑定史：[`ANIM_BIND_FIX.md`](./ANIM_BIND_FIX.md)
 
-摘要：RE Mesh 导模型 + **自研 mot absolute full-chain**（Mot 四元数 **共轭**）→ 默认 clips **0,1,3** → `out/ryu_idle_pipeline/ryu_c1_clipXX_*.{blend,fbx,glb}`，**强制 60 fps**。  
+摘要：RE Mesh 导模型 + **自研 mot absolute full-chain**（Mot 四元数 **共轭** + **dense lerp/slerp** + disconnect 连骨）→ 默认 clips **0,1,3** → `out/ryu_idle_pipeline/ryu_c1_clipXX_*.{blend,fbx,glb}`，**强制 60 fps**。  
 Noesis FBX 仅可选对照（`--compare-noesis`），**不是**默认烘焙路径。
 
 ```bash
@@ -49,8 +49,9 @@ ROOT="…/tools/re_motlist"
 
 **完整说明：[`PIPELINE_RYU_BATCH.md`](./PIPELINE_RYU_BATCH.md)**
 
-与特殊管线 **同一绑定**；单个 motlist 全量/子集 → 独立 GLB。  
-命名 = 索引 + 招式名 + motion_id + 帧数。产物示例：`private/assets/ryu/anims/basic/esf001v00_idle/`（**未接入** `app/`）。
+与特殊管线 **同一绑定**（conjugate + dense + disconnect）；单个 motlist 全量/子集 → 独立 GLB。  
+命名 = 索引 + 招式名 + motion_id + 帧数。产物示例：`private/assets/ryu/anims/basic/esf001v00_idle/`（**未接入** `app/`）。  
+重建旧 hold/未共轭产物时加 `--clean-glb`。
 
 ```bash
 "$BLENDER" --background --python "$ROOT/scripts/pipeline_ryu_batch_motlist.py" -- \
@@ -69,8 +70,8 @@ ROOT="…/tools/re_motlist"
 | 3 | Build skeleton from mot bone headers (debug only) |
 | 4 | Write Blender **Actions** on RE Mesh armature (`mot_conjugate` full-chain) |
 | 5 | GUI: File → Import → **RE Motlist** |
-| 6 | **特殊 idle 管线**（clips 0/1/3，60 fps，已对齐 Noesis） |
-| 7 | **批量管线**（同绑定，量产 GLB） |
+| 6 | **特殊 idle 管线**（clips 0/1/3，dense@60 fps，已对齐 Noesis） |
+| 7 | **批量管线**（同 dense 绑定，量产 GLB） |
 
 交付绑定细节与勿用路径见 `ANIM_BIND_FIX.md`。
 
@@ -142,6 +143,8 @@ tools/re_motlist/
 - Mot header `frameRate` is often **0** on SF6; **export timeline is locked to 60 FPS** (`t_sec = frame / 60` in glTF).
 - Mot translations are Noesis-style **×100**; pipeline uses **pos_scale=0.01**.
 - Mot rotations need **conjugate** into Blender (`mot_quat_to_blender`); skipping this twists limbs.
+- Mot keys are baked **dense** (every logical frame + lerp/slerp); sparse hold causes staircase jitter.
+- Disconnect `use_connect` on driven bones (esp. `C_Hip`) or hip translation is discarded.
 - Facial / multi-motlist sync merge is **not** ported yet.
 - RE Mesh apply needs **matching bone names** (`C_Hip`, `L_Hand`, …). Skip Mot `Root` (mesh Root holds rotate90).
 - Headless Apple Silicon: textures often missing (`libtexconv`); animation/geometry still valid.
@@ -153,6 +156,7 @@ tools/re_motlist/
 
 ## Next
 
-- Re-run batch packs with conjugate bind (attack / move / damage motlists)  
+- Re-run batch packs with dense+conjugate bind (`--clean-glb`) for attack / move / damage  
+
 - Optional: wire accepted glbs into `app/` / `clips.json`  
 - Facial motlist merge

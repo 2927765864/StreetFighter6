@@ -1,5 +1,7 @@
 /** Defaults from docs/plans/ai-execution-plan-character-control-p0-v0.md */
 
+import { buildFrontHeavyDashDx } from '../combat/loco/DashProfile';
+
 export const LOGIC_FPS = 60;
 export const LOGIC_DT = 1 / LOGIC_FPS;
 export const MAX_FRAME_TIME_MS = 100;
@@ -49,8 +51,16 @@ export type MutableSimConfig = {
   enableActionBuffer: boolean;
   dashFrames: number;
   dashBackFrames: number;
+  /** glb/map frames for dash residual (default map: 42 / 40). */
+  dashAnimFrames: number;
+  dashBackAnimFrames: number;
   dashSpeed: number;
   dashBackSpeed: number;
+  /** Front-heavy curve exponent; higher = more front-loaded. */
+  dashFrontHeavyPower: number;
+  /** Per-frame |dx| (rebuilt from power × distance). */
+  dashDxFwd: number[];
+  dashDxBack: number[];
   prejumpFrames: number;
   airFrames: number;
   landingFrames: number;
@@ -63,6 +73,12 @@ export type MutableSimConfig = {
   jumpNeutralDist: number;
   scrubFromLogic: boolean;
   scrubMode: 'uniform' | 'truncate';
+  /**
+   * Foot ground policy:
+   * - `consensus` (default): trust authored idle/walk feet; one-shot Y snap on
+   *   hard clip cut / land-from-air only; attack support-foot XZ if enabled.
+   * - `legacy`: every-frame whole-body sole chase (old idle Y jitter).
+   */
   plantMode: 'consensus' | 'legacy';
   footPlantEnabled: boolean;
   rootPoseLockAttack: boolean;
@@ -80,7 +96,11 @@ export type MutableSimConfig = {
    * Attack residual → another attack (§3.11). Default 0 = hard cut (跟手).
    */
   residualToAttackBlendSec: number;
-  /** Max |ΔY| for sole plant per second (meters, world). Softens foot pops. */
+  /**
+   * Attack residual → stand↔crouch transition clip (§3.11). Soft entry only.
+   */
+  residualToStanceBlendSec: number;
+  /** Only used when plantMode=legacy (max |ΔY|/s). Consensus ignores continuous plant. */
   plantSlewPerSec: number;
   /** Stand → crouch transition logic frames (§3.7.2). */
   standToCrouchFrames: number;
@@ -94,6 +114,7 @@ export function createDefaultSimConfig(): MutableSimConfig {
   const dashFwdFrames = 19;
   const dashBackDist = 0.923;
   const dashBackFrames = 23;
+  const dashFrontHeavyPower = 1.5;
   return {
     logicFps: LOGIC_FPS,
     maxLogicStepsPerRaf: MAX_LOGIC_STEPS_PER_RAF,
@@ -123,8 +144,21 @@ export function createDefaultSimConfig(): MutableSimConfig {
     enableActionBuffer: true,
     dashFrames: dashFwdFrames,
     dashBackFrames,
+    dashAnimFrames: 42,
+    dashBackAnimFrames: 40,
     dashSpeed: dashFwdDist / dashFwdFrames,
     dashBackSpeed: dashBackDist / dashBackFrames,
+    dashFrontHeavyPower,
+    dashDxFwd: buildFrontHeavyDashDx(
+      dashFwdFrames,
+      dashFwdDist,
+      dashFrontHeavyPower,
+    ),
+    dashDxBack: buildFrontHeavyDashDx(
+      dashBackFrames,
+      dashBackDist,
+      dashFrontHeavyPower,
+    ),
     prejumpFrames: 4,
     airFrames: 38,
     landingFrames: 3,
@@ -146,6 +180,7 @@ export function createDefaultSimConfig(): MutableSimConfig {
     locoBlendSec: 0.12,
     residualToMoveBlendSec: 0.1,
     residualToAttackBlendSec: 0,
+    residualToStanceBlendSec: 0.1,
     plantSlewPerSec: 0.55,
     standToCrouchFrames: 60,
     crouchToStandFrames: 38,
@@ -153,6 +188,19 @@ export function createDefaultSimConfig(): MutableSimConfig {
 }
 
 export function applyConfigToMatchOpts(cfg: MutableSimConfig) {
+  const power = cfg.dashFrontHeavyPower ?? 1.5;
+  const dashDxFwd = buildFrontHeavyDashDx(
+    cfg.dashFrames,
+    cfg.dashSpeed * Math.max(1, cfg.dashFrames),
+    power,
+  );
+  const dashDxBack = buildFrontHeavyDashDx(
+    cfg.dashBackFrames,
+    cfg.dashBackSpeed * Math.max(1, cfg.dashBackFrames),
+    power,
+  );
+  cfg.dashDxFwd = dashDxFwd;
+  cfg.dashDxBack = dashDxBack;
   return {
     actionBufferStandard: cfg.actionBufferStandard,
     actionBufferDash: cfg.actionBufferDash,
@@ -166,8 +214,13 @@ export function applyConfigToMatchOpts(cfg: MutableSimConfig) {
     enableActionBuffer: cfg.enableActionBuffer,
     dashFrames: cfg.dashFrames,
     dashBackFrames: cfg.dashBackFrames,
+    dashAnimFrames: cfg.dashAnimFrames,
+    dashBackAnimFrames: cfg.dashBackAnimFrames,
     dashSpeed: cfg.dashSpeed,
     dashBackSpeed: cfg.dashBackSpeed,
+    dashDxFwd,
+    dashDxBack,
+    dashFrontHeavyPower: power,
     prejumpFrames: cfg.prejumpFrames,
     airFrames: cfg.airFrames,
     landingFrames: cfg.landingFrames,
@@ -190,9 +243,11 @@ export function syncMatchOpts(
   match: {
     opts: ReturnType<typeof applyConfigToMatchOpts>;
     history: { setCapacity: (n: number) => void };
+    ensureDashDxTables?: () => void;
   },
   cfg: MutableSimConfig,
 ): void {
   Object.assign(match.opts, applyConfigToMatchOpts(cfg));
   match.history.setCapacity(cfg.motionHistoryCapacity);
+  match.ensureDashDxTables?.();
 }

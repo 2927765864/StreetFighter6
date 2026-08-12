@@ -295,8 +295,12 @@ export function createDebugGui(
     .name('后冲帧数')
     .onChange(syncOpts);
   moveStateFolder
+    .add(cfg, 'dashFrontHeavyPower', 0.5, 4, 0.05)
+    .name('dash前重指数')
+    .onChange(syncOpts);
+  moveStateFolder
     .add(cfg, 'dashSpeed', 0.02, 0.4, 0.001)
-    .name('前冲速度')
+    .name('前冲均速(总距/帧)')
     .onChange(syncOpts);
   moveStateFolder
     .add(cfg, 'dashBackSpeed', 0.02, 0.4, 0.001)
@@ -356,8 +360,8 @@ export function createDebugGui(
     .name('scrubMode');
   animDrive
     .add(cfg, 'plantMode', { consensus: 'consensus', legacy: 'legacy' })
-    .name('plantMode');
-  animDrive.add(cfg, 'footPlantEnabled').name('footPlantEnabled');
+    .name('plantMode(信动画/每帧追地)');
+  animDrive.add(cfg, 'footPlantEnabled').name('出招支撑脚XZ');
   animDrive.add(cfg, 'rootPoseLockAttack').name('rootPoseLockAttack');
   animDrive
     .add(cfg, 'locoBlendSec', 0, 0.35, 0.01)
@@ -369,8 +373,11 @@ export function createDebugGui(
     .add(cfg, 'residualToAttackBlendSec', 0, 0.2, 0.01)
     .name('residual→攻溶图');
   animDrive
+    .add(cfg, 'residualToStanceBlendSec', 0, 0.35, 0.01)
+    .name('residual→站蹲过渡');
+  animDrive
     .add(cfg, 'plantSlewPerSec', 0.05, 2, 0.01)
-    .name('plantSlewPerSec');
+    .name('plantSlew(仅legacy)');
   animDrive.add(cfg, 'showFootDebug').name('showFootDebug');
 
   const disp = gui.addFolder('位移调试');

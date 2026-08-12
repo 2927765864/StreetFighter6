@@ -39,11 +39,12 @@ export class AnimClipLibrary {
     if (!gltf.animations.length) {
       throw new Error(`No AnimationClips in ${url}`);
     }
-    // prepare tracks against a temporary empty object graph is not enough —
-    // prepareReExtractedFighter expects a model; track sanitization works with
-    // null model if we only need track cleanup. Use first mesh from gltf if any.
+    // Clip-only sanitize: do not skeleton.pose() the anim-glb hierarchy
+    // (tracks are bound onto the boot fighter mesh, not this scene).
     let animations = gltf.animations.slice();
-    const prepared = prepareReExtractedFighter(gltf.scene, animations);
+    const prepared = prepareReExtractedFighter(gltf.scene, animations, {
+      poseModel: false,
+    });
     animations = prepared.animations;
     const clip = animations[0]!.clone();
     // Name = cache key so multiple clips stay unique on one mixer
