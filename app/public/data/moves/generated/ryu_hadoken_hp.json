@@ -16,8 +16,8 @@
     "startup": 12,
     "active": 1,
     "activeRaw": null,
-    "recovery": null,
-    "total": 13
+    "recovery": 34,
+    "total": 47
   },
   "advantage": {
     "onHit": -3,
@@ -45,7 +45,7 @@
     "hurt": [
       {
         "from": 0,
-        "to": 12,
+        "to": 46,
         "x": 0,
         "y": 0.85,
         "w": 0.7,
@@ -67,7 +67,7 @@
     "push": [
       {
         "from": 0,
-        "to": 12,
+        "to": 46,
         "x": 0,
         "y": 0.7,
         "w": 0.55,
@@ -91,7 +91,7 @@
   ],
   "review": {
     "status": "placeholder",
-    "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+    "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed. totalFrames from 4rays=47; recovery filled as total-startup-active (was recovery=None, total=13)."
   },
   "slug": "ryu-hadoken-heavy",
   "abbreviation": null

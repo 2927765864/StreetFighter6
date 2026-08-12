@@ -57,6 +57,10 @@ curl -sL "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml" \
 - `cancel: "C"` → `specialCancel: true`；**cancel 窗先占位为 active 起至招末**（非精确 hitconfirm 窗）。
 - **无 hitstun/blockstun 字段**时不强行编造。
 - `glbPath`：若能挂上 `ryu-logic-to-glb-map` 家族路径则写入。
+- **`totalFrames` 优先**：4rays 飞弹类常只给 `startup` + `totalFrames`、无 `recovery`。  
+  必须写入 `frames.total = totalFrames`，再填  
+  `recovery = total − startup − active`（本仓飞弹默认 `active = 1` 出弹帧）。  
+  **禁止**在缺 `recovery` 时用 `startup + active` 当 total（曾误把弱/中/强波动写成 17/15/13，正确总长为 **47**）。
 
 ---
 

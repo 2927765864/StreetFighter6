@@ -7,8 +7,8 @@
   "frames": {
     "startup": 16,
     "active": 1,
-    "recovery": 33,
-    "total": 50
+    "recovery": 30,
+    "total": 47
   },
   "advantage": {
     "onHit": 1,
@@ -28,7 +28,7 @@
     "hurt": [
       {
         "from": 0,
-        "to": 49,
+        "to": 46,
         "x": 0,
         "y": 0.85,
         "w": 0.7,
@@ -53,7 +53,7 @@
   "facingRelative": true,
   "review": {
     "status": "placeholder",
-    "notes": "P0 runtime copy from generated/4rays; recovery normalized (generated had recovery null / total 17). Boxes placeholder. Cross-check SuperCombo before reviewed."
+    "notes": "Runtime LP Hadoken: startup/total from Capcom/4rays (16 / 47). active=1 spawn frame; recovery=total-startup-active=30. Boxes placeholder."
   },
   "sources": [
     {

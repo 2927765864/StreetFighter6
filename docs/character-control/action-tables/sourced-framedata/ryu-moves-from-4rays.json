@@ -2706,8 +2706,8 @@
         "startup": 16,
         "active": 1,
         "activeRaw": null,
-        "recovery": null,
-        "total": 17
+        "recovery": 30,
+        "total": 47
       },
       "advantage": {
         "onHit": 1,
@@ -2735,7 +2735,7 @@
         "hurt": [
           {
             "from": 0,
-            "to": 16,
+            "to": 46,
             "x": 0,
             "y": 0.85,
             "w": 0.7,
@@ -2757,7 +2757,7 @@
         "push": [
           {
             "from": 0,
-            "to": 16,
+            "to": 46,
             "x": 0,
             "y": 0.7,
             "w": 0.55,
@@ -2781,7 +2781,7 @@
       ],
       "review": {
         "status": "placeholder",
-        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed. totalFrames from 4rays=47; recovery filled."
       },
       "slug": "ryu-hadoken-light",
       "abbreviation": null
@@ -2804,8 +2804,8 @@
         "startup": 14,
         "active": 1,
         "activeRaw": null,
-        "recovery": null,
-        "total": 15
+        "recovery": 32,
+        "total": 47
       },
       "advantage": {
         "onHit": -1,
@@ -2833,7 +2833,7 @@
         "hurt": [
           {
             "from": 0,
-            "to": 14,
+            "to": 46,
             "x": 0,
             "y": 0.85,
             "w": 0.7,
@@ -2855,7 +2855,7 @@
         "push": [
           {
             "from": 0,
-            "to": 14,
+            "to": 46,
             "x": 0,
             "y": 0.7,
             "w": 0.55,
@@ -2879,7 +2879,7 @@
       ],
       "review": {
         "status": "placeholder",
-        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed. totalFrames from 4rays=47; recovery filled."
       },
       "slug": "ryu-hadoken-medium",
       "abbreviation": null
@@ -2902,8 +2902,8 @@
         "startup": 12,
         "active": 1,
         "activeRaw": null,
-        "recovery": null,
-        "total": 13
+        "recovery": 34,
+        "total": 47
       },
       "advantage": {
         "onHit": -3,
@@ -2931,7 +2931,7 @@
         "hurt": [
           {
             "from": 0,
-            "to": 12,
+            "to": 46,
             "x": 0,
             "y": 0.85,
             "w": 0.7,
@@ -2953,7 +2953,7 @@
         "push": [
           {
             "from": 0,
-            "to": 12,
+            "to": 46,
             "x": 0,
             "y": 0.7,
             "w": 0.55,
@@ -2977,7 +2977,7 @@
       ],
       "review": {
         "status": "placeholder",
-        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed. totalFrames from 4rays=47; recovery filled."
       },
       "slug": "ryu-hadoken-heavy",
       "abbreviation": null
@@ -3000,8 +3000,8 @@
         "startup": 12,
         "active": 1,
         "activeRaw": null,
-        "recovery": null,
-        "total": 13
+        "recovery": 27,
+        "total": 40
       },
       "advantage": {
         "onHit": null,
@@ -3031,7 +3031,7 @@
         "hurt": [
           {
             "from": 0,
-            "to": 12,
+            "to": 39,
             "x": 0,
             "y": 0.85,
             "w": 0.7,
@@ -3053,7 +3053,7 @@
         "push": [
           {
             "from": 0,
-            "to": 12,
+            "to": 39,
             "x": 0,
             "y": 0.7,
             "w": 0.55,
@@ -3077,7 +3077,7 @@
       ],
       "review": {
         "status": "placeholder",
-        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed. totalFrames from 4rays=40; recovery filled."
       },
       "slug": "ryu-hadoken-od",
       "abbreviation": null
@@ -3100,8 +3100,8 @@
         "startup": 12,
         "active": 1,
         "activeRaw": null,
-        "recovery": null,
-        "total": 13
+        "recovery": 29,
+        "total": 42
       },
       "advantage": {
         "onHit": null,
@@ -3132,7 +3132,7 @@
         "hurt": [
           {
             "from": 0,
-            "to": 12,
+            "to": 41,
             "x": 0,
             "y": 0.85,
             "w": 0.7,
@@ -3154,7 +3154,7 @@
         "push": [
           {
             "from": 0,
-            "to": 12,
+            "to": 41,
             "x": 0,
             "y": 0.7,
             "w": 0.55,
@@ -3178,7 +3178,7 @@
       ],
       "review": {
         "status": "placeholder",
-        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed. totalFrames from 4rays=42; recovery filled."
       },
       "slug": "denjin-charge-hadoken",
       "abbreviation": null
@@ -3201,8 +3201,8 @@
         "startup": 12,
         "active": 1,
         "activeRaw": null,
-        "recovery": null,
-        "total": 13
+        "recovery": 25,
+        "total": 38
       },
       "advantage": {
         "onHit": null,
@@ -3230,7 +3230,7 @@
         "hurt": [
           {
             "from": 0,
-            "to": 12,
+            "to": 37,
             "x": 0,
             "y": 0.85,
             "w": 0.7,
@@ -3252,7 +3252,7 @@
         "push": [
           {
             "from": 0,
-            "to": 12,
+            "to": 37,
             "x": 0,
             "y": 0.7,
             "w": 0.55,
@@ -3276,7 +3276,7 @@
       ],
       "review": {
         "status": "placeholder",
-        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed. totalFrames from 4rays=38; recovery filled."
       },
       "slug": "denjin-charge-hadoken-od",
       "abbreviation": null
@@ -5357,8 +5357,8 @@
         "startup": 7,
         "active": 1,
         "activeRaw": null,
-        "recovery": null,
-        "total": 8
+        "recovery": 78,
+        "total": 86
       },
       "advantage": {
         "onHit": null,
@@ -5386,7 +5386,7 @@
         "hurt": [
           {
             "from": 0,
-            "to": 7,
+            "to": 85,
             "x": 0,
             "y": 0.85,
             "w": 0.7,
@@ -5408,7 +5408,7 @@
         "push": [
           {
             "from": 0,
-            "to": 7,
+            "to": 85,
             "x": 0,
             "y": 0.7,
             "w": 0.55,
@@ -5432,7 +5432,7 @@
       ],
       "review": {
         "status": "placeholder",
-        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed. totalFrames from 4rays=86; recovery filled."
       },
       "slug": "shinku-hadoken",
       "abbreviation": null
@@ -5455,8 +5455,8 @@
         "startup": 7,
         "active": 1,
         "activeRaw": null,
-        "recovery": null,
-        "total": 8
+        "recovery": 78,
+        "total": 86
       },
       "advantage": {
         "onHit": null,
@@ -5484,7 +5484,7 @@
         "hurt": [
           {
             "from": 0,
-            "to": 7,
+            "to": 85,
             "x": 0,
             "y": 0.85,
             "w": 0.7,
@@ -5506,7 +5506,7 @@
         "push": [
           {
             "from": 0,
-            "to": 7,
+            "to": 85,
             "x": 0,
             "y": 0.7,
             "w": 0.55,
@@ -5530,7 +5530,7 @@
       ],
       "review": {
         "status": "placeholder",
-        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
+        "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed. totalFrames from 4rays=86; recovery filled."
       },
       "slug": "denjin-charge-shinku-hadoken",
       "abbreviation": null

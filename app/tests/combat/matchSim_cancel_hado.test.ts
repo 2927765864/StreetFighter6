@@ -1,7 +1,12 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { MatchSim } from '../../src/combat/match/MatchSim';
 import { MoveCatalog } from '../../src/combat/move/MoveCatalog';
-import type { MoveDefinition } from '../../src/combat/move/MoveDefinition';
+import {
+  parseMoveDefinition,
+  type MoveDefinition,
+} from '../../src/combat/move/MoveDefinition';
 import { BTN_LP } from '../../src/combat/types';
 
 const lp: MoveDefinition = {
@@ -33,14 +38,14 @@ const hado: MoveDefinition = {
   characterId: 'ryu',
   moveId: 'ryu_hadoken_lp',
   displayName: 'Hadoken',
-  frames: { startup: 16, active: 1, recovery: 33, total: 50 },
+  frames: { startup: 16, active: 1, recovery: 30, total: 47 },
   advantage: { onHit: 1, onBlock: -5 },
   damage: 600,
   hitstun: 20,
   blockstun: 14,
   cancel: { specialCancel: false, targetCombo: [], windows: [] },
   boxes: {
-    hurt: [{ from: 0, to: 49, x: 0, y: 0.85, w: 0.7, h: 1.7 }],
+    hurt: [{ from: 0, to: 46, x: 0, y: 0.85, w: 0.7, h: 1.7 }],
     hit: [{ from: 15, to: 15, x: 0.9, y: 1.15, w: 0.7, h: 0.4 }],
   },
   clipId: 'hadoken_lp',
@@ -55,6 +60,46 @@ const N = {
   pressed: 0,
   released: 0,
 };
+
+describe('Hadoken frame data', () => {
+  it('LP/MP/HP use Capcom total 47, not startup+1', () => {
+    const dir = resolve(__dirname, '../../public/data/moves/generated');
+    const expectTotal = (
+      file: string,
+      startup: number,
+      recovery: number,
+    ) => {
+      const m = parseMoveDefinition(
+        JSON.parse(readFileSync(`${dir}/${file}`, 'utf8')),
+      );
+      expect(m.frames.startup).toBe(startup);
+      expect(m.frames.active).toBe(1);
+      expect(m.frames.recovery).toBe(recovery);
+      expect(m.frames.total).toBe(47);
+      expect(m.frames.total).toBe(
+        m.frames.startup + m.frames.active + m.frames.recovery,
+      );
+    };
+    expectTotal('ryu_hadoken_lp.json', 16, 30);
+    expectTotal('ryu_hadoken_mp.json', 14, 32);
+    expectTotal('ryu_hadoken_hp.json', 12, 34);
+
+    const runtime = parseMoveDefinition(
+      JSON.parse(
+        readFileSync(
+          resolve(__dirname, '../../public/data/moves/ryu_hadoken_lp.json'),
+          'utf8',
+        ),
+      ),
+    );
+    expect(runtime.frames).toMatchObject({
+      startup: 16,
+      active: 1,
+      recovery: 30,
+      total: 47,
+    });
+  });
+});
 
 describe('MatchSim cancel to hadoken', () => {
   it('cancels 5LP into 236P inside cancel window', () => {
