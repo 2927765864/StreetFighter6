@@ -1,0 +1,136 @@
+{
+  "id": "ryu_denjin_charge",
+  "characterId": "ryu",
+  "moveId": "ryu_denjin_charge",
+  "displayName": "Denjin Charge",
+  "displayNameJa": "電刃錬気",
+  "input": {
+    "raw": "22*p",
+    "buttons": null,
+    "motion": null
+  },
+  "type": "special",
+  "guard": null,
+  "hitCount": null,
+  "frames": {
+    "startup": null,
+    "active": 1,
+    "activeRaw": null,
+    "recovery": null,
+    "total": 2
+  },
+  "advantage": {
+    "onHit": null,
+    "onBlock": null
+  },
+  "damage": null,
+  "cancel": {
+    "specialCancel": false,
+    "super": false,
+    "raw": null
+  },
+  "driveGauge": null,
+  "superArtGauge": null,
+  "scaling": null,
+  "notes": [
+    "Envelop your fists with the Power of Nothingness, enhancing moves such as the Hadoken and Hashogeki. Leaves you wide open, making the timing of its usage critical",
+    "Denjin Charge stock added on the 51st frame. Only 1 Denjin Charge stock can be held at a time",
+    "Hadoken, Hashogeki, Shinku Hadoken, and Shin Hashogeki’s properties are enhanced when a Denjin Charge is held"
+  ],
+  "boxes": {
+    "hurt": [
+      {
+        "from": 0,
+        "to": 1,
+        "x": 0,
+        "y": 1.693975903614458,
+        "w": 0.8,
+        "h": 0.31204819277108437,
+        "rectId": 7,
+        "part": "head",
+        "layer": "base",
+        "rectBucket": "08"
+      },
+      {
+        "from": 0,
+        "to": 1,
+        "x": 0,
+        "y": 1.0698795180722893,
+        "w": 0.8,
+        "h": 0.936144578313253,
+        "rectId": 8,
+        "part": "body",
+        "layer": "base",
+        "rectBucket": "08"
+      },
+      {
+        "from": 0,
+        "to": 1,
+        "x": 0,
+        "y": 0.30090361445783137,
+        "w": 0.8,
+        "h": 0.6018072289156627,
+        "rectId": 9,
+        "part": "leg",
+        "layer": "base",
+        "rectBucket": "08"
+      },
+      {
+        "from": 5,
+        "to": 48,
+        "x": 0.49,
+        "y": 0.36777108433734945,
+        "w": 0.38,
+        "h": 0.7132530120481928,
+        "rectId": 219,
+        "part": "leg",
+        "layer": "extend",
+        "rectBucket": "08"
+      }
+    ],
+    "hit": [],
+    "push": [
+      {
+        "from": 0,
+        "to": 95,
+        "x": 0,
+        "y": 1.6605421686746988,
+        "w": 0.6,
+        "h": 0.37891566265060245,
+        "rectId": 1,
+        "rectBucket": "08"
+      }
+    ]
+  },
+  "clipId": "22_p",
+  "glbPath": null,
+  "facingRelative": true,
+  "sources": [
+    {
+      "name": "4rays/sf6-move-data",
+      "url": "https://github.com/4rays/sf6-move-data",
+      "file": "moves/ryu.toml",
+      "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+      "retrieved": "2026-08-10",
+      "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+    }
+  ],
+  "review": {
+    "status": "mmdk_converted",
+    "notes": "MMDK hurt/push only (no strike hit); unitScale=0.01"
+  },
+  "slug": "denjin-charge",
+  "abbreviation": null,
+  "selfMovement": [
+    0,
+    0
+  ],
+  "timelineFrames": 96,
+  "mmdk": {
+    "actionName": "SPA_KIAITAME",
+    "fabFrame": 95,
+    "hitDtIndex": null,
+    "unitScale": 0.01,
+    "clampBaseHurtToTotal": true
+  }
+}

@@ -18,6 +18,8 @@ export const MOVE_ID_ALIASES: Record<string, string> = {
   'j>lk': 'ryu_jlk',
   'j>mk': 'ryu_jmk',
   'j>hk': 'ryu_jhk',
+  ryu_22_p: 'ryu_denjin_charge',
+  '22_p': 'ryu_denjin_charge',
 };
 
 /** clipId strings that should resolve via LogicGlbMap aliases */
@@ -101,53 +103,60 @@ export function canonicalizeMoveDefinition(m: MoveDefinition): MoveDefinition {
 
 /**
  * Public URLs under app/public for feedback catalog.
- * Filenames match generated/ from 4rays pipeline (including `j>`).
+ * All non-deferred should-wire moves: MMDK dual-source at /data/moves/ryu_*.json
+ * (not generated placeholder boxes). Supers deferred — not listed.
  */
 export const RYU_FEEDBACK_MOVE_URLS: string[] = [
   // Standing
-  '/data/moves/generated/ryu_5lp.json',
-  '/data/moves/generated/ryu_5mp.json',
-  '/data/moves/generated/ryu_5hp.json',
-  '/data/moves/generated/ryu_5lk.json',
-  '/data/moves/generated/ryu_5mk.json',
-  '/data/moves/generated/ryu_5hk.json',
+  '/data/moves/ryu_5lp.json',
+  '/data/moves/ryu_5mp.json',
+  '/data/moves/ryu_5hp.json',
+  '/data/moves/ryu_5lk.json',
+  '/data/moves/ryu_5mk.json',
+  '/data/moves/ryu_5hk.json',
   // Crouching
-  '/data/moves/generated/ryu_2lp.json',
-  '/data/moves/generated/ryu_2mp.json',
-  '/data/moves/generated/ryu_2hp.json',
-  '/data/moves/generated/ryu_2lk.json',
-  '/data/moves/generated/ryu_2mk.json',
-  '/data/moves/generated/ryu_2hk.json',
-  // Jump (encode > for URL safety)
-  '/data/moves/generated/' + encodeURIComponent('ryu_j>lp') + '.json',
-  '/data/moves/generated/' + encodeURIComponent('ryu_j>mp') + '.json',
-  '/data/moves/generated/' + encodeURIComponent('ryu_j>hp') + '.json',
-  '/data/moves/generated/' + encodeURIComponent('ryu_j>lk') + '.json',
-  '/data/moves/generated/' + encodeURIComponent('ryu_j>mk') + '.json',
-  '/data/moves/generated/' + encodeURIComponent('ryu_j>hk') + '.json',
+  '/data/moves/ryu_2lp.json',
+  '/data/moves/ryu_2mp.json',
+  '/data/moves/ryu_2hp.json',
+  '/data/moves/ryu_2lk.json',
+  '/data/moves/ryu_2mk.json',
+  '/data/moves/ryu_2hk.json',
+  // Jump
+  '/data/moves/ryu_jlp.json',
+  '/data/moves/ryu_jmp.json',
+  '/data/moves/ryu_jhp.json',
+  '/data/moves/ryu_jlk.json',
+  '/data/moves/ryu_jmk.json',
+  '/data/moves/ryu_jhk.json',
   // Unique
-  '/data/moves/generated/ryu_6mp.json',
-  '/data/moves/generated/ryu_6hp.json',
-  '/data/moves/generated/ryu_4hp.json',
-  '/data/moves/generated/ryu_4hk.json',
-  '/data/moves/generated/ryu_6hk.json',
-  // Specials
-  '/data/moves/generated/ryu_hadoken_lp.json',
-  '/data/moves/generated/ryu_hadoken_mp.json',
-  '/data/moves/generated/ryu_hadoken_hp.json',
-  '/data/moves/generated/ryu_shoryuken_lp.json',
-  '/data/moves/generated/ryu_shoryuken_mp.json',
-  '/data/moves/generated/ryu_shoryuken_hp.json',
-  '/data/moves/generated/ryu_tatsu_lk.json',
-  '/data/moves/generated/ryu_tatsu_mk.json',
-  '/data/moves/generated/ryu_tatsu_hk.json',
-  '/data/moves/generated/ryu_blade_lk.json',
-  '/data/moves/generated/ryu_blade_mk.json',
-  '/data/moves/generated/ryu_blade_hk.json',
-  '/data/moves/generated/ryu_hashogeki_lp.json',
-  '/data/moves/generated/ryu_hashogeki_mp.json',
-  '/data/moves/generated/ryu_hashogeki_hp.json',
-  '/data/moves/generated/ryu_22_p.json',
+  '/data/moves/ryu_6mp.json',
+  '/data/moves/ryu_6hp.json',
+  '/data/moves/ryu_4hp.json',
+  '/data/moves/ryu_4hk.json',
+  '/data/moves/ryu_6hk.json',
+  // Target combos
+  '/data/moves/ryu_tc_hp_hk.json',
+  '/data/moves/ryu_tc_fuwa.json',
+  // Specials (MMDK convert)
+  '/data/moves/ryu_hadoken_lp.json',
+  '/data/moves/ryu_hadoken_mp.json',
+  '/data/moves/ryu_hadoken_hp.json',
+  '/data/moves/ryu_shoryuken_lp.json',
+  '/data/moves/ryu_shoryuken_mp.json',
+  '/data/moves/ryu_shoryuken_hp.json',
+  '/data/moves/ryu_tatsu_lk.json',
+  '/data/moves/ryu_tatsu_mk.json',
+  '/data/moves/ryu_tatsu_hk.json',
+  '/data/moves/ryu_air_tatsu_lk.json',
+  '/data/moves/ryu_air_tatsu_mk.json',
+  '/data/moves/ryu_air_tatsu_hk.json',
+  '/data/moves/ryu_blade_lk.json',
+  '/data/moves/ryu_blade_mk.json',
+  '/data/moves/ryu_blade_hk.json',
+  '/data/moves/ryu_hashogeki_lp.json',
+  '/data/moves/ryu_hashogeki_mp.json',
+  '/data/moves/ryu_hashogeki_hp.json',
+  '/data/moves/ryu_denjin_charge.json',
   // Throws (presentation; consensus §3.8)
   '/data/moves/ryu_throw_fwd.json',
   '/data/moves/ryu_throw_back.json',
@@ -199,4 +208,8 @@ export const FEEDBACK_PRELOAD_LOGIC_IDS: string[] = [
   'ryu_tatsu',
   'ryu_blade',
   'ryu_hashogeki',
+  'ryu_denjin_charge',
+  'ryu_tc_hp_hk',
+  'ryu_tc_fuwa',
+  'ryu_air_tatsu_lk',
 ];

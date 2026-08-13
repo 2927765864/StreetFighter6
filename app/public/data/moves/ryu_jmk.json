@@ -1,0 +1,199 @@
+{
+  "id": "ryu_jmk",
+  "characterId": "ryu",
+  "moveId": "ryu_jmk",
+  "displayName": "Jumping Medium Kick",
+  "displayNameJa": "ジャンプ中K",
+  "input": {
+    "raw": "j>mk",
+    "buttons": null,
+    "motion": null
+  },
+  "type": "normal",
+  "guard": "mid",
+  "hitCount": 1,
+  "frames": {
+    "startup": 7,
+    "active": 6,
+    "activeRaw": [
+      7,
+      12
+    ],
+    "recovery": null,
+    "total": 12
+  },
+  "advantage": {
+    "onHit": null,
+    "onBlock": null
+  },
+  "damage": 500,
+  "cancel": {
+    "specialCancel": false,
+    "super": false,
+    "raw": null
+  },
+  "driveGauge": {
+    "onHit": 1000,
+    "onBlock": -2500,
+    "onPunishCounter": -4000
+  },
+  "superArtGauge": 500,
+  "scaling": null,
+  "notes": [
+    "Has cross-up attack properties"
+  ],
+  "boxes": {
+    "hurt": [
+      {
+        "from": 0,
+        "to": 20,
+        "x": 0,
+        "y": 1.6159638554216869,
+        "w": 0.8,
+        "h": 0.8915662650602411,
+        "rectId": 166,
+        "part": "body",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 20,
+        "to": 60,
+        "x": 0,
+        "y": 1.3930722891566267,
+        "w": 0.8,
+        "h": 1.3373493975903614,
+        "rectId": 16,
+        "part": "body",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 0,
+        "to": 6,
+        "x": 0,
+        "y": 0.9250000000000002,
+        "w": 0.8,
+        "h": 0.4680722891566265,
+        "rectId": 167,
+        "part": "body",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 6,
+        "to": 20,
+        "x": 0,
+        "y": 0.9250000000000002,
+        "w": 0.8,
+        "h": 0.4680722891566265,
+        "rectId": 167,
+        "part": "body",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 6,
+        "to": 20,
+        "x": 0.84,
+        "y": 1.4376506024096387,
+        "w": 0.86,
+        "h": 0.6909638554216868,
+        "rectId": 168,
+        "part": "body",
+        "layer": "extend",
+        "rectBucket": "08"
+      }
+    ],
+    "hit": [
+      {
+        "from": 6,
+        "to": 12,
+        "x": 0.45,
+        "y": 1.4042168674698796,
+        "w": 0.7000000000000001,
+        "h": 0.18945783132530122,
+        "rectId": 35,
+        "rectBucket": "00"
+      },
+      {
+        "from": 6,
+        "to": 12,
+        "x": 1.16,
+        "y": 1.0030120481927711,
+        "w": 0.64,
+        "h": 0.33433734939759036,
+        "rectId": 36,
+        "rectBucket": "03"
+      }
+    ],
+    "push": [
+      {
+        "from": 0,
+        "to": 60,
+        "x": 0,
+        "y": 0.30090361445783137,
+        "w": 0.8,
+        "h": 0.6018072289156627,
+        "rectId": 3,
+        "rectBucket": "08"
+      },
+      {
+        "from": 0,
+        "to": 15,
+        "x": 0,
+        "y": 0.8915662650602411,
+        "w": 0.5,
+        "h": 1.560240963855422,
+        "rectId": 32,
+        "rectBucket": "05"
+      }
+    ]
+  },
+  "clipId": "j>mk",
+  "glbPath": null,
+  "facingRelative": true,
+  "sources": [
+    {
+      "name": "4rays/sf6-move-data",
+      "url": "https://github.com/4rays/sf6-move-data",
+      "file": "moves/ryu.toml",
+      "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+      "retrieved": "2026-08-10",
+      "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+    }
+  ],
+  "review": {
+    "status": "mmdk_converted",
+    "notes": "MMDK convert unitScale=0.01; public frames kept; layer/part on hurt; CLAMP_BASE=true"
+  },
+  "slug": "ryu-jump-medium-kick",
+  "abbreviation": "J.MK",
+  "selfMovement": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "timelineFrames": 61,
+  "hitstun": 17,
+  "blockstun": 17,
+  "hitstopOnHit": 11,
+  "hitstopOnBlock": 11,
+  "blockPushbackTotal": 0.25,
+  "mmdk": {
+    "actionName": "ATK_8MK",
+    "fabFrame": 60,
+    "hitDtIndex": 65,
+    "unitScale": 0.01,
+    "clampBaseHurtToTotal": true
+  }
+}

@@ -1,0 +1,351 @@
+{
+  "id": "ryu_tatsu_hk",
+  "characterId": "ryu",
+  "moveId": "ryu_tatsu_hk",
+  "displayName": "Tatsumaki Senpu-kyaku (Heavy)",
+  "displayNameJa": "竜巻旋風脚 (強)",
+  "input": {
+    "raw": "214hk",
+    "buttons": null,
+    "motion": null
+  },
+  "type": "special",
+  "guard": "high",
+  "hitCount": 3,
+  "frames": {
+    "startup": 16,
+    "active": 1,
+    "activeRaw": [
+      16,
+      17,
+      31,
+      32,
+      46,
+      47
+    ],
+    "recovery": 14,
+    "total": 30
+  },
+  "advantage": {
+    "onHit": null,
+    "onBlock": -13
+  },
+  "damage": 1200,
+  "cancel": {
+    "specialCancel": false,
+    "super": false,
+    "raw": null
+  },
+  "driveGauge": {
+    "onHit": 4000,
+    "onBlock": -2000,
+    "onPunishCounter": -5000
+  },
+  "superArtGauge": 1400,
+  "scaling": null,
+  "notes": [
+    "Unleash a series of roundhouse kicks while moving forward. A useful attack for knocking opponents away",
+    "Considered airborne from frames 10 - 61",
+    "Values listed for Super Art gauge increases and Parry or Drive Block induced Drive Gauge increases are per hit"
+  ],
+  "boxes": {
+    "hurt": [
+      {
+        "from": 45,
+        "to": 47,
+        "x": 0.8,
+        "y": 1.3373493975903614,
+        "w": 0.8,
+        "h": 0.5572289156626506,
+        "rectId": 208,
+        "part": "body",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 0,
+        "to": 9,
+        "x": 0,
+        "y": 1.693975903614458,
+        "w": 0.8,
+        "h": 0.31204819277108437,
+        "rectId": 7,
+        "part": "head",
+        "layer": "base",
+        "rectBucket": "08"
+      },
+      {
+        "from": 0,
+        "to": 9,
+        "x": 0,
+        "y": 1.0698795180722893,
+        "w": 0.8,
+        "h": 0.936144578313253,
+        "rectId": 8,
+        "part": "body",
+        "layer": "base",
+        "rectBucket": "08"
+      },
+      {
+        "from": 0,
+        "to": 9,
+        "x": 0,
+        "y": 0.30090361445783137,
+        "w": 0.8,
+        "h": 0.6018072289156627,
+        "rectId": 9,
+        "part": "leg",
+        "layer": "base",
+        "rectBucket": "08"
+      },
+      {
+        "from": 9,
+        "to": 61,
+        "x": 0,
+        "y": 1.0698795180722893,
+        "w": 0.8,
+        "h": 0.936144578313253,
+        "rectId": 205,
+        "part": "body",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 61,
+        "to": 29,
+        "x": 0,
+        "y": 1.693975903614458,
+        "w": 0.8,
+        "h": 0.31204819277108437,
+        "rectId": 7,
+        "part": "head",
+        "layer": "base",
+        "rectBucket": "08"
+      },
+      {
+        "from": 61,
+        "to": 29,
+        "x": 0,
+        "y": 1.0698795180722893,
+        "w": 0.8,
+        "h": 0.936144578313253,
+        "rectId": 8,
+        "part": "body",
+        "layer": "base",
+        "rectBucket": "08"
+      },
+      {
+        "from": 61,
+        "to": 29,
+        "x": 0,
+        "y": 0.30090361445783137,
+        "w": 0.8,
+        "h": 0.6018072289156627,
+        "rectId": 9,
+        "part": "leg",
+        "layer": "base",
+        "rectBucket": "08"
+      },
+      {
+        "from": 9,
+        "to": 61,
+        "x": 0,
+        "y": 1.693975903614458,
+        "w": 0.8,
+        "h": 0.31204819277108437,
+        "rectId": 7,
+        "part": "head",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 61,
+        "to": 78,
+        "x": 0.5,
+        "y": 0.47921686746987957,
+        "w": 0.22,
+        "h": 0.936144578313253,
+        "rectId": 206,
+        "part": "leg",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 15,
+        "to": 17,
+        "x": 0.8,
+        "y": 1.3373493975903614,
+        "w": 0.8,
+        "h": 0.5572289156626506,
+        "rectId": 208,
+        "part": "body",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 22,
+        "to": 24,
+        "x": -0.65,
+        "y": 1.3373493975903614,
+        "w": 0.8,
+        "h": 0.44578313253012053,
+        "rectId": 209,
+        "part": "body",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 30,
+        "to": 32,
+        "x": 0.8,
+        "y": 1.3373493975903614,
+        "w": 0.8,
+        "h": 0.5572289156626506,
+        "rectId": 208,
+        "part": "body",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 37,
+        "to": 39,
+        "x": -0.65,
+        "y": 1.3373493975903614,
+        "w": 0.8,
+        "h": 0.44578313253012053,
+        "rectId": 209,
+        "part": "body",
+        "layer": "extend",
+        "rectBucket": "08"
+      }
+    ],
+    "hit": [
+      {
+        "from": 15,
+        "to": 17,
+        "x": 0.9500000000000001,
+        "y": 1.2259036144578315,
+        "w": 0.38,
+        "h": 0.18945783132530122,
+        "rectId": 72,
+        "rectBucket": "00"
+      },
+      {
+        "from": 30,
+        "to": 32,
+        "x": 0.74,
+        "y": 1.2593373493975906,
+        "w": 0.38,
+        "h": 0.18945783132530122,
+        "rectId": 72,
+        "rectBucket": "00"
+      },
+      {
+        "from": 45,
+        "to": 47,
+        "x": 0.91,
+        "y": 1.2370481927710846,
+        "w": 0.38,
+        "h": 0.18945783132530122,
+        "rectId": 72,
+        "rectBucket": "00"
+      }
+    ],
+    "push": [
+      {
+        "from": 0,
+        "to": 9,
+        "x": 0,
+        "y": 1.6605421686746988,
+        "w": 0.6,
+        "h": 0.37891566265060245,
+        "rectId": 1,
+        "rectBucket": "08"
+      },
+      {
+        "from": 9,
+        "to": 61,
+        "x": 0,
+        "y": 1.1256024096385544,
+        "w": 0.7000000000000001,
+        "h": 0.8024096385542169,
+        "rectId": 40,
+        "rectBucket": "05"
+      },
+      {
+        "from": 61,
+        "to": 138,
+        "x": 0,
+        "y": 1.6605421686746988,
+        "w": 0.6,
+        "h": 0.37891566265060245,
+        "rectId": 1,
+        "rectBucket": "08"
+      }
+    ]
+  },
+  "clipId": "tatsu_hk",
+  "glbPath": "specialskill/esf001v00_specialskill_02/glb/000_esf001_SPA_TATSUMAKI_START_id0200_f14.glb",
+  "facingRelative": true,
+  "sources": [
+    {
+      "name": "4rays/sf6-move-data",
+      "url": "https://github.com/4rays/sf6-move-data",
+      "file": "moves/ryu.toml",
+      "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+      "retrieved": "2026-08-10",
+      "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+    }
+  ],
+  "review": {
+    "status": "mmdk_converted",
+    "notes": "MMDK convert unitScale=0.01; public frames kept; layer/part on hurt; CLAMP_BASE=true"
+  },
+  "slug": "ryu-tatsumaki-senpukyaku-heavy",
+  "abbreviation": null,
+  "selfMovement": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "timelineFrames": 139,
+  "hitstun": 40,
+  "blockstun": 24,
+  "hitstopOnHit": 15,
+  "hitstopOnBlock": 15,
+  "blockPushbackTotal": 0.5,
+  "mmdk": {
+    "actionName": "SPA_TATSUMAKI_END(2)",
+    "fabFrame": 138,
+    "hitDtIndex": 146,
+    "unitScale": 0.01,
+    "clampBaseHurtToTotal": true
+  }
+}

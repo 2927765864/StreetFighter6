@@ -22,6 +22,7 @@ const fixture: MoveDefinition = {
   boxes: {
     hurt: [{ from: 0, to: 13, x: 0, y: 0.85, w: 0.7, h: 1.7 }],
     hit: [{ from: 3, to: 5, x: 1.2, y: 0.85, w: 2.5, h: 1.5 }],
+    push: [{ from: 0, to: 13, x: 0, y: 0.7, w: 0.55, h: 1.4 }],
   },
   clipId: '5lp',
   facingRelative: true,
@@ -49,8 +50,9 @@ function neutral() {
 }
 
 describe('MatchSim 5LP', () => {
-  it('LP on frame 0 leads to hitstun and damage on active frames', () => {
-    const sim = new MatchSim(fixture);
+  it('LP leads to hitstun when forceP2Guard is off', () => {
+    const sim = new MatchSim(fixture, undefined, { forceP2Guard: false });
+    sim.dummy.setMode('stand');
     const hp0 = sim.p2.hp;
     sim.pendingInput = pressLp();
     sim.step();
@@ -66,10 +68,14 @@ describe('MatchSim 5LP', () => {
     expect(sim.lastHitResult).toBe('hit');
   });
 
-  it('stand_block yields blockstun', () => {
-    const sim = new MatchSim(fixture);
-    sim.dummy.setMode('stand_block');
+  it('default forceP2Guard yields blockstun + hitstop + pushback queue', () => {
+    const sim = new MatchSim(fixture, undefined, {
+      forceP2Guard: true,
+      blockPushbackTotal: 0.3,
+      hitstopFramesOnBlock: 4,
+    });
     const hp0 = sim.p2.hp;
+    const x0 = sim.p2.x;
     sim.pendingInput = pressLp();
     sim.step();
     for (let i = 0; i < 30; i++) {
@@ -80,5 +86,12 @@ describe('MatchSim 5LP', () => {
     expect(sim.p2.phase).toBe('blockstun');
     expect(sim.p2.hp).toBe(hp0);
     expect(sim.lastHitResult).toBe('block');
+    expect(sim.hitstopTimer).toBeGreaterThan(0);
+    // After hitstop, defender should be pushed away from p1 (p2 starts at +x)
+    for (let i = 0; i < 20; i++) {
+      sim.pendingInput = neutral();
+      sim.step();
+    }
+    expect(sim.p2.x).toBeGreaterThan(x0);
   });
 });

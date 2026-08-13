@@ -1,7 +1,7 @@
 {
   "id": "ryu_5lp",
   "characterId": "ryu",
-  "moveId": "5LP",
+  "moveId": "ryu_5lp",
   "displayName": "Standing Light Punch",
   "displayNameJa": "立ち弱P",
   "input": {
@@ -59,39 +59,103 @@
         "from": 0,
         "to": 12,
         "x": 0,
-        "y": 0.85,
-        "w": 0.7,
-        "h": 1.7,
-        "placeholder": true
+        "y": 1.693975903614458,
+        "w": 0.8,
+        "h": 0.31204819277108437,
+        "rectId": 7,
+        "part": "head",
+        "layer": "base",
+        "rectBucket": "08"
+      },
+      {
+        "from": 0,
+        "to": 12,
+        "x": 0,
+        "y": 1.0698795180722893,
+        "w": 0.8,
+        "h": 0.936144578313253,
+        "rectId": 8,
+        "part": "body",
+        "layer": "base",
+        "rectBucket": "08"
+      },
+      {
+        "from": 0,
+        "to": 12,
+        "x": 0,
+        "y": 0.30090361445783137,
+        "w": 0.8,
+        "h": 0.6018072289156627,
+        "rectId": 9,
+        "part": "leg",
+        "layer": "base",
+        "rectBucket": "08"
+      },
+      {
+        "from": 1,
+        "to": 3,
+        "x": 0.71,
+        "y": 1.4710843373493978,
+        "w": 0.62,
+        "h": 0.7578313253012049,
+        "rectId": 100,
+        "part": "body",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 3,
+        "to": 6,
+        "x": 0.71,
+        "y": 1.4710843373493978,
+        "w": 0.62,
+        "h": 0.7578313253012049,
+        "rectId": 100,
+        "part": "body",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 6,
+        "to": 8,
+        "x": 0.65,
+        "y": 1.5156626506024098,
+        "w": 0.5,
+        "h": 0.6686746987951807,
+        "rectId": 101,
+        "part": "body",
+        "layer": "extend",
+        "rectBucket": "08"
       }
     ],
     "hit": [
       {
         "from": 3,
-        "to": 5,
-        "x": 0.55,
-        "y": 1.15,
-        "w": 0.6,
-        "h": 0.4,
-        "placeholder": true
+        "to": 6,
+        "x": 0.9400000000000001,
+        "y": 1.5825301204819278,
+        "w": 0.5,
+        "h": 0.7243975903614459,
+        "rectId": 1,
+        "rectBucket": "10"
       }
     ],
     "push": [
       {
         "from": 0,
-        "to": 12,
+        "to": 39,
         "x": 0,
-        "y": 0.7,
-        "w": 0.55,
-        "h": 1.4,
-        "placeholder": true
+        "y": 1.6605421686746988,
+        "w": 0.6,
+        "h": 0.37891566265060245,
+        "rectId": 1,
+        "rectBucket": "08"
       }
     ]
   },
-  "clipId": "ryu_5lp",
+  "clipId": "5lp",
   "glbPath": "attack/esf001v00_attack_00/glb/000_esf001_ATK_5LP_id0000_f39.glb",
   "facingRelative": true,
-  "selfMovement": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
   "sources": [
     {
       "name": "4rays/sf6-move-data",
@@ -103,9 +167,63 @@
     }
   ],
   "review": {
-    "status": "placeholder",
-    "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed. Overwrote MVP placeholder with 4rays conversion; boxes still placeholder."
+    "status": "mmdk_converted",
+    "notes": "MMDK convert unitScale=0.01; public frames kept; layer/part on hurt; CLAMP_BASE=true"
   },
   "slug": "ryu-stand-light-punch",
-  "abbreviation": "S.LP"
+  "abbreviation": "S.LP",
+  "selfMovement": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "timelineFrames": 40,
+  "hitstun": 14,
+  "blockstun": 13,
+  "hitstopOnHit": 9,
+  "hitstopOnBlock": 9,
+  "blockPushbackTotal": 0.34,
+  "mmdk": {
+    "actionName": "ATK_5LP",
+    "fabFrame": 39,
+    "hitDtIndex": 15,
+    "unitScale": 0.01,
+    "clampBaseHurtToTotal": true
+  }
 }

@@ -1,0 +1,138 @@
+{
+  "characterId": "ryu",
+  "unitScale": 0.01,
+  "logicBodyHeight": 1.85,
+  "yFit": 1.1144578313253013,
+  "mmdkStackTopRaw": 1.66,
+  "stances": {
+    "stand": {
+      "hurt": [
+        {
+          "part": "head",
+          "x": 0,
+          "y": 1.6605421686746988,
+          "w": 0.6,
+          "h": 0.37891566265060245,
+          "rectId": 1,
+          "rectBucket": "08"
+        },
+        {
+          "part": "body",
+          "x": 0,
+          "y": 1.0698795180722893,
+          "w": 0.8,
+          "h": 0.936144578313253,
+          "rectId": 2,
+          "rectBucket": "08"
+        },
+        {
+          "part": "leg",
+          "x": 0,
+          "y": 0.30090361445783137,
+          "w": 0.8,
+          "h": 0.6018072289156627,
+          "rectId": 3,
+          "rectBucket": "08"
+        }
+      ],
+      "push": [
+        {
+          "x": 0,
+          "y": 0.925,
+          "w": 0.7,
+          "h": 1.85,
+          "fromBody": true
+        }
+      ],
+      "sourceAction": "BAS_STD_Loop"
+    },
+    "crouch": {
+      "hurt": [
+        {
+          "part": "head",
+          "x": 0,
+          "y": 1.1478915662650604,
+          "w": 0.9400000000000001,
+          "h": 0.3566265060240964,
+          "rectId": 4,
+          "rectBucket": "08"
+        },
+        {
+          "part": "body",
+          "x": 0,
+          "y": 0.7132530120481928,
+          "w": 0.9400000000000001,
+          "h": 0.5126506024096387,
+          "rectId": 5,
+          "rectBucket": "08"
+        },
+        {
+          "part": "leg",
+          "x": 0,
+          "y": 0.23403614457831326,
+          "w": 0.9400000000000001,
+          "h": 0.44578313253012053,
+          "rectId": 6,
+          "rectBucket": "08"
+        }
+      ],
+      "push": [
+        {
+          "x": 0,
+          "y": 0.6686746987951807,
+          "w": 0.7,
+          "h": 1.3150602409638554,
+          "fromBody": true
+        }
+      ],
+      "sourceAction": "BAS_CRH_Loop"
+    },
+    "air": {
+      "hurt": [
+        {
+          "part": "head",
+          "x": 0,
+          "y": 1.6605421686746988,
+          "w": 0.6,
+          "h": 0.37891566265060245,
+          "rectId": 1,
+          "rectBucket": "08"
+        },
+        {
+          "part": "body",
+          "x": 0,
+          "y": 1.0698795180722893,
+          "w": 0.8,
+          "h": 0.936144578313253,
+          "rectId": 2,
+          "rectBucket": "08"
+        },
+        {
+          "part": "leg",
+          "x": 0,
+          "y": 0.2708132530120482,
+          "w": 0.8,
+          "h": 0.4212650602409639,
+          "rectId": 3,
+          "rectBucket": "08"
+        }
+      ],
+      "push": [
+        {
+          "x": 0,
+          "y": 0.925,
+          "w": 0.7,
+          "h": 1.85,
+          "fromBody": true
+        }
+      ],
+      "sourceAction": "BAS_STD_Loop",
+      "placeholder": true,
+      "notes": "air uses stand base with shortened legs (P10)"
+    }
+  },
+  "review": {
+    "status": "mmdk_converted",
+    "notes": "stand=BAS_STD_Loop; crouch=BAS_CRH_Loop; unitScale=0.01; yFit=1.1145 (rawTop→1.85)"
+  }
+}

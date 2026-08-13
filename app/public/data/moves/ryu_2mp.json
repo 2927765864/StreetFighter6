@@ -1,0 +1,256 @@
+{
+  "id": "ryu_2mp",
+  "characterId": "ryu",
+  "moveId": "ryu_2mp",
+  "displayName": "Crouching Medium Punch",
+  "displayNameJa": "しゃがみ中P",
+  "input": {
+    "raw": "2mp",
+    "buttons": null,
+    "motion": null
+  },
+  "type": "normal",
+  "guard": "high",
+  "hitCount": 1,
+  "frames": {
+    "startup": 6,
+    "active": 4,
+    "activeRaw": [
+      6,
+      9
+    ],
+    "recovery": 13,
+    "total": 22
+  },
+  "advantage": {
+    "onHit": 5,
+    "onBlock": 0
+  },
+  "damage": 600,
+  "cancel": {
+    "specialCancel": true,
+    "superOnly": false,
+    "raw": "C",
+    "targetCombo": [],
+    "windows": [
+      {
+        "fromFrame": 5,
+        "toFrame": 21,
+        "into": "special|super|di|dr",
+        "placeholder": true
+      }
+    ]
+  },
+  "driveGauge": {
+    "onHit": 1500,
+    "onBlock": -3000,
+    "onPunishCounter": -4000
+  },
+  "superArtGauge": 500,
+  "scaling": null,
+  "notes": [],
+  "boxes": {
+    "hurt": [
+      {
+        "from": 0,
+        "to": 21,
+        "x": 0,
+        "y": 1.1478915662650604,
+        "w": 0.9400000000000001,
+        "h": 0.3566265060240964,
+        "rectId": 10,
+        "part": "head",
+        "layer": "base",
+        "rectBucket": "08"
+      },
+      {
+        "from": 0,
+        "to": 21,
+        "x": 0,
+        "y": 0.7132530120481928,
+        "w": 0.9400000000000001,
+        "h": 0.5126506024096387,
+        "rectId": 11,
+        "part": "body",
+        "layer": "base",
+        "rectBucket": "08"
+      },
+      {
+        "from": 0,
+        "to": 21,
+        "x": 0,
+        "y": 0.23403614457831326,
+        "w": 0.9400000000000001,
+        "h": 0.44578313253012053,
+        "rectId": 12,
+        "part": "leg",
+        "layer": "base",
+        "rectBucket": "08"
+      },
+      {
+        "from": 5,
+        "to": 9,
+        "x": 0.67,
+        "y": 1.0810240963855422,
+        "w": 0.42,
+        "h": 0.49036144578313257,
+        "rectId": 128,
+        "part": "head",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 9,
+        "to": 11,
+        "x": 0.81,
+        "y": 1.0810240963855422,
+        "w": 0.7000000000000001,
+        "h": 0.49036144578313257,
+        "rectId": 129,
+        "part": "head",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 11,
+        "to": 15,
+        "x": 0.54,
+        "y": 1.0810240963855422,
+        "w": 0.7000000000000001,
+        "h": 0.49036144578313257,
+        "rectId": 129,
+        "part": "head",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 5,
+        "to": 22,
+        "x": 0.58,
+        "y": 0.33433734939759036,
+        "w": 0.22,
+        "h": 0.6463855421686747,
+        "rectId": 130,
+        "part": "leg",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 0,
+        "to": 9,
+        "x": 0.45,
+        "y": 1.4042168674698796,
+        "w": 1.4000000000000001,
+        "h": 0.37891566265060245,
+        "rectId": 35,
+        "part": "head",
+        "layer": "extend",
+        "rectBucket": "00"
+      }
+    ],
+    "hit": [
+      {
+        "from": 5,
+        "to": 9,
+        "x": 1,
+        "y": 1.1144578313253013,
+        "w": 0.4,
+        "h": 0.6686746987951807,
+        "rectId": 16,
+        "rectBucket": "08"
+      }
+    ],
+    "push": [
+      {
+        "from": 0,
+        "to": 46,
+        "x": 0,
+        "y": 1.0698795180722893,
+        "w": 0.8,
+        "h": 0.936144578313253,
+        "rectId": 2,
+        "rectBucket": "08"
+      }
+    ]
+  },
+  "clipId": "2mp",
+  "glbPath": "attack/esf001v00_attack_07/glb/000_esf001_ATK_2MP_id2000_f46.glb",
+  "facingRelative": true,
+  "sources": [
+    {
+      "name": "4rays/sf6-move-data",
+      "url": "https://github.com/4rays/sf6-move-data",
+      "file": "moves/ryu.toml",
+      "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+      "retrieved": "2026-08-10",
+      "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+    }
+  ],
+  "review": {
+    "status": "mmdk_converted",
+    "notes": "MMDK convert unitScale=0.01; public frames kept; layer/part on hurt; CLAMP_BASE=true"
+  },
+  "slug": "ryu-crouch-medium-punch",
+  "abbreviation": "C.MP",
+  "selfMovement": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "timelineFrames": 47,
+  "hitstun": 22,
+  "blockstun": 21,
+  "hitstopOnHit": 11,
+  "hitstopOnBlock": 11,
+  "blockPushbackTotal": 0.5,
+  "mmdk": {
+    "actionName": "ATK_2MP",
+    "fabFrame": 46,
+    "hitDtIndex": 36,
+    "unitScale": 0.01,
+    "clampBaseHurtToTotal": true
+  }
+}

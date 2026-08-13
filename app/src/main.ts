@@ -118,6 +118,21 @@ async function boot(): Promise<void> {
   }
   const match = new MatchSim(move, catalog, applyConfigToMatchOpts(cfg));
   if (ryuMovement) match.setMovementTable(ryuMovement);
+  try {
+    const { fetchStanceBoxTable } = await import('./data/loadStanceBoxes');
+    const stance = await fetchStanceBoxTable();
+    match.setStanceTable(stance);
+    console.info(
+      '[boot] stance boxes',
+      stance.review.status,
+      'stand.hurt',
+      stance.stances.stand.hurt.length,
+    );
+  } catch (e) {
+    console.warn('[boot] ryu_stance_boxes.json failed — using fallback', e);
+    const { fallbackStanceTable } = await import('./data/loadStanceBoxes');
+    match.setStanceTable(fallbackStanceTable());
+  }
   cfg.cameraZ = 8;
   cfg.cameraY = 1.4;
   cfg.modelScale = 1;

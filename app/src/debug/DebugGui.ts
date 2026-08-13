@@ -186,6 +186,7 @@ export function createDebugGui(
   const render = gui.addFolder('渲染');
   render.add(cfg, 'showHitboxes').name('显示攻击框');
   render.add(cfg, 'showHurtboxes').name('显示受击框');
+  render.add(cfg, 'showPushboxes').name('显示推挤框');
   render.add(cfg, 'worldScale', 0.01, 10, 0.01).name('世界缩放');
   render.add(cfg, 'modelScale', 0.01, 10, 0.01).name('模型缩放');
   render.add(cfg, 'modelYOffset', -2, 2, 0.01).name('模型 Y 偏移');
@@ -272,6 +273,100 @@ export function createDebugGui(
     .name('Hitstop防御(f)')
     .onChange(syncOpts);
   cancelFolder.add(cfg, 'showCancelWindow').name('HUD显示取消窗');
+
+  const guardFolder = gui.addFolder('防住 / 推挤 / 位移');
+  guardFolder
+    .add(cfg, 'forceP2Guard')
+    .name('P2强制真格挡')
+    .onChange((v: boolean) => {
+      if (v) match.dummy.setMode('stand_block');
+      syncOpts();
+    });
+  guardFolder.add(cfg, 'enablePushResolve').name('启用推挤').onChange(syncOpts);
+  guardFolder.add(cfg, 'enableBlockPush').name('启用防御推开').onChange(syncOpts);
+  guardFolder
+    .add(cfg, 'blockPushbackTotal', 0, 1.5, 0.01)
+    .name('防御推开总量')
+    .onChange(syncOpts);
+  guardFolder
+    .add(cfg, 'blockstunOverride', -1, 40, 1)
+    .name('blockstun覆盖(-1表)')
+    .onChange(syncOpts);
+  guardFolder
+    .add(cfg, 'damageScale', 0, 2, 0.05)
+    .name('伤害倍率')
+    .onChange(syncOpts);
+  guardFolder.add(cfg, 'applySelfMovement').name('启用攻击Place').onChange(syncOpts);
+  guardFolder
+    .add(cfg, 'selfMovementScale', 0, 3, 0.05)
+    .name('selfMovementScale')
+    .onChange(syncOpts);
+  guardFolder
+    .add(cfg, 'mmdkUnitScale', 0.001, 2, 0.001)
+    .name('mmdkUnitScale')
+    .onChange(syncOpts);
+  guardFolder
+    .add(cfg, 'stageMinX', -10, 0, 0.1)
+    .name('舞台minX')
+    .onChange(syncOpts);
+  guardFolder
+    .add(cfg, 'stageMaxX', 0, 10, 0.1)
+    .name('舞台maxX')
+    .onChange(syncOpts);
+
+  const boxesFolder = gui.addFolder('框显示');
+  boxesFolder.add(cfg, 'showHitboxes').name('显示 Hit');
+  boxesFolder.add(cfg, 'showHurtboxes').name('显示 Hurt');
+  boxesFolder.add(cfg, 'showPushboxes').name('显示 Push');
+  boxesFolder.add(cfg, 'hurtPartColors').name('按 part 染色绿框');
+
+  const assemblyFolder = gui.addFolder('装配 / 时间轴');
+  const probeTl = match.debugProbe;
+  assemblyFolder.add(probeTl, 'p1StanceId').name('姿态').listen();
+  assemblyFolder.add(probeTl, 'p1ActionTimelineFrame').name('动作时间轴帧').listen();
+  assemblyFolder.add(probeTl, 'p1TimelineFrame').name('timelineFrame').listen();
+  assemblyFolder.add(probeTl, 'p1Total').name('逻辑 total').listen();
+  assemblyFolder.add(probeTl, 'p1CanAct').name('canAct').listen();
+  assemblyFolder.add(probeTl, 'p1ActionTimelineActive').name('动作层激活').listen();
+  assemblyFolder.add(probeTl, 'p1HasAttackResidual').name('attackResidual').listen();
+  assemblyFolder.add(probeTl, 'p1HurtCount').name('本帧 hurt 块数').listen();
+  assemblyFolder.add(probeTl, 'p1HitCount').name('本帧 hit 块数').listen();
+  assemblyFolder.add(probeTl, 'reviewStatus').name('当前招 review').listen();
+  assemblyFolder
+    .add(
+      {
+        debugClearActionBoxes: () => {
+          match.p1.debugClearActionBoxes = true;
+          match.p1.clearActionTimeline();
+        },
+      },
+      'debugClearActionBoxes',
+    )
+    .name('强制关动作层');
+  assemblyFolder
+    .add(
+      {
+        reloadStance: async () => {
+          try {
+            const { fetchStanceBoxTable } = await import(
+              '../data/loadStanceBoxes'
+            );
+            const t = await fetchStanceBoxTable();
+            match.setStanceTable(t);
+            console.info('[gui] stance reloaded', t.review);
+          } catch (e) {
+            console.warn('[gui] stance reload failed', e);
+          }
+        },
+      },
+      'reloadStance',
+    )
+    .name('重载姿态框 JSON');
+  assemblyFolder.add(probeTl, 'hitstopTimer').name('hitstop').listen();
+  assemblyFolder.add(probeTl, 'lastHitResult').name('lastHit').listen();
+  assemblyFolder.add(probeTl, 'pushOverlapX').name('pushOverlapX').listen();
+  assemblyFolder.add(probe, 'p1SelfDx').name('P1 selfDx').listen();
+  assemblyFolder.add(probeTl, 'p2BlockPushDx').name('P2 blockPushDx').listen();
 
   const moveStateFolder = gui.addFolder('移动状态');
   moveStateFolder

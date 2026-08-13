@@ -1,5 +1,10 @@
-import { faceBox, type Box } from '../boxes/Box2D';
+import type { Box } from '../boxes/Box2D';
+import {
+  assembleWorldBoxes,
+  type ActionTimeline,
+} from '../boxes/BoxAssembly';
 import type { MoveDefinition } from '../move/MoveDefinition';
+import { inferTimelineFrames } from '../move/MoveDefinition';
 import { MovePlayer } from '../move/MovePlayer';
 import type {
   Facing,
@@ -27,9 +32,18 @@ import {
   residualInterruptedByHeldPosture,
   type MoveStance,
 } from '../anim/AnimResidual';
+import type { StanceBoxTable } from '../../data/loadStanceBoxes';
 
-const STAND_HURT: Box = { x: 0, y: 0.85, w: 0.7, h: 1.7 };
-const CROUCH_HURT: Box = { x: 0, y: 0.5, w: 0.75, h: 1.0 };
+/**
+ * Post-total action timeline for Place / Hurt / Push (consensus §3.12).
+ * Alias of action timeline residual (plan §2.3 / §6 migration note).
+ */
+export type AttackResidual = {
+  move: MoveDefinition;
+  /** Current sample frame on action timeline (starts at logic total). */
+  frame: number;
+  until: number;
+};
 
 export class Fighter {
   phase: FighterPhase = 'idle';
@@ -61,6 +75,8 @@ export class Fighter {
   airTimeRemain = 0;
   /** Last selfMovement dx applied (debug). */
   lastSelfDx = 0;
+  /** Last block-push channel dx (debug). */
+  lastBlockPushDx = 0;
   /**
    * After logic total ends: keep attack/dash clip on a 60Hz visual timeline until
    * animFrameCount or player interrupts (consensus §3.7.1, incl. dash residual).
@@ -74,6 +90,22 @@ export class Fighter {
     /** Posture family of the finished move (compatibility vs hold). */
     stance: MoveStance;
   } | null = null;
+  /**
+   * Attack Place + action-layer boxes after canAct (not dash).
+   * Cleared by walk / new attack / dash / jump (§3.12 / plan clearActionTimeline).
+   */
+  attackResidual: AttackResidual | null = null;
+  /**
+   * Runtime stance box table (two-layer assembly). Set by MatchSim / boot.
+   * When null, assembly uses single-body fallback with review warning path.
+   */
+  stanceTable: StanceBoxTable | null = null;
+  /** Debug: force-clear action layer boxes without killing animTail. */
+  debugClearActionBoxes = false;
+  /** Queued per-frame |dx| for block pushback (applied along pushDir). */
+  blockPushQueue: number[] = [];
+  /** World X sign for remaining block push (defender moved this way). */
+  blockPushDir: Facing = 1;
   /** Logic dash length for residual (set in startDash). */
   private dashLogicFrames = 0;
   /** glb/map frame count for dash residual; 0 = use logic only. */
@@ -121,6 +153,121 @@ export class Fighter {
 
   clearAnimTail(): void {
     this.animTail = null;
+  }
+
+  /** Clear attack Place residual + residual boxes (§3.12 walk/new action). */
+  clearAttackResidual(): void {
+    this.attackResidual = null;
+  }
+
+  /** Plan alias: clear action box/Place timeline (not animTail). */
+  clearActionTimeline(): void {
+    this.clearAttackResidual();
+  }
+
+  setStanceTable(table: StanceBoxTable | null): void {
+    this.stanceTable = table;
+  }
+
+  /**
+   * Action timeline pointer for box/Place sampling.
+   * attack lock → moveFrame; post-total residual → residual.frame.
+   */
+  getActionTimeline(): ActionTimeline | null {
+    if (this.debugClearActionBoxes) return null;
+    if (this.phase === 'attack' && this.mover.move) {
+      return { move: this.mover.move, frame: this.mover.moveFrame };
+    }
+    if (this.attackResidual) {
+      return {
+        move: this.attackResidual.move,
+        frame: this.attackResidual.frame,
+      };
+    }
+    return null;
+  }
+
+  get actionTimelineActive(): boolean {
+    return this.getActionTimeline() != null;
+  }
+
+  clearBlockPush(): void {
+    this.blockPushQueue = [];
+    this.lastBlockPushDx = 0;
+  }
+
+  /**
+   * Start residual attack timeline after logic total.
+   * frame begins at total (first residual sample index).
+   */
+  beginAttackResidual(move: MoveDefinition, logicTotal: number): void {
+    const until = inferTimelineFrames(move);
+    if (until <= logicTotal) {
+      this.attackResidual = null;
+      return;
+    }
+    this.attackResidual = {
+      move,
+      frame: logicTotal,
+      until,
+    };
+  }
+
+  queueBlockPush(steps: number[], awayDir: Facing): void {
+    this.blockPushQueue = steps.slice();
+    this.blockPushDir = awayDir;
+  }
+
+  /**
+   * Apply attack Place at current locked moveFrame (before advance).
+   * Does not advance the frame counter.
+   */
+  applyAttackPlaceDisplacement(scale = 1): number {
+    this.lastSelfDx = 0;
+    if (this.phase !== 'attack' || !this.mover.move) return 0;
+    const move = this.mover.move;
+    const dx = (move.selfMovement?.[this.mover.moveFrame] ?? 0) * scale;
+    const dy = (move.selfMovementY?.[this.mover.moveFrame] ?? 0) * scale;
+    this.x += this.facing * dx;
+    this.y += dy;
+    this.lastSelfDx = dx;
+    return dx;
+  }
+
+  /**
+   * Residual Place after total (§3.12). Not used for dash residual.
+   */
+  applyAttackResidualDisplacement(scale = 1): number {
+    this.lastSelfDx = 0;
+    const r = this.attackResidual;
+    if (!r) return 0;
+    const dx = (r.move.selfMovement?.[r.frame] ?? 0) * scale;
+    const dy = (r.move.selfMovementY?.[r.frame] ?? 0) * scale;
+    this.x += this.facing * dx;
+    this.y += dy;
+    this.lastSelfDx = dx;
+    return dx;
+  }
+
+  /** Advance residual timeline frame after displacement + collision for the frame. */
+  tickAttackResidual(): void {
+    const r = this.attackResidual;
+    if (!r) return;
+    r.frame += 1;
+    if (r.frame >= r.until) {
+      this.attackResidual = null;
+    }
+  }
+
+  /** One frame of block push channel (hitstop already skipped by MatchSim). */
+  applyBlockPushDisplacement(): number {
+    this.lastBlockPushDx = 0;
+    if (this.blockPushQueue.length === 0) return 0;
+    const step = this.blockPushQueue.shift() ?? 0;
+    const dx = this.blockPushDir * step;
+    this.x += dx;
+    this.lastBlockPushDx = dx;
+    return dx;
   }
 
   setStanceConfig(cfg: Partial<StanceFrameConfig>): void {
@@ -258,6 +405,8 @@ export class Fighter {
     if (!this.canAct()) return;
 
     if (intent === 'walk') {
+      // §3.12 / plan: walk clears action timeline + residual Place
+      this.clearActionTimeline();
       this.clearAnimTail();
       this.stanceState = clearStanceTo(false);
       this.phase = 'walk';
@@ -303,6 +452,8 @@ export class Fighter {
       this.airTimeRemain = 0;
     }
     this.clearAnimTail();
+    this.clearAttackResidual();
+    this.clearBlockPush();
     this.stanceState = clearStanceTo(false);
     this.phase = 'attack';
     this.mover.start(move);
@@ -320,6 +471,8 @@ export class Fighter {
    */
   startDash(fwd: boolean, frames: number, animFrameCount?: number): void {
     this.clearAnimTail();
+    this.clearAttackResidual();
+    this.clearBlockPush();
     this.stanceState = clearStanceTo(false);
     this.phase = 'dash';
     const logic = Math.max(1, Math.floor(frames));
@@ -343,6 +496,8 @@ export class Fighter {
    */
   startJump(prejumpFrames: number, relDir: NumpadDir = 8): void {
     this.clearAnimTail();
+    this.clearAttackResidual();
+    this.clearBlockPush();
     this.stanceState = clearStanceTo(false);
     this.phase = 'prejump';
     this.stateTimer = prejumpFrames;
@@ -368,6 +523,8 @@ export class Fighter {
 
   applyHitstun(frames: number, damage: number): void {
     this.clearAnimTail();
+    this.clearAttackResidual();
+    this.clearBlockPush();
     this.stanceState = clearStanceTo(false);
     this.phase = 'hitstun';
     this.stunTimer = frames;
@@ -384,6 +541,8 @@ export class Fighter {
 
   applyBlockstun(frames: number): void {
     this.clearAnimTail();
+    this.clearAttackResidual();
+    // block push queue is set by MatchSim after this call
     this.stanceState = clearStanceTo(false);
     this.phase = 'blockstun';
     this.stunTimer = frames;
@@ -399,7 +558,8 @@ export class Fighter {
 
   /**
    * Advance one logic frame (skipped during hitstop by MatchSim).
-   * Attack selfMovement applied at start of frame using current moveFrame, then advance.
+   * Attack Place displacement is applied by MatchSim before push/hit
+   * (consensus §4.4 order) — not here.
    */
   advance(opts: {
     airFrames: number;
@@ -417,18 +577,11 @@ export class Fighter {
   }): void {
     if (this.phase === 'attack') {
       const move = this.mover.move;
-      if (move && opts.applySelfMovement !== false) {
-        const scale = opts.selfMovementScale ?? 1;
-        const dx = (move.selfMovement?.[this.mover.moveFrame] ?? 0) * scale;
-        this.lastSelfDx = dx;
-        this.x += this.facing * dx;
-      } else {
-        this.lastSelfDx = 0;
-      }
       const finished = this.mover.advance();
       if (finished) {
         if (this.airTimeRemain > 0) {
           this.clearAnimTail();
+          this.clearAttackResidual();
           this.phase = 'airborne';
           this.stateTimer = this.airTimeRemain;
           this.clipId = this.jumpClipId;
@@ -436,11 +589,13 @@ export class Fighter {
           this.jumpPhase = 'air';
           this.airTimeRemain = 0;
         } else {
-          // Logic canAct; presentation may continue residual (§3.7.1)
+          // Logic canAct; presentation + optional Place residual (§3.7.1 / §3.12)
           this.phase = 'idle';
           this.y = 0;
-          if (move) this.beginAnimTail(move);
-          else {
+          if (move) {
+            this.beginAnimTail(move);
+            this.beginAttackResidual(move, move.frames.total);
+          } else {
             this.clipId = 'idle';
             this.animRole = 'main';
           }
@@ -552,21 +707,59 @@ export class Fighter {
     }
   }
 
-  worldHurtBoxes(crouch = false): Box[] {
-    if (this.phase === 'attack') {
-      return this.mover
-        .currentHurtBoxesLocal()
-        .map((b) => faceBox(b, this.x, this.y, this.facing));
-    }
-    const local = crouch ? CROUCH_HURT : STAND_HURT;
-    return [faceBox(local, this.x, this.y, this.facing)];
+  /**
+   * Whether hurt/push should use crouch stance base.
+   * Derived from phase + stance machine (callers should not need to pass flags).
+   */
+  isHurtCrouching(): boolean {
+    return (
+      this.phase === 'crouch' ||
+      this.stanceState.logicalCrouch === true
+    );
+  }
+
+  /** World-space boxes via two-layer assembly (plan §2.4). */
+  worldHurtBoxes(crouch?: boolean): Box[] {
+    return assembleWorldBoxes(
+      this.boxState(crouch),
+      this.stanceTable,
+      crouch ?? this.isHurtCrouching(),
+    ).hurt;
   }
 
   worldHitBoxes(): Box[] {
-    if (this.phase !== 'attack' || !this.mover.isHitActive()) return [];
-    return this.mover
-      .currentHitBoxesLocal()
-      .map((b) => faceBox(b, this.x, this.y, this.facing));
+    return assembleWorldBoxes(this.boxState(), this.stanceTable).hit;
+  }
+
+  worldPushBoxes(crouch?: boolean): Box[] {
+    return assembleWorldBoxes(
+      this.boxState(crouch),
+      this.stanceTable,
+      crouch ?? this.isHurtCrouching(),
+    ).push;
+  }
+
+  /** Debug / GUI: full assembly snapshot. */
+  assembleBoxes(crouch?: boolean) {
+    return assembleWorldBoxes(
+      this.boxState(crouch),
+      this.stanceTable,
+      crouch ?? this.isHurtCrouching(),
+    );
+  }
+
+  private boxState(crouchOverride?: boolean) {
+    return {
+      x: this.x,
+      y: this.y,
+      facing: this.facing,
+      phase: this.phase,
+      hasActiveMove: this.mover.move != null,
+      logicalCrouch: this.stanceState.logicalCrouch,
+      crouchOverride:
+        crouchOverride === undefined ? undefined : crouchOverride,
+      getActionTimeline: () => this.getActionTimeline(),
+    };
   }
 
   setIdleWalk(clip: 'idle' | 'walk' | 'crouch'): void {
@@ -588,6 +781,7 @@ export class Fighter {
       this.clearAnimTail();
       this.applyStancePresentation();
     } else {
+      this.clearAttackResidual();
       this.clearAnimTail();
       this.stanceState = clearStanceTo(false);
       this.phase = 'walk';

@@ -1,0 +1,269 @@
+{
+  "id": "ryu_shoryuken_lp",
+  "characterId": "ryu",
+  "moveId": "ryu_shoryuken_lp",
+  "displayName": "Shoryuken (Light)",
+  "displayNameJa": "昇龍拳（弱)",
+  "input": {
+    "raw": "623lp",
+    "buttons": null,
+    "motion": null
+  },
+  "type": "special",
+  "guard": "high",
+  "hitCount": 1,
+  "frames": {
+    "startup": 5,
+    "active": 10,
+    "activeRaw": [
+      5,
+      14
+    ],
+    "recovery": 21,
+    "total": 35
+  },
+  "advantage": {
+    "onHit": null,
+    "onBlock": -23
+  },
+  "damage": 800,
+  "cancel": {
+    "specialCancel": false,
+    "superOnly": true,
+    "raw": "SA3",
+    "targetCombo": [],
+    "windows": []
+  },
+  "driveGauge": {
+    "onHit": 2000,
+    "onBlock": -4000,
+    "onPunishCounter": -5000
+  },
+  "superArtGauge": 1000,
+  "scaling": [
+    "Starter scaling 30%"
+  ],
+  "notes": [
+    "Leap into the air and perform a powerful uppercut. A Shoryuken is invincible to an opponent's jumping attacks, making it a great anti-air tool",
+    "Invincible against projectiles and strikes with mid-air hitboxes from frames 1 - 14",
+    "Considered airborne from frames 7 - 34",
+    "Note: After the 3rd active frame this move deals only 800 damage"
+  ],
+  "boxes": {
+    "hurt": [
+      {
+        "from": 0,
+        "to": 7,
+        "x": 0,
+        "y": 1.3707831325301205,
+        "w": 0.8,
+        "h": 0.4680722891566265,
+        "rectId": 197,
+        "part": "head",
+        "layer": "base",
+        "rectBucket": "08"
+      },
+      {
+        "from": 0,
+        "to": 7,
+        "x": 0,
+        "y": 0.8692771084337351,
+        "w": 0.8,
+        "h": 0.5349397590361447,
+        "rectId": 198,
+        "part": "body",
+        "layer": "base",
+        "rectBucket": "08"
+      },
+      {
+        "from": 0,
+        "to": 7,
+        "x": 0,
+        "y": 0.30090361445783137,
+        "w": 0.8,
+        "h": 0.6018072289156627,
+        "rectId": 199,
+        "part": "leg",
+        "layer": "base",
+        "rectBucket": "08"
+      },
+      {
+        "from": 7,
+        "to": 14,
+        "x": 0,
+        "y": 1.3930722891566267,
+        "w": 0.8,
+        "h": 1.3373493975903614,
+        "rectId": 200,
+        "part": "body",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 14,
+        "to": 35,
+        "x": 0,
+        "y": 1.3930722891566267,
+        "w": 0.8,
+        "h": 1.3373493975903614,
+        "rectId": 200,
+        "part": "body",
+        "layer": "extend",
+        "rectBucket": "08"
+      }
+    ],
+    "hit": [
+      {
+        "from": 4,
+        "to": 5,
+        "x": 0.97,
+        "y": 0.780120481927711,
+        "w": 0.71,
+        "h": 0.5126506024096387,
+        "rectId": 50,
+        "rectBucket": "03"
+      },
+      {
+        "from": 5,
+        "to": 6,
+        "x": 1.4000000000000001,
+        "y": 1.2927710843373494,
+        "w": 1.1500000000000001,
+        "h": 0.33433734939759036,
+        "rectId": 51,
+        "rectBucket": "03"
+      },
+      {
+        "from": 6,
+        "to": 7,
+        "x": 0.55,
+        "y": 1.4487951807228918,
+        "w": 0.25,
+        "h": 0.5015060240963856,
+        "rectId": 52,
+        "rectBucket": "00"
+      },
+      {
+        "from": 7,
+        "to": 8,
+        "x": 0,
+        "y": 0.858132530120482,
+        "w": 0.35000000000000003,
+        "h": 0.858132530120482,
+        "rectId": 53,
+        "rectBucket": "05"
+      },
+      {
+        "from": 8,
+        "to": 14,
+        "x": 0,
+        "y": 0.858132530120482,
+        "w": 0.35000000000000003,
+        "h": 0.858132530120482,
+        "rectId": 53,
+        "rectBucket": "05"
+      }
+    ],
+    "push": [
+      {
+        "from": 0,
+        "to": 7,
+        "x": 0,
+        "y": 0.858132530120482,
+        "w": 0.7000000000000001,
+        "h": 1.716265060240964,
+        "rectId": 53,
+        "rectBucket": "05"
+      },
+      {
+        "from": 7,
+        "to": 28,
+        "x": 0,
+        "y": 1.716265060240964,
+        "w": 0.7000000000000001,
+        "h": 1.0698795180722893,
+        "rectId": 54,
+        "rectBucket": "05"
+      },
+      {
+        "from": 28,
+        "to": 35,
+        "x": 0,
+        "y": 0.30090361445783137,
+        "w": 0.8,
+        "h": 0.6018072289156627,
+        "rectId": 3,
+        "rectBucket": "08"
+      }
+    ]
+  },
+  "clipId": "shoryuken_lp",
+  "glbPath": "specialskill/esf001v00_specialskill_01/glb/000_esf001_SPA_SYORYU_START_id0200_f49.glb",
+  "facingRelative": true,
+  "sources": [
+    {
+      "name": "4rays/sf6-move-data",
+      "url": "https://github.com/4rays/sf6-move-data",
+      "file": "moves/ryu.toml",
+      "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+      "retrieved": "2026-08-10",
+      "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+    }
+  ],
+  "review": {
+    "status": "mmdk_converted",
+    "notes": "MMDK convert unitScale=0.01; public frames kept; layer/part on hurt; CLAMP_BASE=true"
+  },
+  "slug": "ryu-shoryuken-light",
+  "abbreviation": null,
+  "selfMovement": [
+    0,
+    0.000029754638671875,
+    0.000506439208984375,
+    0.002115020751953125,
+    0.03342193603515625,
+    0.05751434326171875,
+    0.06272018432617188,
+    0.07776077270507811,
+    0.06833786010742188,
+    0.00015365600585937056,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "timelineFrames": 36,
+  "hitstun": 29,
+  "blockstun": 24,
+  "hitstopOnHit": 13,
+  "hitstopOnBlock": 13,
+  "blockPushbackTotal": 0.3,
+  "mmdk": {
+    "actionName": "SPA_SYORYU_START",
+    "fabFrame": 35,
+    "hitDtIndex": 134,
+    "unitScale": 0.01,
+    "clampBaseHurtToTotal": true
+  }
+}

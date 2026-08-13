@@ -1,0 +1,341 @@
+{
+  "id": "ryu_air_tatsu_mk",
+  "characterId": "ryu",
+  "moveId": "ryu_air_tatsu_mk",
+  "displayName": "Aerial Tatsumaki Senpu-kyaku",
+  "displayNameJa": "空中竜巻旋風脚",
+  "input": {
+    "raw": "9>214*k",
+    "buttons": null,
+    "motion": null
+  },
+  "type": "special",
+  "guard": "high",
+  "hitCount": 3,
+  "frames": {
+    "startup": 11,
+    "active": 1,
+    "activeRaw": [
+      11,
+      12,
+      18,
+      19,
+      26,
+      27
+    ],
+    "recovery": null,
+    "total": 12
+  },
+  "advantage": {
+    "onHit": null,
+    "onBlock": null
+  },
+  "damage": 200,
+  "cancel": {
+    "specialCancel": false,
+    "super": false,
+    "raw": null
+  },
+  "driveGauge": {
+    "onHit": 2000,
+    "onBlock": -4000,
+    "onPunishCounter": -5000
+  },
+  "superArtGauge": 600,
+  "scaling": [
+    "Starter scaling 30%"
+  ],
+  "notes": [
+    "A Tatsumaki Senpu-kyaku performed while airborne. Useful for altering the trajectory of your jump, or for staging a surprise attack from above"
+  ],
+  "boxes": {
+    "hurt": [
+      {
+        "from": 0,
+        "to": 71,
+        "x": 0,
+        "y": 1.693975903614458,
+        "w": 0.8,
+        "h": 0.31204819277108437,
+        "rectId": 204,
+        "part": "head",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 0,
+        "to": 71,
+        "x": 0,
+        "y": 1.0698795180722893,
+        "w": 0.8,
+        "h": 0.936144578313253,
+        "rectId": 205,
+        "part": "body",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 0,
+        "to": 71,
+        "x": 0,
+        "y": 0.5126506024096387,
+        "w": 0.8,
+        "h": 0.846987951807229,
+        "rectId": 214,
+        "part": "leg",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 10,
+        "to": 12,
+        "x": 0.8,
+        "y": 1.3373493975903614,
+        "w": 0.8,
+        "h": 0.5572289156626506,
+        "rectId": 208,
+        "part": "body",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 13,
+        "to": 15,
+        "x": -0.65,
+        "y": 1.3373493975903614,
+        "w": 0.8,
+        "h": 0.44578313253012053,
+        "rectId": 209,
+        "part": "body",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 17,
+        "to": 19,
+        "x": 0.8,
+        "y": 1.3373493975903614,
+        "w": 0.8,
+        "h": 0.5572289156626506,
+        "rectId": 208,
+        "part": "body",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 21,
+        "to": 23,
+        "x": -0.65,
+        "y": 1.3373493975903614,
+        "w": 0.8,
+        "h": 0.44578313253012053,
+        "rectId": 209,
+        "part": "body",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 26,
+        "to": 28,
+        "x": 0.8,
+        "y": 1.3373493975903614,
+        "w": 0.8,
+        "h": 0.5572289156626506,
+        "rectId": 208,
+        "part": "body",
+        "layer": "extend",
+        "rectBucket": "08"
+      }
+    ],
+    "hit": [
+      {
+        "from": 21,
+        "to": 24,
+        "x": 0.6900000000000001,
+        "y": 1.2816265060240966,
+        "w": 0.79,
+        "h": 0.5906626506024097,
+        "rectId": 114,
+        "rectBucket": "00"
+      },
+      {
+        "from": 26,
+        "to": 28,
+        "x": 0.78,
+        "y": 1.3373493975903614,
+        "w": 0.76,
+        "h": 0.6686746987951807,
+        "rectId": 115,
+        "rectBucket": "00"
+      },
+      {
+        "from": 10,
+        "to": 12,
+        "x": 0.55,
+        "y": 1.2147590361445786,
+        "w": 0.59,
+        "h": 0.21174698795180724,
+        "rectId": 110,
+        "rectBucket": "00"
+      },
+      {
+        "from": 13,
+        "to": 16,
+        "x": 0.55,
+        "y": 1.2147590361445786,
+        "w": 0.59,
+        "h": 0.21174698795180724,
+        "rectId": 110,
+        "rectBucket": "00"
+      },
+      {
+        "from": 17,
+        "to": 20,
+        "x": 0.55,
+        "y": 1.2147590361445786,
+        "w": 0.59,
+        "h": 0.21174698795180724,
+        "rectId": 110,
+        "rectBucket": "00"
+      },
+      {
+        "from": 21,
+        "to": 24,
+        "x": 0.55,
+        "y": 1.2147590361445786,
+        "w": 0.59,
+        "h": 0.21174698795180724,
+        "rectId": 110,
+        "rectBucket": "00"
+      },
+      {
+        "from": 26,
+        "to": 28,
+        "x": 0.55,
+        "y": 1.2147590361445786,
+        "w": 0.59,
+        "h": 0.21174698795180724,
+        "rectId": 110,
+        "rectBucket": "00"
+      },
+      {
+        "from": 10,
+        "to": 12,
+        "x": 0.63,
+        "y": 1.2036144578313255,
+        "w": 0.67,
+        "h": 0.5349397590361447,
+        "rectId": 111,
+        "rectBucket": "00"
+      },
+      {
+        "from": 13,
+        "to": 16,
+        "x": 0.63,
+        "y": 1.2147590361445786,
+        "w": 0.73,
+        "h": 0.5460843373493977,
+        "rectId": 112,
+        "rectBucket": "00"
+      },
+      {
+        "from": 17,
+        "to": 20,
+        "x": 0.7000000000000001,
+        "y": 1.2481927710843375,
+        "w": 0.72,
+        "h": 0.5795180722891566,
+        "rectId": 113,
+        "rectBucket": "00"
+      }
+    ],
+    "push": [
+      {
+        "from": 0,
+        "to": 8,
+        "x": 0,
+        "y": 1.2259036144578315,
+        "w": 0.7000000000000001,
+        "h": 1.0030120481927711,
+        "rectId": 39,
+        "rectBucket": "05"
+      },
+      {
+        "from": 8,
+        "to": 35,
+        "x": 0,
+        "y": 1.2259036144578315,
+        "w": 0.26,
+        "h": 1.0030120481927711,
+        "rectId": 41,
+        "rectBucket": "05"
+      },
+      {
+        "from": 35,
+        "to": 71,
+        "x": 0,
+        "y": 1.2259036144578315,
+        "w": 0.7000000000000001,
+        "h": 1.0030120481927711,
+        "rectId": 39,
+        "rectBucket": "05"
+      },
+      {
+        "from": 8,
+        "to": 35,
+        "x": 0,
+        "y": 2.2289156626506026,
+        "w": 0.26,
+        "h": 1.0030120481927711,
+        "rectId": 41,
+        "rectBucket": "05"
+      }
+    ]
+  },
+  "clipId": "9_214_k",
+  "glbPath": null,
+  "facingRelative": true,
+  "sources": [
+    {
+      "name": "4rays/sf6-move-data",
+      "url": "https://github.com/4rays/sf6-move-data",
+      "file": "moves/ryu.toml",
+      "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+      "retrieved": "2026-08-10",
+      "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+    }
+  ],
+  "review": {
+    "status": "mmdk_converted",
+    "notes": "MMDK convert unitScale=0.01; public frames kept; layer/part on hurt; CLAMP_BASE=true"
+  },
+  "slug": "aerial-ryu-tatsumaki-senpukyaku",
+  "abbreviation": null,
+  "selfMovement": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "timelineFrames": 72,
+  "hitstun": 20,
+  "blockstun": 20,
+  "hitstopOnHit": 2,
+  "hitstopOnBlock": 2,
+  "blockPushbackTotal": 0.1,
+  "mmdk": {
+    "actionName": "SPA_TATSUMAKI_AIR_END(1)",
+    "fabFrame": 71,
+    "hitDtIndex": 158,
+    "unitScale": 0.01,
+    "clampBaseHurtToTotal": true
+  }
+}

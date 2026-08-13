@@ -2,7 +2,8 @@
 
 > 共识要求：每招（或等价状态动作）在写入运行时数据前，至少能表达下列信息。  
 > 具体 JSON 键名可在 ADR / 实现中细化，**语义不可缺**。  
-> 坐标：hit/hurt/push 服从 ADR-002（中心 + 全宽高）。
+> 坐标：hit/hurt/push 服从 ADR-002（中心 + 全宽高）。  
+> 对齐总共识 §0：写进共识即全做。
 
 ---
 
@@ -51,10 +52,23 @@ cancel: {
 | `hit[]` | `{ x, y, w, h, ... }` 攻击盒 |
 | `hurt[]` | 受击盒 |
 | `push[]` | 推挤盒 |
-| `throwHit[]` / `throwHurt[]` | 分期 |
+| `throwHit[]` / `throwHurt[]` | 延后（共识点名） |
 | `tags` | 可选：comboOnly、invuln 等 |
+| `layer` / 等价 | 可选：姿态默认 vs 动作衍生（实现可分表） |
 
-第一期必填能力：**hit / hurt / push**（无数据时可用占位盒并标 placeholder）。
+**须具备**：**hit / hurt / push**（hurt 常态为头/身/腿多块；有 MMDK 时须转换，不得长期单块假框）。
+
+### 2.1 时间轴与位移（§3.10 / §3.12）
+
+| 字段 | 说明 |
+|------|------|
+| `timelineFrames` | 框/Place 取样长度；可 **>** `frames.total` |
+| `selfMovement[]` | 每帧攻击 Place 差分 dx（面向 +） |
+| `selfMovementY[]` | 可选竖直 |
+| `blockPushback[]` / `blockPushbackTotal` | 防住推开（与 Place **分通道**） |
+| `hitstopOnBlock` / `hitstopOnHit` | 可选；缺省用全局 GUI |
+
+框开闭长度 **以表 `from`–`to` 为准**；红框不残留。
 
 ---
 
@@ -71,11 +85,14 @@ cancel: {
 
 与 `consensus-design-v0.md` §2 一致。
 
+另须有 **姿态框表**（站/蹲默认头身腿+推挤），见 `consensus-design` §4.3。
+
 ---
 
-## 4. 样板
+## 4. 覆盖
 
-- **`ryu_5lp`（5LP）**：第一条完整字段样板；用于打通采信 → 表 → 逻辑 → 表现。
+- 指令表应接招式均须满足本 schema 的逻辑+框字段（总共识 §0；`consensus-design` §6.6）。  
+- 不设「仅 5LP 样板即完成」。
 
 ---
 
@@ -84,3 +101,4 @@ cancel: {
 | 日期 | 说明 |
 |------|------|
 | 2026-08-10 | 初版语义 schema |
+| 2026-08-13 | 对齐元共识；废止样板/第一期措辞；姿态框表 |

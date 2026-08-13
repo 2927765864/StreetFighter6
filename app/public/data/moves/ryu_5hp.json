@@ -1,0 +1,279 @@
+{
+  "id": "ryu_5hp",
+  "characterId": "ryu",
+  "moveId": "ryu_5hp",
+  "displayName": "Standing Heavy Punch",
+  "displayNameJa": "立ち強P",
+  "input": {
+    "raw": "5hp",
+    "buttons": null,
+    "motion": null
+  },
+  "type": "normal",
+  "guard": "high",
+  "hitCount": 1,
+  "frames": {
+    "startup": 10,
+    "active": 5,
+    "activeRaw": [
+      10,
+      14
+    ],
+    "recovery": 18,
+    "total": 32
+  },
+  "advantage": {
+    "onHit": 4,
+    "onBlock": -2
+  },
+  "damage": 800,
+  "cancel": {
+    "specialCancel": true,
+    "superOnly": false,
+    "raw": "C",
+    "targetCombo": [],
+    "windows": [
+      {
+        "fromFrame": 9,
+        "toFrame": 31,
+        "into": "special|super|di|dr",
+        "placeholder": true
+      }
+    ]
+  },
+  "driveGauge": {
+    "onHit": 2000,
+    "onBlock": -5000,
+    "onPunishCounter": -8000
+  },
+  "superArtGauge": 1000,
+  "scaling": null,
+  "notes": [
+    "Forces the opponent into a standing position"
+  ],
+  "boxes": {
+    "hurt": [
+      {
+        "from": 0,
+        "to": 31,
+        "x": 0,
+        "y": 1.693975903614458,
+        "w": 0.8,
+        "h": 0.31204819277108437,
+        "rectId": 7,
+        "part": "head",
+        "layer": "base",
+        "rectBucket": "08"
+      },
+      {
+        "from": 0,
+        "to": 31,
+        "x": 0,
+        "y": 1.0698795180722893,
+        "w": 0.8,
+        "h": 0.936144578313253,
+        "rectId": 8,
+        "part": "body",
+        "layer": "base",
+        "rectBucket": "08"
+      },
+      {
+        "from": 0,
+        "to": 31,
+        "x": 0,
+        "y": 0.30090361445783137,
+        "w": 0.8,
+        "h": 0.6018072289156627,
+        "rectId": 9,
+        "part": "leg",
+        "layer": "base",
+        "rectBucket": "08"
+      },
+      {
+        "from": 9,
+        "to": 14,
+        "x": 0.66,
+        "y": 1.3930722891566267,
+        "w": 0.52,
+        "h": 0.6686746987951807,
+        "rectId": 105,
+        "part": "head",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 14,
+        "to": 21,
+        "x": 0.68,
+        "y": 1.3930722891566267,
+        "w": 0.56,
+        "h": 0.6686746987951807,
+        "rectId": 106,
+        "part": "head",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 21,
+        "to": 29,
+        "x": 0.53,
+        "y": 1.3930722891566267,
+        "w": 0.46,
+        "h": 0.6686746987951807,
+        "rectId": 107,
+        "part": "head",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 9,
+        "to": 29,
+        "x": 0.5,
+        "y": 0.40120481927710844,
+        "w": 0.2,
+        "h": 0.8024096385542169,
+        "rectId": 109,
+        "part": "leg",
+        "layer": "extend",
+        "rectBucket": "08"
+      }
+    ],
+    "hit": [
+      {
+        "from": 9,
+        "to": 14,
+        "x": 0.86,
+        "y": 1.4933734939759038,
+        "w": 0.54,
+        "h": 0.33433734939759036,
+        "rectId": 3,
+        "rectBucket": "03"
+      }
+    ],
+    "push": [
+      {
+        "from": 0,
+        "to": 79,
+        "x": 0,
+        "y": 1.6605421686746988,
+        "w": 0.6,
+        "h": 0.37891566265060245,
+        "rectId": 1,
+        "rectBucket": "08"
+      }
+    ]
+  },
+  "clipId": "5hp",
+  "glbPath": null,
+  "facingRelative": true,
+  "sources": [
+    {
+      "name": "4rays/sf6-move-data",
+      "url": "https://github.com/4rays/sf6-move-data",
+      "file": "moves/ryu.toml",
+      "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+      "retrieved": "2026-08-10",
+      "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+    }
+  ],
+  "review": {
+    "status": "mmdk_converted",
+    "notes": "MMDK convert unitScale=0.01; public frames kept; layer/part on hurt; CLAMP_BASE=true"
+  },
+  "slug": "ryu-stand-heavy-punch",
+  "abbreviation": "S.HP",
+  "selfMovement": [
+    0,
+    0,
+    0.05563247680664063,
+    0.05563247680664063,
+    0.027816314697265615,
+    0.027816162109375014,
+    0.05563262939453123,
+    0.05563247680664063,
+    0.05563247680664063,
+    0.11126495361328126,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "timelineFrames": 80,
+  "hitstun": 27,
+  "blockstun": 25,
+  "hitstopOnHit": 13,
+  "hitstopOnBlock": 13,
+  "blockPushbackTotal": 0.6,
+  "mmdk": {
+    "actionName": "ATK_5HP",
+    "fabFrame": 79,
+    "hitDtIndex": 21,
+    "unitScale": 0.01,
+    "clampBaseHurtToTotal": true
+  }
+}

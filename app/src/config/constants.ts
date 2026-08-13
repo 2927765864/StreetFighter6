@@ -13,6 +13,7 @@ export const DEFAULT_HP = 10000;
 export const DRIVE_MAX = 6;
 export const HITBOX_COLOR = 0xff3333;
 export const HURTBOX_COLOR = 0x33ff66;
+export const PUSHBOX_COLOR = 0xffcc33;
 
 export const ACTION_BUFFER_STANDARD = 4;
 export const ACTION_BUFFER_DASH = 7;
@@ -35,10 +36,23 @@ export type MutableSimConfig = {
   bufferFrames: number;
   showHitboxes: boolean;
   showHurtboxes: boolean;
+  showPushboxes: boolean;
+  /** Tint hurt boxes by part (head/body/leg) in green family. */
+  hurtPartColors: boolean;
   showBuffer: boolean;
   showCancelWindow: boolean;
   hitboxColor: number;
   hurtboxColor: number;
+  pushboxColor: number;
+  forceP2Guard: boolean;
+  enablePushResolve: boolean;
+  enableBlockPush: boolean;
+  blockPushbackTotal: number;
+  blockstunOverride: number;
+  damageScale: number;
+  mmdkUnitScale: number;
+  stageMinX: number;
+  stageMaxX: number;
   actionBufferStandard: number;
   actionBufferDash: number;
   motionStepGapMax: number;
@@ -128,10 +142,22 @@ export function createDefaultSimConfig(): MutableSimConfig {
     bufferFrames: INPUT_BUFFER_FRAMES,
     showHitboxes: true,
     showHurtboxes: true,
+    showPushboxes: true,
+    hurtPartColors: true,
     showBuffer: false,
     showCancelWindow: true,
     hitboxColor: HITBOX_COLOR,
     hurtboxColor: HURTBOX_COLOR,
+    pushboxColor: PUSHBOX_COLOR,
+    forceP2Guard: true,
+    enablePushResolve: true,
+    enableBlockPush: true,
+    blockPushbackTotal: 0.22,
+    blockstunOverride: -1,
+    damageScale: 1,
+    mmdkUnitScale: 1,
+    stageMinX: -4.5,
+    stageMaxX: 4.5,
     actionBufferStandard: ACTION_BUFFER_STANDARD,
     actionBufferDash: ACTION_BUFFER_DASH,
     motionStepGapMax: MOTION_STEP_GAP_MAX,
@@ -232,9 +258,17 @@ export function applyConfigToMatchOpts(cfg: MutableSimConfig) {
     jumpBackDist: cfg.jumpBackDist,
     jumpNeutralDist: cfg.jumpNeutralDist,
     applySelfMovement: cfg.applySelfMovement,
-    selfMovementScale: cfg.selfMovementScale,
+    selfMovementScale: cfg.selfMovementScale * (cfg.mmdkUnitScale ?? 1),
     standToCrouchFrames: cfg.standToCrouchFrames,
     crouchToStandFrames: cfg.crouchToStandFrames,
+    forceP2Guard: cfg.forceP2Guard,
+    enablePushResolve: cfg.enablePushResolve,
+    enableBlockPush: cfg.enableBlockPush,
+    blockPushbackTotal: cfg.blockPushbackTotal,
+    blockstunOverride: cfg.blockstunOverride,
+    damageScale: cfg.damageScale,
+    stageMinX: cfg.stageMinX,
+    stageMaxX: cfg.stageMaxX,
   };
 }
 

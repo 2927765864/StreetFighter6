@@ -1,0 +1,176 @@
+{
+  "id": "ryu_jlp",
+  "characterId": "ryu",
+  "moveId": "ryu_jlp",
+  "displayName": "Jumping Light Punch",
+  "displayNameJa": "ジャンプ弱P",
+  "input": {
+    "raw": "j>lp",
+    "buttons": null,
+    "motion": null
+  },
+  "type": "normal",
+  "guard": "mid",
+  "hitCount": 1,
+  "frames": {
+    "startup": 4,
+    "active": 10,
+    "activeRaw": [
+      4,
+      13
+    ],
+    "recovery": null,
+    "total": 13
+  },
+  "advantage": {
+    "onHit": null,
+    "onBlock": null
+  },
+  "damage": 300,
+  "cancel": {
+    "specialCancel": false,
+    "super": false,
+    "raw": null
+  },
+  "driveGauge": {
+    "onHit": 500,
+    "onBlock": -1500,
+    "onPunishCounter": -2000
+  },
+  "superArtGauge": 300,
+  "scaling": null,
+  "notes": [],
+  "boxes": {
+    "hurt": [
+      {
+        "from": 0,
+        "to": 16,
+        "x": 0,
+        "y": 1.6159638554216869,
+        "w": 0.8,
+        "h": 0.8915662650602411,
+        "rectId": 144,
+        "part": "body",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 16,
+        "to": 47,
+        "x": 0,
+        "y": 1.3930722891566267,
+        "w": 0.8,
+        "h": 1.3373493975903614,
+        "rectId": 16,
+        "part": "body",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 0,
+        "to": 16,
+        "x": 0,
+        "y": 0.947289156626506,
+        "w": 0.8,
+        "h": 0.44578313253012053,
+        "rectId": 145,
+        "part": "body",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 3,
+        "to": 14,
+        "x": 0.5,
+        "y": 1.3039156626506025,
+        "w": 0.22,
+        "h": 0.6240963855421687,
+        "rectId": 143,
+        "part": "body",
+        "layer": "extend",
+        "rectBucket": "08"
+      }
+    ],
+    "hit": [
+      {
+        "from": 3,
+        "to": 13,
+        "x": 0.63,
+        "y": 1.0587349397590362,
+        "w": 0.25,
+        "h": 0.33433734939759036,
+        "rectId": 26,
+        "rectBucket": "00"
+      }
+    ],
+    "push": [
+      {
+        "from": 0,
+        "to": 47,
+        "x": 0,
+        "y": 0.30090361445783137,
+        "w": 0.8,
+        "h": 0.6018072289156627,
+        "rectId": 3,
+        "rectBucket": "08"
+      },
+      {
+        "from": 0,
+        "to": 16,
+        "x": 0,
+        "y": 0.8915662650602411,
+        "w": 0.5,
+        "h": 1.560240963855422,
+        "rectId": 32,
+        "rectBucket": "05"
+      }
+    ]
+  },
+  "clipId": "j>lp",
+  "glbPath": null,
+  "facingRelative": true,
+  "sources": [
+    {
+      "name": "4rays/sf6-move-data",
+      "url": "https://github.com/4rays/sf6-move-data",
+      "file": "moves/ryu.toml",
+      "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+      "retrieved": "2026-08-10",
+      "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+    }
+  ],
+  "review": {
+    "status": "mmdk_converted",
+    "notes": "MMDK convert unitScale=0.01; public frames kept; layer/part on hurt; CLAMP_BASE=true"
+  },
+  "slug": "ryu-jump-light-punch",
+  "abbreviation": "J.LP",
+  "selfMovement": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "timelineFrames": 48,
+  "hitstun": 13,
+  "blockstun": 13,
+  "hitstopOnHit": 9,
+  "hitstopOnBlock": 9,
+  "blockPushbackTotal": 0.2,
+  "mmdk": {
+    "actionName": "ATK_8LP",
+    "fabFrame": 47,
+    "hitDtIndex": 55,
+    "unitScale": 0.01,
+    "clampBaseHurtToTotal": true
+  }
+}

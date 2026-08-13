@@ -1,0 +1,213 @@
+{
+  "id": "ryu_jhp",
+  "characterId": "ryu",
+  "moveId": "ryu_jhp",
+  "displayName": "Jumping Heavy Punch",
+  "displayNameJa": "ジャンプ強P",
+  "input": {
+    "raw": "j>hp",
+    "buttons": null,
+    "motion": null
+  },
+  "type": "normal",
+  "guard": "mid",
+  "hitCount": 1,
+  "frames": {
+    "startup": 9,
+    "active": 6,
+    "activeRaw": [
+      9,
+      14
+    ],
+    "recovery": null,
+    "total": 14
+  },
+  "advantage": {
+    "onHit": null,
+    "onBlock": null
+  },
+  "damage": 800,
+  "cancel": {
+    "specialCancel": false,
+    "super": false,
+    "raw": null
+  },
+  "driveGauge": {
+    "onHit": 2000,
+    "onBlock": -4000,
+    "onPunishCounter": -5000
+  },
+  "superArtGauge": 1000,
+  "scaling": null,
+  "notes": [
+    "Forces a slam knockdown on counter or Punish Counter when hitting a mid-air opponent"
+  ],
+  "boxes": {
+    "hurt": [
+      {
+        "from": 0,
+        "to": 23,
+        "x": 0,
+        "y": 1.4376506024096387,
+        "w": 0.8,
+        "h": 1.1144578313253013,
+        "rectId": 157,
+        "part": "body",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 23,
+        "to": 49,
+        "x": 0,
+        "y": 1.3930722891566267,
+        "w": 0.8,
+        "h": 1.3373493975903614,
+        "rectId": 16,
+        "part": "body",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 0,
+        "to": 8,
+        "x": 0,
+        "y": 0.6575301204819277,
+        "w": 0.8,
+        "h": 0.44578313253012053,
+        "rectId": 158,
+        "part": "body",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 8,
+        "to": 23,
+        "x": 0,
+        "y": 0.6575301204819277,
+        "w": 0.8,
+        "h": 0.44578313253012053,
+        "rectId": 158,
+        "part": "body",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 23,
+        "to": 49,
+        "x": 0,
+        "y": 0.6575301204819277,
+        "w": 0.8,
+        "h": 0.44578313253012053,
+        "rectId": 158,
+        "part": "body",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 8,
+        "to": 23,
+        "x": 0.65,
+        "y": 1.0587349397590362,
+        "w": 0.56,
+        "h": 1.1367469879518073,
+        "rectId": 159,
+        "part": "body",
+        "layer": "extend",
+        "rectBucket": "08"
+      }
+    ],
+    "hit": [
+      {
+        "from": 8,
+        "to": 14,
+        "x": 0.96,
+        "y": 0.7021084337349398,
+        "w": 0.64,
+        "h": 0.33433734939759036,
+        "rectId": 31,
+        "rectBucket": "03"
+      }
+    ],
+    "push": [
+      {
+        "from": 0,
+        "to": 46,
+        "x": 0,
+        "y": 1.2147590361445786,
+        "w": 0.5,
+        "h": 0.9807228915662651,
+        "rectId": 37,
+        "rectBucket": "05"
+      },
+      {
+        "from": 46,
+        "to": 49,
+        "x": 0,
+        "y": 0.30090361445783137,
+        "w": 0.8,
+        "h": 0.6018072289156627,
+        "rectId": 3,
+        "rectBucket": "08"
+      },
+      {
+        "from": 0,
+        "to": 17,
+        "x": 0,
+        "y": 0.8915662650602411,
+        "w": 0.5,
+        "h": 1.560240963855422,
+        "rectId": 32,
+        "rectBucket": "05"
+      }
+    ]
+  },
+  "clipId": "j>hp",
+  "glbPath": null,
+  "facingRelative": true,
+  "sources": [
+    {
+      "name": "4rays/sf6-move-data",
+      "url": "https://github.com/4rays/sf6-move-data",
+      "file": "moves/ryu.toml",
+      "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+      "retrieved": "2026-08-10",
+      "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+    }
+  ],
+  "review": {
+    "status": "mmdk_converted",
+    "notes": "MMDK convert unitScale=0.01; public frames kept; layer/part on hurt; CLAMP_BASE=true"
+  },
+  "slug": "ryu-jump-heavy-punch",
+  "abbreviation": "J.HP",
+  "selfMovement": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "timelineFrames": 50,
+  "hitstun": 19,
+  "blockstun": 19,
+  "hitstopOnHit": 13,
+  "hitstopOnBlock": 13,
+  "blockPushbackTotal": 0.35000000000000003,
+  "mmdk": {
+    "actionName": "ATK_8HP",
+    "fabFrame": 49,
+    "hitDtIndex": 60,
+    "unitScale": 0.01,
+    "clampBaseHurtToTotal": true
+  }
+}

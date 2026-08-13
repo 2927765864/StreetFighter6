@@ -1,0 +1,317 @@
+{
+  "id": "ryu_2hp",
+  "characterId": "ryu",
+  "moveId": "ryu_2hp",
+  "displayName": "Crouching Heavy Punch",
+  "displayNameJa": "しゃがみ強P",
+  "input": {
+    "raw": "2hp",
+    "buttons": null,
+    "motion": null
+  },
+  "type": "normal",
+  "guard": "high",
+  "hitCount": 1,
+  "frames": {
+    "startup": 9,
+    "active": 6,
+    "activeRaw": [
+      9,
+      14
+    ],
+    "recovery": 22,
+    "total": 36
+  },
+  "advantage": {
+    "onHit": 1,
+    "onBlock": -7
+  },
+  "damage": 800,
+  "cancel": {
+    "specialCancel": true,
+    "superOnly": false,
+    "raw": "C",
+    "targetCombo": [],
+    "windows": [
+      {
+        "fromFrame": 8,
+        "toFrame": 35,
+        "into": "special|super|di|dr",
+        "placeholder": true
+      }
+    ]
+  },
+  "driveGauge": {
+    "onHit": 3000,
+    "onBlock": -7500,
+    "onPunishCounter": -10000
+  },
+  "superArtGauge": 1200,
+  "scaling": null,
+  "notes": [
+    "Can only be canceled on the 1st active frame if the attack hits",
+    "Forces the opponent into a standing position"
+  ],
+  "boxes": {
+    "hurt": [
+      {
+        "from": 0,
+        "to": 28,
+        "x": 0,
+        "y": 1.0698795180722893,
+        "w": 0.8,
+        "h": 0.936144578313253,
+        "rectId": 8,
+        "part": "body",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 0,
+        "to": 28,
+        "x": 0,
+        "y": 0.30090361445783137,
+        "w": 0.8,
+        "h": 0.6018072289156627,
+        "rectId": 9,
+        "part": "leg",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 28,
+        "to": 35,
+        "x": 0,
+        "y": 1.1478915662650604,
+        "w": 0.9400000000000001,
+        "h": 0.3566265060240964,
+        "rectId": 10,
+        "part": "head",
+        "layer": "base",
+        "rectBucket": "08"
+      },
+      {
+        "from": 28,
+        "to": 35,
+        "x": 0,
+        "y": 0.7132530120481928,
+        "w": 0.9400000000000001,
+        "h": 0.5126506024096387,
+        "rectId": 11,
+        "part": "body",
+        "layer": "base",
+        "rectBucket": "08"
+      },
+      {
+        "from": 28,
+        "to": 35,
+        "x": 0,
+        "y": 0.23403614457831326,
+        "w": 0.9400000000000001,
+        "h": 0.44578313253012053,
+        "rectId": 12,
+        "part": "leg",
+        "layer": "base",
+        "rectBucket": "08"
+      },
+      {
+        "from": 0,
+        "to": 6,
+        "x": 0,
+        "y": 1.693975903614458,
+        "w": 0.8,
+        "h": 0.31204819277108437,
+        "rectId": 7,
+        "part": "head",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 6,
+        "to": 28,
+        "x": 0,
+        "y": 1.693975903614458,
+        "w": 0.8,
+        "h": 0.31204819277108437,
+        "rectId": 7,
+        "part": "head",
+        "layer": "extend",
+        "rectBucket": "08"
+      }
+    ],
+    "hit": [
+      {
+        "from": 0,
+        "to": 1,
+        "x": 0.55,
+        "y": 1.1924698795180724,
+        "w": 0.46,
+        "h": 0.4234939759036145,
+        "rectId": 17,
+        "rectBucket": "01"
+      },
+      {
+        "from": 1,
+        "to": 2,
+        "x": 0.68,
+        "y": 1.4042168674698796,
+        "w": 0.38,
+        "h": 0.31204819277108437,
+        "rectId": 19,
+        "rectBucket": "01"
+      },
+      {
+        "from": 2,
+        "to": 3,
+        "x": 0.34,
+        "y": 2.0171686746987953,
+        "w": 0.42,
+        "h": 0.26746987951807233,
+        "rectId": 18,
+        "rectBucket": "01"
+      },
+      {
+        "from": 3,
+        "to": 6,
+        "x": 0.27,
+        "y": 2.0617469879518073,
+        "w": 0.55,
+        "h": 0.33433734939759036,
+        "rectId": 20,
+        "rectBucket": "03"
+      }
+    ],
+    "push": [
+      {
+        "from": 0,
+        "to": 28,
+        "x": 0,
+        "y": 1.6605421686746988,
+        "w": 0.6,
+        "h": 0.37891566265060245,
+        "rectId": 1,
+        "rectBucket": "08"
+      },
+      {
+        "from": 28,
+        "to": 76,
+        "x": 0,
+        "y": 1.0698795180722893,
+        "w": 0.8,
+        "h": 0.936144578313253,
+        "rectId": 2,
+        "rectBucket": "08"
+      }
+    ]
+  },
+  "clipId": "2hp",
+  "glbPath": "attack/esf001v00_attack_08/glb/000_esf001_ATK_2HP_id2000_f76.glb",
+  "facingRelative": true,
+  "sources": [
+    {
+      "name": "4rays/sf6-move-data",
+      "url": "https://github.com/4rays/sf6-move-data",
+      "file": "moves/ryu.toml",
+      "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+      "retrieved": "2026-08-10",
+      "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+    }
+  ],
+  "review": {
+    "status": "mmdk_converted",
+    "notes": "MMDK convert unitScale=0.01; public frames kept; layer/part on hurt; CLAMP_BASE=true"
+  },
+  "slug": "ryu-crouch-heavy-punch",
+  "abbreviation": "C.HP",
+  "selfMovement": [
+    0.3874800109863281,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "timelineFrames": 77,
+  "hitstun": 22,
+  "blockstun": 23,
+  "hitstopOnHit": 13,
+  "hitstopOnBlock": 13,
+  "blockPushbackTotal": 0.2,
+  "mmdk": {
+    "actionName": "ATK_2HP",
+    "fabFrame": 76,
+    "hitDtIndex": 41,
+    "unitScale": 0.01,
+    "clampBaseHurtToTotal": true
+  }
+}

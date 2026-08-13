@@ -1,0 +1,264 @@
+{
+  "id": "ryu_2lk",
+  "characterId": "ryu",
+  "moveId": "ryu_2lk",
+  "displayName": "Crouching Light Kick",
+  "displayNameJa": "しゃがみ弱K",
+  "input": {
+    "raw": "2lk",
+    "buttons": null,
+    "motion": null
+  },
+  "type": "normal",
+  "guard": "low",
+  "hitCount": 1,
+  "frames": {
+    "startup": 5,
+    "active": 2,
+    "activeRaw": [
+      5,
+      6
+    ],
+    "recovery": 10,
+    "total": 16
+  },
+  "advantage": {
+    "onHit": 3,
+    "onBlock": -3
+  },
+  "damage": 200,
+  "cancel": {
+    "specialCancel": false,
+    "super": false,
+    "raw": null
+  },
+  "driveGauge": {
+    "onHit": 250,
+    "onBlock": -500,
+    "onPunishCounter": -2000
+  },
+  "superArtGauge": 300,
+  "scaling": [
+    "Starter scaling 20%"
+  ],
+  "notes": [
+    "Can be rapid canceled"
+  ],
+  "boxes": {
+    "hurt": [
+      {
+        "from": 0,
+        "to": 15,
+        "x": 0,
+        "y": 1.1478915662650604,
+        "w": 0.9400000000000001,
+        "h": 0.3566265060240964,
+        "rectId": 10,
+        "part": "head",
+        "layer": "base",
+        "rectBucket": "08"
+      },
+      {
+        "from": 0,
+        "to": 15,
+        "x": 0,
+        "y": 0.7132530120481928,
+        "w": 0.9400000000000001,
+        "h": 0.5126506024096387,
+        "rectId": 11,
+        "part": "body",
+        "layer": "base",
+        "rectBucket": "08"
+      },
+      {
+        "from": 0,
+        "to": 15,
+        "x": 0,
+        "y": 0.23403614457831326,
+        "w": 0.9400000000000001,
+        "h": 0.44578313253012053,
+        "rectId": 12,
+        "part": "leg",
+        "layer": "base",
+        "rectBucket": "08"
+      },
+      {
+        "from": 2,
+        "to": 6,
+        "x": 0.8200000000000001,
+        "y": 0.33433734939759036,
+        "w": 0.72,
+        "h": 0.6686746987951807,
+        "rectId": 135,
+        "part": "leg",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 6,
+        "to": 8,
+        "x": 0.74,
+        "y": 0.33433734939759036,
+        "w": 0.56,
+        "h": 0.6686746987951807,
+        "rectId": 136,
+        "part": "leg",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 8,
+        "to": 9,
+        "x": 0.64,
+        "y": 0.33433734939759036,
+        "w": 0.36,
+        "h": 0.6686746987951807,
+        "rectId": 137,
+        "part": "leg",
+        "layer": "extend",
+        "rectBucket": "08"
+      }
+    ],
+    "hit": [
+      {
+        "from": 4,
+        "to": 6,
+        "x": 0.96,
+        "y": 0.14487951807228916,
+        "w": 0.7000000000000001,
+        "h": 0.33433734939759036,
+        "rectId": 21,
+        "rectBucket": "03"
+      }
+    ],
+    "push": [
+      {
+        "from": 0,
+        "to": 83,
+        "x": 0,
+        "y": 1.0698795180722893,
+        "w": 0.8,
+        "h": 0.936144578313253,
+        "rectId": 2,
+        "rectBucket": "08"
+      }
+    ]
+  },
+  "clipId": "2lk",
+  "glbPath": "attack/esf001v00_attack_09/glb/000_esf001_ATK_2LK_id2000_f83.glb",
+  "facingRelative": true,
+  "sources": [
+    {
+      "name": "4rays/sf6-move-data",
+      "url": "https://github.com/4rays/sf6-move-data",
+      "file": "moves/ryu.toml",
+      "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+      "retrieved": "2026-08-10",
+      "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+    }
+  ],
+  "review": {
+    "status": "mmdk_converted",
+    "notes": "MMDK convert unitScale=0.01; public frames kept; layer/part on hurt; CLAMP_BASE=true"
+  },
+  "slug": "ryu-crouch-light-kick",
+  "abbreviation": "C.LK",
+  "selfMovement": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "timelineFrames": 84,
+  "hitstun": 15,
+  "blockstun": 13,
+  "hitstopOnHit": 9,
+  "hitstopOnBlock": 9,
+  "blockPushbackTotal": 0.3,
+  "mmdk": {
+    "actionName": "ATK_2LK",
+    "fabFrame": 83,
+    "hitDtIndex": 46,
+    "unitScale": 0.01,
+    "clampBaseHurtToTotal": true
+  }
+}

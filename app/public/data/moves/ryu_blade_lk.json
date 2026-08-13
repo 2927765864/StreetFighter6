@@ -1,0 +1,268 @@
+{
+  "id": "ryu_blade_lk",
+  "characterId": "ryu",
+  "moveId": "ryu_blade_lk",
+  "displayName": "High Blade Kick (Light)",
+  "displayNameJa": "上段足刀蹴り (弱)",
+  "input": {
+    "raw": "236lk",
+    "buttons": null,
+    "motion": null
+  },
+  "type": "special",
+  "guard": "high",
+  "hitCount": 1,
+  "frames": {
+    "startup": 14,
+    "active": 6,
+    "activeRaw": [
+      14,
+      19
+    ],
+    "recovery": 22,
+    "total": 41
+  },
+  "advantage": {
+    "onHit": null,
+    "onBlock": -11
+  },
+  "damage": 1100,
+  "cancel": {
+    "specialCancel": false,
+    "superOnly": true,
+    "raw": "SA3",
+    "targetCombo": [],
+    "windows": []
+  },
+  "driveGauge": {
+    "onHit": 3000,
+    "onBlock": -6000,
+    "onPunishCounter": -5000
+  },
+  "superArtGauge": 1400,
+  "scaling": null,
+  "notes": [
+    "A thrust kick that quickly closes distance, and can be used to surprise an opponent between their attacks. Strike with the tip of the foot for maximum effectiveness"
+  ],
+  "boxes": {
+    "hurt": [
+      {
+        "from": 0,
+        "to": 40,
+        "x": 0,
+        "y": 1.693975903614458,
+        "w": 0.8,
+        "h": 0.31204819277108437,
+        "rectId": 7,
+        "part": "head",
+        "layer": "base",
+        "rectBucket": "08"
+      },
+      {
+        "from": 0,
+        "to": 40,
+        "x": 0,
+        "y": 1.0698795180722893,
+        "w": 0.8,
+        "h": 0.936144578313253,
+        "rectId": 8,
+        "part": "body",
+        "layer": "base",
+        "rectBucket": "08"
+      },
+      {
+        "from": 0,
+        "to": 40,
+        "x": 0,
+        "y": 0.30090361445783137,
+        "w": 0.8,
+        "h": 0.6018072289156627,
+        "rectId": 9,
+        "part": "leg",
+        "layer": "base",
+        "rectBucket": "08"
+      },
+      {
+        "from": 13,
+        "to": 19,
+        "x": 0.5,
+        "y": 1.2816265060240966,
+        "w": 1,
+        "h": 0.5572289156626506,
+        "rectId": 226,
+        "part": "body",
+        "layer": "extend",
+        "rectBucket": "08"
+      },
+      {
+        "from": 19,
+        "to": 27,
+        "x": 0.66,
+        "y": 1.2816265060240966,
+        "w": 1.32,
+        "h": 0.5572289156626506,
+        "rectId": 225,
+        "part": "body",
+        "layer": "extend",
+        "rectBucket": "08"
+      }
+    ],
+    "hit": [
+      {
+        "from": 13,
+        "to": 15,
+        "x": 0.98,
+        "y": 1.3930722891566267,
+        "w": 0.31,
+        "h": 0.37891566265060245,
+        "rectId": 100,
+        "rectBucket": "08"
+      },
+      {
+        "from": 15,
+        "to": 17,
+        "x": 1.01,
+        "y": 1.4376506024096387,
+        "w": 0.49,
+        "h": 0.21174698795180724,
+        "rectId": 101,
+        "rectBucket": "00"
+      },
+      {
+        "from": 17,
+        "to": 19,
+        "x": 1.04,
+        "y": 1.4599397590361447,
+        "w": 0.55,
+        "h": 0.21174698795180724,
+        "rectId": 102,
+        "rectBucket": "00"
+      }
+    ],
+    "push": [
+      {
+        "from": 0,
+        "to": 79,
+        "x": 0,
+        "y": 1.6605421686746988,
+        "w": 0.6,
+        "h": 0.37891566265060245,
+        "rectId": 1,
+        "rectBucket": "08"
+      }
+    ]
+  },
+  "clipId": "blade_lk",
+  "glbPath": "specialskill/esf001v00_specialskill_04/glb/000_esf001_SPA_SOKUTOU_L_id0000_f98.glb",
+  "facingRelative": true,
+  "sources": [
+    {
+      "name": "4rays/sf6-move-data",
+      "url": "https://github.com/4rays/sf6-move-data",
+      "file": "moves/ryu.toml",
+      "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+      "retrieved": "2026-08-10",
+      "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+    }
+  ],
+  "review": {
+    "status": "mmdk_converted",
+    "notes": "MMDK convert unitScale=0.01; public frames kept; layer/part on hurt; CLAMP_BASE=true"
+  },
+  "slug": "high-blade-kick-light",
+  "abbreviation": null,
+  "selfMovement": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0.00180328369140625,
+    0.033935546875,
+    0.05737884521484376,
+    0.07237930297851562,
+    0.06533004760742187,
+    0.020984191894531268,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0.00020553588867189276,
+    0.0031343078613281228,
+    0.0031343078613281228,
+    0.0031343078613281228,
+    0.0031343078613281228,
+    0.0031344604492187234,
+    0.0031343078613281228,
+    0.0031343078613281228,
+    0.0031343078613281228,
+    0.0031343078613281228,
+    0.0031343078613281228,
+    0.003134460449218779,
+    0.0016955566406249845,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "timelineFrames": 80,
+  "hitstun": 24,
+  "blockstun": 21,
+  "hitstopOnHit": 15,
+  "hitstopOnBlock": 15,
+  "blockPushbackTotal": 0.3,
+  "mmdk": {
+    "actionName": "SPA_SOKUTOU_L",
+    "fabFrame": 79,
+    "hitDtIndex": 181,
+    "unitScale": 0.01,
+    "clampBaseHurtToTotal": true
+  }
+}

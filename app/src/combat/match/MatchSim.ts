@@ -1,5 +1,5 @@
 import { DEFAULT_HP, DRIVE_MAX } from '../../config/constants';
-import { hitOverlapsHurt } from '../boxes/Collision';
+import { anyHitOverlapsHurt } from '../boxes/Collision';
 import type { MoveDefinition } from '../move/MoveDefinition';
 import { cloneMove } from '../move/MoveDefinition';
 import { MoveCatalog } from '../move/MoveCatalog';
@@ -9,12 +9,18 @@ import { ActionBuffer } from '../input/ActionBuffer';
 import { toFacingRelative } from '../input/facing';
 import { resolveIntent } from '../command/IntentResolver';
 import { DriveStub } from '../systems/DriveStub';
-import type { HitResult, InputSample, Intent } from '../types';
+import type { Facing, HitResult, InputSample, Intent } from '../types';
 import { DummyController } from './DummyController';
 import { stepWalk } from '../loco/WalkController';
 import type { RyuMovementTable } from '../../data/loadRyuMovement';
 import { parseRyuMovement } from '../../data/loadRyuMovement';
 import { buildFrontHeavyDashDx } from '../loco/DashProfile';
+import { resolvePush } from '../systems/PushResolve';
+import {
+  distributePushback,
+  resolveBlockOnHit,
+} from '../systems/BlockResolve';
+import type { StanceBoxTable } from '../../data/loadStanceBoxes';
 
 export type MatchSimOptions = {
   actionBufferStandard: number;
@@ -53,6 +59,17 @@ export type MatchSimOptions = {
   selfMovementScale: number;
   standToCrouchFrames: number;
   crouchToStandFrames: number;
+  /** Consensus §4.6 scheme A: P2 always true-guards. */
+  forceP2Guard: boolean;
+  enablePushResolve: boolean;
+  enableBlockPush: boolean;
+  blockPushbackTotal: number;
+  /** -1 = use move.blockstun */
+  blockstunOverride: number;
+  /** 0 = no chip on block path; 1 = full damage on hit path */
+  damageScale: number;
+  stageMinX: number;
+  stageMaxX: number;
 };
 
 const DEFAULT_OPTS: MatchSimOptions = {
@@ -90,6 +107,14 @@ const DEFAULT_OPTS: MatchSimOptions = {
   selfMovementScale: 1,
   standToCrouchFrames: 60,
   crouchToStandFrames: 38,
+  forceP2Guard: true,
+  enablePushResolve: true,
+  enableBlockPush: true,
+  blockPushbackTotal: 0.22,
+  blockstunOverride: -1,
+  damageScale: 1,
+  stageMinX: -4.5,
+  stageMaxX: 4.5,
 };
 
 export type MatchSnapshot = {
@@ -137,6 +162,9 @@ export class MatchSim {
   /** Optional walk clip frame counts from ryu_movement.json */
   movementTable: RyuMovementTable | null = null;
 
+  /** Stance head/body/leg table (two-layer assembly). */
+  stanceTable: StanceBoxTable | null = null;
+
   /** Live probe for lil-gui / HUD (plan: 指令反馈 panel). */
   debugProbe = {
     lastIntentKind: 'none',
@@ -148,10 +176,26 @@ export class MatchSim {
     p1LocoPhase: 'none',
     p1JumpPhase: 'none',
     p1SelfDx: 0,
+    p1BlockPushDx: 0,
+    p2BlockPushDx: 0,
+    pushOverlapX: 0,
+    p1TimelineFrame: 0,
+    p1Total: 0,
+    p1CanAct: true,
+    p1HasAttackResidual: false,
+    p1ActionTimelineActive: false,
+    p1ActionTimelineFrame: 0,
+    p1StanceId: 'stand',
+    p1HurtCount: 0,
+    p1HitCount: 0,
+    hitstopTimer: 0,
+    lastHitResult: 'none',
+    forceP2Guard: true,
     catalogCount: 0,
     lastMoveMiss: '',
     lastExecuteOk: false,
     logCommandsToConsole: false,
+    reviewStatus: '',
   };
 
   pendingInput: InputSample = {
@@ -177,7 +221,11 @@ export class MatchSim {
       standToCrouchFrames: this.opts.standToCrouchFrames,
       crouchToStandFrames: this.opts.crouchToStandFrames,
     });
+    if (this.opts.forceP2Guard) {
+      this.dummy.setMode('stand_block');
+    }
     this.debugProbe.catalogCount = this.catalog.size;
+    this.debugProbe.forceP2Guard = this.opts.forceP2Guard;
   }
 
   /** Rebuild front-heavy |dx| tables from frames × avg speed (= distance). */
@@ -212,12 +260,27 @@ export class MatchSim {
   reset(): void {
     this.p1 = new Fighter('p1', -1.2, 1, DEFAULT_HP);
     this.p2 = new Fighter('p2', 1.2, -1, DEFAULT_HP);
+    this.applyStanceTableToFighters();
+    this.p1.setStanceConfig({
+      standToCrouchFrames: this.opts.standToCrouchFrames,
+      crouchToStandFrames: this.opts.crouchToStandFrames,
+    });
     this.lastHitResult = 'none';
     this.logicFrame = 0;
     this.hitstopTimer = 0;
     this.actionBuffer.clear();
     this.history.clear();
     this.drive.setBars(DRIVE_MAX);
+  }
+
+  setStanceTable(table: StanceBoxTable | null): void {
+    this.stanceTable = table;
+    this.applyStanceTableToFighters();
+  }
+
+  private applyStanceTableToFighters(): void {
+    this.p1.setStanceTable(this.stanceTable);
+    this.p2.setStanceTable(this.stanceTable);
   }
 
   applyMoveEdit(
@@ -452,6 +515,8 @@ export class MatchSim {
 
     // Locomotion when can act and not attacking this frame
     // Residual §3.7.1 + stance transition §3.7.2
+    // Walk locomotion dx applied here only when NOT in hitstop (below).
+    let pendingWalk = false;
     if (this.p1.canAct() && this.p1.phase !== 'attack') {
       this.p1.setStanceConfig({
         standToCrouchFrames: this.opts.standToCrouchFrames,
@@ -461,64 +526,112 @@ export class MatchSim {
         this.p1.applyPostureOrWalkIntent('crouch');
       } else if (intent.kind === 'walk') {
         this.p1.applyPostureOrWalkIntent('walk');
-        this.stepWalkLocomotion(true);
+        pendingWalk = true;
       } else if (intent.kind === 'none') {
-        // Finish walk end segment if needed
         if (
           this.p1.locoPhase === 'start' ||
           this.p1.locoPhase === 'loop' ||
           this.p1.locoPhase === 'end'
         ) {
-          this.stepWalkLocomotion(false);
+          pendingWalk = true; // finish end segment without hold
         } else {
           this.p1.applyPostureOrWalkIntent('none');
         }
       }
     }
 
-    // Hitstop: still accept input above; skip combat frame advance
+    // Hitstop: still accept input above; skip combat frame advance / displace
     if (this.hitstopTimer > 0) {
       this.hitstopTimer -= 1;
+      this.syncDebugProbe();
       return;
     }
 
-    // Collision (throws: presentation only — no grab resolve this slice)
+    // --- §4.4 order: displace → push → hit → advance ---
+
+    // 4a. Walk displacement (after residual cleared by applyPostureOrWalkIntent)
+    if (pendingWalk) {
+      const holding = intent.kind === 'walk';
+      this.stepWalkLocomotion(holding);
+    }
+
+    // 4b. Attack Place (locked) + residual Place + block push
+    if (this.opts.applySelfMovement) {
+      const scale = this.opts.selfMovementScale;
+      if (this.p1.phase === 'attack' && !this.skipP1Advance) {
+        this.p1.applyAttackPlaceDisplacement(scale);
+      } else if (this.p1.attackResidual) {
+        this.p1.applyAttackResidualDisplacement(scale);
+      }
+      if (this.p2.phase === 'attack') {
+        this.p2.applyAttackPlaceDisplacement(scale);
+      } else if (this.p2.attackResidual) {
+        this.p2.applyAttackResidualDisplacement(scale);
+      }
+    }
+    if (this.opts.enableBlockPush) {
+      this.p1.applyBlockPushDisplacement();
+      this.p2.applyBlockPushDisplacement();
+    }
+
+    // 5. Push resolve
+    const pushRes = resolvePush(this.p1, this.p2, {
+      minX: this.opts.stageMinX,
+      maxX: this.opts.stageMaxX,
+    }, { enabled: this.opts.enablePushResolve });
+    this.debugProbe.pushOverlapX = pushRes.maxOverlapX;
+
+    // 6. Hit ∩ Hurt (throws: presentation only)
     if (
       this.p1.phase === 'attack' &&
-      this.p1.mover.isHitActive() &&
       !this.p1.mover.hasHitThisMove &&
       this.p1.mover.move?.clipId !== 'throw_fwd' &&
       this.p1.mover.move?.clipId !== 'throw_back'
     ) {
       const hits = this.p1.worldHitBoxes();
-      const hurts = this.p2.worldHurtBoxes(this.dummy.isCrouching());
-      let overlapped = false;
-      for (const h of hits) {
-        for (const u of hurts) {
-          if (hitOverlapsHurt(h, u)) {
-            overlapped = true;
-            break;
-          }
-        }
-        if (overlapped) break;
-      }
-      if (overlapped) {
+      const hurts = this.p2.worldHurtBoxes(
+        this.dummy.isCrouching() || this.p2.isHurtCrouching(),
+      );
+      if (hits.length > 0 && anyHitOverlapsHurt(hits, hurts)) {
         this.p1.mover.hasHitThisMove = true;
         const mv = this.p1.mover.move ?? this.move5lp;
-        if (this.dummy.isBlocking()) {
-          this.p2.applyBlockstun(mv.blockstun);
+        const guard = this.opts.forceP2Guard || this.dummy.isBlocking();
+        if (guard) {
+          const br = resolveBlockOnHit(mv, {
+            hitstopFramesOnBlock: this.opts.hitstopFramesOnBlock,
+            blockstunOverride: this.opts.blockstunOverride,
+            blockPushbackTotal: this.opts.blockPushbackTotal,
+            // guard path: chip optional; keep damage 0 unless scale wants chip later
+            damageScale: 0,
+          });
+          this.p2.applyBlockstun(br.blockstun);
+          if (this.opts.enableBlockPush && br.pushbackTotal !== 0) {
+            let away: Facing = this.p1.facing;
+            if (this.p2.x < this.p1.x) away = -1;
+            else if (this.p2.x > this.p1.x) away = 1;
+            const steps =
+              mv.blockPushback && mv.blockPushback.length > 0
+                ? mv.blockPushback.slice()
+                : distributePushback(br.pushbackTotal, br.blockstun);
+            this.p2.queueBlockPush(steps, away);
+          }
           this.lastHitResult = 'block';
-          this.hitstopTimer = this.opts.hitstopFramesOnBlock;
+          this.hitstopTimer = br.hitstop;
         } else {
-          this.p2.applyHitstun(mv.hitstun, mv.damage);
+          const dmg = Math.floor(mv.damage * this.opts.damageScale);
+          this.p2.applyHitstun(mv.hitstun, dmg);
           this.lastHitResult = 'hit';
-          this.hitstopTimer = this.opts.hitstopFramesOnHit;
+          this.hitstopTimer =
+            mv.hitstopOnHit != null
+              ? mv.hitstopOnHit
+              : this.opts.hitstopFramesOnHit;
         }
       }
     }
 
     this.markWhiffIfNeeded();
 
+    // 7. Advance timelines (no Place here)
     const dashBack = this.p1.clipId === 'dash_back';
     const dashSpeed = dashBack ? this.opts.dashBackSpeed : this.opts.dashSpeed;
     const dashDx = dashBack ? this.opts.dashDxBack : this.opts.dashDxFwd;
@@ -538,7 +651,42 @@ export class MatchSim {
       this.p1.advance(adv);
     }
     this.p2.advance(adv);
+    // Residual Place frame tick after advance (same sample used this frame)
+    if (this.p1.attackResidual) this.p1.tickAttackResidual();
+    if (this.p2.attackResidual) this.p2.tickAttackResidual();
+
+    this.syncDebugProbe();
+  }
+
+  private syncDebugProbe(): void {
     this.debugProbe.p1SelfDx = this.p1.lastSelfDx;
+    this.debugProbe.p1BlockPushDx = this.p1.lastBlockPushDx;
+    this.debugProbe.p2BlockPushDx = this.p2.lastBlockPushDx;
+    this.debugProbe.p1Phase = this.p1.phase;
+    this.debugProbe.p1ClipId = this.p1.clipId;
+    this.debugProbe.p1AnimRole = this.p1.animRole;
+    this.debugProbe.p1LocoPhase = this.p1.locoPhase;
+    this.debugProbe.p1JumpPhase = this.p1.jumpPhase;
+    this.debugProbe.p1Total = this.p1.mover.total;
+    this.debugProbe.p1CanAct = this.p1.canAct();
+    this.debugProbe.p1HasAttackResidual = this.p1.attackResidual != null;
+    const tl = this.p1.getActionTimeline();
+    this.debugProbe.p1ActionTimelineActive = tl != null;
+    this.debugProbe.p1ActionTimelineFrame = tl?.frame ?? 0;
+    this.debugProbe.p1TimelineFrame =
+      this.p1.phase === 'attack' && this.p1.mover.move
+        ? this.p1.mover.moveFrame
+        : (this.p1.attackResidual?.frame ?? 0);
+    const assembled = this.p1.assembleBoxes();
+    this.debugProbe.p1StanceId = assembled.stanceId;
+    this.debugProbe.p1HurtCount = assembled.hurt.length;
+    this.debugProbe.p1HitCount = assembled.hit.length;
+    const mid = this.p1.mover.move;
+    this.debugProbe.reviewStatus = mid?.review?.status ?? '';
+    this.debugProbe.hitstopTimer = this.hitstopTimer;
+    this.debugProbe.lastHitResult = this.lastHitResult;
+    this.debugProbe.forceP2Guard = this.opts.forceP2Guard;
+    this.debugProbe.catalogCount = this.catalog.size;
   }
 
   markWhiffIfNeeded(): void {
