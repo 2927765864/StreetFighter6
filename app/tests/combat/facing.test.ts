@@ -19,4 +19,5 @@ describe('toFacingRelative', () => {
     expect(toFacingRelative(5, -1)).toBe(5);
     expect(toFacingRelative(8, -1)).toBe(8);
   });
+
 });

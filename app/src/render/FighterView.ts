@@ -37,6 +37,11 @@ import {
   resolveCrossfadeSec,
   type CrossfadeDurations,
 } from '../combat/anim/AnimCrossfade';
+import {
+  isJumpLandBinding,
+  shouldResetGroundOffset,
+  shouldSnapSoleOnLand,
+} from './plantPolicy';
 
 /** In-flight freeze-old + blend-to-new (§3.11 presentation crossfade). */
 type PoseBlend = {
@@ -81,6 +86,10 @@ export class FighterView {
   private attackHipsLockLocal: THREE.Vector3 | null = null;
   /** Last fighter.phase seen by plant policy (one-shot snaps on land). */
   private lastPlantPolicyPhase: string | null = null;
+  /** Snap after attack→land dissolve finishes (do not snap from air-attack pose). */
+  private pendingLandPlant = false;
+  /** modelRoot.y after install sole align; land reset returns here. */
+  private modelGroundRestY = 0;
   private placeholder: THREE.Mesh;
   private procedural = new ProceduralRyuAnim();
   private useProcedural = false;
@@ -266,6 +275,7 @@ export class FighterView {
     this.root.add(model);
     // One-shot sole align after stance pose (not per-frame; trust idle clip after this).
     this.plantFeetOnGround();
+    this.modelGroundRestY = this.modelRoot.position.y;
     this.lastPlantPolicyPhase = 'idle';
 
     console.info(
@@ -472,6 +482,12 @@ export class FighterView {
    * on grounded loops (that turns heel rise into whole-body Y jitter).
    * @param maxAbsDeltaWorld cap |ΔY| this call (slew); omit for full snap.
    */
+  /** Undo accumulated sole-snap Y (needed before snapping from a land clip). */
+  private resetModelGroundOffset(): void {
+    if (!this.modelRoot) return;
+    this.modelRoot.position.y = this.modelGroundRestY;
+  }
+
   private plantFeetOnGround(maxAbsDeltaWorld?: number): void {
     if (!this.modelRoot) return;
     const soleY = this.measureContactSoleY();
@@ -641,8 +657,25 @@ export class FighterView {
       this.isAirborneLogicPhase(prev) &&
       !this.isAirborneLogicPhase(phase);
     const enterLanding = phase === 'landing' && prev !== 'landing';
-    if (grounded && (fromAir || enterLanding)) {
+    const blendingFromNonLand =
+      this.poseBlend != null && !isJumpLandBinding(this.poseBlend.fromKey);
+    if (shouldResetGroundOffset({ fromAir, enterLanding })) {
+      this.resetModelGroundOffset();
+      this.pendingLandPlant = true;
+    }
+    const snapNow = shouldSnapSoleOnLand({
+      phase,
+      animRole: fighter.animRole || 'main',
+      fromAir,
+      enterLanding,
+      blendingFromNonLand,
+    });
+    if (this.pendingLandPlant && !blendingFromNonLand && fighter.animRole === 'land') {
       this.plantFeetOnGround();
+      this.pendingLandPlant = false;
+    } else if (grounded && snapNow) {
+      this.plantFeetOnGround();
+      this.pendingLandPlant = false;
     }
     this.lastPlantPolicyPhase = phase;
 
@@ -805,6 +838,10 @@ export class FighterView {
 
     if (soft && prev) {
       this.beginPoseBlend(prev, action, prevKey, bind, freeRun, blendSec);
+      if (isJumpLandBinding(bind)) {
+        this.resetModelGroundOffset();
+        this.pendingLandPlant = true;
+      }
     } else {
       this.clearPoseBlend(true);
       this.mixer?.stopAllAction();
@@ -816,8 +853,14 @@ export class FighterView {
       action.setEffectiveWeight(1);
       action.play();
       this.mixer?.update(0);
-      // Hard cut sole snap only when not blending
-      this.plantFeetOnGround();
+      // Hard cut: land snaps after land pose; other cuts keep old one-shot
+      if (isJumpLandBinding(bind)) {
+        this.resetModelGroundOffset();
+        this.plantFeetOnGround();
+        this.pendingLandPlant = false;
+      } else {
+        this.plantFeetOnGround();
+      }
     }
 
     this.currentClip = canon;
@@ -1081,7 +1124,7 @@ export class FighterView {
     wallDtSec = 1 / 60,
   ): void {
     const s = cfg.worldScale * cfg.modelScale;
-    this.root.scale.set(s, s, fighter.facing * s);
+    this.root.scale.set(s, s, fighter.visualFacing * s);
     this.root.position.set(
       fighter.x * cfg.worldScale,
       cfg.modelYOffset + fighter.y * cfg.worldScale,
@@ -1161,22 +1204,31 @@ export class FighterView {
     }
     this.attackHipsLockLocal = null;
 
-    // Attack residual tail (logic idle/crouch canAct, still attack clip) — §3.7.1
-    // Stay on attack clip with hard cut to self; freeze-old starts only when leaving.
+    // Attack / land residual tail — §3.7.1 / §3.13.5
+    // Role must come from the tail (land residual is `land`, not main/START).
     if (
       fighter.animTail &&
-      (fighter.phase === 'idle' || fighter.phase === 'crouch')
+      (fighter.phase === 'idle' ||
+        fighter.phase === 'crouch' ||
+        (fighter.phase === 'airborne' && fighter.animTail.holdAir))
     ) {
-      this.clearPoseBlend(true);
       const tailClip = fighter.animTail.clipId;
-      this.playBest(tailClip, 'main', HARD_CUT);
-      const action = this.resolveAction(tailClip, 'main');
+      const tailRole = fighter.animTail.animRole || 'main';
+      const leaveFade =
+        fighter.phase === 'airborne' ? fadePolicy : HARD_CUT;
+      this.playBest(tailClip, tailRole, leaveFade);
+      const action = this.resolveAction(tailClip, tailRole);
       if (action && this.mixer) {
         const t = visualFrameToClipTime(
           fighter.animTail.visualFrame,
           action.getClip().duration,
         );
-        this.scrubActionTo(action, t);
+        if (this.poseBlend && this.poseBlend.to === action) {
+          const w = this.stepPoseBlend(wallDtSec);
+          this.scrubActionTo(action, t, w, true);
+        } else {
+          this.scrubActionTo(action, t);
+        }
       }
       this.maybePlantAfterPose(fighter, cfg, wallDtSec);
       return;
@@ -1224,24 +1276,34 @@ export class FighterView {
       return;
     }
 
-    // Jump phases: hard cut
+    // Jump: prejump/air hard-cut; land may dissolve from attack residual (§3.13.5)
     if (
       fighter.phase === 'prejump' ||
       fighter.phase === 'airborne' ||
       fighter.phase === 'landing'
     ) {
-      this.clearPoseBlend(true);
-      this.playBest(fighter.clipId, role, HARD_CUT);
+      const jumpFade =
+        fighter.phase === 'landing' && role === 'land' ? fadePolicy : HARD_CUT;
+      this.playBest(fighter.clipId, role, jumpFade);
       const action = this.resolveAction(fighter.clipId, role);
       if (action && this.mixer) {
+        const landVisual =
+          cfg.landingAnimFrames > cfg.landingFrames
+            ? cfg.landingAnimFrames
+            : cfg.landingFrames;
         const mapTotal =
           this.logicMap?.frameCountForRole(fighter.clipId, role) ??
           (fighter.phase === 'prejump'
             ? cfg.prejumpFrames
             : fighter.phase === 'landing'
-              ? cfg.landingFrames
+              ? landVisual
               : cfg.airFrames);
-        scrubTo(action, fighter.jumpFrame, mapTotal);
+        if (this.poseBlend && this.poseBlend.to === action) {
+          const w = this.stepPoseBlend(wallDtSec);
+          scrubTo(action, fighter.jumpFrame, mapTotal, w, true);
+        } else {
+          scrubTo(action, fighter.jumpFrame, mapTotal);
+        }
       }
       this.maybePlantAfterPose(fighter, cfg, wallDtSec);
       return;
@@ -1275,6 +1337,23 @@ export class FighterView {
         action.paused = false;
         action.setEffectiveWeight(1);
         this.mixer.update(animDt);
+      }
+      this.maybePlantAfterPose(fighter, cfg, wallDtSec);
+      return;
+    }
+
+    // Turn clip: scrub by logic turnFrame (§3.14)
+    if (fighter.turning) {
+      this.playBest(fighter.clipId, 'main', fadePolicy);
+      const action = this.resolveAction(fighter.clipId, 'main');
+      if (action && this.mixer) {
+        const total = Math.max(1, fighter.turnTotal);
+        if (this.poseBlend && this.poseBlend.to === action) {
+          const w = this.stepPoseBlend(wallDtSec);
+          scrubTo(action, fighter.turnFrame, total, w, true);
+        } else {
+          scrubTo(action, fighter.turnFrame, total);
+        }
       }
       this.maybePlantAfterPose(fighter, cfg, wallDtSec);
       return;

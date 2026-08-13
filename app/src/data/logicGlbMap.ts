@@ -157,6 +157,8 @@ export const RYU_MESH_PUBLIC_FALLBACK_URL = '/models/ryu/ryu_c1.glb';
  */
 export const BOOT_PRELOAD_LOGIC_IDS = [
   'idle',
+  'turn_std',
+  'turn_crh',
   'walk_fwd',
   'walk_back',
   'crouch',

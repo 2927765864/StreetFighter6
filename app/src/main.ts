@@ -135,7 +135,7 @@ async function boot(): Promise<void> {
   }
   cfg.cameraZ = 8;
   cfg.cameraY = 1.4;
-  cfg.modelScale = 1;
+  cfg.modelScale = 0.9;
   cfg.worldScale = 1;
   syncMatchOpts(match, cfg);
 

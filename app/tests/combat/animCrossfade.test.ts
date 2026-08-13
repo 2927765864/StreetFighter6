@@ -81,4 +81,24 @@ describe('AnimCrossfade §3.11', () => {
     expect(resolveCrossfadeSec('dash_fwd::main', 'idle::main', d)).toBe(0.1);
     expect(resolveCrossfadeSec('idle::main', 'hitstun::main', d)).toBe(0);
   });
+
+  it('land → idle can sol; land → attack hard cut', () => {
+    expect(resolveCrossfadeSec('jump_f::land', 'idle::main', d)).toBe(0.1);
+    expect(resolveCrossfadeSec('jump_n::land', 'ryu_5lp::main', d)).toBe(0);
+    expect(resolveCrossfadeSec('jump_f::air', 'idle::main', d)).toBe(0);
+    expect(resolveCrossfadeSec('jump_f::prejump', 'idle::main', d)).toBe(0);
+  });
+
+  it('turn → idle dissolves; turn → attack hard cut', () => {
+    expect(resolveCrossfadeSec('turn_std::main', 'idle::main', d)).toBe(0.1);
+    expect(resolveCrossfadeSec('jump_f::land', 'turn_std::main', d)).toBe(0.1);
+    expect(resolveCrossfadeSec('turn_std::main', 'ryu_5lp::main', d)).toBe(0);
+  });
+
+  it('air-attack residual → land / air dissolves; into-attack still hard', () => {
+    expect(resolveCrossfadeSec('ryu_jlp::main', 'jump_f::land', d)).toBe(0.1);
+    expect(resolveCrossfadeSec('ryu_jlp::main', 'jump_n::air', d)).toBe(0.1);
+    expect(resolveCrossfadeSec('idle::main', 'jump_f::prejump', d)).toBe(0);
+    expect(resolveCrossfadeSec('jump_f::air', 'ryu_jlp::main', d)).toBe(0);
+  });
 });

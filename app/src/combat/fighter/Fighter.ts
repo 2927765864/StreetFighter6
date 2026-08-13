@@ -50,6 +50,8 @@ export class Fighter {
   x: number;
   y = 0;
   facing: Facing;
+  /** Mesh / box flip. May lag logical `facing` until land (§3.14.2). */
+  visualFacing: Facing;
   hp: number;
   stunTimer = 0;
   /** dash / prejump / air / landing timers */
@@ -65,14 +67,28 @@ export class Fighter {
   jumpFrame = 0;
   /** -1 back, 0 neutral, +1 forward (facing-relative). */
   jumpHorizSign: -1 | 0 | 1 = 0;
+  /** World +X/−X locked at jump start; not remultiplied by live facing. */
+  jumpWorldDir: -1 | 0 | 1 = 0;
   /** Logic id for jump clips: jump_n | jump_f | jump_b */
   jumpClipId: 'jump_n' | 'jump_f' | 'jump_b' = 'jump_n';
   walkState: WalkState = initialWalkState();
   /**
    * Remaining airborne frames when an air attack interrupts freefall.
-   * Restored when the attack ends so we do not snap to ground idle mid-air.
+   * Jump clock no longer pauses (§3.13); kept as debug/legacy mirror of stateTimer.
    */
   airTimeRemain = 0;
+  /** True after any air attack this jump — blocks a second air normal (§3.13.3). */
+  usedAirNormal = false;
+  /** Playing TRN_STD / TRN_CRH after a logical turn (§3.14). */
+  turning = false;
+  turnFrame = 0;
+  turnTotal = 70;
+  /** Commit happened during landing — play turn after land clip if no attack. */
+  pendingTurnAfterLand = false;
+  /** Logic landing length (for residual tail). */
+  private landLogicFrames = 3;
+  /** glb/map frames for land residual; ≤ logic → no tail. */
+  private landAnimFrameCount = 3;
   /** Last selfMovement dx applied (debug). */
   lastSelfDx = 0;
   /** Last block-push channel dx (debug). */
@@ -89,6 +105,10 @@ export class Fighter {
     logicTotal: number;
     /** Posture family of the finished move (compatibility vs hold). */
     stance: MoveStance;
+    /** Presentation role (land residual must stay `land`, not main). */
+    animRole: string;
+    /** Air-attack tail: keep flying; do not flip phase to idle. */
+    holdAir?: boolean;
   } | null = null;
   /**
    * Attack Place + action-layer boxes after canAct (not dash).
@@ -122,6 +142,7 @@ export class Fighter {
   ) {
     this.x = x;
     this.facing = facing;
+    this.visualFacing = facing;
     this.hp = hp;
   }
 
@@ -133,9 +154,88 @@ export class Fighter {
     );
   }
 
-  /** Jump normals while freefalling (not prejump/landing). */
+  /** Jump normals while freefalling (not prejump/landing); one per jump. */
   canAirAct(): boolean {
-    return this.phase === 'airborne';
+    return this.phase === 'airborne' && !this.usedAirNormal;
+  }
+
+  /** Empty-jump landing frames 2–3: ground attacks / specials only (§3.13.4). */
+  canLandingAttack(): boolean {
+    return (
+      this.phase === 'landing' &&
+      !this.usedAirNormal &&
+      this.jumpFrame >= 1
+    );
+  }
+
+  canPrejumpSpecial(): boolean {
+    return this.phase === 'prejump';
+  }
+
+  /** True while in the jump arc (freefall or air attack). */
+  get airborne(): boolean {
+    return (
+      this.phase === 'airborne' ||
+      (this.phase === 'attack' && this.jumpPhase === 'air') ||
+      this.y > 0.05
+    );
+  }
+
+  clearTurn(): void {
+    this.turning = false;
+    this.turnFrame = 0;
+    this.pendingTurnAfterLand = false;
+  }
+
+  /** Snap mesh to logical facing (walk instant flip, start of turn clip, land-attack). */
+  applyVisualFacing(): void {
+    this.visualFacing = this.facing;
+  }
+
+  /**
+   * Logical facing just changed (§3.14). Mesh stays until land if still airborne.
+   */
+  onLogicalTurn(): void {
+    if (this.phase === 'walk') {
+      this.clearTurn();
+      this.applyVisualFacing();
+      return;
+    }
+    if (
+      this.phase === 'attack' ||
+      this.phase === 'dash' ||
+      this.phase === 'hitstun' ||
+      this.phase === 'blockstun'
+    ) {
+      this.clearTurn();
+      if (!this.airborne) this.applyVisualFacing();
+      return;
+    }
+    if (this.airborne) {
+      this.turning = false;
+      this.turnFrame = 0;
+      this.pendingTurnAfterLand = true;
+      return;
+    }
+    if (this.phase === 'landing') {
+      this.turning = false;
+      this.turnFrame = 0;
+      this.pendingTurnAfterLand = true;
+      return;
+    }
+    this.beginTurnClip();
+  }
+
+  beginTurnClip(): void {
+    const crouch =
+      this.phase === 'crouch' || this.stanceState.logicalCrouch === true;
+    this.turning = true;
+    this.turnFrame = 0;
+    this.turnTotal = crouch ? 65 : 70;
+    this.pendingTurnAfterLand = false;
+    this.applyVisualFacing();
+    this.clipId = crouch ? 'turn_crh' : 'turn_std';
+    this.animRole = 'main';
   }
 
   canSpecialCancel(enableCancel: boolean): boolean {
@@ -336,6 +436,7 @@ export class Fighter {
     logicTotal: number,
     animFrameCount: number | null | undefined,
     stance: MoveStance,
+    animRole: string = 'main',
   ): void {
     const total = Math.max(1, Math.floor(logicTotal));
     const animN = Math.max(
@@ -357,11 +458,34 @@ export class Fighter {
       animFrameCount: animN,
       logicTotal: total,
       stance,
+      animRole,
     };
     this.clipId = clipId;
-    this.animRole = 'main';
+    this.animRole = animRole;
     this.stanceState = clearStanceTo(crouch);
     this.phase = crouch ? 'crouch' : 'idle';
+  }
+
+  /** Air-attack residual: stay airborne, keep attack clip (§3.13.5). */
+  private beginAirAttackAnimTail(move: MoveDefinition): void {
+    const total = Math.max(1, Math.floor(move.frames.total));
+    const animN = Math.max(
+      total,
+      move.animFrameCount != null && move.animFrameCount > 0
+        ? Math.floor(move.animFrameCount)
+        : total,
+    );
+    this.animTail = {
+      clipId: move.clipId,
+      visualFrame: total,
+      animFrameCount: animN,
+      logicTotal: total,
+      stance: inferMoveStance(move),
+      animRole: 'main',
+      holdAir: true,
+    };
+    this.clipId = move.clipId;
+    this.animRole = 'main';
   }
 
   private beginAnimTail(move: MoveDefinition): void {
@@ -380,21 +504,114 @@ export class Fighter {
     this.beginClipAnimTail(this.clipId, logic, anim, 'stand');
   }
 
+  private beginLandAnimTail(): void {
+    const logic = Math.max(1, this.landLogicFrames);
+    this.beginClipAnimTail(
+      this.jumpClipId,
+      logic,
+      this.landAnimFrameCount,
+      'stand',
+      'land',
+    );
+    if (!this.animTail) {
+      this.phase = 'idle';
+      if (this.pendingTurnAfterLand) {
+        this.beginTurnClip();
+      } else {
+        this.clipId = 'idle';
+        this.animRole = 'main';
+      }
+    }
+    this.usedAirNormal = false;
+  }
+
+  /**
+   * Advance one air-arc sample. Returns true if this sample lands.
+   */
+  tickJumpArc(opts: {
+    airFrames: number;
+    jumpApex?: number;
+    jumpFwdDist?: number;
+    jumpBackDist?: number;
+    jumpNeutralDist?: number;
+  }): boolean {
+    const airTotal = Math.max(1, opts.airFrames);
+    const i = this.jumpFrame;
+    const t = (i + 0.5) / airTotal;
+    const apex = opts.jumpApex ?? 2.115;
+    this.y = 4 * apex * t * (1 - t);
+    const dist =
+      this.jumpHorizSign === 1
+        ? (opts.jumpFwdDist ?? 1.9)
+        : this.jumpHorizSign === -1
+          ? (opts.jumpBackDist ?? 1.52)
+          : (opts.jumpNeutralDist ?? 0);
+    this.x += this.jumpWorldDir * (dist / airTotal);
+    this.jumpFrame += 1;
+    this.stateTimer -= 1;
+    this.airTimeRemain = Math.max(0, this.stateTimer);
+    return this.stateTimer <= 0;
+  }
+
+  /** Skip-advance frame still consumes jump clock during air attack. */
+  continueJumpArc(opts: {
+    airFrames: number;
+    landingFrames: number;
+    jumpApex?: number;
+    jumpFwdDist?: number;
+    jumpBackDist?: number;
+    jumpNeutralDist?: number;
+    landingAnimFrames?: number;
+  }): void {
+    if (this.jumpPhase !== 'air') return;
+    if (this.tickJumpArc(opts)) {
+      this.enterLanding(opts.landingFrames, opts.landingAnimFrames);
+    }
+  }
+
+  private enterLanding(
+    landingFrames: number,
+    landingAnimFrames?: number,
+  ): void {
+    this.mover.move = null;
+    this.clearAttackResidual();
+    this.clearAnimTail();
+    this.phase = 'landing';
+    this.landLogicFrames = Math.max(1, landingFrames);
+    this.stateTimer = this.landLogicFrames;
+    this.jumpPhase = 'land';
+    this.jumpFrame = 0;
+    this.animRole = 'land';
+    this.clipId = this.jumpClipId;
+    this.y = 0;
+    if (landingAnimFrames != null && landingAnimFrames > 0) {
+      this.landAnimFrameCount = Math.floor(landingAnimFrames);
+    }
+  }
+
   /** Advance residual one logic tick; clear when done → stance idle clip. */
   private tickAnimTail(): void {
     if (!this.animTail) return;
     this.animTail.visualFrame += 1;
     if (this.animTail.visualFrame >= this.animTail.animFrameCount) {
+      if (this.animTail.holdAir && this.jumpPhase === 'air') {
+        this.animTail.visualFrame = this.animTail.animFrameCount - 1;
+        this.clipId = this.animTail.clipId;
+        this.animRole = this.animTail.animRole;
+        return;
+      }
       const st = this.animTail.stance;
       this.clearAnimTail();
-      if (this.phase === 'idle' || this.phase === 'crouch') {
+      if (this.pendingTurnAfterLand && (this.phase === 'idle' || this.phase === 'crouch')) {
+        this.beginTurnClip();
+      } else if (this.phase === 'idle' || this.phase === 'crouch') {
         const crouch = st === 'crouch' || this.phase === 'crouch';
         this.stanceState = clearStanceTo(crouch);
         this.applyStancePresentation();
       }
     } else {
       this.clipId = this.animTail.clipId;
-      this.animRole = 'main';
+      this.animRole = this.animTail.animRole;
     }
   }
 
@@ -408,6 +625,8 @@ export class Fighter {
       // §3.12 / plan: walk clears action timeline + residual Place
       this.clearActionTimeline();
       this.clearAnimTail();
+      this.clearTurn();
+      this.applyVisualFacing();
       this.stanceState = clearStanceTo(false);
       this.phase = 'walk';
       return;
@@ -446,10 +665,15 @@ export class Fighter {
   }
 
   startMove(move: MoveDefinition): void {
-    if (this.phase === 'airborne') {
+    const onJumpArc =
+      this.jumpPhase === 'air' &&
+      (this.phase === 'airborne' || this.phase === 'attack');
+    if (onJumpArc) {
+      this.usedAirNormal = true;
       this.airTimeRemain = Math.max(0, this.stateTimer);
-    } else if (this.phase !== 'attack') {
+    } else {
       this.airTimeRemain = 0;
+      this.jumpPhase = 'none';
     }
     this.clearAnimTail();
     this.clearAttackResidual();
@@ -459,9 +683,12 @@ export class Fighter {
     this.mover.start(move);
     this.clipId = move.clipId;
     this.animRole = 'main';
-    this.stateTimer = 0;
+    if (!onJumpArc) {
+      this.stateTimer = 0;
+    }
     this.clearLoco();
-    this.jumpPhase = 'none';
+    this.clearTurn();
+    if (!onJumpArc) this.applyVisualFacing();
     this.lastSelfDx = 0;
   }
 
@@ -489,12 +716,47 @@ export class Fighter {
     this.airTimeRemain = 0;
     this.clearLoco();
     this.jumpPhase = 'none';
+    this.usedAirNormal = false;
+    this.clearTurn();
+  }
+
+  /**
+   * Neutral prejump → diagonal until first airborne frame (§3.13.1).
+   * Diagonal cannot convert back to neutral.
+   */
+  retargetJump(relDir: NumpadDir): boolean {
+    if (this.phase !== 'prejump' || this.jumpClipId !== 'jump_n') return false;
+    if (relDir === 9 || relDir === 3) {
+      this.jumpHorizSign = 1;
+      this.jumpClipId = 'jump_f';
+    } else if (relDir === 7 || relDir === 1) {
+      this.jumpHorizSign = -1;
+      this.jumpClipId = 'jump_b';
+    } else {
+      return false;
+    }
+    this.clipId = this.jumpClipId;
+    this.animRole = 'prejump';
+    this.lockJumpWorldDir();
+    return true;
+  }
+
+  private lockJumpWorldDir(): void {
+    if (this.jumpHorizSign === 0) {
+      this.jumpWorldDir = 0;
+    } else {
+      this.jumpWorldDir = (this.facing * this.jumpHorizSign) as -1 | 1;
+    }
   }
 
   /**
    * @param relDir facing-relative numpad at jump press (7/8/9)
    */
-  startJump(prejumpFrames: number, relDir: NumpadDir = 8): void {
+  startJump(
+    prejumpFrames: number,
+    relDir: NumpadDir = 8,
+    landAnimFrames?: number,
+  ): void {
     this.clearAnimTail();
     this.clearAttackResidual();
     this.clearBlockPush();
@@ -505,7 +767,9 @@ export class Fighter {
     this.jumpPhase = 'prejump';
     this.mover.move = null;
     this.airTimeRemain = 0;
+    this.usedAirNormal = false;
     this.clearLoco();
+    this.clearTurn();
     if (relDir === 9 || relDir === 3) {
       this.jumpHorizSign = 1;
       this.jumpClipId = 'jump_f';
@@ -519,6 +783,10 @@ export class Fighter {
     this.clipId = this.jumpClipId;
     this.animRole = 'prejump';
     this.y = 0;
+    this.lockJumpWorldDir();
+    if (landAnimFrames != null && landAnimFrames > 0) {
+      this.landAnimFrameCount = Math.floor(landAnimFrames);
+    }
   }
 
   applyHitstun(frames: number, damage: number): void {
@@ -536,6 +804,9 @@ export class Fighter {
     this.airTimeRemain = 0;
     this.clearLoco();
     this.jumpPhase = 'none';
+    this.usedAirNormal = false;
+    this.clearTurn();
+    this.applyVisualFacing();
     this.y = 0;
   }
 
@@ -553,6 +824,9 @@ export class Fighter {
     this.airTimeRemain = 0;
     this.clearLoco();
     this.jumpPhase = 'none';
+    this.usedAirNormal = false;
+    this.clearTurn();
+    this.applyVisualFacing();
     this.y = 0;
   }
 
@@ -574,22 +848,29 @@ export class Fighter {
     jumpFwdDist?: number;
     jumpBackDist?: number;
     jumpNeutralDist?: number;
+    landingAnimFrames?: number;
   }): void {
     if (this.phase === 'attack') {
+      if (this.jumpPhase === 'air') {
+        if (this.tickJumpArc(opts)) {
+          this.enterLanding(opts.landingFrames, opts.landingAnimFrames);
+          return;
+        }
+      }
       const move = this.mover.move;
       const finished = this.mover.advance();
       if (finished) {
-        if (this.airTimeRemain > 0) {
-          this.clearAnimTail();
+        if (this.jumpPhase === 'air' && this.stateTimer > 0) {
           this.clearAttackResidual();
           this.phase = 'airborne';
-          this.stateTimer = this.airTimeRemain;
-          this.clipId = this.jumpClipId;
-          this.animRole = 'air';
-          this.jumpPhase = 'air';
-          this.airTimeRemain = 0;
+          this.airTimeRemain = this.stateTimer;
+          if (move) {
+            this.beginAirAttackAnimTail(move);
+          } else {
+            this.clipId = this.jumpClipId;
+            this.animRole = 'air';
+          }
         } else {
-          // Logic canAct; presentation + optional Place residual (§3.7.1 / §3.12)
           this.phase = 'idle';
           this.y = 0;
           if (move) {
@@ -653,30 +934,14 @@ export class Fighter {
       return;
     }
     if (this.phase === 'airborne') {
-      const airTotal = Math.max(1, opts.airFrames);
-      const i = this.jumpFrame;
-      const t = (i + 0.5) / airTotal;
-      const apex = opts.jumpApex ?? 2.115;
-      this.y = 4 * apex * t * (1 - t);
-      const dist =
-        this.jumpHorizSign === 1
-          ? (opts.jumpFwdDist ?? 1.9)
-          : this.jumpHorizSign === -1
-            ? (opts.jumpBackDist ?? 1.52)
-            : (opts.jumpNeutralDist ?? 0);
-      this.x += this.facing * this.jumpHorizSign * (dist / airTotal);
-
-      this.jumpFrame += 1;
-      this.stateTimer -= 1;
-      this.animRole = 'air';
-      this.clipId = this.jumpClipId;
-      if (this.stateTimer <= 0) {
-        this.phase = 'landing';
-        this.stateTimer = opts.landingFrames;
-        this.jumpPhase = 'land';
-        this.jumpFrame = 0;
-        this.animRole = 'land';
-        this.y = 0;
+      if (this.animTail?.holdAir) {
+        this.tickAnimTail();
+      }
+      if (this.tickJumpArc(opts)) {
+        this.enterLanding(opts.landingFrames, opts.landingAnimFrames);
+      } else if (!this.animTail?.holdAir) {
+        this.animRole = 'air';
+        this.clipId = this.jumpClipId;
       }
       return;
     }
@@ -687,19 +952,28 @@ export class Fighter {
       this.animRole = 'land';
       this.clipId = this.jumpClipId;
       if (this.stateTimer <= 0) {
-        this.phase = 'idle';
-        this.clipId = 'idle';
-        this.animRole = 'main';
         this.jumpPhase = 'none';
         this.jumpFrame = 0;
+        this.beginLandAnimTail();
       }
       return;
     }
 
-    // Idle / crouch: residual first, else tick stance transition
+    // Idle / crouch: residual first, else turn clip, else stance transition
     if (this.phase === 'idle' || this.phase === 'crouch') {
       if (this.animTail) {
         this.tickAnimTail();
+      } else if (this.turning) {
+        this.turnFrame += 1;
+        this.clipId =
+          this.phase === 'crouch' || this.stanceState.logicalCrouch
+            ? 'turn_crh'
+            : 'turn_std';
+        this.animRole = 'main';
+        if (this.turnFrame >= this.turnTotal) {
+          this.clearTurn();
+          this.applyStancePresentation();
+        }
       } else if (this.stanceState.seg !== 'none') {
         this.stanceState = tickStance(this.stanceState);
         this.applyStancePresentation();
@@ -752,7 +1026,7 @@ export class Fighter {
     return {
       x: this.x,
       y: this.y,
-      facing: this.facing,
+      facing: this.visualFacing,
       phase: this.phase,
       hasActiveMove: this.mover.move != null,
       logicalCrouch: this.stanceState.logicalCrouch,

@@ -78,6 +78,7 @@ export type MutableSimConfig = {
   prejumpFrames: number;
   airFrames: number;
   landingFrames: number;
+  landingAnimFrames: number;
   walkSpeed: number;
   walkBackSpeed: number;
   walkFirstFrameScale: number;
@@ -134,7 +135,7 @@ export function createDefaultSimConfig(): MutableSimConfig {
     maxLogicStepsPerRaf: MAX_LOGIC_STEPS_PER_RAF,
     maxFrameTimeMs: MAX_FRAME_TIME_MS,
     worldScale: WORLD_SCALE,
-    modelScale: 1,
+    modelScale: 0.9,
     modelYOffset: 0,
     cameraZ: 6,
     cameraY: 1.2,
@@ -188,6 +189,7 @@ export function createDefaultSimConfig(): MutableSimConfig {
     prejumpFrames: 4,
     airFrames: 38,
     landingFrames: 3,
+    landingAnimFrames: 20,
     walkSpeed: 0.047,
     walkBackSpeed: 0.032,
     walkFirstFrameScale: 0.25,
@@ -250,6 +252,7 @@ export function applyConfigToMatchOpts(cfg: MutableSimConfig) {
     prejumpFrames: cfg.prejumpFrames,
     airFrames: cfg.airFrames,
     landingFrames: cfg.landingFrames,
+    landingAnimFrames: cfg.landingAnimFrames,
     walkSpeed: cfg.walkSpeed,
     walkBackSpeed: cfg.walkBackSpeed,
     walkFirstFrameScale: cfg.walkFirstFrameScale,

@@ -27,6 +27,8 @@ function commandAllowedInPhase(cmd: CommandDef, phase: FighterPhase): boolean {
   if (cmd.airOnly) return phase === 'airborne';
   // Ground attacks: not while airborne (jump normals are airOnly)
   if (phase === 'airborne') return false;
+  // Prejump: specials only (normals gated out here; specials stay)
+  if (phase === 'prejump') return cmd.kind === 'special';
   return true;
 }
 

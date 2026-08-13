@@ -107,6 +107,10 @@
     "ryu_sa3": "ryu_sa3",
     "sa3": "ryu_sa3",
     "idle": "idle",
+    "turn_std": "turn_std",
+    "turn_stand": "turn_std",
+    "turn_crh": "turn_crh",
+    "turn_crouch": "turn_crh",
     "walk_fwd": "walk_fwd",
     "walk": "walk_fwd",
     "walk_f": "walk_fwd",
@@ -1462,6 +1466,44 @@
       ],
       "primaryPath": "basic/esf001v00_throw/glb/002_esf001_NGA_4_id0200_f127.glb",
       "notes": ""
+    },
+    {
+      "moveId": "turn_std",
+      "command": "—",
+      "displayName": "Stand turn",
+      "category": "movement",
+      "status": "mapped",
+      "aliases": ["turn_stand"],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "BAS_TRN_STD",
+          "path": "basic/esf001v00_idle/glb/001_esf001_BAS_TRN_STD_id0010_f70.glb",
+          "stem": "001_esf001_BAS_TRN_STD_id0010_f70",
+          "frameCount": 70
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle/glb/001_esf001_BAS_TRN_STD_id0010_f70.glb",
+      "notes": "§3.14 presentation; logic facing already flipped."
+    },
+    {
+      "moveId": "turn_crh",
+      "command": "—",
+      "displayName": "Crouch turn",
+      "category": "movement",
+      "status": "mapped",
+      "aliases": ["turn_crouch"],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "BAS_TRN_CRH",
+          "path": "basic/esf001v00_idle/glb/005_esf001_BAS_TRN_CRH_id0110_f65.glb",
+          "stem": "005_esf001_BAS_TRN_CRH_id0110_f65",
+          "frameCount": 65
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle/glb/005_esf001_BAS_TRN_CRH_id0110_f65.glb",
+      "notes": "§3.14 presentation."
     }
   ]
 }

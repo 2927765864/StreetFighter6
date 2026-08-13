@@ -712,7 +712,7 @@ function convertOne(publicId, actions, generated, shortKey, rectTable, movesDict
   };
 }
 
-function extractStanceParts(action, rectTable, scale) {
+function extractStanceParts(action, rectTable, scale, opts = {}) {
   const keys = iterKeyEntries(action.DamageCollisionKey);
   // Prefer mid-timeline key that has all three parts
   let pick = keys.find((k) => {
@@ -781,8 +781,11 @@ function extractStanceParts(action, rectTable, scale) {
 
   // Vertical fit: MMDK raw stack top (~1.66) → LOGIC_BODY_HEIGHT (1.85 model)
   const rawTop = stackTopFromHurt(hurt);
-  const yFit = computeYFitFromHurt(hurt);
-  Y_FIT = yFit;
+  const yFit =
+    opts.yFit != null && Number.isFinite(opts.yFit)
+      ? opts.yFit
+      : computeYFitFromHurt(hurt);
+  if (opts.yFit == null) Y_FIT = yFit;
   return {
     hurt: hurt.map((b) => applyYFitBox(b, yFit)),
     push: push.map((b) => applyYFitBox(b, yFit)),
@@ -830,13 +833,31 @@ function convertStance(rectTable, movesDict) {
     crouchAction = '(fallback from stand)';
   }
 
-  // Air: stand with slightly shorter legs (placeholder)
-  const air = {
-    hurt: stand.hurt.map((h) =>
-      h.part === 'leg' ? { ...h, h: h.h * 0.7, y: h.y * 0.9 } : h,
-    ),
-    push: stand.push.map((p) => ({ ...p })),
-  };
+  // Air: BAS_JUMP_*_AIR — SF6 uses a compact body hurt (often BodyList only),
+  // not the standing head/body/leg stack. Share stand yFit so units match.
+  const airNames = [
+    'BAS_JUMP_N_AIR',
+    'BAS_JUMP_F_AIR',
+    'BAS_JUMP_B_AIR',
+  ];
+  const airFound = findAction(movesDict, airNames);
+  let air;
+  let airAction = airFound?.name ?? null;
+  let airPlaceholder = false;
+  if (airFound) {
+    air = extractStanceParts(airFound.action, rectTable, UNIT_SCALE, {
+      yFit: stand.yFit,
+    });
+  } else {
+    air = {
+      hurt: stand.hurt.map((h) =>
+        h.part === 'leg' ? { ...h, h: h.h * 0.7, y: h.y * 0.9 } : h,
+      ),
+      push: stand.push.map((p) => ({ ...p })),
+    };
+    airAction = '(fallback from stand)';
+    airPlaceholder = true;
+  }
 
   const yFit = stand.yFit ?? Y_FIT ?? 1;
   const rawTop = stand.rawTop ?? stackTopFromHurt(stand.hurt.map((b) => ({
@@ -864,14 +885,21 @@ function convertStance(rectTable, movesDict) {
       air: {
         hurt: air.hurt,
         push: air.push,
-        sourceAction: standFound.name,
-        placeholder: true,
-        notes: 'air uses stand base with shortened legs (P10)',
+        sourceAction: airAction,
+        ...(airPlaceholder
+          ? {
+              placeholder: true,
+              notes: 'air uses stand base with shortened legs (P10)',
+            }
+          : {
+              notes:
+                'BAS_JUMP_*_AIR DamageCollision (typically compact BodyList, not stand 3-stack)',
+            }),
       },
     },
     review: {
       status: 'mmdk_converted',
-      notes: `stand=${standFound.name}; crouch=${crouchAction}; unitScale=${UNIT_SCALE}; yFit=${yFit.toFixed(4)} (rawTop→${LOGIC_BODY_HEIGHT})`,
+      notes: `stand=${standFound.name}; crouch=${crouchAction}; air=${airAction}; unitScale=${UNIT_SCALE}; yFit=${yFit.toFixed(4)} (rawTop→${LOGIC_BODY_HEIGHT})`,
     },
   };
 
@@ -908,11 +936,15 @@ function convertStance(rectTable, movesDict) {
 |--------|---------------|------------|------------|-----------|
 | stand | \`${standFound.name}\` | ${stand.hurt.map((h) => h.part).join(', ')} (${stand.hurt.length}) | ${stand.push.length} | ${UNIT_SCALE} |
 | crouch | \`${crouchAction}\` | ${crouch.hurt.map((h) => h.part).join(', ')} (${crouch.hurt.length}) | ${crouch.push.length} | ${UNIT_SCALE} |
-| air | stand placeholder | ${air.hurt.length} | ${air.push.length} | ${UNIT_SCALE} |
+| air | \`${airAction}\` | ${air.hurt.map((h) => h.part).join(', ') || '—'} (${air.hurt.length}) | ${air.push.length} | ${UNIT_SCALE} |
 
 Stand geometry (local ADR-002 center/wh):
 
 ${stand.hurt.map((h) => `- **${h.part}**: x=${h.x.toFixed(3)} y=${h.y.toFixed(3)} w=${h.w.toFixed(3)} h=${h.h.toFixed(3)} rectId=${h.rectId}`).join('\n')}
+
+Air geometry (same yFit as stand):
+
+${air.hurt.map((h) => `- **${h.part}**: x=${h.x.toFixed(3)} y=${h.y.toFixed(3)} w=${h.w.toFixed(3)} h=${h.h.toFixed(3)} rectId=${h.rectId}`).join('\n')}
 `;
   fs.mkdirSync(path.dirname(STANCE_MD), { recursive: true });
   fs.writeFileSync(STANCE_MD, md);

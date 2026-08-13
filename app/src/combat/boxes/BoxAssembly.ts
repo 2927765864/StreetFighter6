@@ -32,7 +32,7 @@ export function filterTimedBoxes(list: TimedBox[] | undefined, frame: number): T
 
 /**
  * Infer stance family for box assembly from fighter state + optional move.
- * Crouch/jump/air attacks must change the three-green base (consensus §4.3–4.4).
+ * Crouch/jump/air attacks must change the stance-green base (consensus §4.3–4.4).
  */
 export function resolveStanceId(f: {
   y: number;
@@ -45,10 +45,9 @@ export function resolveStanceId(f: {
   const airTh = f.airThreshold ?? 0.01;
   const moveSt = f.moveStance ?? null;
 
-  // Air wins when airborne / prejump / elevated / air move
+  // Air: freefall / elevated / air move. Prejump is still grounded (stand).
   if (
     f.phase === 'airborne' ||
-    f.phase === 'prejump' ||
     f.y > airTh ||
     moveSt === 'air'
   ) {

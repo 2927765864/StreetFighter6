@@ -33,6 +33,7 @@ export type ClipCategory =
   | 'jump'
   | 'dash'
   | 'hit'
+  | 'turn'
   | 'other';
 
 function bindingParts(bindingKey: string): { id: string; role: string } {
@@ -86,6 +87,8 @@ export function categorizeBinding(bindingKey: string): ClipCategory {
 
   if (id.startsWith('dash')) return 'dash';
 
+  if (id.startsWith('turn')) return 'turn';
+
   if (
     id.includes('hitstun') ||
     id.includes('blockstun') ||
@@ -121,8 +124,24 @@ export function resolveCrossfadeSec(
   // 受击等：通常不溶
   if (from === 'hit' || to === 'hit') return 0;
 
-  // 跳：不溶
+  // 转身（§3.14 / §3.11.2）
+  if (from === 'turn' || to === 'turn') {
+    if (to === 'attack' || to === 'jump' || to === 'dash') return 0;
+    return Math.max(0, d.residualToMoveSec);
+  }
+
+  // 跳（§3.11.2 / §3.13.5）
   if (from === 'jump' || to === 'jump') {
+    const fromRole = bindingParts(fromKey).role;
+    const toRole = bindingParts(toKey).role;
+    // 落地画面 → 待机
+    if (from === 'jump' && fromRole === 'land' && isMoveLike(to)) {
+      return Math.max(0, d.residualToMoveSec);
+    }
+    // 跳攻残留 → land / air（收招后溶；按下进招仍走 attack 锁定硬切）
+    if (from === 'attack' && to === 'jump' && (toRole === 'land' || toRole === 'air')) {
+      return Math.max(0, d.residualToMoveSec);
+    }
     return 0;
   }
 

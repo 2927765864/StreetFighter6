@@ -6,6 +6,7 @@ import {
 
 export type PushBody = {
   x: number;
+  airborne?: boolean;
   worldPushBoxes(): Box[];
 };
 

@@ -94,16 +94,29 @@ describe('boxAssembly stance switches with posture / move', () => {
     expect(crouchTop).toBeLessThan(standTop - 0.15);
   });
 
-  it('airborne / elevated uses air stance', () => {
+  it('airborne / elevated uses compact air stance (not stand 3-stack)', () => {
     const stance = fallbackStanceTable();
     const f = new Fighter('p1', 0, 1, 10000);
     f.setStanceTable(stance);
     f.phase = 'airborne';
     f.y = 1.2;
-    expect(f.assembleBoxes().stanceId).toBe('air');
+    const a = f.assembleBoxes();
+    expect(a.stanceId).toBe('air');
+    expect(a.hurt.length).toBe(1);
+    expect(a.hurt.length).toBeLessThan(stance.stances.stand.hurt.length);
     // boxes ride fighter.y (world)
     const minY = Math.min(...f.worldHurtBoxes().map((b) => b.y - b.h / 2));
     expect(minY).toBeGreaterThan(0.5);
+  });
+
+  it('prejump stays on stand boxes (still grounded)', () => {
+    const stance = fallbackStanceTable();
+    const f = new Fighter('p1', 0, 1, 10000);
+    f.setStanceTable(stance);
+    f.phase = 'prejump';
+    f.y = 0;
+    expect(f.assembleBoxes().stanceId).toBe('stand');
+    expect(f.assembleBoxes().hurt.length).toBe(3);
   });
 
   it('attack replaces stance base and adds extend + hit', () => {

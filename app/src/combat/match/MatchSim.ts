@@ -6,7 +6,7 @@ import { MoveCatalog } from '../move/MoveCatalog';
 import { Fighter } from '../fighter/Fighter';
 import { InputHistory } from '../input/InputHistory';
 import { ActionBuffer } from '../input/ActionBuffer';
-import { toFacingRelative } from '../input/facing';
+import { tryCommitLogicalFacing, toFacingRelative } from '../input/facing';
 import { resolveIntent } from '../command/IntentResolver';
 import { DriveStub } from '../systems/DriveStub';
 import type { Facing, HitResult, InputSample, Intent } from '../types';
@@ -48,6 +48,8 @@ export type MatchSimOptions = {
   prejumpFrames: number;
   airFrames: number;
   landingFrames: number;
+  /** Land clip visual length (map/glb); > landingFrames → residual. */
+  landingAnimFrames: number;
   walkSpeed: number;
   walkBackSpeed: number;
   walkFirstFrameScale: number;
@@ -96,6 +98,7 @@ const DEFAULT_OPTS: MatchSimOptions = {
   prejumpFrames: 4,
   airFrames: 38,
   landingFrames: 3,
+  landingAnimFrames: 20,
   walkSpeed: 0.047,
   walkBackSpeed: 0.032,
   walkFirstFrameScale: 0.25,
@@ -323,13 +326,15 @@ export class MatchSim {
     }
     if (intent.kind === 'special') {
       return (
-        this.p1.canAct() || this.p1.canSpecialCancel(this.opts.enableCancel)
+        this.p1.canAct() ||
+        this.p1.canSpecialCancel(this.opts.enableCancel) ||
+        this.p1.canPrejumpSpecial() ||
+        this.p1.canLandingAttack()
       );
     }
     if (intent.kind === 'normal' || intent.kind === 'throw') {
-      // Jump normals: airborne only (plan S5 / consensus airborne)
       if (intent.airOnly) return this.p1.canAirAct();
-      return this.p1.canAct();
+      return this.p1.canAct() || this.p1.canLandingAttack();
     }
     if (intent.kind === 'dash_fwd' || intent.kind === 'dash_back') {
       return this.p1.canAct();
@@ -411,7 +416,11 @@ export class MatchSim {
     if (intent.kind === 'jump') {
       const last = this.history.latest();
       const rel = last?.relDir ?? 8;
-      this.p1.startJump(this.opts.prejumpFrames, rel);
+      this.p1.startJump(
+        this.opts.prejumpFrames,
+        rel,
+        this.opts.landingAnimFrames,
+      );
       this.actionBuffer.clear();
       this.skipP1Advance = true;
       return true;
@@ -452,18 +461,23 @@ export class MatchSim {
     this.p1.applyWalkState(state);
   }
 
+  private commitLogicalFacing(): void {
+    const face = tryCommitLogicalFacing(
+      this.p1,
+      this.p2,
+      this.p1.worldPushBoxes(),
+      this.p2.worldPushBoxes(),
+    );
+    if (face.aChanged) this.p1.onLogicalTurn();
+    if (face.bChanged) this.p2.onLogicalTurn();
+  }
+
   step(): void {
     this.logicFrame += 1;
     this.skipP1Advance = false;
 
-    // Face first so relDir is correct for motion matching (CritPoints facing).
-    if (this.p1.x <= this.p2.x) {
-      this.p1.facing = 1;
-      this.p2.facing = -1;
-    } else {
-      this.p1.facing = -1;
-      this.p2.facing = 1;
-    }
+    // Commands use logical facing from last frame / already-separated boxes.
+    this.commitLogicalFacing();
 
     const input = { ...this.pendingInput };
     input.relDir = toFacingRelative(input.dir, this.p1.facing);
@@ -475,6 +489,11 @@ export class MatchSim {
       dashDirHoldMax: this.opts.dashDirHoldMax,
       dashNeutralMax: this.opts.dashNeutralMax,
     };
+
+    if (this.p1.phase === 'prejump') {
+      const rel = input.relDir;
+      this.p1.retargetJump(rel);
+    }
 
     let intent = resolveIntent(this.history.entries(), this.logicFrame, resolveCfg, {
       phase: this.p1.phase,
@@ -558,7 +577,11 @@ export class MatchSim {
     // 4b. Attack Place (locked) + residual Place + block push
     if (this.opts.applySelfMovement) {
       const scale = this.opts.selfMovementScale;
-      if (this.p1.phase === 'attack' && !this.skipP1Advance) {
+      if (
+        this.p1.phase === 'attack' &&
+        !this.skipP1Advance &&
+        this.p1.jumpPhase !== 'air'
+      ) {
         this.p1.applyAttackPlaceDisplacement(scale);
       } else if (this.p1.attackResidual) {
         this.p1.applyAttackResidualDisplacement(scale);
@@ -580,6 +603,8 @@ export class MatchSim {
       maxX: this.opts.stageMaxX,
     }, { enabled: this.opts.enablePushResolve });
     this.debugProbe.pushOverlapX = pushRes.maxOverlapX;
+
+    this.commitLogicalFacing();
 
     // 6. Hit ∩ Hurt (throws: presentation only)
     if (
@@ -646,9 +671,12 @@ export class MatchSim {
       jumpFwdDist: this.opts.jumpFwdDist,
       jumpBackDist: this.opts.jumpBackDist,
       jumpNeutralDist: this.opts.jumpNeutralDist,
+      landingAnimFrames: this.opts.landingAnimFrames,
     };
     if (!this.skipP1Advance) {
       this.p1.advance(adv);
+    } else if (this.p1.jumpPhase === 'air') {
+      this.p1.continueJumpArc(adv);
     }
     this.p2.advance(adv);
     // Residual Place frame tick after advance (same sample used this frame)
