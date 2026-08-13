@@ -76,7 +76,7 @@
     ]
   },
   "clipId": "j>lp",
-  "glbPath": null,
+  "glbPath": "attack/esf001v00_attack_12/glb/000_esf001_ATK_8LP_id3000_f47.glb",
   "facingRelative": true,
   "sources": [
     {
@@ -93,5 +93,7 @@
     "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
   },
   "slug": "ryu-jump-light-punch",
-  "abbreviation": "J.LP"
+  "abbreviation": "J.LP",
+  "animFrameCount": 47,
+  "stance": "air"
 }

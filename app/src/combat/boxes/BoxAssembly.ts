@@ -1,10 +1,21 @@
 import { faceBox, type Box } from './Box2D';
 import type { TimedBox, MoveDefinition } from '../move/MoveDefinition';
-import type { StanceBoxTable, StanceId } from '../../data/loadStanceBoxes';
+import type {
+  StanceBoxTable,
+  StanceId,
+  StanceTransitionRole,
+  StanceTimedBox,
+} from '../../data/loadStanceBoxes';
 import type { FighterPhase, Facing } from '../types';
 
 export type ActionTimeline = {
   move: MoveDefinition;
+  frame: number;
+};
+
+export type StanceTransitionSample = {
+  role: StanceTransitionRole;
+  /** Logic frame within the transition segment (0-based). */
   frame: number;
 };
 
@@ -22,12 +33,29 @@ export type FighterBoxState = {
    * phase / logicalCrouch / current move stance.
    */
   crouchOverride?: boolean;
+  /**
+   * Active stand↔crouch transition sample. When set and the stance table has
+   * matching timed boxes, those replace the static stance green/push base.
+   */
+  stanceTransition?: StanceTransitionSample | null;
   getActionTimeline(): ActionTimeline | null;
 };
 
 export function filterTimedBoxes(list: TimedBox[] | undefined, frame: number): TimedBox[] {
   if (!list?.length) return [];
   return list.filter((b) => frame >= b.from && frame <= b.to);
+}
+
+/** Filter stance transition timed boxes; if multiple segments cover frame, keep latest `from`. */
+export function filterStanceTimedBoxes(
+  list: StanceTimedBox[] | undefined,
+  frame: number,
+): StanceTimedBox[] {
+  if (!list?.length) return [];
+  const hit = list.filter((b) => frame >= b.from && frame <= b.to);
+  if (hit.length <= 1) return hit;
+  const maxFrom = Math.max(...hit.map((b) => b.from));
+  return hit.filter((b) => b.from === maxFrom);
 }
 
 /**
@@ -101,6 +129,8 @@ function inferMoveStanceFromTimeline(
  * Two-layer box assembly (consensus §4.3 / plan §2.4).
  *
  * Stance: stand / crouch / air from phase + posture + move family + y.
+ * Transition: when stanceTransition is set and table has timed segments,
+ *             those replace static stance hurt/push for that frame.
  * Hurt: if action has layer:base on this frame → replace stance with action base;
  *       layer:extend always merges on top (arm/leg stretch).
  * Hit: only while phase==attack, active move, frame < total, table covers frame.
@@ -137,6 +167,35 @@ export function assembleWorldBoxes(
     : stanceId === 'crouch'
       ? [{ x: 0, y: 0.45, w: 0.6, h: 0.9 }]
       : [{ x: 0, y: 0.7, w: 0.55, h: 1.4 }];
+
+  // Stand↔crouch transition timed base (MMDK BAS_STD_CRH / BAS_CRH_STD)
+  const trSample = f.stanceTransition;
+  if (trSample && stanceTable?.transitions) {
+    const tr = stanceTable.transitions[trSample.role];
+    if (tr) {
+      const frame = Math.max(0, trSample.frame | 0);
+      const th = filterStanceTimedBoxes(tr.hurt, frame);
+      if (th.length > 0) {
+        hurtLocal = th.map((b) => ({
+          x: b.x,
+          y: b.y,
+          w: b.w,
+          h: b.h,
+          part: b.part,
+          layer: b.layer ?? 'base',
+        }));
+      }
+      const tp = filterStanceTimedBoxes(tr.push, frame);
+      if (tp.length > 0) {
+        pushLocal = tp.map((b) => ({
+          x: b.x,
+          y: b.y,
+          w: b.w,
+          h: b.h,
+        }));
+      }
+    }
+  }
 
   let hitLocal: Box[] = [];
 

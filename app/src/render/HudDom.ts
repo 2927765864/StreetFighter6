@@ -39,7 +39,7 @@ export class HudDom {
       maxWidth: '90vw',
     } as CSSStyleDeclaration);
     help.textContent =
-      '移动 WASD/方向 · 拳U/I/O 脚J/K/L · 下+键=蹲攻 · 跳中键=j. · 6+I/O/L unique · 236P/623P/214K/236K/214P/22P · 66/44冲刺 · 右上「指令反馈」';
+      '移动 WASD/方向 · 拳U/I/O 脚J/K/L · 下+键=蹲攻 · 跳中键=j. · 6+I/O/L unique · 236P/623P/214K/236K/214P/22P · 66/44冲刺 · R重置 · 右上「指令反馈」';
     parent.appendChild(help);
   }
 

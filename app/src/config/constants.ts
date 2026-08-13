@@ -62,6 +62,10 @@ export type MutableSimConfig = {
   hitstopFramesOnHit: number;
   hitstopFramesOnBlock: number;
   enableCancel: boolean;
+  /** Gameplay gate: special command usage (definitions stay loaded). */
+  enableSpecials: boolean;
+  /** Gameplay gate: throw command usage (definitions stay loaded). */
+  enableThrows: boolean;
   enableActionBuffer: boolean;
   dashFrames: number;
   dashBackFrames: number;
@@ -168,6 +172,8 @@ export function createDefaultSimConfig(): MutableSimConfig {
     hitstopFramesOnHit: HITSTOP_ON_HIT,
     hitstopFramesOnBlock: HITSTOP_ON_BLOCK,
     enableCancel: true,
+    enableSpecials: false,
+    enableThrows: false,
     enableActionBuffer: true,
     dashFrames: dashFwdFrames,
     dashBackFrames,
@@ -239,6 +245,8 @@ export function applyConfigToMatchOpts(cfg: MutableSimConfig) {
     hitstopFramesOnHit: cfg.hitstopFramesOnHit,
     hitstopFramesOnBlock: cfg.hitstopFramesOnBlock,
     enableCancel: cfg.enableCancel,
+    enableSpecials: cfg.enableSpecials,
+    enableThrows: cfg.enableThrows,
     enableActionBuffer: cfg.enableActionBuffer,
     dashFrames: cfg.dashFrames,
     dashBackFrames: cfg.dashBackFrames,

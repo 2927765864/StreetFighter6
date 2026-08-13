@@ -27,9 +27,22 @@ const jlp: MoveDefinition = {
   id: 'ryu_jlp',
   moveId: 'ryu_jlp',
   displayName: 'j.LP',
-  frames: { startup: 4, active: 10, recovery: 3, total: 17 },
+  // §3.13.3: jump total = startup+active; recovery is until landing (state), not table
+  frames: { startup: 4, active: 10, recovery: 0, total: 14 },
   clipId: 'ryu_jlp',
   animFrameCount: 47,
+  stance: 'air',
+};
+
+const jhk: MoveDefinition = {
+  ...lp,
+  id: 'ryu_jhk',
+  moveId: 'ryu_jhk',
+  displayName: 'j.HK',
+  frames: { startup: 12, active: 8, recovery: 0, total: 19 },
+  clipId: 'ryu_jhk',
+  animFrameCount: 82,
+  stance: 'air',
 };
 
 const hado: MoveDefinition = {
@@ -49,11 +62,18 @@ const N = {
   released: 0,
 };
 
-function sim() {
+function sim(
+  extra: MoveDefinition[] = [],
+  opts: { enableSpecials?: boolean } = {},
+) {
   return new MatchSim(
     lp,
-    MoveCatalog.fromMoves([lp, jlp, hado]),
-    { forceP2Guard: true, enableActionBuffer: false },
+    MoveCatalog.fromMoves([lp, jlp, jhk, hado, ...extra]),
+    {
+      forceP2Guard: true,
+      enableActionBuffer: false,
+      enableSpecials: opts.enableSpecials ?? false,
+    },
   );
 }
 
@@ -191,7 +211,7 @@ describe('jump §3.13', () => {
   });
 
   it('prejump can special-cancel into hadoken', () => {
-    const s = sim();
+    const s = sim([], { enableSpecials: true });
     jumpNeutral(s);
     s.pendingInput = {
       dir: 2,
@@ -233,7 +253,7 @@ describe('jump §3.13', () => {
       released: 0,
     };
     s.step();
-    for (let i = 0; i < 17; i++) {
+    for (let i = 0; i < jlp.frames.total; i++) {
       s.pendingInput = N;
       s.step();
     }
@@ -242,6 +262,43 @@ describe('jump §3.13', () => {
     expect(s.p1.clipId).toBe('ryu_jlp');
     expect(s.p1.hasAnimTail).toBe(true);
     expect(s.p1.animTail?.holdAir).toBe(true);
+    expect(s.p1.animRole).not.toBe('air');
+    // Residual starts at total and advances toward animFrameCount (§3.13.5)
+    expect(s.p1.animTail?.logicTotal).toBe(jlp.frames.total);
+    expect(s.p1.animTail?.animFrameCount).toBe(47);
+    expect(s.p1.animTail!.visualFrame).toBeGreaterThanOrEqual(jlp.frames.total);
+    const vf0 = s.p1.animTail!.visualFrame;
+    s.pendingInput = N;
+    s.step();
+    s.step();
+    s.step();
+    expect(s.p1.animTail!.visualFrame).toBe(vf0 + 3);
+    expect(s.p1.clipId).toBe('ryu_jlp');
+  });
+
+  it('j.HK residual scrubs past logic total toward 82 frames', () => {
+    const s = sim();
+    // Attack early in the arc so residual has air time left (38f air total).
+    toAirborne(s);
+    s.p1.startMove(jhk);
+    expect(s.p1.phase).toBe('attack');
+    for (let i = 0; i < jhk.frames.total; i++) {
+      s.pendingInput = N;
+      s.step();
+    }
+    expect(s.p1.phase).toBe('airborne');
+    expect(s.p1.animTail?.holdAir).toBe(true);
+    expect(s.p1.animTail?.animFrameCount).toBe(82);
+    expect(s.p1.animTail!.visualFrame).toBe(jhk.frames.total);
+    // 19 logic + 10 residual still well before land (~38 air samples)
+    for (let i = 0; i < 10; i++) {
+      s.pendingInput = N;
+      s.step();
+      expect(s.p1.phase).toBe('airborne');
+      expect(s.p1.hasAnimTail).toBe(true);
+    }
+    expect(s.p1.animTail!.visualFrame).toBe(jhk.frames.total + 10);
+    expect(s.p1.clipId).toBe('ryu_jhk');
     expect(s.p1.animRole).not.toBe('air');
   });
 

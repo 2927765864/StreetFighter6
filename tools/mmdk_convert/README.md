@@ -46,7 +46,9 @@ Place：`PosList` 累积差分 → `selfMovement`（`placeCumToDx`）。
 
 ## 输出
 
-- `app/public/data/systems/ryu_stance_boxes.json`
+- `app/public/data/systems/ryu_stance_boxes.json`  
+  - `stances.stand|crouch|air`：静态姿态绿/推挤  
+  - `transitions.stand_to_crouch` / `transitions.crouch_to_stand`：MMDK `BAS_STD_CRH` / `BAS_CRH_STD` 分段时间轴（通常 2 段，非逐帧 morph）
 - `app/public/data/moves/ryu_*.json`
 - `tools/mmdk_convert/coverage_list.json` / `coverage_report.json`
 - `docs/character-control/action-tables/sourced-stance-boxes.md`

@@ -46,26 +46,14 @@
     "hurt": [
       {
         "from": 0,
-        "to": 23,
+        "to": 13,
         "x": 0,
         "y": 1.4376506024096387,
         "w": 0.8,
         "h": 1.1144578313253013,
         "rectId": 157,
         "part": "body",
-        "layer": "extend",
-        "rectBucket": "08"
-      },
-      {
-        "from": 23,
-        "to": 49,
-        "x": 0,
-        "y": 1.3930722891566267,
-        "w": 0.8,
-        "h": 1.3373493975903614,
-        "rectId": 16,
-        "part": "body",
-        "layer": "extend",
+        "layer": "base",
         "rectBucket": "08"
       },
       {
@@ -77,31 +65,19 @@
         "h": 0.44578313253012053,
         "rectId": 158,
         "part": "body",
-        "layer": "extend",
+        "layer": "base",
         "rectBucket": "08"
       },
       {
         "from": 8,
-        "to": 23,
+        "to": 13,
         "x": 0,
         "y": 0.6575301204819277,
         "w": 0.8,
         "h": 0.44578313253012053,
         "rectId": 158,
         "part": "body",
-        "layer": "extend",
-        "rectBucket": "08"
-      },
-      {
-        "from": 23,
-        "to": 49,
-        "x": 0,
-        "y": 0.6575301204819277,
-        "w": 0.8,
-        "h": 0.44578313253012053,
-        "rectId": 158,
-        "part": "body",
-        "layer": "extend",
+        "layer": "base",
         "rectBucket": "08"
       },
       {
@@ -163,7 +139,7 @@
     ]
   },
   "clipId": "j>hp",
-  "glbPath": null,
+  "glbPath": "attack/esf001v00_attack_14/glb/000_esf001_ATK_8HP_id3000_f48.glb",
   "facingRelative": true,
   "sources": [
     {
@@ -181,6 +157,8 @@
   },
   "slug": "ryu-jump-heavy-punch",
   "abbreviation": "J.HP",
+  "animFrameCount": 48,
+  "stance": "air",
   "selfMovement": [
     0,
     0,

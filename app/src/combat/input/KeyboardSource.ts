@@ -74,13 +74,18 @@ export class KeyboardSource {
     };
   }
 
+  /** Drop held keys / edge state (reset, focus loss, tests). */
+  clear(): void {
+    this.down.clear();
+    this.prevButtons = 0;
+  }
+
   /** For tests: inject held keys */
   setKeysForTest(codes: string[]): void {
     this.down = new Set(codes);
   }
 
   clearForTest(): void {
-    this.down.clear();
-    this.prevButtons = 0;
+    this.clear();
   }
 }

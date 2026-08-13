@@ -128,6 +128,8 @@ export function parseMoveDefinition(raw: unknown): MoveDefinition {
   const framesIn = o.frames as Record<string, unknown>;
   let startup = asNum(framesIn.startup, 0);
   let active = asNum(framesIn.active, 0);
+  /** Explicit null = no table recovery (jump attacks §3.13.3). */
+  const recoveryExplicitNull = framesIn.recovery === null;
   let recovery =
     framesIn.recovery === null || framesIn.recovery === undefined
       ? NaN
@@ -137,17 +139,25 @@ export function parseMoveDefinition(raw: unknown): MoveDefinition {
       ? NaN
       : asNum(framesIn.total, NaN);
 
-  if (!Number.isFinite(recovery) && Number.isFinite(total)) {
-    recovery = Math.max(0, total - startup - active);
+  if (recoveryExplicitNull) {
+    // Jump / until-landing: do not rewrite table total to startup+active.
+    recovery = 0;
+    if (!Number.isFinite(total)) {
+      total = startup + active;
+    }
+  } else {
+    if (!Number.isFinite(recovery) && Number.isFinite(total)) {
+      recovery = Math.max(0, total - startup - active);
+    }
+    if (!Number.isFinite(total)) {
+      total = startup + active + (Number.isFinite(recovery) ? recovery : 0);
+    }
+    if (!Number.isFinite(recovery)) {
+      recovery = Math.max(0, total - startup - active);
+    }
+    // Ground moves: total matches sum
+    total = startup + active + recovery;
   }
-  if (!Number.isFinite(total)) {
-    total = startup + active + (Number.isFinite(recovery) ? recovery : 0);
-  }
-  if (!Number.isFinite(recovery)) {
-    recovery = Math.max(0, total - startup - active);
-  }
-  // Ensure total matches sum
-  total = startup + active + recovery;
 
   const cancelIn = (o.cancel ?? {}) as Record<string, unknown>;
   const windowsRaw = cancelIn.windows;
@@ -349,4 +359,52 @@ export function parseMoveDefinition(raw: unknown): MoveDefinition {
 
 export function cloneMove(m: MoveDefinition): MoveDefinition {
   return structuredClone(m);
+}
+
+/**
+ * Fill animFrameCount / glbPath from logic→glb map when move table omitted them.
+ * Needed so attack residual can scrub past logic total (§3.7.1 / §3.13.5).
+ */
+export function enrichMoveAnimFromMap(
+  move: MoveDefinition,
+  lookup: {
+    primaryPath(id: string): string | null;
+    frameCountForRole(id: string, role: string): number | null;
+  },
+): MoveDefinition {
+  const ids = [move.moveId, move.id, move.clipId].filter(Boolean);
+  let animFrameCount = move.animFrameCount;
+  let glbPath = move.glbPath;
+  if (animFrameCount == null || animFrameCount <= 0) {
+    for (const id of ids) {
+      const n = lookup.frameCountForRole(id, 'main');
+      if (n != null && n > 0) {
+        animFrameCount = n;
+        break;
+      }
+    }
+  }
+  if (!glbPath) {
+    for (const id of ids) {
+      const p = lookup.primaryPath(id);
+      if (p) {
+        glbPath = p;
+        break;
+      }
+    }
+  }
+  if (
+    (animFrameCount == null || animFrameCount <= 0) &&
+    glbPath
+  ) {
+    const m = /_f(\d+)(?:\.|$)/i.exec(glbPath);
+    if (m) animFrameCount = Math.max(1, parseInt(m[1]!, 10));
+  }
+  if (
+    animFrameCount === move.animFrameCount &&
+    glbPath === move.glbPath
+  ) {
+    return move;
+  }
+  return { ...move, animFrameCount, glbPath };
 }

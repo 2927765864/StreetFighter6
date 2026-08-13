@@ -275,6 +275,13 @@ async function boot(): Promise<void> {
         '/data/clips/ryu_logic_to_glb_map.json',
       );
       const logicMap = LogicGlbMap.fromJson(mapRaw);
+      // Jump/ground residual needs animFrameCount when move JSON omitted it (§3.13.5)
+      const enriched = catalog.enrichAnimFromMap(logicMap);
+      if (enriched > 0) {
+        console.info('[boot] enriched move animFrameCount from map', enriched);
+        const live5 = catalog.get('ryu_5lp');
+        if (live5) match.move5lp = live5;
+      }
       const clipLib = new AnimClipLibrary();
       p1View.setAnimsBackend(logicMap, clipLib);
       p2View.setAnimsBackend(logicMap, clipLib);
@@ -346,6 +353,23 @@ async function boot(): Promise<void> {
     p1View,
   };
   createDebugGui(match, clock, cfg, hooks);
+
+  /** R: return both fighters to start positions / idle state (training reset). */
+  window.addEventListener('keydown', (e) => {
+    if (e.code !== 'KeyR' || e.repeat) return;
+    const t = e.target as HTMLElement | null;
+    if (
+      t &&
+      (t.tagName === 'INPUT' ||
+        t.tagName === 'TEXTAREA' ||
+        t.isContentEditable)
+    ) {
+      return;
+    }
+    e.preventDefault();
+    keys.clear();
+    match.reset();
+  });
 
   window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;

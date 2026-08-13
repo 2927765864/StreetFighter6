@@ -106,6 +106,7 @@ describe('MatchSim cancel to hadoken', () => {
     const catalog = MoveCatalog.fromMoves([lp, hado]);
     const sim = new MatchSim(lp, catalog, {
       enableCancel: true,
+      enableSpecials: true,
       hitstopFramesOnHit: 0,
       hitstopFramesOnBlock: 0,
     });

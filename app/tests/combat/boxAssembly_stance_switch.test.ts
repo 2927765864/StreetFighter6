@@ -79,10 +79,15 @@ describe('boxAssembly stance switches with posture / move', () => {
     const stance = fallbackStanceTable();
     const f = new Fighter('p1', 0, 1, 10000);
     f.setStanceTable(stance);
+    f.setStanceConfig({ standToCrouchFrames: 4, crouchToStandFrames: 3 });
     f.applyPostureOrWalkIntent('crouch');
-    // force logical crouch complete
+    // Finish stand_to_crouch (early frames are still stand-shaped MMDK segs)
+    for (let i = 0; i < 4; i++) {
+      f.advance({ airFrames: 38, landingFrames: 3, dashSpeed: 0 });
+    }
+    expect(f.stanceState.seg).toBe('none');
+    expect(f.stanceState.logicalCrouch).toBe(true);
     f.phase = 'crouch';
-    f.stanceState.logicalCrouch = true;
 
     const standTop = Math.max(
       ...stance.stances.stand.hurt.map((b) => b.y + b.h / 2),

@@ -2,7 +2,17 @@ import {
   canonicalizeMoveDefinition,
   RYU_FEEDBACK_MOVE_URLS,
 } from './ryuMoveIds';
-import { cloneMove, parseMoveDefinition, type MoveDefinition } from './MoveDefinition';
+import {
+  cloneMove,
+  enrichMoveAnimFromMap,
+  parseMoveDefinition,
+  type MoveDefinition,
+} from './MoveDefinition';
+
+export type AnimMapLookup = {
+  primaryPath(id: string): string | null;
+  frameCountForRole(id: string, role: string): number | null;
+};
 
 /**
  * Whitelist moves loaded into memory (feedback catalog).
@@ -36,6 +46,24 @@ export class MoveCatalog {
     const seen = new Set<string>();
     for (const m of this.byId.values()) seen.add(m.moveId);
     return [...seen].sort();
+  }
+
+  /**
+   * Fill missing animFrameCount/glbPath from logic→glb map (§3.13.5 residual).
+   */
+  enrichAnimFromMap(lookup: AnimMapLookup): number {
+    let n = 0;
+    const seen = new Set<string>();
+    for (const m of this.byId.values()) {
+      if (seen.has(m.moveId)) continue;
+      seen.add(m.moveId);
+      const next = enrichMoveAnimFromMap(m, lookup);
+      if (next !== m) {
+        this.register(next);
+        n += 1;
+      }
+    }
+    return n;
   }
 
   /** Sync load from already-parsed defs (tests / boot). */

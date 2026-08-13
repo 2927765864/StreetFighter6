@@ -44,38 +44,26 @@
     "hurt": [
       {
         "from": 0,
-        "to": 16,
+        "to": 12,
         "x": 0,
         "y": 1.6159638554216869,
         "w": 0.8,
         "h": 0.8915662650602411,
         "rectId": 144,
         "part": "body",
-        "layer": "extend",
-        "rectBucket": "08"
-      },
-      {
-        "from": 16,
-        "to": 47,
-        "x": 0,
-        "y": 1.3930722891566267,
-        "w": 0.8,
-        "h": 1.3373493975903614,
-        "rectId": 16,
-        "part": "body",
-        "layer": "extend",
+        "layer": "base",
         "rectBucket": "08"
       },
       {
         "from": 0,
-        "to": 16,
+        "to": 12,
         "x": 0,
         "y": 0.947289156626506,
         "w": 0.8,
         "h": 0.44578313253012053,
         "rectId": 145,
         "part": "body",
-        "layer": "extend",
+        "layer": "base",
         "rectBucket": "08"
       },
       {
@@ -127,7 +115,7 @@
     ]
   },
   "clipId": "j>lp",
-  "glbPath": null,
+  "glbPath": "attack/esf001v00_attack_12/glb/000_esf001_ATK_8LP_id3000_f47.glb",
   "facingRelative": true,
   "sources": [
     {
@@ -145,6 +133,8 @@
   },
   "slug": "ryu-jump-light-punch",
   "abbreviation": "J.LP",
+  "animFrameCount": 47,
+  "stance": "air",
   "selfMovement": [
     0,
     0,

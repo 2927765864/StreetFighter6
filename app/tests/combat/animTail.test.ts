@@ -99,4 +99,26 @@ describe('anim residual tail §3.7.1', () => {
     expect(m.animFrameCount).toBe(48);
     expect(m.frames.total).toBe(18);
   });
+
+  it('parseMoveDefinition keeps jump total when recovery is null (§3.13.3)', () => {
+    const m = parseMoveDefinition({
+      id: 'ryu_jhk',
+      characterId: 'ryu',
+      moveId: 'ryu_jhk',
+      frames: {
+        startup: 12,
+        active: 8,
+        recovery: null,
+        total: 19,
+      },
+      boxes: { hurt: [], hit: [] },
+      animFrameCount: 82,
+      glbPath:
+        'attack/esf001v00_attack_17/glb/000_esf001_ATK_8HK_id3000_f82.glb',
+      clipId: 'ryu_jhk',
+    });
+    expect(m.frames.recovery).toBe(0);
+    expect(m.frames.total).toBe(19);
+    expect(m.animFrameCount).toBe(82);
+  });
 });

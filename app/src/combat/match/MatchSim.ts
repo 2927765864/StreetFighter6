@@ -8,6 +8,8 @@ import { InputHistory } from '../input/InputHistory';
 import { ActionBuffer } from '../input/ActionBuffer';
 import { tryCommitLogicalFacing, toFacingRelative } from '../input/facing';
 import { resolveIntent } from '../command/IntentResolver';
+import { RYU_FEEDBACK_COMMANDS } from '../command/ryuCommands';
+import type { CommandDef } from '../command/CommandDef';
 import { DriveStub } from '../systems/DriveStub';
 import type { Facing, HitResult, InputSample, Intent } from '../types';
 import { DummyController } from './DummyController';
@@ -32,6 +34,10 @@ export type MatchSimOptions = {
   hitstopFramesOnHit: number;
   hitstopFramesOnBlock: number;
   enableCancel: boolean;
+  /** When false, special command inputs never resolve/execute (data stays loaded). */
+  enableSpecials: boolean;
+  /** When false, throw command inputs never resolve/execute (data stays loaded). */
+  enableThrows: boolean;
   enableActionBuffer: boolean;
   dashFrames: number;
   dashBackFrames: number;
@@ -84,6 +90,8 @@ const DEFAULT_OPTS: MatchSimOptions = {
   hitstopFramesOnHit: 8,
   hitstopFramesOnBlock: 8,
   enableCancel: true,
+  enableSpecials: false,
+  enableThrows: false,
   enableActionBuffer: true,
   dashFrames: 19,
   dashBackFrames: 23,
@@ -274,6 +282,32 @@ export class MatchSim {
     this.actionBuffer.clear();
     this.history.clear();
     this.drive.setBars(DRIVE_MAX);
+    this.lastIntent = {
+      kind: 'none',
+      priority: -1,
+      bufferClass: 'standard',
+    };
+    this.pendingInput = {
+      dir: 5,
+      relDir: 5,
+      buttons: 0,
+      pressed: 0,
+      released: 0,
+    };
+    this.debugProbe.lastIntentKind = 'none';
+    this.debugProbe.lastIntentMoveId = '';
+    this.debugProbe.lastCommandId = '';
+    this.debugProbe.lastHitResult = 'none';
+    this.debugProbe.hitstopTimer = 0;
+    this.debugProbe.p1Phase = 'idle';
+    this.debugProbe.p1ClipId = 'idle';
+    this.debugProbe.p1AnimRole = 'main';
+    this.debugProbe.p1LocoPhase = 'none';
+    this.debugProbe.p1JumpPhase = 'none';
+    this.debugProbe.p1SelfDx = 0;
+    this.debugProbe.p1BlockPushDx = 0;
+    this.debugProbe.p2BlockPushDx = 0;
+    this.debugProbe.pushOverlapX = 0;
   }
 
   setStanceTable(table: StanceBoxTable | null): void {
@@ -320,11 +354,24 @@ export class MatchSim {
       : this.opts.actionBufferStandard;
   }
 
+  /** Command rows allowed for input resolution (usage gate only). */
+  private activeCommands(): readonly CommandDef[] {
+    if (this.opts.enableSpecials && this.opts.enableThrows) {
+      return RYU_FEEDBACK_COMMANDS;
+    }
+    return RYU_FEEDBACK_COMMANDS.filter((c) => {
+      if (c.kind === 'special' && !this.opts.enableSpecials) return false;
+      if (c.kind === 'throw' && !this.opts.enableThrows) return false;
+      return true;
+    });
+  }
+
   private canExecute(intent: Intent): boolean {
     if (intent.kind === 'none' || intent.kind === 'walk' || intent.kind === 'crouch') {
       return this.p1.canAct();
     }
     if (intent.kind === 'special') {
+      if (!this.opts.enableSpecials) return false;
       return (
         this.p1.canAct() ||
         this.p1.canSpecialCancel(this.opts.enableCancel) ||
@@ -332,7 +379,11 @@ export class MatchSim {
         this.p1.canLandingAttack()
       );
     }
-    if (intent.kind === 'normal' || intent.kind === 'throw') {
+    if (intent.kind === 'throw') {
+      if (!this.opts.enableThrows) return false;
+      return this.p1.canAct() || this.p1.canLandingAttack();
+    }
+    if (intent.kind === 'normal') {
       if (intent.airOnly) return this.p1.canAirAct();
       return this.p1.canAct() || this.p1.canLandingAttack();
     }
@@ -357,6 +408,8 @@ export class MatchSim {
   private skipP1Advance = false;
 
   private executeIntent(intent: Intent): boolean {
+    if (intent.kind === 'special' && !this.opts.enableSpecials) return false;
+    if (intent.kind === 'throw' && !this.opts.enableThrows) return false;
     if (
       intent.kind === 'special' ||
       intent.kind === 'normal' ||
@@ -497,6 +550,7 @@ export class MatchSim {
 
     let intent = resolveIntent(this.history.entries(), this.logicFrame, resolveCfg, {
       phase: this.p1.phase,
+      commands: this.activeCommands(),
     });
     this.lastIntent = intent;
     this.debugProbe.lastIntentKind = intent.kind;

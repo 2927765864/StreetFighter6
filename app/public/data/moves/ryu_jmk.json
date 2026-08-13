@@ -46,26 +46,14 @@
     "hurt": [
       {
         "from": 0,
-        "to": 20,
+        "to": 11,
         "x": 0,
         "y": 1.6159638554216869,
         "w": 0.8,
         "h": 0.8915662650602411,
         "rectId": 166,
         "part": "body",
-        "layer": "extend",
-        "rectBucket": "08"
-      },
-      {
-        "from": 20,
-        "to": 60,
-        "x": 0,
-        "y": 1.3930722891566267,
-        "w": 0.8,
-        "h": 1.3373493975903614,
-        "rectId": 16,
-        "part": "body",
-        "layer": "extend",
+        "layer": "base",
         "rectBucket": "08"
       },
       {
@@ -77,19 +65,19 @@
         "h": 0.4680722891566265,
         "rectId": 167,
         "part": "body",
-        "layer": "extend",
+        "layer": "base",
         "rectBucket": "08"
       },
       {
         "from": 6,
-        "to": 20,
+        "to": 11,
         "x": 0,
         "y": 0.9250000000000002,
         "w": 0.8,
         "h": 0.4680722891566265,
         "rectId": 167,
         "part": "body",
-        "layer": "extend",
+        "layer": "base",
         "rectBucket": "08"
       },
       {
@@ -109,22 +97,12 @@
       {
         "from": 6,
         "to": 12,
-        "x": 0.45,
-        "y": 1.4042168674698796,
-        "w": 0.7000000000000001,
-        "h": 0.18945783132530122,
-        "rectId": 35,
-        "rectBucket": "00"
-      },
-      {
-        "from": 6,
-        "to": 12,
-        "x": 1.16,
-        "y": 1.0030120481927711,
-        "w": 0.64,
-        "h": 0.33433734939759036,
-        "rectId": 36,
-        "rectBucket": "03"
+        "x": 0.9,
+        "y": 1.25,
+        "w": 1.05,
+        "h": 0.6,
+        "manualCalib": true,
+        "note": "viewer leg volume (user markup); replaces rect35/36 packing"
       }
     ],
     "push": [
@@ -151,7 +129,7 @@
     ]
   },
   "clipId": "j>mk",
-  "glbPath": null,
+  "glbPath": "attack/esf001v00_attack_16/glb/000_esf001_ATK_8MK_id3000_f60.glb",
   "facingRelative": true,
   "sources": [
     {
@@ -164,11 +142,13 @@
     }
   ],
   "review": {
-    "status": "mmdk_converted",
-    "notes": "MMDK convert unitScale=0.01; public frames kept; layer/part on hurt; CLAMP_BASE=true"
+    "status": "mmdk_converted+manual_hit",
+    "notes": "MMDK convert + HIT_MANUAL_OVERRIDES[ryu_jmk]; unitScale=0.01; CLAMP_BASE=true"
   },
   "slug": "ryu-jump-medium-kick",
   "abbreviation": "J.MK",
+  "animFrameCount": 60,
+  "stance": "air",
   "selfMovement": [
     0,
     0,
@@ -194,6 +174,7 @@
     "fabFrame": 60,
     "hitDtIndex": 65,
     "unitScale": 0.01,
-    "clampBaseHurtToTotal": true
+    "clampBaseHurtToTotal": true,
+    "hitManualOverride": true
   }
 }

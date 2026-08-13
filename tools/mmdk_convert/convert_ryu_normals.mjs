@@ -70,6 +70,29 @@ const NORMAL_MAP = {
   'jhk': { actions: ['ATK_9HK', 'ATK_8HK'], publicId: 'ryu_jhk', generated: 'ryu_j>hk.json' },
 };
 
+/**
+ * Manual hit AABB overrides (viewer-calibrated). Applied after MMDK extract so
+ * reconvert keeps the tuned volume. Keys = publicId.
+ *
+ * ryu_jmk: MMDK rect35/36 raw packing cannot match the full kicking-leg volume
+ * (user markup 2026-08-13). Single active-range box covering hip→foot white pants.
+ * Frames keep MMDK active window 6–12 (0-based inclusive).
+ */
+const HIT_MANUAL_OVERRIDES = {
+  ryu_jmk: [
+    {
+      from: 6,
+      to: 12,
+      x: 0.9,
+      y: 1.25,
+      w: 1.05,
+      h: 0.6,
+      manualCalib: true,
+      note: 'viewer leg volume (user markup); replaces rect35/36 packing',
+    },
+  ],
+};
+
 /** Specials / target combo / denjin — MMDK action candidates (order = priority). */
 const SPECIAL_MAP = {
   ryu_hadoken_lp: {
@@ -226,13 +249,23 @@ function buildRectTable(rectsRoot) {
  * - Bucket **08** is the primary standing hurt palette (OffsetX≈0, head/body/leg stack).
  * - For hurt: prefer bucket 08, then min |OffsetX|, then max area.
  * - MMDK hurt SizeX/Y are **half-extents** (center→edge); ADR-002 wants full w/h → ×2.
- * - Strike hitboxes keep Size as full (HitOffset is center; calibrated punch ~0.5×0.65).
+ * - Strike HitOffset≠0: center = HitOffset; Size **full** (punch ~0.5×0.65 max-area).
+ * - Strike HitOffset≈0: center = rect Offset; preferExtendedX; Size **per-axis**:
+ *   small raw axes are hurt-like half-extents (×2), large axes already full limb span.
+ *
+ * j.HK vs j.MK (must not share one global half/full switch):
+ * - j.HK rect37 **40×22** → both axes half → 0.80×0.49 (leg coverage; user-validated).
+ * - j.MK rect35 **70×17** → X full, Y half → 0.70×0.38 (thigh thickness, not 1.4-wide).
+ * - j.MK rect36 **64×30** → both full → 0.64×0.33 (foot; global ×2 made 1.28 past toe).
+ * - Bucket: HitOffset≈0 + max-area wrongly picks body-centered dups (j.HK r37 b05) →
+ *   preferExtendedX (|OffsetX|). Green full-leg volume is hurt extend, not extra hit.
  */
 function resolveRect(rectTable, id, opts = {}) {
   const list = rectTable.get(id);
   if (!list?.length) return null;
   const preferBuckets = opts.preferBuckets; // e.g. ['08']
   const preferCenteredX = opts.preferCenteredX === true;
+  const preferExtendedX = opts.preferExtendedX === true;
   const ok = list.filter((r) => {
     const oy = num(r.OffsetY);
     const ox = num(r.OffsetX);
@@ -254,7 +287,10 @@ function resolveRect(rectTable, id, opts = {}) {
     if (preferred.length) pool = preferred;
   }
   pool.sort((a, b) => {
-    if (preferCenteredX) {
+    if (preferExtendedX) {
+      const d = Math.abs(num(b.OffsetX)) - Math.abs(num(a.OffsetX));
+      if (d !== 0) return d;
+    } else if (preferCenteredX) {
       const d = Math.abs(num(a.OffsetX)) - Math.abs(num(b.OffsetX));
       if (d !== 0) return d;
     }
@@ -265,8 +301,27 @@ function resolveRect(rectTable, id, opts = {}) {
 
 /** Hurt / push DamageCollision palette. */
 const HURT_RECT_OPTS = { preferBuckets: ['08'], preferCenteredX: true };
-/** Strike AttackCollision — keep max-area among sane (no bucket force). */
+/**
+ * Strike AttackCollision defaults (HitOffset non-zero → size only from rect).
+ * When HitOffset is zero, extractFromAction uses HIT_RECT_OPTS_EXTENDED instead.
+ */
 const HIT_RECT_OPTS = { preferCenteredX: false };
+/** Strike when position is rect Offset (HitOffset≈0): prefer limb-extension |OffsetX|. */
+const HIT_RECT_OPTS_EXTENDED = { preferExtendedX: true };
+
+/**
+ * Per-axis half-extent thresholds (raw MMDK units) for HitOffset≈0 strikes.
+ * See resolveRect / extractFromAction comments (j.HK vs j.MK).
+ */
+const STRIKE_HALF_EXTENT_X_MAX = 45;
+const STRIKE_HALF_EXTENT_Y_MAX = 25;
+
+/** Full logical extent from raw Size on one axis (HitOffset≈0 strike packing). */
+function strikeAxisFullExtent(rawSize, axisMax) {
+  const v = num(rawSize);
+  if (v <= 0) return 0;
+  return v <= axisMax ? v * 2 : v;
+}
 
 function rectToBox(rect, scale, opts = {}) {
   const {
@@ -277,9 +332,21 @@ function rectToBox(rect, scale, opts = {}) {
     useHitOffsetAsCenter = false,
     /** When true, Size is half-extent → full w/h = 2 * Size (ADR-002). */
     sizeIsHalfExtent = false,
+    /**
+     * HitOffset≈0 strike: per-axis half packing (overrides sizeIsHalfExtent for size).
+     * When true, SizeX/Y use STRIKE_HALF_EXTENT_* thresholds independently.
+     */
+    strikeOffsetSizePacking = false,
   } = opts;
-  const sx = num(rect.SizeX) * (sizeIsHalfExtent ? 2 : 1);
-  const sy = num(rect.SizeY) * (sizeIsHalfExtent ? 2 : 1);
+  let sx;
+  let sy;
+  if (strikeOffsetSizePacking) {
+    sx = strikeAxisFullExtent(rect.SizeX, STRIKE_HALF_EXTENT_X_MAX);
+    sy = strikeAxisFullExtent(rect.SizeY, STRIKE_HALF_EXTENT_Y_MAX);
+  } else {
+    sx = num(rect.SizeX) * (sizeIsHalfExtent ? 2 : 1);
+    sy = num(rect.SizeY) * (sizeIsHalfExtent ? 2 : 1);
+  }
   let ox;
   let oy;
   if (useHitOffsetAsCenter && (hitOffsetX !== 0 || hitOffsetY !== 0)) {
@@ -374,8 +441,13 @@ function extractFromAction(action, rectTable, hitDt, scale) {
     if (num(key.AttackDataListIndex, -1) >= 0) {
       hitDtIndex = num(key.AttackDataListIndex);
     }
+    // HitOffset non-zero → center from HitOffset, Size full (punch calibration).
+    // HitOffset zero → center from rect Offset; preferExtendedX; per-axis size pack
+    // (j.HK both half; j.MK wide X full + thin Y half — do NOT global ×2).
+    const hitOffsetAsCenter = hox !== 0 || hoy !== 0;
+    const hitRectOpts = hitOffsetAsCenter ? HIT_RECT_OPTS : HIT_RECT_OPTS_EXTENDED;
     for (const id of ids) {
-      const rect = resolveRect(rectTable, id, HIT_RECT_OPTS);
+      const rect = resolveRect(rectTable, id, hitRectOpts);
       if (!rect) continue;
       const geo = rectToBox(rect, scale, {
         hitOffsetX: hox,
@@ -384,13 +456,32 @@ function extractFromAction(action, rectTable, hitDt, scale) {
         rootY: roy,
         useHitOffsetAsCenter: true,
         sizeIsHalfExtent: false,
+        strikeOffsetSizePacking: !hitOffsetAsCenter,
       });
       const { _bucket, ...box } = geo;
       hit.push({ from, to, ...box, rectId: id, rectBucket: _bucket });
     }
   }
 
-  for (const key of iterKeyEntries(action.DamageCollisionKey)) {
+  // Stand normals use Head+Body+Leg keys as layer:base. Air freefall / air normals
+  // often only have BodyList — without a special rule everything becomes extend and
+  // the stand-shaped air stance never gets replaced (§4.3 / jump box follow-up).
+  const dmgKeys = iterKeyEntries(action.DamageCollisionKey);
+  let actionHasThreePartBase = false;
+  for (const key of dmgKeys) {
+    if (
+      listIds(key.HeadList).length &&
+      listIds(key.BodyList).length &&
+      listIds(key.LegList).length
+    ) {
+      actionHasThreePartBase = true;
+      break;
+    }
+  }
+  /** Body-only rects with |OffsetX| ≤ this are full-body base (air torso). */
+  const BODY_ONLY_BASE_OX_MAX = 12;
+
+  for (const key of dmgKeys) {
     const { from, to } = frameRange(key);
     const rox = num(key.RootOffset?.X ?? key.RootOffset?.x, 0);
     const roy = num(key.RootOffset?.Y ?? key.RootOffset?.y, 0);
@@ -400,8 +491,6 @@ function extractFromAction(action, rectTable, hitDt, scale) {
     const hasHead = headIds.length > 0;
     const hasBody = bodyIds.length > 0;
     const hasLeg = legIds.length > 0;
-    const layer =
-      hasHead && hasBody && hasLeg ? 'base' : 'extend';
     for (const [listName, ids, part] of [
       ['HeadList', headIds, 'head'],
       ['BodyList', bodyIds, 'body'],
@@ -412,6 +501,20 @@ function extractFromAction(action, rectTable, hitDt, scale) {
         let rect = resolveRect(rectTable, id, HURT_RECT_OPTS);
         if (!rect) rect = resolveRect(rectTable, id, { preferCenteredX: true });
         if (!rect) continue;
+        let layer = 'extend';
+        if (hasHead && hasBody && hasLeg) {
+          layer = 'base';
+        } else if (
+          !actionHasThreePartBase &&
+          hasBody &&
+          !hasHead &&
+          !hasLeg &&
+          part === 'body'
+        ) {
+          // Air-style action: centered body volumes replace stance; offset = limb stretch
+          const ox = Math.abs(num(rect.OffsetX));
+          layer = ox <= BODY_ONLY_BASE_OX_MAX ? 'base' : 'extend';
+        }
         const geo = rectToBox(rect, scale, {
           rootX: rox,
           rootY: roy,
@@ -546,10 +649,21 @@ function findAction(movesDict, names) {
 function clampBaseHurt(hurt, total) {
   if (!CLAMP_BASE_HURT_TO_TOTAL || !Number.isFinite(total) || total < 1) return hurt;
   const maxTo = total - 1;
-  return hurt.map((b) => {
-    if (b.layer !== 'base') return b;
-    return { ...b, to: Math.min(b.to, maxTo) };
-  });
+  // Drop base keys that start after public total (common on air normals:
+  // MMDK recovery BodyList@f23+ vs public total ~15). Clamping only `to`
+  // produced inverted ranges (from=23, to=14).
+  const out = [];
+  for (const b of hurt) {
+    if (b.layer !== 'base') {
+      out.push(b);
+      continue;
+    }
+    if (b.from > maxTo) continue;
+    const to = Math.min(b.to, maxTo);
+    if (b.from > to) continue;
+    out.push(to === b.to ? b : { ...b, to });
+  }
+  return out;
 }
 
 function mergePublicAndMmdk(publicMove, part, meta) {
@@ -557,7 +671,15 @@ function mergePublicAndMmdk(publicMove, part, meta) {
   out.boxes = out.boxes ?? {};
   const total = num(out.frames?.total, 1);
   const hurt = clampBaseHurt(part.hurt, total);
-  if (part.hit.length) out.boxes.hit = part.hit;
+  // Prefer convert publicId (ryu_jmk); generated load may still be ryu_j>mk.
+  const overrideKey = meta.publicId || out.id || out.moveId;
+  const hitOverride = overrideKey ? HIT_MANUAL_OVERRIDES[overrideKey] : null;
+  const publicId = overrideKey;
+  if (hitOverride?.length) {
+    out.boxes.hit = hitOverride.map((b) => ({ ...b }));
+  } else if (part.hit.length) {
+    out.boxes.hit = part.hit;
+  }
   if (hurt.length) out.boxes.hurt = hurt;
   if (part.push.length) out.boxes.push = part.push;
   else if (!out.boxes.push?.length) {
@@ -578,12 +700,13 @@ function mergePublicAndMmdk(publicMove, part, meta) {
   } else if (!Array.isArray(out.selfMovement)) {
     out.selfMovement = new Array(total).fill(0);
   }
+  const hitForTimeline = out.boxes.hit ?? part.hit;
   out.timelineFrames = Math.max(
     out.frames?.total ?? 0,
     part.fabFrame || 0,
     out.selfMovement?.length ?? 0,
     ...hurt.map((b) => b.to + 1),
-    ...part.hit.map((b) => b.to + 1),
+    ...hitForTimeline.map((b) => b.to + 1),
     ...part.push.map((b) => b.to + 1),
   );
   const hm = part.hitMeta || {};
@@ -600,16 +723,23 @@ function mergePublicAndMmdk(publicMove, part, meta) {
     hitDtIndex: part.hitDtIndex,
     unitScale: UNIT_SCALE,
     clampBaseHurtToTotal: CLAMP_BASE_HURT_TO_TOTAL,
+    hitManualOverride: Boolean(hitOverride?.length),
   };
   out.review = {
-    status: part.hit.length || hurt.length ? 'mmdk_converted' : 'placeholder',
-    notes: part.hit.length
-      ? `MMDK convert unitScale=${UNIT_SCALE}; public frames kept; layer/part on hurt; CLAMP_BASE=${CLAMP_BASE_HURT_TO_TOTAL}`
-      : hurt.length
-        ? `MMDK hurt/push only (no strike hit); unitScale=${UNIT_SCALE}`
-        : 'MMDK action found but no collision boxes',
+    status: hitOverride?.length
+      ? 'mmdk_converted+manual_hit'
+      : part.hit.length || hurt.length
+        ? 'mmdk_converted'
+        : 'placeholder',
+    notes: hitOverride?.length
+      ? `MMDK convert + HIT_MANUAL_OVERRIDES[${publicId}]; unitScale=${UNIT_SCALE}; CLAMP_BASE=${CLAMP_BASE_HURT_TO_TOTAL}`
+      : part.hit.length
+        ? `MMDK convert unitScale=${UNIT_SCALE}; public frames kept; layer/part on hurt; CLAMP_BASE=${CLAMP_BASE_HURT_TO_TOTAL}`
+        : hurt.length
+          ? `MMDK hurt/push only (no strike hit); unitScale=${UNIT_SCALE}`
+          : 'MMDK action found but no collision boxes',
   };
-  if (part.hit.length && Array.isArray(out.boxes.hit)) {
+  if (out.boxes.hit?.length) {
     out.boxes.hit = out.boxes.hit.map(({ placeholder, ...rest }) => rest);
   }
   return out;
@@ -693,7 +823,10 @@ function convertOne(publicId, actions, generated, shortKey, rectTable, movesDict
   const actionLabel = part._projAction
     ? `${found.name}+${part._projAction}`
     : found.name;
-  const merged = mergePublicAndMmdk(publicMove, part, { actionName: actionLabel });
+  const merged = mergePublicAndMmdk(publicMove, part, {
+    actionName: actionLabel,
+    publicId,
+  });
   merged.id = publicId;
   merged.moveId = publicId;
   if (!merged.clipId) merged.clipId = publicId;
@@ -712,6 +845,130 @@ function convertOne(publicId, actions, generated, shortKey, rectTable, movesDict
   };
 }
 
+/** Derive under-head push from a head/body/leg hurt stack (pre or post yFit). */
+function pushFromHurtStack(hurt) {
+  const bodyHurt = hurt.find((h) => h.part === 'body');
+  if (!bodyHurt) return null;
+  const leg = hurt.find((h) => h.part === 'leg');
+  const head = hurt.find((h) => h.part === 'head');
+  const bodyTop = bodyHurt.y + bodyHurt.h / 2;
+  const top = head ? Math.min(head.y - head.h / 2, bodyTop) : bodyTop;
+  const bot = leg ? leg.y - leg.h / 2 : bodyHurt.y - bodyHurt.h / 2;
+  const h = Math.max(0.5, top - bot);
+  const y = (top + bot) / 2;
+  return {
+    x: 0,
+    y,
+    w: Math.min(bodyHurt.w, 0.7),
+    h,
+    fromBody: true,
+  };
+}
+
+/** Hurt parts from one DamageCollisionKey entry (raw units, pre yFit). */
+function hurtPartsFromDmgKey(key, rectTable, scale) {
+  const hurt = [];
+  const rox = num(key.RootOffset?.X ?? key.RootOffset?.x, 0);
+  const roy = num(key.RootOffset?.Y ?? key.RootOffset?.y, 0);
+  for (const [ids, part] of [
+    [listIds(key.HeadList), 'head'],
+    [listIds(key.BodyList), 'body'],
+    [listIds(key.LegList), 'leg'],
+  ]) {
+    for (const id of ids) {
+      let rect = resolveRect(rectTable, id, HURT_RECT_OPTS);
+      if (!rect) rect = resolveRect(rectTable, id, { preferCenteredX: true });
+      if (!rect) continue;
+      const geo = rectToBox(rect, scale, {
+        rootX: rox,
+        rootY: roy,
+        sizeIsHalfExtent: true,
+      });
+      const { _bucket, ...box } = geo;
+      hurt.push({ part, ...box, rectId: id, rectBucket: _bucket });
+    }
+  }
+  return hurt;
+}
+
+/**
+ * Per-keyframe stance transition timeline (MMDK DamageCollision segments).
+ * SF6 stand↔crouch actions are typically 2 segments (e.g. f0–3 source posture,
+ * f4+ destination), not smooth per-frame morph — export as timed base stacks.
+ */
+function extractStanceTransitionTimeline(action, rectTable, scale, yFit) {
+  const rawKeys = iterKeyEntries(action.DamageCollisionKey)
+    .map((k) => {
+      const { from, to } = frameRange(k);
+      return { key: k, from, to };
+    })
+    .filter((s) => s.to >= s.from)
+    .sort((a, b) => a.from - b.from || a.to - b.to);
+
+  // Touching ranges like [0,4] + [4,60] → [0,3] + [4,60] (later segment wins frame 4)
+  for (let i = 0; i < rawKeys.length - 1; i++) {
+    const cur = rawKeys[i];
+    const next = rawKeys[i + 1];
+    if (cur.to >= next.from) {
+      cur.to = Math.max(cur.from, next.from - 1);
+    }
+  }
+
+  const fabFrame = num(action?.fab?.Frame, 0);
+  // fab.Frame is exclusive length (glb _fN). MMDK _EndFrame often equals fab.Frame
+  // (one past last sample) — clamp inclusive `to` to totalFrames-1.
+  let totalFrames = fabFrame > 0 ? fabFrame : 0;
+  if (totalFrames <= 0 && rawKeys.length) {
+    totalFrames = Math.max(...rawKeys.map((s) => s.to)) + 1;
+  }
+  totalFrames = Math.max(1, totalFrames);
+  const lastFrame = totalFrames - 1;
+
+  const hurt = [];
+  const push = [];
+  for (const seg of rawKeys) {
+    const from = Math.min(seg.from, lastFrame);
+    const to = Math.min(Math.max(seg.to, from), lastFrame);
+    if (to < from) continue;
+    const parts = hurtPartsFromDmgKey(seg.key, rectTable, scale).map((b) =>
+      applyYFitBox(b, yFit),
+    );
+    for (const p of parts) {
+      hurt.push({
+        from,
+        to,
+        part: p.part,
+        x: p.x,
+        y: p.y,
+        w: p.w,
+        h: p.h,
+        rectId: p.rectId,
+        rectBucket: p.rectBucket,
+        layer: 'base',
+      });
+    }
+    const pushBox = pushFromHurtStack(parts);
+    if (pushBox) {
+      push.push({
+        from,
+        to,
+        x: pushBox.x,
+        y: pushBox.y,
+        w: pushBox.w,
+        h: pushBox.h,
+        fromBody: true,
+      });
+    }
+  }
+
+  return {
+    hurt,
+    push,
+    totalFrames,
+    segmentCount: new Set(hurt.map((b) => `${b.from}-${b.to}`)).size,
+  };
+}
+
 function extractStanceParts(action, rectTable, scale, opts = {}) {
   const keys = iterKeyEntries(action.DamageCollisionKey);
   // Prefer mid-timeline key that has all three parts
@@ -723,46 +980,11 @@ function extractStanceParts(action, rectTable, scale, opts = {}) {
     );
   });
   if (!pick && keys.length) pick = keys[0];
-  const hurt = [];
-  if (pick) {
-    const rox = num(pick.RootOffset?.X ?? pick.RootOffset?.x, 0);
-    const roy = num(pick.RootOffset?.Y ?? pick.RootOffset?.y, 0);
-    for (const [ids, part] of [
-      [listIds(pick.HeadList), 'head'],
-      [listIds(pick.BodyList), 'body'],
-      [listIds(pick.LegList), 'leg'],
-    ]) {
-      for (const id of ids) {
-        let rect = resolveRect(rectTable, id, HURT_RECT_OPTS);
-        if (!rect) rect = resolveRect(rectTable, id, { preferCenteredX: true });
-        if (!rect) continue;
-        const geo = rectToBox(rect, scale, {
-          rootX: rox,
-          rootY: roy,
-          sizeIsHalfExtent: true,
-        });
-        const { _bucket, ...box } = geo;
-        hurt.push({ part, ...box, rectId: id, rectBucket: _bucket });
-      }
-    }
-  }
+  const hurt = pick ? hurtPartsFromDmgKey(pick, rectTable, scale) : [];
   const push = [];
-  const bodyHurt = hurt.find((h) => h.part === 'body');
-  if (bodyHurt) {
-    // Stance push ≈ body thickness, full height of body+leg stack
-    const leg = hurt.find((h) => h.part === 'leg');
-    const head = hurt.find((h) => h.part === 'head');
-    const top = head ? head.y + head.h / 2 : bodyHurt.y + bodyHurt.h / 2;
-    const bot = leg ? leg.y - leg.h / 2 : bodyHurt.y - bodyHurt.h / 2;
-    const h = Math.max(0.5, top - bot);
-    const y = (top + bot) / 2;
-    push.push({
-      x: 0,
-      y,
-      w: Math.min(bodyHurt.w, 0.7),
-      h,
-      fromBody: true,
-    });
+  const derived = pushFromHurtStack(hurt);
+  if (derived) {
+    push.push(derived);
   } else {
     const pkeys = iterKeyEntries(action.PushCollisionKey);
     const pk = pkeys[0];
@@ -865,6 +1087,55 @@ function convertStance(rectTable, movesDict) {
     h: b.h / (yFit || 1),
   })));
 
+  // Stand ↔ crouch transition timelines (BAS_STD_CRH / BAS_CRH_STD)
+  const stcNames = ['BAS_STD_CRH', 'BAS_STD_CRH_tired'];
+  const ctsNames = ['BAS_CRH_STD', 'BAS_CRH_STD_tired'];
+  const stcFound = findAction(movesDict, stcNames);
+  const ctsFound = findAction(movesDict, ctsNames);
+  const transitions = {};
+  if (stcFound) {
+    const tl = extractStanceTransitionTimeline(
+      stcFound.action,
+      rectTable,
+      UNIT_SCALE,
+      yFit,
+    );
+    transitions.stand_to_crouch = {
+      sourceAction: stcFound.name,
+      totalFrames: tl.totalFrames,
+      hurt: tl.hurt,
+      push: tl.push,
+      notes: `${tl.segmentCount} DamageCollision segment(s); timed base replaces static stance during to_crouch`,
+    };
+  } else {
+    console.warn(
+      'WARN: missing stand_to_crouch action (tried',
+      stcNames.join(', '),
+      ') — transitions.stand_to_crouch omitted',
+    );
+  }
+  if (ctsFound) {
+    const tl = extractStanceTransitionTimeline(
+      ctsFound.action,
+      rectTable,
+      UNIT_SCALE,
+      yFit,
+    );
+    transitions.crouch_to_stand = {
+      sourceAction: ctsFound.name,
+      totalFrames: tl.totalFrames,
+      hurt: tl.hurt,
+      push: tl.push,
+      notes: `${tl.segmentCount} DamageCollision segment(s); timed base replaces static stance during to_stand`,
+    };
+  } else {
+    console.warn(
+      'WARN: missing crouch_to_stand action (tried',
+      ctsNames.join(', '),
+      ') — transitions.crouch_to_stand omitted',
+    );
+  }
+
   const out = {
     characterId: 'ryu',
     unitScale: UNIT_SCALE,
@@ -897,9 +1168,10 @@ function convertStance(rectTable, movesDict) {
             }),
       },
     },
+    transitions,
     review: {
       status: 'mmdk_converted',
-      notes: `stand=${standFound.name}; crouch=${crouchAction}; air=${airAction}; unitScale=${UNIT_SCALE}; yFit=${yFit.toFixed(4)} (rawTop→${LOGIC_BODY_HEIGHT})`,
+      notes: `stand=${standFound.name}; crouch=${crouchAction}; air=${airAction}; stc=${stcFound?.name ?? 'missing'}; cts=${ctsFound?.name ?? 'missing'}; unitScale=${UNIT_SCALE}; yFit=${yFit.toFixed(4)} (rawTop→${LOGIC_BODY_HEIGHT})`,
     },
   };
 
@@ -919,6 +1191,18 @@ function convertStance(rectTable, movesDict) {
     crouchAction,
     'crouch.hurt',
     crouch.hurt.length,
+    'stc',
+    stcFound?.name ?? 'missing',
+    'stc.segs',
+    transitions.stand_to_crouch
+      ? `${transitions.stand_to_crouch.hurt.length}hurt/${transitions.stand_to_crouch.totalFrames}f`
+      : '-',
+    'cts',
+    ctsFound?.name ?? 'missing',
+    'cts.segs',
+    transitions.crouch_to_stand
+      ? `${transitions.crouch_to_stand.hurt.length}hurt/${transitions.crouch_to_stand.totalFrames}f`
+      : '-',
     'yFit',
     yFit.toFixed(4),
     'rawTop',
@@ -926,6 +1210,19 @@ function convertStance(rectTable, movesDict) {
     'logicH',
     LOGIC_BODY_HEIGHT,
   );
+
+  const trRows = [];
+  for (const role of ['stand_to_crouch', 'crouch_to_stand']) {
+    const tr = transitions[role];
+    if (!tr) {
+      trRows.push(`| ${role} | — | missing | — | — |`);
+      continue;
+    }
+    const segs = new Set(tr.hurt.map((b) => `${b.from}-${b.to}`)).size;
+    trRows.push(
+      `| ${role} | \`${tr.sourceAction}\` | ${tr.totalFrames} | ${segs} | ${tr.hurt.length} hurt / ${tr.push.length} push |`,
+    );
+  }
 
   const md = `# Sourced stance boxes (Ryu)
 
@@ -937,6 +1234,14 @@ function convertStance(rectTable, movesDict) {
 | stand | \`${standFound.name}\` | ${stand.hurt.map((h) => h.part).join(', ')} (${stand.hurt.length}) | ${stand.push.length} | ${UNIT_SCALE} |
 | crouch | \`${crouchAction}\` | ${crouch.hurt.map((h) => h.part).join(', ')} (${crouch.hurt.length}) | ${crouch.push.length} | ${UNIT_SCALE} |
 | air | \`${airAction}\` | ${air.hurt.map((h) => h.part).join(', ') || '—'} (${air.hurt.length}) | ${air.push.length} | ${UNIT_SCALE} |
+
+## Transitions (stand ↔ crouch)
+
+MMDK DamageCollision is **segmented**, not smooth morph (typically ~4f hold source posture, then destination posture for remainder).
+
+| Role | Source action | totalFrames | Segments | Boxes |
+|------|---------------|-------------|----------|-------|
+${trRows.join('\n')}
 
 Stand geometry (local ADR-002 center/wh):
 
@@ -1166,8 +1471,9 @@ function main() {
     CLAMP_BASE_HURT_TO_TOTAL,
   );
 
-  // Always measure stance yFit before move convert so hit/hurt share vertical frame
-  if (doStance || doCoverage || all) {
+  // Always measure stance yFit before move convert so hit/hurt share vertical frame.
+  // Even `--only` must set Y_FIT (otherwise air/normal boxes skip vertical fit).
+  if (doStance || doCoverage || all || only) {
     convertStance(rectTable, movesDict);
     console.log('Y_FIT for subsequent moves', Y_FIT);
   }

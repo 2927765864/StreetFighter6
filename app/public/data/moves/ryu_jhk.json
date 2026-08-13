@@ -44,26 +44,14 @@
     "hurt": [
       {
         "from": 0,
-        "to": 19,
+        "to": 18,
         "x": 0,
         "y": 1.6159638554216869,
         "w": 0.8,
         "h": 0.8915662650602411,
         "rectId": 171,
         "part": "body",
-        "layer": "extend",
-        "rectBucket": "08"
-      },
-      {
-        "from": 19,
-        "to": 83,
-        "x": 0,
-        "y": 1.3930722891566267,
-        "w": 0.8,
-        "h": 1.3373493975903614,
-        "rectId": 16,
-        "part": "body",
-        "layer": "extend",
+        "layer": "base",
         "rectBucket": "08"
       },
       {
@@ -75,19 +63,19 @@
         "h": 0.44578313253012053,
         "rectId": 172,
         "part": "body",
-        "layer": "extend",
+        "layer": "base",
         "rectBucket": "08"
       },
       {
         "from": 11,
-        "to": 19,
+        "to": 18,
         "x": 0,
         "y": 0.947289156626506,
         "w": 0.8,
         "h": 0.44578313253012053,
         "rectId": 172,
         "part": "body",
-        "layer": "extend",
+        "layer": "base",
         "rectBucket": "08"
       },
       {
@@ -107,12 +95,12 @@
       {
         "from": 11,
         "to": 19,
-        "x": -0.03,
-        "y": 1.2147590361445786,
-        "w": 0.25,
+        "x": 0.8,
+        "y": 0.9584337349397591,
+        "w": 0.8,
         "h": 0.49036144578313257,
         "rectId": 37,
-        "rectBucket": "05"
+        "rectBucket": "00"
       }
     ],
     "push": [
@@ -139,7 +127,7 @@
     ]
   },
   "clipId": "j>hk",
-  "glbPath": null,
+  "glbPath": "attack/esf001v00_attack_17/glb/000_esf001_ATK_8HK_id3000_f82.glb",
   "facingRelative": true,
   "sources": [
     {
@@ -157,6 +145,8 @@
   },
   "slug": "ryu-jump-heavy-kick",
   "abbreviation": "J.HK",
+  "animFrameCount": 82,
+  "stance": "air",
   "selfMovement": [
     0,
     0,

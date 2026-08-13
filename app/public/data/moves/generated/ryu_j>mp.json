@@ -87,7 +87,7 @@
     ]
   },
   "clipId": "j>mp",
-  "glbPath": null,
+  "glbPath": "attack/esf001v00_attack_13/glb/000_esf001_ATK_8MP_id3000_f49.glb",
   "facingRelative": true,
   "sources": [
     {
@@ -104,5 +104,7 @@
     "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
   },
   "slug": "ryu-jump-medium-punch",
-  "abbreviation": "J.MP"
+  "abbreviation": "J.MP",
+  "animFrameCount": 49,
+  "stance": "air"
 }

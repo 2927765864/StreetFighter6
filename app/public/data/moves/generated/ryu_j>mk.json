@@ -78,7 +78,7 @@
     ]
   },
   "clipId": "j>mk",
-  "glbPath": null,
+  "glbPath": "attack/esf001v00_attack_16/glb/000_esf001_ATK_8MK_id3000_f60.glb",
   "facingRelative": true,
   "sources": [
     {
@@ -95,5 +95,7 @@
     "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
   },
   "slug": "ryu-jump-medium-kick",
-  "abbreviation": "J.MK"
+  "abbreviation": "J.MK",
+  "animFrameCount": 60,
+  "stance": "air"
 }

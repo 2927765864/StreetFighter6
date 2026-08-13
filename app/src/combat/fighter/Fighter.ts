@@ -466,17 +466,23 @@ export class Fighter {
     this.phase = crouch ? 'crouch' : 'idle';
   }
 
-  /** Air-attack residual: stay airborne, keep attack clip (§3.13.5). */
+  /**
+   * Air-attack residual: stay airborne, keep attack clip (§3.13.5).
+   * Starts immediately at logic total (no table recovery wait); scrubs
+   * total…animFrameCount−1. Missing animFrameCount → freeze last logic frame.
+   */
   private beginAirAttackAnimTail(move: MoveDefinition): void {
     const total = Math.max(1, Math.floor(move.frames.total));
-    const animN = Math.max(
-      total,
-      move.animFrameCount != null && move.animFrameCount > 0
-        ? Math.floor(move.animFrameCount)
-        : total,
-    );
+    let animN = total;
+    if (move.animFrameCount != null && move.animFrameCount > 0) {
+      animN = Math.max(total, Math.floor(move.animFrameCount));
+    } else if (move.glbPath) {
+      const m = /_f(\d+)(?:\.|$)/i.exec(move.glbPath);
+      if (m) animN = Math.max(total, parseInt(m[1]!, 10));
+    }
     this.animTail = {
       clipId: move.clipId,
+      // First residual sample = first frame after locked segment
       visualFrame: total,
       animFrameCount: animN,
       logicTotal: total,
@@ -1023,6 +1029,19 @@ export class Fighter {
   }
 
   private boxState(crouchOverride?: boolean) {
+    const seg = this.stanceState.seg;
+    const stanceTransition =
+      seg === 'to_crouch'
+        ? {
+            role: 'stand_to_crouch' as const,
+            frame: this.stanceState.frame,
+          }
+        : seg === 'to_stand'
+          ? {
+              role: 'crouch_to_stand' as const,
+              frame: this.stanceState.frame,
+            }
+          : null;
     return {
       x: this.x,
       y: this.y,
@@ -1032,6 +1051,7 @@ export class Fighter {
       logicalCrouch: this.stanceState.logicalCrouch,
       crouchOverride:
         crouchOverride === undefined ? undefined : crouchOverride,
+      stanceTransition,
       getActionTimeline: () => this.getActionTimeline(),
     };
   }

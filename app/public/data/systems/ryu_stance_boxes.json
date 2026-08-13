@@ -38,9 +38,9 @@
       "push": [
         {
           "x": 0,
-          "y": 0.925,
+          "y": 0.7355421686746989,
           "w": 0.7,
-          "h": 1.85,
+          "h": 1.4710843373493978,
           "fromBody": true
         }
       ],
@@ -79,9 +79,9 @@
       "push": [
         {
           "x": 0,
-          "y": 0.6686746987951807,
+          "y": 0.49036144578313257,
           "w": 0.7,
-          "h": 1.3150602409638554,
+          "h": 0.9584337349397591,
           "fromBody": true
         }
       ],
@@ -90,49 +90,230 @@
     "air": {
       "hurt": [
         {
-          "part": "head",
-          "x": 0,
-          "y": 1.6605421686746988,
-          "w": 0.6,
-          "h": 0.37891566265060245,
-          "rectId": 1,
-          "rectBucket": "08"
-        },
-        {
           "part": "body",
           "x": 0,
-          "y": 1.0698795180722893,
+          "y": 1.3930722891566267,
           "w": 0.8,
-          "h": 0.936144578313253,
-          "rectId": 2,
-          "rectBucket": "08"
-        },
-        {
-          "part": "leg",
-          "x": 0,
-          "y": 0.2708132530120482,
-          "w": 0.8,
-          "h": 0.4212650602409639,
-          "rectId": 3,
+          "h": 1.3373493975903614,
+          "rectId": 16,
           "rectBucket": "08"
         }
       ],
       "push": [
         {
           "x": 0,
-          "y": 0.925,
+          "y": 1.3930722891566267,
           "w": 0.7,
-          "h": 1.85,
+          "h": 1.3373493975903616,
           "fromBody": true
         }
       ],
-      "sourceAction": "BAS_STD_Loop",
-      "placeholder": true,
-      "notes": "air uses stand base with shortened legs (P10)"
+      "sourceAction": "BAS_JUMP_N_AIR",
+      "notes": "BAS_JUMP_*_AIR DamageCollision (typically compact BodyList, not stand 3-stack)"
+    }
+  },
+  "transitions": {
+    "stand_to_crouch": {
+      "sourceAction": "BAS_STD_CRH",
+      "totalFrames": 60,
+      "hurt": [
+        {
+          "from": 0,
+          "to": 3,
+          "part": "head",
+          "x": 0,
+          "y": 1.6605421686746988,
+          "w": 0.6,
+          "h": 0.37891566265060245,
+          "rectId": 1,
+          "rectBucket": "08",
+          "layer": "base"
+        },
+        {
+          "from": 0,
+          "to": 3,
+          "part": "body",
+          "x": 0,
+          "y": 1.0698795180722893,
+          "w": 0.8,
+          "h": 0.936144578313253,
+          "rectId": 2,
+          "rectBucket": "08",
+          "layer": "base"
+        },
+        {
+          "from": 0,
+          "to": 3,
+          "part": "leg",
+          "x": 0,
+          "y": 0.30090361445783137,
+          "w": 0.8,
+          "h": 0.6018072289156627,
+          "rectId": 3,
+          "rectBucket": "08",
+          "layer": "base"
+        },
+        {
+          "from": 4,
+          "to": 59,
+          "part": "head",
+          "x": 0,
+          "y": 1.1478915662650604,
+          "w": 0.9400000000000001,
+          "h": 0.3566265060240964,
+          "rectId": 4,
+          "rectBucket": "08",
+          "layer": "base"
+        },
+        {
+          "from": 4,
+          "to": 59,
+          "part": "body",
+          "x": 0,
+          "y": 0.7132530120481928,
+          "w": 0.9400000000000001,
+          "h": 0.5126506024096387,
+          "rectId": 5,
+          "rectBucket": "08",
+          "layer": "base"
+        },
+        {
+          "from": 4,
+          "to": 59,
+          "part": "leg",
+          "x": 0,
+          "y": 0.23403614457831326,
+          "w": 0.9400000000000001,
+          "h": 0.44578313253012053,
+          "rectId": 6,
+          "rectBucket": "08",
+          "layer": "base"
+        }
+      ],
+      "push": [
+        {
+          "from": 0,
+          "to": 3,
+          "x": 0,
+          "y": 0.7355421686746988,
+          "w": 0.7,
+          "h": 1.4710843373493976,
+          "fromBody": true
+        },
+        {
+          "from": 4,
+          "to": 59,
+          "x": 0,
+          "y": 0.49036144578313257,
+          "w": 0.7,
+          "h": 0.9584337349397591,
+          "fromBody": true
+        }
+      ],
+      "notes": "2 DamageCollision segment(s); timed base replaces static stance during to_crouch"
+    },
+    "crouch_to_stand": {
+      "sourceAction": "BAS_CRH_STD",
+      "totalFrames": 38,
+      "hurt": [
+        {
+          "from": 0,
+          "to": 3,
+          "part": "head",
+          "x": 0,
+          "y": 1.1478915662650604,
+          "w": 0.9400000000000001,
+          "h": 0.3566265060240964,
+          "rectId": 4,
+          "rectBucket": "08",
+          "layer": "base"
+        },
+        {
+          "from": 0,
+          "to": 3,
+          "part": "body",
+          "x": 0,
+          "y": 0.7132530120481928,
+          "w": 0.9400000000000001,
+          "h": 0.5126506024096387,
+          "rectId": 5,
+          "rectBucket": "08",
+          "layer": "base"
+        },
+        {
+          "from": 0,
+          "to": 3,
+          "part": "leg",
+          "x": 0,
+          "y": 0.23403614457831326,
+          "w": 0.9400000000000001,
+          "h": 0.44578313253012053,
+          "rectId": 6,
+          "rectBucket": "08",
+          "layer": "base"
+        },
+        {
+          "from": 4,
+          "to": 37,
+          "part": "head",
+          "x": 0,
+          "y": 1.6605421686746988,
+          "w": 0.6,
+          "h": 0.37891566265060245,
+          "rectId": 1,
+          "rectBucket": "08",
+          "layer": "base"
+        },
+        {
+          "from": 4,
+          "to": 37,
+          "part": "body",
+          "x": 0,
+          "y": 1.0698795180722893,
+          "w": 0.8,
+          "h": 0.936144578313253,
+          "rectId": 2,
+          "rectBucket": "08",
+          "layer": "base"
+        },
+        {
+          "from": 4,
+          "to": 37,
+          "part": "leg",
+          "x": 0,
+          "y": 0.30090361445783137,
+          "w": 0.8,
+          "h": 0.6018072289156627,
+          "rectId": 3,
+          "rectBucket": "08",
+          "layer": "base"
+        }
+      ],
+      "push": [
+        {
+          "from": 0,
+          "to": 3,
+          "x": 0,
+          "y": 0.49036144578313257,
+          "w": 0.7,
+          "h": 0.9584337349397591,
+          "fromBody": true
+        },
+        {
+          "from": 4,
+          "to": 37,
+          "x": 0,
+          "y": 0.7355421686746988,
+          "w": 0.7,
+          "h": 1.4710843373493976,
+          "fromBody": true
+        }
+      ],
+      "notes": "2 DamageCollision segment(s); timed base replaces static stance during to_stand"
     }
   },
   "review": {
     "status": "mmdk_converted",
-    "notes": "stand=BAS_STD_Loop; crouch=BAS_CRH_Loop; unitScale=0.01; yFit=1.1145 (rawTop→1.85)"
+    "notes": "stand=BAS_STD_Loop; crouch=BAS_CRH_Loop; air=BAS_JUMP_N_AIR; stc=BAS_STD_CRH; cts=BAS_CRH_STD; unitScale=0.01; yFit=1.1145 (rawTop→1.85)"
   }
 }

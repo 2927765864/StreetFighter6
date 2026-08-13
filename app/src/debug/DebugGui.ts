@@ -264,6 +264,8 @@ export function createDebugGui(
 
   const cancelFolder = gui.addFolder('取消 / 硬直');
   cancelFolder.add(cfg, 'enableCancel').name('启用Cancel').onChange(syncOpts);
+  cancelFolder.add(cfg, 'enableSpecials').name('启用必杀指令').onChange(syncOpts);
+  cancelFolder.add(cfg, 'enableThrows').name('启用投技指令').onChange(syncOpts);
   cancelFolder
     .add(cfg, 'hitstopFramesOnHit', 0, 30, 1)
     .name('Hitstop命中(f)')
