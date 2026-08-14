@@ -38,12 +38,18 @@ import {
   type CrossfadeDurations,
 } from '../combat/anim/AnimCrossfade';
 import {
+  advanceFromTime,
+  blendToWeight,
+  blendWallDt,
+  type CrossfadeAdvanceMode,
+} from '../combat/anim/PoseBlendMath';
+import {
   isJumpLandBinding,
   shouldResetGroundOffset,
   shouldSnapSoleOnLand,
 } from './plantPolicy';
 
-/** In-flight freeze-old + blend-to-new (§3.11 presentation crossfade). */
+/** In-flight dual-advance (or debug freeze) + blend-to-new (§3.11). */
 type PoseBlend = {
   from: THREE.AnimationAction;
   to: THREE.AnimationAction;
@@ -51,10 +57,15 @@ type PoseBlend = {
   toKey: string;
   duration: number;
   elapsed: number;
-  /** Frozen scrub time on `from` for the blend window. */
-  fromTimeSec: number;
-  /** If true, `to` free-runs with wall clock after weight settles. */
+  /** Clip time of `from` at switch (seconds). */
+  fromStartTimeSec: number;
+  /** Wall-clock seconds advanced on `from` during blend (dual mode). */
+  fromAdvancedSec: number;
+  /** Wall-clock seconds advanced on free-run `to` during blend. */
+  toAdvancedSec: number;
+  /** If true, `to` free-runs (idle/crouch main) during/after blend. */
   toFreeRun: boolean;
+  mode: CrossfadeAdvanceMode;
 };
 
 const HARD_CUT: CrossfadeDurations = {
@@ -93,8 +104,10 @@ export class FighterView {
   private placeholder: THREE.Mesh;
   private procedural = new ProceduralRyuAnim();
   private useProcedural = false;
-  /** Freeze-old presentation crossfade (§3.11; walk + residual→move, etc.). */
+  /** Dual-advance presentation crossfade (§3.11; walk + residual→move, etc.). */
   private poseBlend: PoseBlend | null = null;
+  /** Latest §3.11 old-layer mode from sim cfg (set each syncFromLogic). */
+  private crossfadeAdvanceMode: CrossfadeAdvanceMode = 'dual';
   /**
    * When true, ignore logic clipId and only advance the preview mixer
    * (used by the animation test panel).
@@ -719,8 +732,8 @@ export class FighterView {
   }
 
   /**
-   * Start freeze-old + blend-to-new (§3.11). Freezes `from`; `to` is
-   * scrubbed/free-run by the sync path.
+   * Start dual-advance (or debug freeze) + blend-to-new (§3.11).
+   * Both tracks stay paused; times are written by stepPoseBlend / sync scrub.
    */
   private beginPoseBlend(
     from: THREE.AnimationAction,
@@ -729,6 +742,7 @@ export class FighterView {
     toKey: string,
     toFreeRun: boolean,
     blendSec: number,
+    mode: CrossfadeAdvanceMode = this.crossfadeAdvanceMode,
   ): void {
     if (!this.mixer || blendSec <= 1e-4) {
       this.clearPoseBlend(true);
@@ -757,6 +771,7 @@ export class FighterView {
     from.enabled = true;
     from.paused = true;
     from.setEffectiveWeight(1);
+    from.play();
 
     to.reset();
     to.setLoop(toFreeRun ? THREE.LoopRepeat : THREE.LoopOnce, Infinity);
@@ -774,28 +789,42 @@ export class FighterView {
       toKey,
       duration: blendSec,
       elapsed: 0,
-      fromTimeSec: fromTime,
+      fromStartTimeSec: fromTime,
+      fromAdvancedSec: 0,
+      toAdvancedSec: 0,
       toFreeRun,
+      mode: mode === 'freeze' ? 'freeze' : 'dual',
     };
     this.mixer.update(0);
   }
 
   /**
-   * Advance pose-blend weights; freeze from; prepare `to` weight.
+   * Advance pose-blend weights + old-layer time (§3.11 dual-advance default).
    * Returns weight on `to` in [0,1]. When finished, clears blend and returns 1.
    */
   private stepPoseBlend(wallDtSec: number): number {
     const b = this.poseBlend;
     if (!b || !this.mixer) return 1;
 
-    b.elapsed += Math.min(Math.max(wallDtSec, 0), 0.1);
-    const u = Math.min(1, b.elapsed / Math.max(1e-4, b.duration));
-    // smoothstep
-    const w = u * u * (3 - 2 * u);
+    const dt = blendWallDt(wallDtSec);
+    b.elapsed += dt;
+    if (b.mode === 'dual') {
+      b.fromAdvancedSec += dt;
+    }
+    if (b.toFreeRun) {
+      b.toAdvancedSec += dt;
+    }
+    const w = blendToWeight(b.elapsed, b.duration);
 
-    this.scrubActionTo(b.from, b.fromTimeSec, 1 - w, false);
+    const fromT = advanceFromTime(
+      b.fromStartTimeSec,
+      b.fromAdvancedSec,
+      b.from.getClip().duration,
+      b.mode,
+    );
+    this.scrubActionTo(b.from, fromT, 1 - w, false);
 
-    if (u >= 1) {
+    if (b.elapsed / Math.max(1e-4, b.duration) >= 1) {
       b.from.stop();
       b.from.setEffectiveWeight(0);
       b.to.setEffectiveWeight(1);
@@ -810,13 +839,42 @@ export class FighterView {
     return w;
   }
 
+  /** Debug/readout for GUI (§3.11 plan optional). */
+  getPoseBlendDebug(): null | {
+    mode: CrossfadeAdvanceMode;
+    fromKey: string;
+    toKey: string;
+    elapsed: number;
+    duration: number;
+    fromTimeSec: number;
+    toWeight: number;
+  } {
+    const b = this.poseBlend;
+    if (!b) return null;
+    const w = blendToWeight(b.elapsed, b.duration);
+    return {
+      mode: b.mode,
+      fromKey: b.fromKey,
+      toKey: b.toKey,
+      elapsed: b.elapsed,
+      duration: b.duration,
+      fromTimeSec: advanceFromTime(
+        b.fromStartTimeSec,
+        b.fromAdvancedSec,
+        b.from.getClip().duration,
+        b.mode,
+      ),
+      toWeight: w,
+    };
+  }
+
   private isFreeRunLogic(canon: string, role: string): boolean {
     return (canon === 'idle' || canon === 'crouch') && role === 'main';
   }
 
   /**
    * Switch to a loaded logic action (sync).
-   * Soft-blends per §3.11 resolveCrossfadeSec (freeze-old).
+   * Soft-blends per §3.11 resolveCrossfadeSec (dual-advance default).
    */
   private switchToLogicAction(
     canon: string,
@@ -837,7 +895,15 @@ export class FighterView {
     const soft = prev != null && blendSec > 1e-4;
 
     if (soft && prev) {
-      this.beginPoseBlend(prev, action, prevKey, bind, freeRun, blendSec);
+      this.beginPoseBlend(
+        prev,
+        action,
+        prevKey,
+        bind,
+        freeRun,
+        blendSec,
+        this.crossfadeAdvanceMode,
+      );
       if (isJumpLandBinding(bind)) {
         this.resetModelGroundOffset();
         this.pendingLandPlant = true;
@@ -1136,6 +1202,8 @@ export class FighterView {
       Math.min(Math.max(wallDtSec, 0), 0.1) * (cfg.timeScaleAnim || 1);
     const scrubMode = (cfg.scrubMode ?? 'uniform') as ScrubMode;
     const role = fighter.animRole || 'main';
+    this.crossfadeAdvanceMode =
+      cfg.crossfadeAdvanceMode === 'freeze' ? 'freeze' : 'dual';
 
     if (this.previewMode) {
       if (this.mixer) this.mixer.update(animDt);
@@ -1234,7 +1302,7 @@ export class FighterView {
       return;
     }
 
-    // Stance transition scrub (§3.7.2 必接片). Residual→stance may freeze-old (§3.11).
+    // Stance transition scrub (§3.7.2 必接片). Residual→stance may dual-advance (§3.11).
     if (
       fighter.inStanceTransition &&
       (fighter.phase === 'idle' || fighter.phase === 'crouch')
@@ -1258,7 +1326,7 @@ export class FighterView {
       return;
     }
 
-    // Walk: scrub by locoFrame; §3.11 freeze-old (loco + residual→move)
+    // Walk: scrub by locoFrame; §3.11 dual-advance (loco + residual→move)
     if (fighter.phase === 'walk') {
       this.playBest(fighter.clipId, role, fadePolicy);
       const action = this.resolveAction(fighter.clipId, role);
@@ -1371,8 +1439,11 @@ export class FighterView {
         if (this.poseBlend && this.poseBlend.to === action) {
           const w = this.stepPoseBlend(wallDtSec);
           if (this.poseBlend) {
-            // Still blending: hold idle at start pose while previous freezes
-            this.scrubActionTo(action, 0, w, true);
+            // Dual-advance: new free-run track advances from 0 by wall clock
+            const clip = action.getClip();
+            const end = Math.max(0, clip.duration - 1e-4);
+            const toT = Math.min(this.poseBlend.toAdvancedSec, end);
+            this.scrubActionTo(action, toT, w, true);
           } else {
             action.paused = false;
             action.setEffectiveWeight(1);

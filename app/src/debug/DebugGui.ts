@@ -473,6 +473,9 @@ export function createDebugGui(
     .add(cfg, 'residualToStanceBlendSec', 0, 0.35, 0.01)
     .name('residual→站蹲过渡');
   animDrive
+    .add(cfg, 'crossfadeAdvanceMode', { dual: 'dual', freeze: 'freeze' })
+    .name('溶图旧层模式');
+  animDrive
     .add(cfg, 'plantSlewPerSec', 0.05, 2, 0.01)
     .name('plantSlew(仅legacy)');
   animDrive.add(cfg, 'showFootDebug').name('showFootDebug');

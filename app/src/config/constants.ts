@@ -107,7 +107,7 @@ export type MutableSimConfig = {
   /** Wall-clock seconds for walk/idle role crossfade (0 = hard cut). §3.11 loco. */
   locoBlendSec: number;
   /**
-   * Attack residual (or attack clip) → walk/idle freeze-old blend (§3.11).
+   * Attack residual (or attack clip) → walk/idle dual-advance blend (§3.11).
    * Must not apply during attack lock (callers pass 0 there).
    */
   residualToMoveBlendSec: number;
@@ -119,6 +119,12 @@ export type MutableSimConfig = {
    * Attack residual → stand↔crouch transition clip (§3.11). Soft entry only.
    */
   residualToStanceBlendSec: number;
+  /**
+   * §3.11 old-layer during blend window:
+   * - `dual` (default): old clip keeps advancing from switch time (方案一).
+   * - `freeze`: pin old pose at switch frame (历史方案二，调试对比).
+   */
+  crossfadeAdvanceMode: 'dual' | 'freeze';
   /** Only used when plantMode=legacy (max |ΔY|/s). Consensus ignores continuous plant. */
   plantSlewPerSec: number;
   /** Stand → crouch transition logic frames (§3.7.2). */
@@ -215,6 +221,7 @@ export function createDefaultSimConfig(): MutableSimConfig {
     residualToMoveBlendSec: 0.1,
     residualToAttackBlendSec: 0,
     residualToStanceBlendSec: 0.1,
+    crossfadeAdvanceMode: 'dual',
     plantSlewPerSec: 0.55,
     standToCrouchFrames: 60,
     crouchToStandFrames: 38,

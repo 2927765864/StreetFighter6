@@ -1,7 +1,8 @@
 /**
  * Presentation crossfade policy (§3.11).
  *
- * Mechanism: freeze-old + blend-to-new (shared mixer in FighterView).
+ * Mechanism (executor in FighterView): dual-advance old clip + blend-to-new
+ * (optional debug freeze-old via cfg.crossfadeAdvanceMode).
  * Policy table decides whether to blend and for how long — not a single global fade.
  *
  * Never encroaches on attack lock (total): callers must pass duration 0 while
@@ -108,8 +109,8 @@ function isMoveLike(cat: ClipCategory): boolean {
 }
 
 /**
- * Resolve freeze-old crossfade duration (seconds) for a clip switch.
- * Returns 0 → hard cut.
+ * Resolve presentation crossfade duration (seconds) for a clip switch.
+ * Returns 0 → hard cut. Executor advances old layer per §3.11 dual-advance.
  */
 export function resolveCrossfadeSec(
   fromKey: string | null | undefined,
@@ -189,7 +190,7 @@ export function resolveCrossfadeSec(
 }
 
 /**
- * Whether freeze-old soft blend should run for this edge (duration > 0).
+ * Whether presentation soft blend should run for this edge (duration > 0).
  * Prefer resolveCrossfadeSec for the actual seconds.
  */
 export function shouldPresentationCrossfade(
