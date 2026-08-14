@@ -1,10 +1,8 @@
 import './style.css';
 import * as THREE from 'three/webgpu';
-import {
-  applyConfigToMatchOpts,
-  createDefaultSimConfig,
-  syncMatchOpts,
-} from './config/constants';
+import { applyConfigToMatchOpts, syncMatchOpts } from './config/constants';
+import { cloneConfig, CONFIG, setActiveDefaultConfig } from './config/store';
+import { loadSavedConfig, loadShippingConfig } from './config/persist';
 import { FrameClock } from './combat/frameClock';
 import { parseMoveDefinition } from './combat/move/MoveDefinition';
 import { MatchSim } from './combat/match/MatchSim';
@@ -14,7 +12,10 @@ import { FighterView } from './render/FighterView';
 import { StageView } from './render/StageView';
 import { DebugDraw } from './render/DebugDraw';
 import { HudDom } from './render/HudDom';
-import { createDebugGui, reloadMoveFromPublic } from './debug/DebugGui';
+import {
+  reloadMoveFromPublic,
+  setupControlPanel,
+} from './debug/ControlPanel';
 import type { MoveDefinition } from './combat/move/MoveDefinition';
 import {
   bakeRyuMeshTemplate,
@@ -81,7 +82,9 @@ async function boot(): Promise<void> {
     move = parseMoveDefinition(moveRaw);
     catalog.register(move);
   }
-  const cfg = createDefaultSimConfig();
+  // Live config is the single source (CONFIG). Content tables seed defaults,
+  // then shipping + localStorage may override before the panel attaches.
+  const cfg = CONFIG;
   try {
     const ib = await loadJson<{
       ACTION_BUFFER_STANDARD?: number;
@@ -116,6 +119,18 @@ async function boot(): Promise<void> {
   } catch (e) {
     console.warn('[boot] ryu_movement.json failed', e);
   }
+
+  // Session display defaults (overridden by shipping / local default below)
+  cfg.cameraZ = 8;
+  cfg.cameraY = 1.4;
+  cfg.modelScale = 0.9;
+  cfg.worldScale = 1;
+
+  // Content-seeded snapshot becomes the "project default" baseline before shipping.
+  setActiveDefaultConfig(cloneConfig(cfg));
+  await loadShippingConfig();
+  loadSavedConfig();
+
   const match = new MatchSim(move, catalog, applyConfigToMatchOpts(cfg));
   if (ryuMovement) match.setMovementTable(ryuMovement);
   try {
@@ -133,10 +148,6 @@ async function boot(): Promise<void> {
     const { fallbackStanceTable } = await import('./data/loadStanceBoxes');
     match.setStanceTable(fallbackStanceTable());
   }
-  cfg.cameraZ = 8;
-  cfg.cameraY = 1.4;
-  cfg.modelScale = 0.9;
-  cfg.worldScale = 1;
   syncMatchOpts(match, cfg);
 
   const clock = new FrameClock(
@@ -352,7 +363,7 @@ async function boot(): Promise<void> {
     },
     p1View,
   };
-  createDebugGui(match, clock, cfg, hooks);
+  setupControlPanel(match, clock, hooks);
 
   /** R: return both fighters to start positions / idle state (training reset). */
   window.addEventListener('keydown', (e) => {
