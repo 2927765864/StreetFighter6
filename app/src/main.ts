@@ -20,8 +20,11 @@ import type { MoveDefinition } from './combat/move/MoveDefinition';
 import {
   bakeRyuMeshTemplate,
   ensureRyuFallbackAlbedoCatalog,
+  isPreparedTexturedModel,
   worldBox,
 } from './render/materialUtils';
+import { applyPreparedRyuArtMaterials } from './render/applyPreparedRyuArt';
+import { fixRyuHandSkinWeights } from './render/fixHandSkinWeights';
 import {
   BOOT_PRELOAD_LOGIC_IDS,
   LogicGlbMap,
@@ -178,17 +181,17 @@ async function boot(): Promise<void> {
   camera.position.set(0, cfg.cameraY, cfg.cameraZ);
   camera.lookAt(0, 1.0, 0);
 
-  // Strong lighting for MeshStandardMaterials (PBR)
-  scene.add(new THREE.AmbientLight(0xffffff, 0.65));
-  const hemi = new THREE.HemisphereLight(0xe8f0ff, 0x4a4035, 1.35);
+  // Strong lighting for MeshStandardMaterials (PBR). RE albedos are dark — lift fill.
+  scene.add(new THREE.AmbientLight(0xffffff, 0.85));
+  const hemi = new THREE.HemisphereLight(0xf2f6ff, 0x5a5048, 1.55);
   scene.add(hemi);
-  const dir = new THREE.DirectionalLight(0xfff5e6, 2.4);
+  const dir = new THREE.DirectionalLight(0xfff5e6, 2.9);
   dir.position.set(4, 14, 9);
   scene.add(dir);
-  const fill = new THREE.DirectionalLight(0x99bbff, 0.85);
+  const fill = new THREE.DirectionalLight(0xaaccff, 1.1);
   fill.position.set(-9, 5, -3);
   scene.add(fill);
-  const rim = new THREE.DirectionalLight(0xffffff, 0.45);
+  const rim = new THREE.DirectionalLight(0xffffff, 0.65);
   rim.position.set(0, 3, -8);
   scene.add(rim);
 
@@ -223,21 +226,21 @@ async function boot(): Promise<void> {
   async function loadFighters(): Promise<void> {
     /**
      * Mesh candidates (first success wins):
-     * 1) esf001_TPose.fbx — project target mesh (cm→m + skeleton unify at bake)
-     * 2) runtime mesh-only glb fallback
-     * 3) public ryu_c1 glb (mesh only; clips discarded)
+     * Prefer mesh_only / FBX skin (intact glove weights). Do NOT prefer Blender
+     * re-exported ryu_c1_textured.glb — re-export corrupts hand skinning.
+     * Prepared PNGs are applied in Three via applyPreparedRyuArtMaterials.
      *
      * Combat clips always come from private/assets/ryu/anims via LogicGlbMap.
      */
     async function loadRyuMeshScene(): Promise<THREE.Object3D> {
       const candidates = [
         {
-          url: RYU_MESH_FBX_URL,
-          label: 'private/runtime esf001_TPose.fbx (target)',
+          url: RYU_MESH_ONLY_URL,
+          label: 'private/runtime ryu_c1_mesh_only.glb (skin-safe)',
         },
         {
-          url: RYU_MESH_ONLY_URL,
-          label: 'private/runtime mesh-only glb fallback',
+          url: RYU_MESH_FBX_URL,
+          label: 'private/runtime esf001_TPose.fbx',
         },
         {
           url: RYU_MESH_PUBLIC_FALLBACK_URL,
@@ -268,10 +271,20 @@ async function boot(): Promise<void> {
     try {
       setBootStatus('Loading Ryu mesh + textures + anims map…');
       const t0 = performance.now();
-      const [meshScene] = await Promise.all([
-        loadRyuMeshScene(),
-        ensureRyuFallbackAlbedoCatalog(),
-      ]);
+      const meshScene = await loadRyuMeshScene();
+      // Fix Root-weighted glove/hand verts BEFORE clone (stretch/twist on wraps)
+      fixRyuHandSkinWeights(meshScene);
+      // Apply prepared PNG art onto intact skin (hides cape; black belt; etc.)
+      setBootStatus('Applying prepared Ryu textures…');
+      try {
+        await applyPreparedRyuArtMaterials(meshScene);
+      } catch (e) {
+        console.warn('[boot] applyPreparedRyuArt failed, interim albedo fallback', e);
+        await ensureRyuFallbackAlbedoCatalog();
+      }
+      if (!isPreparedTexturedModel(meshScene)) {
+        await ensureRyuFallbackAlbedoCatalog();
+      }
       // cm→m + rebind once on the template, then clone for P1/P2 (do not bake per clone)
       bakeRyuMeshTemplate(meshScene);
       console.info(

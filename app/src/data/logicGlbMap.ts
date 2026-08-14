@@ -151,6 +151,15 @@ export const RYU_MESH_ONLY_URL = '/private-runtime/ryu/ryu_c1_mesh_only.glb';
 export const RYU_MESH_PUBLIC_FALLBACK_URL = '/models/ryu/ryu_c1.glb';
 
 /**
+ * Prepared textured mesh (color + standard normal + roughness embedded).
+ * From tools/character_art bind_export; private + public copies.
+ * @see docs/character-art-consensus-v0.md §10
+ */
+export const RYU_MESH_TEXTURED_URL = '/models/ryu/ryu_c1_textured.glb';
+export const RYU_MESH_TEXTURED_RUNTIME_URL =
+  '/private-runtime/ryu/ryu_c1_textured.glb';
+
+/**
  * Critical + feedback clips to load before first combat frame.
  * Paths resolved via ryu_logic_to_glb_map; missing ids only warn.
  * @see docs/plans/feedback-full-commands-exec-v1.md S7

@@ -91,11 +91,56 @@ const OUTLIER_MAX_CENTER = 6;
  * and mis-slot Capcom packed maps (atos/nrrc/cmask) as baseColor.
  * Rebuild as MeshStandardMaterial with remapped albedo when possible.
  */
+export function countEmbeddedColorMaps(root: THREE.Object3D): number {
+  let n = 0;
+  root.traverse((o) => {
+    const mesh = o as THREE.Mesh;
+    if (!mesh.isMesh || !mesh.material) return;
+    const list = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+    for (const mat of list) {
+      const m = mat as THREE.MeshStandardMaterial;
+      if (m.map && isUsableTexture(m.map)) n++;
+    }
+  });
+  return n;
+}
+
+/** True when glb already carries prepared color maps (skip FBX albedo fallback). */
+export function isPreparedTexturedModel(root: THREE.Object3D): boolean {
+  if (root.userData?.ryuPreparedArt) return true;
+  let hits = 0;
+  root.traverse((o) => {
+    const mesh = o as THREE.Mesh;
+    if (!mesh.isMesh || !mesh.material) return;
+    const list = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+    for (const mat of list) {
+      const m = mat as THREE.MeshStandardMaterial;
+      const label = textureName(m.map).toLowerCase();
+      if (
+        label.includes('color_final') ||
+        label.includes('headband') ||
+        label.includes('head_color') ||
+        label.includes('body_color') ||
+        label.includes('clotha') ||
+        label.includes('clothb') ||
+        label.includes('prepared') ||
+        label.includes('belt_color')
+      ) {
+        hits++;
+      }
+    }
+  });
+  return hits >= 2 || countEmbeddedColorMaps(root) >= 8;
+}
+
 export function sanitizeObjectMaterials(root: THREE.Object3D): void {
+  const prepared = isPreparedTexturedModel(root);
   const albedoByKey = collectAlbedoTextures(root);
-  // Prefer external interim pack (FBX has no embedded images)
-  for (const [k, tex] of getRyuFallbackAlbedoCatalog()) {
-    albedoByKey.set(k, tex);
+  // FBX path needs external albedos; prepared textured glb must NOT be remapped.
+  if (!prepared) {
+    for (const [k, tex] of getRyuFallbackAlbedoCatalog()) {
+      albedoByKey.set(k, tex);
+    }
   }
 
   let withMap = 0;
@@ -109,8 +154,26 @@ export function sanitizeObjectMaterials(root: THREE.Object3D): void {
     mesh.castShadow = false;
     mesh.receiveShadow = true;
 
+    // Hide face shells + open-gi/cape (no clothing system — consensus: no cape).
+    const mn = mesh.name.toLowerCase();
+    if (
+      mn.includes('eyetear') ||
+      mn.includes('eye_tear') ||
+      mn.includes('eyeshadow') ||
+      mn.includes('mouth00') ||
+      (mn.includes('mouth') && !mn.includes('head')) ||
+      mn.includes('costume00') ||
+      mn.includes('threads') ||
+      (mn.includes('ring') && !mn.includes('string')) ||
+      mn.includes('icosphere')
+    ) {
+      mesh.visible = false;
+    }
+
     const list = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-    const next = list.map((mat) => sanitizeOne(mat, mesh.name, albedoByKey));
+    const next = list.map((mat) =>
+      sanitizeOne(mat, mesh.name, albedoByKey, prepared),
+    );
     mesh.material = Array.isArray(mesh.material) ? next : next[0]!;
     const m0 = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
     const std = m0 as THREE.MeshStandardMaterial;
@@ -118,7 +181,7 @@ export function sanitizeObjectMaterials(root: THREE.Object3D): void {
     else solid++;
   });
   console.info(
-    `[mat] sanitize done maps=${withMap} solid=${solid} catalog=${albedoByKey.size}`,
+    `[mat] sanitize done maps=${withMap} solid=${solid} catalog=${albedoByKey.size} preparedTextured=${prepared ? 1 : 0}`,
   );
 }
 
@@ -436,6 +499,7 @@ function sanitizeOne(
   mat: THREE.Material,
   meshName: string,
   albedoCatalog: Map<string, THREE.Texture>,
+  preparedTextured = false,
 ): THREE.Material {
   const anyMat = mat as THREE.MeshStandardMaterial & {
     map?: THREE.Texture | null;
@@ -453,7 +517,7 @@ function sanitizeOne(
   if (map && (!isUsableTexture(map) || isPlaceholderTexture(map))) {
     map = null;
   }
-  if (map && isDataMapName(mapLabel)) {
+  if (map && isDataMapName(mapLabel) && !preparedTextured) {
     const remapped = pickAlbedo(meshName, mat.name || '', albedoCatalog);
     if (remapped && isUsableTexture(remapped)) {
       console.info(
@@ -468,8 +532,8 @@ function sanitizeOne(
     }
   }
 
-  // If still no map, try catalog for this part
-  if (!map) {
+  // If still no map, try catalog for this part (FBX only)
+  if (!map && !preparedTextured) {
     const picked = pickAlbedo(meshName, mat.name || '', albedoCatalog);
     map = isUsableTexture(picked) ? picked : null;
   }
@@ -477,47 +541,95 @@ function sanitizeOne(
 
   let normalMap = anyMat.normalMap ?? null;
   const nLabel = textureName(normalMap);
+  // Drop raw RE packed nrrc / masks only — keep converted *_bump and glTF normals.
+  // @see docs/plans/ai-execution-plan-character-art-textures-v1.md B2
+  const isRawPackedNormal =
+    nLabel.includes('nrrc') && !nLabel.includes('bump');
   if (
     !isUsableTexture(normalMap) ||
     (normalMap != null && isPlaceholderTexture(normalMap)) ||
-    nLabel.includes('nrrc') ||
+    isRawPackedNormal ||
     nLabel.includes('dmask') ||
-    nLabel.includes('msk')
+    (nLabel.includes('msk') && !nLabel.includes('bump'))
   ) {
     normalMap = null;
   }
 
+  let roughnessMap = (anyMat as { roughnessMap?: THREE.Texture | null })
+    .roughnessMap ?? null;
+  const rLabel = textureName(roughnessMap);
+  if (
+    !isUsableTexture(roughnessMap) ||
+    (roughnessMap != null && isPlaceholderTexture(roughnessMap)) ||
+    rLabel.includes('nrrc')
+  ) {
+    roughnessMap = null;
+  }
+
   map = prepareTexture(map, THREE.SRGBColorSpace);
   normalMap = prepareTexture(normalMap, THREE.NoColorSpace);
+  roughnessMap = prepareTexture(roughnessMap, THREE.NoColorSpace);
 
   const matLabel = mat.name || '';
-  const color = partColorTint(meshName, matLabel, map != null);
+  const n = `${meshName} ${matLabel}`.toLowerCase();
+  const isEye =
+    (n.includes('eye') &&
+      !n.includes('brow') &&
+      !n.includes('lash') &&
+      !n.includes('shadow') &&
+      !n.includes('tear')) ||
+    n.includes('eye00');
+  // Flat/constant eye normals force sideways lighting → green/black iris.
+  if (isEye) {
+    normalMap = null;
+    roughnessMap = null;
+  }
+
+  // Textured glb already has offline dye; keep white multiply unless map missing.
+  const color =
+    map != null
+      ? new THREE.Color(0xffffff)
+      : partColorTint(meshName, matLabel, false);
 
   let transparent = Boolean(anyMat.transparent || (mat.opacity ?? 1) < 0.99);
   let opacity = typeof mat.opacity === 'number' ? mat.opacity : 1;
-  const n = `${meshName} ${matLabel}`.toLowerCase();
   const isHair =
     n.includes('hair') || n.includes('lash') || n.includes('beard');
   const isHeadband = n.includes('headband') || n.includes('head_band');
-  if (isHair) {
-    // Hair albedo is often fully opaque gray; alpha-test helps strand edges
-    // when alpha exists, and double-side fills thin cards.
+  const isCloth =
+    n.includes('costume') ||
+    n.includes('cloth') ||
+    n.includes('dougi') ||
+    n.includes('obi') ||
+    n.includes('waraji') ||
+    n.includes('thread') ||
+    n.includes('glove');
+  // Cloth/hair: atlas often has empty black UVs — need alpha test cutout
+  if (isHair || isCloth || isHeadband) {
     transparent = true;
-    opacity = Math.max(opacity, 0.95);
+    opacity = 1;
   }
   if (opacity < 0.05) {
     opacity = 1;
     transparent = false;
   }
 
-  const metalness = 0.05;
-  // Cloth slightly rougher; hair a bit shinier; headband fabric mid
-  let roughness = 0.72;
-  if (isHair) roughness = 0.58;
-  else if (isHeadband) roughness = 0.68;
-  else if (n.includes('body') || n.includes('head') || n.includes('skin')) {
-    roughness = 0.62;
+  // Hair cards: no normal (solid gray islands). Cloth: keep soft normals from glb.
+  if (isHair) {
+    normalMap = null;
+    roughnessMap = null;
   }
+
+  const metalness = 0.0;
+  let roughness = 0.75;
+  if (isHair) roughness = 0.62;
+  else if (isHeadband) roughness = 0.82;
+  else if (isEye) roughness = 0.22;
+  else if (isCloth) roughness = 0.78;
+  else if (n.includes('body') || n.includes('head') || n.includes('skin')) {
+    roughness = 0.68;
+  }
+  if (roughnessMap) roughness = 0.75;
 
   const out = new THREE.MeshStandardMaterial({
     name: mat.name ? `${mat.name}_safe` : 'sanitized',
@@ -526,21 +638,31 @@ function sanitizeOne(
     normalMap,
     metalness,
     roughness,
-    roughnessMap: null,
+    roughnessMap: isHair ? null : roughnessMap,
     metalnessMap: null,
     emissive: new THREE.Color(0x000000),
     emissiveMap: null,
     alphaMap: null,
     transparent,
     opacity,
-    side: THREE.DoubleSide,
-    depthWrite: !transparent,
+    side: isHair || isHeadband || isCloth ? THREE.DoubleSide : THREE.FrontSide,
+    depthWrite: !(isHair && transparent),
     vertexColors: false,
-    alphaTest: transparent && isHair ? 0.15 : 0,
+    // Cut empty atlas texels (black) and hair cards
+    alphaTest: isCloth || isHeadband ? 0.12 : isHair ? 0.35 : 0,
     envMapIntensity: 0.35,
   });
-  // Tiny emissive so dark maps never go pure black under dim lights
-  out.emissive = color.clone().multiplyScalar(map ? 0.015 : 0.05);
+  if (normalMap) {
+    // Soft defaults; debug panel artNormalScale can raise
+    const ns = isCloth || isHeadband ? 0.3 : 0.45;
+    out.normalScale = new THREE.Vector2(ns, ns);
+  }
+  if (isEye && map) {
+    out.emissive = new THREE.Color(0x221c18);
+    out.emissiveIntensity = 0.2;
+  } else {
+    out.emissive = color.clone().multiplyScalar(map ? 0.01 : 0.05);
+  }
   out.needsUpdate = true;
 
   mat.dispose();
@@ -912,6 +1034,46 @@ export function sanitizeRePositionTrack(
  * 2. Armature `.scale` authored as 0.01 → rewrite keys to 1.
  * 3. Armature `.quaternion` 90° X from Blender → drop (bone quats already Y-up).
  */
+/**
+ * Drop tracks whose node name is not under `root` (e.g. Mantle_Folds after cape mesh
+ * removal). Prevents ~1000 PropertyBinding warnings and broken mixer binds.
+ */
+export function filterClipTracksToHierarchy(
+  clip: THREE.AnimationClip,
+  root: THREE.Object3D,
+): THREE.AnimationClip {
+  const names = new Set<string>();
+  root.traverse((o) => {
+    if (o.name) names.add(o.name);
+  });
+  // Also collect skeleton bone names from SkinnedMesh
+  root.traverse((o) => {
+    const sm = o as THREE.SkinnedMesh;
+    if (sm.isSkinnedMesh && sm.skeleton) {
+      for (const b of sm.skeleton.bones) {
+        if (b.name) names.add(b.name);
+      }
+    }
+  });
+
+  const before = clip.tracks.length;
+  const kept = clip.tracks.filter((t) => {
+    // "BoneName.quaternion" or "path/BoneName.position"
+    const node = t.name.split('.')[0] ?? '';
+    const base = node.includes('/') ? node.slice(node.lastIndexOf('/') + 1) : node;
+    return names.has(base) || names.has(node);
+  });
+  if (kept.length === before) return clip;
+  const next = clip.clone();
+  next.tracks = kept.map((t) => t.clone());
+  next.name = clip.name;
+  // One line per clip, not per missing track
+  console.info(
+    `[re-anim] "${clip.name}": drop unbound tracks ${before}→${kept.length} (cape/sim bones etc.)`,
+  );
+  return next;
+}
+
 export function sanitizeReAnimationClips(
   clips: THREE.AnimationClip[],
 ): THREE.AnimationClip[] {

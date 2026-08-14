@@ -11,6 +11,7 @@ import {
   type AnimCatalogPack,
 } from '../data/animCatalog';
 import type { FighterView } from '../render/FighterView';
+import * as THREE from 'three/webgpu';
 
 export type GuiHooks = {
   paused: boolean;
@@ -19,6 +20,40 @@ export type GuiHooks = {
   /** P1 view used by the animation test panel */
   p1View?: FighterView;
 };
+
+/** Live-apply character-art debug toggles to a FighterView root. */
+export function applyArtConfigToViews(
+  view: FighterView | undefined,
+  cfg: MutableSimConfig,
+): void {
+  const root = view?.root;
+  if (!root) return;
+  const ny = cfg.artFlipNormalY ? -Math.abs(cfg.artNormalScale) : cfg.artNormalScale;
+  root.traverse((o) => {
+    const mesh = o as THREE.Mesh;
+    if (!mesh.isMesh || !mesh.material) return;
+    const list = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+    for (const m of list) {
+      const mat = m as THREE.MeshStandardMaterial;
+      if (!mat.isMeshStandardMaterial) continue;
+      if (mat.userData?.__artNormalMap === undefined) {
+        mat.userData.__artNormalMap = mat.normalMap;
+      }
+      if (mat.userData?.__artRoughnessMap === undefined) {
+        mat.userData.__artRoughnessMap = mat.roughnessMap;
+      }
+      const storedN = mat.userData.__artNormalMap as THREE.Texture | null;
+      const storedR = mat.userData.__artRoughnessMap as THREE.Texture | null;
+      mat.normalMap = cfg.artEnableNormalMap ? storedN : null;
+      if (mat.normalMap) {
+        mat.normalScale.set(cfg.artNormalScale, ny);
+      }
+      mat.roughnessMap = cfg.artEnableRoughnessMap ? storedR : null;
+      mat.roughness = cfg.artRoughness;
+      mat.needsUpdate = true;
+    }
+  });
+}
 
 export function createDebugGui(
   match: MatchSim,
@@ -193,6 +228,17 @@ export function createDebugGui(
   render.add(cfg, 'cameraZ', 1, 20, 0.1).name('相机 Z');
   render.add(cfg, 'cameraY', 0, 5, 0.05).name('相机 Y');
   render.add(cfg, 'timeScaleAnim', 0, 2, 0.05).name('动画时间倍率');
+
+  const art = gui.addFolder('角色外观');
+  const applyArt = () => applyArtConfigToViews(hooks.p1View, cfg);
+  art.add(cfg, 'artEnableNormalMap').name('法线贴图').onChange(applyArt);
+  art
+    .add(cfg, 'artNormalScale', 0, 2, 0.05)
+    .name('法线强度')
+    .onChange(applyArt);
+  art.add(cfg, 'artFlipNormalY').name('翻转法线Y').onChange(applyArt);
+  art.add(cfg, 'artEnableRoughnessMap').name('粗糙贴图').onChange(applyArt);
+  art.add(cfg, 'artRoughness', 0, 1, 0.01).name('基础粗糙度').onChange(applyArt);
 
   const syncOpts = () => syncMatchOpts(match, cfg);
 

@@ -30,6 +30,7 @@ import {
   resetReArmatureTransform,
   applyReCentimeterToMeterIfNeeded,
   sanitizeObjectMaterials,
+  filterClipTracksToHierarchy,
   worldBox,
 } from './materialUtils';
 import {
@@ -399,6 +400,8 @@ export class FighterView {
         });
         clip = prepared.animations[0] ?? clip;
         clip.name = key;
+        // Drop Mantle/cape/sim bone tracks missing after mesh strip
+        clip = filterClipTracksToHierarchy(clip, this.modelRoot!);
 
         if (!this.mixer) {
           this.mixer = new THREE.AnimationMixer(this.modelRoot!);
@@ -1139,6 +1142,7 @@ export class FighterView {
     this.clearPoseBlend(true);
     this.mixer.stopAllAction();
 
+    clip = filterClipTracksToHierarchy(clip, this.modelRoot!);
     const action = this.mixer.clipAction(clip);
     this.actions.set(previewKey, action);
     this.previewActionKey = previewKey;

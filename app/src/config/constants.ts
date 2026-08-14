@@ -131,6 +131,16 @@ export type MutableSimConfig = {
   standToCrouchFrames: number;
   /** Crouch → stand transition logic frames (§3.7.2). */
   crouchToStandFrames: number;
+  /** Character art: enable normal maps (textured glb). */
+  artEnableNormalMap: boolean;
+  /** Character art: normalScale uniform XY. */
+  artNormalScale: number;
+  /** Character art: flip normal Y (DirectX vs OpenGL). */
+  artFlipNormalY: boolean;
+  /** Character art: use roughnessMap when present. */
+  artEnableRoughnessMap: boolean;
+  /** Character art: base roughness when no map / blend. */
+  artRoughness: number;
 };
 
 export function createDefaultSimConfig(): MutableSimConfig {
@@ -225,6 +235,11 @@ export function createDefaultSimConfig(): MutableSimConfig {
     plantSlewPerSec: 0.55,
     standToCrouchFrames: 60,
     crouchToStandFrames: 38,
+    artEnableNormalMap: true,
+    artNormalScale: 0.55,
+    artFlipNormalY: false,
+    artEnableRoughnessMap: true,
+    artRoughness: 0.72,
   };
 }
 
