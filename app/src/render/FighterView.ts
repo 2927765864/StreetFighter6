@@ -565,6 +565,21 @@ export class FighterView {
     return found;
   }
 
+  /**
+   * World Y for follow lights: hips/pelvis height so jump (root.y) and crouch
+   * (animation) both move the light. Falls back to root.y when no hips bone.
+   */
+  getLightFollowAnchorY(): number {
+    this.root.updateMatrixWorld(true);
+    const hips = this.findHipsBone();
+    if (hips) {
+      const p = new THREE.Vector3();
+      hips.getWorldPosition(p);
+      return p.y;
+    }
+    return this.root.position.y;
+  }
+
   /** Attack support-foot lock (world XZ). Consensus §3.9 */
   private applyFootPlant(
     fighter: Fighter,

@@ -16,14 +16,17 @@ import {
   saveNamedPreset,
 } from '../config/persist';
 import {
-  captureLightFollowOffsets,
+  copyFollowLightsP1toP2,
   createLightByType,
   duplicateLightAsNew,
   enableLightFollow,
   enforceLightRules,
-  fighterWorldX,
+  fighterFollowOriginFromLogic,
+  isLightFollowing,
   lightSupportsFollow,
   newLightId,
+  syncLegacyFollowOffsets,
+  type FighterFollowOrigin,
   type LightDesc,
   type LightFollowTarget,
   type LightType,
@@ -43,6 +46,9 @@ export type ControlPanelHooks = {
   stepOnce: () => void;
   reloadMoveJson: () => Promise<void>;
   p1View?: FighterView;
+  p2View?: FighterView;
+  /** World follow origin (logic X + hips Y). Falls back to logic Y if omitted. */
+  getLightFollowOrigin?: (who: 'p1' | 'p2') => FighterFollowOrigin;
 };
 
 export type LightEditPanelHooks = {
@@ -487,7 +493,7 @@ function buildDom(): HTMLElement {
           </div>
           ${rowNumber('fogNear', '雾近', 1, 200, 1)}
           ${rowNumber('fogFar', '雾远', 10, 400, 1)}
-          ${rowNumber('lightMaxCount', '灯数量上限', 5, 15, 1)}
+          ${rowNumber('lightMaxCount', '灯数量上限', 5, 30, 1)}
           <div class="panel-row">
             <div class="panel-row-header"><span>Gizmo 模式</span></div>
             <select id="sel-lightGizmoMode">
@@ -502,6 +508,7 @@ function buildDom(): HTMLElement {
             <button type="button" id="btn-lightAddAmbient">+ 环境光</button>
             <button type="button" id="btn-lightAddHemi">+ 半球光</button>
             <button type="button" id="btn-lightPaste">粘贴灯</button>
+            <button type="button" id="btn-lightCopyP1FollowToP2" title="将所有跟随 P1 的灯按相同本地偏移平行复制为跟随 P2">复制 P1跟随光 → P2</button>
           </div>
           <div id="light-cards" class="light-cards"></div>
           `,
@@ -990,6 +997,21 @@ export function setupControlPanel(
 
   const findLight = (id: string) => CONFIG.lights.find((l) => l.id === id);
 
+  const followOriginOf = (who: 'p1' | 'p2'): FighterFollowOrigin => {
+    if (hooks.getLightFollowOrigin) return hooks.getLightFollowOrigin(who);
+    const f = who === 'p1' ? match.p1 : match.p2;
+    const view = who === 'p1' ? hooks.p1View : hooks.p2View;
+    if (view) {
+      return { x: f.x * CONFIG.worldScale, y: view.getLightFollowAnchorY() };
+    }
+    return fighterFollowOriginFromLogic(
+      f.x,
+      f.y,
+      CONFIG.worldScale,
+      CONFIG.modelYOffset,
+    );
+  };
+
   const cloneLightDesc = (l: LightDesc, opts?: { newId?: boolean; nameSuffix?: string }): LightDesc => ({
     ...l,
     id: opts?.newId ? newLightId(l.type) : l.id,
@@ -1000,28 +1022,30 @@ export function setupControlPanel(
     follow: lightSupportsFollow(l.type) ? (l.follow ?? 'none') : 'none',
     followOffsetPosX: l.followOffsetPosX,
     followOffsetTargetX: l.followOffsetTargetX,
+    followOffsetPosY: l.followOffsetPosY,
+    followOffsetTargetY: l.followOffsetTargetY,
+    shadowOnly: l.type === 'directional' ? !!l.shadowOnly : undefined,
   });
 
-  const recaptureFollowOffsetsFor = (ids: Iterable<string>) => {
+  /** Panel edits local coords directly when following — only sync legacy offset mirrors. */
+  const syncFollowLocalsFor = (ids: Iterable<string>) => {
     const want = new Set(ids);
     for (const l of CONFIG.lights) {
       if (!want.has(l.id)) continue;
-      if (!lightSupportsFollow(l.type)) continue;
-      if (l.follow !== 'p1' && l.follow !== 'p2') continue;
-      const lx = l.follow === 'p1' ? match.p1.x : match.p2.x;
-      captureLightFollowOffsets(l, fighterWorldX(lx, CONFIG.worldScale));
+      if (!isLightFollowing(l)) continue;
+      syncLegacyFollowOffsets(l);
     }
   };
 
   /**
-   * @param recaptureIds - only these follow lights re-pin offsets (pos/target edits).
-   *   Default empty: do NOT recapture all lights (avoids disturbing siblings on dup/add).
+   * @param syncFollowIds - follow lights whose panel local edits need legacy offset sync.
+   *   Default empty: do NOT touch siblings on dup/add.
    */
   const emitLights = (
     rebuild: boolean,
-    recaptureIds: string[] = [],
+    syncFollowIds: string[] = [],
   ) => {
-    if (recaptureIds.length > 0) recaptureFollowOffsetsFor(recaptureIds);
+    if (syncFollowIds.length > 0) syncFollowLocalsFor(syncFollowIds);
     // Drop accidental duplicate config ids (keep first).
     const seen = new Set<string>();
     CONFIG.lights = CONFIG.lights.filter((l) => {
@@ -1239,18 +1263,27 @@ export function setupControlPanel(
     }
 
     body.appendChild(
-      fieldNum('强度', l.intensity, '0.05', 'intensity', (v) => {
-        const cur = findLight(l.id);
-        if (cur) cur.intensity = v;
-      }),
+      fieldNum(
+        l.type === 'directional' && l.shadowOnly ? '阴影强度' : '强度',
+        l.intensity,
+        '0.05',
+        'intensity',
+        (v) => {
+          const cur = findLight(l.id);
+          if (cur) cur.intensity = v;
+        },
+      ),
     );
 
     if (l.type !== 'ambient' && l.type !== 'hemisphere') {
+      const following = isLightFollowing(l);
+      const posLabel = (axis: string) =>
+        following ? `本地 ${axis}` : `位置 ${axis}`;
       const grid = el('div', 'light-field-grid');
       const rid = l.id;
       grid.append(
         fieldNum(
-          '位置 X',
+          posLabel('X'),
           l.position.x,
           '0.1',
           'posX',
@@ -1261,7 +1294,7 @@ export function setupControlPanel(
           { recaptureId: rid },
         ),
         fieldNum(
-          '位置 Y',
+          posLabel('Y'),
           l.position.y,
           '0.1',
           'posY',
@@ -1272,7 +1305,7 @@ export function setupControlPanel(
           { recaptureId: rid },
         ),
         fieldNum(
-          '位置 Z',
+          posLabel('Z'),
           l.position.z,
           '0.1',
           'posZ',
@@ -1287,11 +1320,14 @@ export function setupControlPanel(
     }
 
     if (l.type === 'directional' || l.type === 'spot') {
+      const following = isLightFollowing(l);
+      const tgtLabel = (axis: string) =>
+        following ? `本地目标 ${axis}` : `目标 ${axis}`;
       const grid = el('div', 'light-field-grid');
       const rid = l.id;
       grid.append(
         fieldNum(
-          '目标 X',
+          tgtLabel('X'),
           l.target.x,
           '0.1',
           'tgtX',
@@ -1302,7 +1338,7 @@ export function setupControlPanel(
           { recaptureId: rid },
         ),
         fieldNum(
-          '目标 Y',
+          tgtLabel('Y'),
           l.target.y,
           '0.1',
           'tgtY',
@@ -1313,7 +1349,7 @@ export function setupControlPanel(
           { recaptureId: rid },
         ),
         fieldNum(
-          '目标 Z',
+          tgtLabel('Z'),
           l.target.z,
           '0.1',
           'tgtZ',
@@ -1376,16 +1412,19 @@ export function setupControlPanel(
         const cur = findLight(l.id);
         if (!cur || !lightSupportsFollow(cur.type)) return;
         const v = followSel.value as LightFollowTarget;
-        enableLightFollow(cur, v, match.p1.x, match.p2.x, CONFIG.worldScale);
-        // Only this light's offsets were just captured by enableLightFollow.
-        emitLights(false, []);
+        if (v !== 'none' && cur.shadowOnly) {
+          cur.shadowOnly = false;
+        }
+        enableLightFollow(cur, v, followOriginOf('p1'), followOriginOf('p2'));
+        // World↔local conversion already done in enableLightFollow; rebuild labels.
+        emitLights(true, []);
         const hint =
           cur.type === 'point'
-            ? '仅照该角色；位置 X 跟随'
-            : '仅照该角色；灯与目标相对 X 保持';
+            ? '仅照该角色；本地 XY 随平移/跳跃/下蹲'
+            : '仅照该角色；灯与目标本地 XY 随平移/跳跃/下蹲';
         setFlash(
           v === 'none'
-            ? `「${cur.name}」已取消跟随（恢复照全场）`
+            ? `「${cur.name}」已取消跟随（恢复世界坐标 / 照全场）`
             : `「${cur.name}」跟随 ${v.toUpperCase()}（${hint}）`,
         );
       });
@@ -1402,15 +1441,48 @@ export function setupControlPanel(
         const cur = findLight(l.id);
         if (!cur) return;
         cur.castShadow = shCb.checked;
+        if (!cur.castShadow) cur.shadowOnly = false;
         if (cur.castShadow) {
           for (const o of CONFIG.lights) {
-            if (o.id !== cur.id) o.castShadow = false;
+            if (o.id !== cur.id) {
+              o.castShadow = false;
+              o.shadowOnly = false;
+            }
           }
         }
         emitLights(true);
       });
       sh.append(shCb, document.createTextNode('投射阴影（全场仅一盏）'));
       body.appendChild(sh);
+
+      const so = el('label', 'light-inline-toggle');
+      const soCb = document.createElement('input');
+      soCb.type = 'checkbox';
+      soCb.checked = !!l.shadowOnly;
+      soCb.title = '不进入照明列表；阴影经遮挡通道压暗环境/间接光';
+      soCb.addEventListener('change', () => {
+        const cur = findLight(l.id);
+        if (!cur || cur.type !== 'directional') return;
+        cur.shadowOnly = soCb.checked;
+        if (cur.shadowOnly) {
+          cur.castShadow = true;
+          if (cur.follow === 'p1' || cur.follow === 'p2') {
+            enableLightFollow(cur, 'none', followOriginOf('p1'), followOriginOf('p2'));
+          }
+          for (const o of CONFIG.lights) {
+            if (o.id !== cur.id) {
+              o.castShadow = false;
+              o.shadowOnly = false;
+            }
+          }
+          setFlash(`「${cur.name}」仅投射阴影（不照明）`);
+        } else {
+          setFlash(`「${cur.name}」恢复普通投影照明`);
+        }
+        emitLights(true);
+      });
+      so.append(soCb, document.createTextNode('仅投射阴影（不照明）'));
+      body.appendChild(so);
     }
 
     const actions = el('div', 'light-card-actions');
@@ -1575,6 +1647,44 @@ export function setupControlPanel(
   byId<HTMLButtonElement>(host, 'btn-lightAddHemi').addEventListener('click', () =>
     addLight('hemisphere'),
   );
+  byId<HTMLButtonElement>(host, 'btn-lightCopyP1FollowToP2').addEventListener(
+    'click',
+    () => {
+      const p1Follow = CONFIG.lights.filter(
+        (l) => lightSupportsFollow(l.type) && l.follow === 'p1',
+      );
+      if (p1Follow.length === 0) {
+        setFlash('没有跟随 P1 的灯可复制');
+        return;
+      }
+      const enabledCount = CONFIG.lights.filter((x) => x.enabled).length;
+      const room = Math.max(0, CONFIG.lightMaxCount - enabledCount);
+      if (room <= 0) {
+        setFlash(`已达上限 ${CONFIG.lightMaxCount}，无法再复制`);
+        return;
+      }
+      const copies = copyFollowLightsP1toP2(p1Follow);
+      const toAdd = copies.slice(0, room);
+      if (toAdd.length === 0) {
+        setFlash(`已达上限 ${CONFIG.lightMaxCount}，无法再复制`);
+        return;
+      }
+      for (const c of toAdd) {
+        if (CONFIG.lights.some((x) => x.id === c.id)) continue;
+        CONFIG.lights.push(c);
+        lightCardOpen.set(c.id, true);
+      }
+      CONFIG.lightSelectedId = toAdd[toAdd.length - 1]!.id;
+      emitLights(true, []);
+      const skipped = copies.length - toAdd.length;
+      setFlash(
+        skipped > 0
+          ? `已复制 ${toAdd.length} 盏 P1→P2（平行本地偏移）；另有 ${skipped} 盏因上限未加`
+          : `已复制 ${toAdd.length} 盏跟随光 P1→P2（平行复制本地偏移）`,
+      );
+    },
+  );
+
   byId<HTMLButtonElement>(host, 'btn-lightPaste').addEventListener('click', () => {
     if (!lightClipboard) {
       setFlash('剪贴板为空，请先在某盏灯上点「复制」');

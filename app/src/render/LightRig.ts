@@ -4,10 +4,18 @@
 import type { MutableSimConfig } from '../config/constants';
 import {
   enforceLightRules,
+  resolveLightWorldPose,
+  resolveShadowMapIntensity,
+  type FighterFollowOrigin,
   type LightDesc,
   type LightType,
 } from '../config/lightTypes';
 import type * as THREE_NS from 'three/webgpu';
+
+export type FighterFollowOrigins = {
+  p1: FighterFollowOrigin;
+  p2: FighterFollowOrigin;
+};
 
 type ThreeMod = typeof THREE_NS;
 
@@ -122,9 +130,14 @@ function writeDescToLight(
   light: THREE_NS.Light,
   desc: LightDesc,
   cfg: MutableSimConfig,
+  origins: FighterFollowOrigins,
 ): void {
   light.visible = desc.enabled;
-  light.intensity = desc.enabled ? desc.intensity : 0;
+  // Shadow-only: no illumination; darkness driven by shadow.intensity instead.
+  light.intensity =
+    desc.enabled && !(desc.type === 'directional' && desc.shadowOnly)
+      ? desc.intensity
+      : 0;
   light.color.setHex(desc.color);
   light.userData.lightId = desc.id;
 
@@ -136,20 +149,23 @@ function writeDescToLight(
     return;
   }
 
-  light.position.set(desc.position.x, desc.position.y, desc.position.z);
+  const pose = resolveLightWorldPose(desc, origins.p1, origins.p2);
+  light.position.set(pose.position.x, pose.position.y, pose.position.z);
 
   if (desc.type === 'directional') {
     const dir = light as THREE_NS.DirectionalLight;
-    dir.target.position.set(desc.target.x, desc.target.y, desc.target.z);
+    dir.target.position.set(pose.target.x, pose.target.y, pose.target.z);
     dir.target.updateMatrixWorld();
     // Follow lights only hit one fighter — no stage shadow (selective lightsNode).
+    // shadowOnly lights still cast maps; occlusion is applied via aoNode.
     const followChar = desc.follow === 'p1' || desc.follow === 'p2';
     const wantShadow =
       desc.enabled &&
       desc.castShadow &&
       cfg.shadowMapEnabled &&
-      !followChar;
+      (!followChar || !!desc.shadowOnly);
     dir.castShadow = wantShadow;
+    dir.shadow.intensity = resolveShadowMapIntensity(desc);
     if (wantShadow) applyShadowCamera(dir, cfg);
     return;
   }
@@ -164,7 +180,7 @@ function writeDescToLight(
 
   if (desc.type === 'spot') {
     const s = light as THREE_NS.SpotLight;
-    s.target.position.set(desc.target.x, desc.target.y, desc.target.z);
+    s.target.position.set(pose.target.x, pose.target.y, pose.target.z);
     s.target.updateMatrixWorld();
     s.distance = desc.distance ?? 0;
     s.decay = desc.decay ?? 2;
@@ -212,6 +228,7 @@ export function syncLightsFromConfig(
   scene: THREE_NS.Scene,
   rig: LightRig,
   cfg: MutableSimConfig,
+  origins: FighterFollowOrigins = { p1: { x: 0, y: 0 }, p2: { x: 0, y: 0 } },
 ): void {
   void scene;
   const lights = enforceLightRules(
@@ -251,7 +268,7 @@ export function syncLightsFromConfig(
       rt = { descId: desc.id, type: desc.type, light, helper };
       rig.runtimes.set(desc.id, rt);
     }
-    writeDescToLight(rt.light, desc, cfg);
+    writeDescToLight(rt.light, desc, cfg, origins);
     if (rt.helper) {
       rt.helper.visible = cfg.lightHelpersVisible;
     }
@@ -285,6 +302,7 @@ export function updateLightHelpers(rig: LightRig): void {
 export function applyLightTransformsFromConfig(
   rig: LightRig,
   cfg: MutableSimConfig,
+  origins: FighterFollowOrigins = { p1: { x: 0, y: 0 }, p2: { x: 0, y: 0 } },
 ): void {
   for (const desc of cfg.lights) {
     if (desc.type !== 'directional' && desc.type !== 'spot' && desc.type !== 'point') {
@@ -292,14 +310,15 @@ export function applyLightTransformsFromConfig(
     }
     const rt = rig.runtimes.get(desc.id);
     if (!rt) continue;
+    const pose = resolveLightWorldPose(desc, origins.p1, origins.p2);
     if (desc.type === 'point') {
-      rt.light.position.set(desc.position.x, desc.position.y, desc.position.z);
+      rt.light.position.set(pose.position.x, pose.position.y, pose.position.z);
       continue;
     }
-    rt.light.position.set(desc.position.x, desc.position.y, desc.position.z);
+    rt.light.position.set(pose.position.x, pose.position.y, pose.position.z);
     if (desc.type === 'directional' || desc.type === 'spot') {
       const withTarget = rt.light as THREE_NS.DirectionalLight | THREE_NS.SpotLight;
-      withTarget.target.position.set(desc.target.x, desc.target.y, desc.target.z);
+      withTarget.target.position.set(pose.target.x, pose.target.y, pose.target.z);
       withTarget.target.updateMatrixWorld();
     }
   }

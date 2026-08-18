@@ -16,11 +16,13 @@
  * @see examples/webgpu_lights_selective.html (lights() + material.lightsNode)
  */
 import { MeshStandardNodeMaterial } from 'three/webgpu';
-import { lights } from 'three/tsl';
+import { lights, shadow } from 'three/tsl';
 import type { LightDesc } from '../config/lightTypes';
 import type { LightRig } from './LightRig';
 import type * as THREE_NS from 'three/webgpu';
 import * as THREE from 'three/webgpu';
+
+const SHADOW_ONLY_AO_MARK = 'shadowOnlyAo';
 
 export type SelectiveLightBuckets = {
   global: THREE_NS.Light[];
@@ -53,6 +55,8 @@ export function bucketLightsByFollow(
     if (!desc.enabled) continue;
     if (seenDescIds.has(desc.id)) continue;
     seenDescIds.add(desc.id);
+    // Shadow-only: generate maps + aoNode, never illuminate.
+    if (desc.shadowOnly) continue;
     const rt = rig.runtimes.get(desc.id);
     if (!rt) continue;
     if (desc.follow === 'p1') pushUnique(p1, seen1, rt.light);
@@ -60,6 +64,61 @@ export function bucketLightsByFollow(
     else pushUnique(global, seenG, rt.light);
   }
   return { global, p1, p2 };
+}
+
+/** Enabled directional lights marked shadowOnly (with live Three lights). */
+export function collectShadowOnlyLights(
+  lightDescs: LightDesc[],
+  rig: LightRig,
+): THREE_NS.Light[] {
+  const out: THREE_NS.Light[] = [];
+  const seen = new Set<number>();
+  const seenDesc = new Set<string>();
+  for (const desc of lightDescs) {
+    if (!desc.enabled || !desc.shadowOnly || desc.type !== 'directional') continue;
+    if (seenDesc.has(desc.id)) continue;
+    seenDesc.add(desc.id);
+    const rt = rig.runtimes.get(desc.id);
+    if (!rt) continue;
+    pushUnique(out, seen, rt.light);
+  }
+  return out;
+}
+
+/**
+ * Build product of TSL shadow() nodes for shadow-only lights.
+ * Returns null when there are none (clear our aoNode).
+ */
+export function buildShadowOnlyAoNode(
+  shadowOnlyLights: THREE_NS.Light[],
+): ShadowAoNode | null {
+  if (shadowOnlyLights.length === 0) return null;
+  let node: ShadowAoNode | null = null;
+  for (const light of shadowOnlyLights) {
+    const s = shadow(light) as unknown as ShadowAoNode;
+    node = node == null ? s : node.mul(s);
+  }
+  return node;
+}
+
+function applyShadowOnlyAoToMaterials(
+  mats: Array<MeshStandardNodeMaterial | AnyStd | THREE_NS.Material>,
+  ao: ShadowAoNode | null,
+): void {
+  for (const m of mats) {
+    if (!m) continue;
+    const any = m as AnyStd;
+    if (!any.userData) continue;
+    if (ao) {
+      any.aoNode = ao;
+      any.userData[SHADOW_ONLY_AO_MARK] = true;
+      any.needsUpdate = true;
+    } else if (any.userData[SHADOW_ONLY_AO_MARK]) {
+      any.aoNode = null;
+      delete any.userData[SHADOW_ONLY_AO_MARK];
+      any.needsUpdate = true;
+    }
+  }
 }
 
 /** Hair cards: exclude from character-only follow lights (still get global). */
@@ -85,6 +144,8 @@ type AnyStd = THREE_NS.MeshStandardMaterial & {
   isMeshPhysicalMaterial?: boolean;
   lightsNode?: ReturnType<typeof lights> | null;
   lights?: boolean;
+  aoNode?: unknown;
+  needsUpdate?: boolean;
   userData: Record<string, unknown>;
   envMapIntensity?: number;
   normalScale?: THREE_NS.Vector2;
@@ -93,6 +154,10 @@ type AnyStd = THREE_NS.MeshStandardMaterial & {
   emissiveMap?: THREE_NS.Texture | null;
   metalnessMap?: THREE_NS.Texture | null;
   clone: () => THREE_NS.Material;
+};
+
+type ShadowAoNode = {
+  mul: (other: unknown) => ShadowAoNode;
 };
 
 /** Copy PBR fields onto a MeshStandardNodeMaterial. */
@@ -189,7 +254,7 @@ function assignLightsToRoot(
   root: THREE_NS.Object3D | null | undefined,
   bodyLights: ReturnType<typeof lights>,
   hairLights: ReturnType<typeof lights>,
-  opts: { fighter: boolean },
+  opts: { fighter: boolean; shadowAo: ShadowAoNode | null },
 ): void {
   if (!root) return;
   const owner = root.uuid;
@@ -206,12 +271,14 @@ function assignLightsToRoot(
         m.lightsNode = node;
         m.needsUpdate = true;
       }
+      applyShadowOnlyAoToMaterials(nodeMats, opts.shadowAo);
       return;
     }
 
     // Stage / ground: global lights only; upgrade if standard-like.
     const list = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
     const upgraded: THREE_NS.Material[] = [];
+    const aoTargets: THREE_NS.Material[] = [];
     let anyUp = false;
     for (const mat of list) {
       if (!mat) continue;
@@ -221,6 +288,7 @@ function assignLightsToRoot(
         src.lightsNode = bodyLights;
         src.needsUpdate = true;
         upgraded.push(src);
+        aoTargets.push(src);
         continue;
       }
       if (
@@ -234,6 +302,7 @@ function assignLightsToRoot(
         dst.lightsNode = bodyLights;
         dst.needsUpdate = true;
         upgraded.push(dst);
+        aoTargets.push(dst);
         anyUp = true;
         continue;
       }
@@ -243,6 +312,7 @@ function assignLightsToRoot(
     if (anyUp) {
       mesh.material = Array.isArray(mesh.material) ? upgraded : upgraded[0]!;
     }
+    applyShadowOnlyAoToMaterials(aoTargets, opts.shadowAo);
   });
 }
 
@@ -264,11 +334,24 @@ export function applySelectiveLightNodes(
   const globalNode = lights([...b.global]);
   const p1BodyNode = lights([...b.global, ...b.p1]);
   const p2BodyNode = lights([...b.global, ...b.p2]);
+  const shadowAo = buildShadowOnlyAoNode(collectShadowOnlyLights(lightDescs, rig));
 
   // Stage/ground: only global (no character-follow lights)
-  assignLightsToRoot(roots.stage, globalNode, globalNode, { fighter: false });
-  assignLightsToRoot(roots.ground, globalNode, globalNode, { fighter: false });
+  assignLightsToRoot(roots.stage, globalNode, globalNode, {
+    fighter: false,
+    shadowAo,
+  });
+  assignLightsToRoot(roots.ground, globalNode, globalNode, {
+    fighter: false,
+    shadowAo,
+  });
   // Fighters: body/clothes/shoes get follow; hair global only
-  assignLightsToRoot(roots.p1, p1BodyNode, globalNode, { fighter: true });
-  assignLightsToRoot(roots.p2, p2BodyNode, globalNode, { fighter: true });
+  assignLightsToRoot(roots.p1, p1BodyNode, globalNode, {
+    fighter: true,
+    shadowAo,
+  });
+  assignLightsToRoot(roots.p2, p2BodyNode, globalNode, {
+    fighter: true,
+    shadowAo,
+  });
 }

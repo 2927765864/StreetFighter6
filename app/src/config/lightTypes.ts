@@ -33,17 +33,30 @@ export type LightDesc = {
   penumbra?: number;
   castShadow: boolean;
   /**
+   * Directional only. When true: still castShadow, but excluded from lightsNode
+   * (no illumination); shadow darkening applied via material aoNode.
+   */
+  shadowOnly?: boolean;
+  /**
    * directional / point / spot. When p1/p2:
-   * - all: position.x tracks fighter world X via followOffsetPosX
-   * - directional & spot: target.x also tracks via followOffsetTargetX
-   *   (relative light→target X stays fixed); Y/Z absolute.
+   * - `position` / `target` are **character-local** offsets
+   *   (world = local + fighterFollowOrigin; origin X from logic, Y from hips)
+   * - followOffset* mirror local axes for legacy saves
+   * When none: position / target are world-space.
    */
   follow?: LightFollowTarget;
-  /** World-space X offset: position.x = fighterWorldX + followOffsetPosX */
+  /** Legacy mirror of local position.x when following */
   followOffsetPosX?: number;
-  /** World-space X offset: target.x = fighterWorldX + followOffsetTargetX (dir/spot) */
+  /** Legacy mirror of local target.x when following (dir/spot) */
   followOffsetTargetX?: number;
+  /** Legacy mirror of local position.y when following */
+  followOffsetPosY?: number;
+  /** Legacy mirror of local target.y when following (dir/spot) */
+  followOffsetTargetY?: number;
 };
+
+/** World-space origin a follow light is parented to (X=logic, Y=hips/logic). */
+export type FighterFollowOrigin = { x: number; y: number };
 
 const LIGHT_TYPES: ReadonlySet<string> = new Set([
   'ambient',
@@ -191,24 +204,76 @@ export function normalizeLightDesc(
   }
   if (t !== 'directional') {
     base.castShadow = false;
+    delete base.shadowOnly;
+  } else if (bool(o.shadowOnly, false)) {
+    base.shadowOnly = true;
+    base.castShadow = true;
+  } else {
+    base.shadowOnly = false;
   }
   if (lightSupportsFollow(t)) {
     const f = str(o.follow, 'none');
     base.follow =
       f === 'p1' || f === 'p2' || f === 'none' ? (f as LightFollowTarget) : 'none';
-    if (typeof o.followOffsetPosX === 'number' && Number.isFinite(o.followOffsetPosX)) {
-      base.followOffsetPosX = o.followOffsetPosX;
-    }
-    if (
+    const hasOffPos =
+      typeof o.followOffsetPosX === 'number' && Number.isFinite(o.followOffsetPosX);
+    const hasOffTgt =
       typeof o.followOffsetTargetX === 'number' &&
-      Number.isFinite(o.followOffsetTargetX)
-    ) {
-      base.followOffsetTargetX = o.followOffsetTargetX;
+      Number.isFinite(o.followOffsetTargetX);
+    const hasOffPosY =
+      typeof o.followOffsetPosY === 'number' && Number.isFinite(o.followOffsetPosY);
+    const hasOffTgtY =
+      typeof o.followOffsetTargetY === 'number' &&
+      Number.isFinite(o.followOffsetTargetY);
+    if (base.shadowOnly && (base.follow === 'p1' || base.follow === 'p2')) {
+      // Shadow-only is global occlusion; drop follow.
+      base.follow = 'none';
+      delete base.followOffsetPosX;
+      delete base.followOffsetTargetX;
+      delete base.followOffsetPosY;
+      delete base.followOffsetTargetY;
+    }
+    if (base.follow === 'p1' || base.follow === 'p2') {
+      // Old saves: position was world at save time; followOffset* was local.
+      // Prefer offset as local authority when present.
+      if (hasOffPos) {
+        base.position.x = o.followOffsetPosX as number;
+        base.followOffsetPosX = o.followOffsetPosX as number;
+      } else {
+        base.followOffsetPosX = base.position.x;
+      }
+      if (hasOffPosY) {
+        base.position.y = o.followOffsetPosY as number;
+        base.followOffsetPosY = o.followOffsetPosY as number;
+      }
+      // else: leave position.y; first applyLightFollow converts world→local Y
+      if (t === 'directional' || t === 'spot') {
+        if (hasOffTgt) {
+          base.target.x = o.followOffsetTargetX as number;
+          base.followOffsetTargetX = o.followOffsetTargetX as number;
+        } else {
+          base.followOffsetTargetX = base.target.x;
+        }
+        if (hasOffTgtY) {
+          base.target.y = o.followOffsetTargetY as number;
+          base.followOffsetTargetY = o.followOffsetTargetY as number;
+        }
+      } else {
+        base.followOffsetTargetX = 0;
+        base.followOffsetTargetY = 0;
+      }
+    } else {
+      if (hasOffPos) base.followOffsetPosX = o.followOffsetPosX as number;
+      if (hasOffTgt) base.followOffsetTargetX = o.followOffsetTargetX as number;
+      if (hasOffPosY) base.followOffsetPosY = o.followOffsetPosY as number;
+      if (hasOffTgtY) base.followOffsetTargetY = o.followOffsetTargetY as number;
     }
   } else {
     base.follow = 'none';
     delete base.followOffsetPosX;
     delete base.followOffsetTargetX;
+    delete base.followOffsetPosY;
+    delete base.followOffsetTargetY;
   }
   return base;
 }
@@ -217,63 +282,152 @@ export function fighterWorldX(logicX: number, worldScale: number): number {
   return logicX * worldScale;
 }
 
-/** Capture X offsets from current pose relative to fighter world X. */
+/** Logic-only origin (tests / fallback before hips are available). */
+export function fighterFollowOriginFromLogic(
+  logicX: number,
+  logicY: number,
+  worldScale: number,
+  modelYOffset = 0,
+): FighterFollowOrigin {
+  return {
+    x: logicX * worldScale,
+    y: modelYOffset + logicY * worldScale,
+  };
+}
+
+export function isLightFollowing(desc: LightDesc): boolean {
+  return (
+    lightSupportsFollow(desc.type) &&
+    (desc.follow === 'p1' || desc.follow === 'p2')
+  );
+}
+
+/**
+ * Three mixes shadows as mix(1, factor, light.shadow.intensity).
+ * Shadow-only lights map config intensity → shadow.intensity (not light.intensity).
+ */
+export function resolveShadowMapIntensity(desc: LightDesc): number {
+  if (desc.type === 'directional' && desc.shadowOnly) {
+    return Number.isFinite(desc.intensity) ? desc.intensity : 1;
+  }
+  return 1;
+}
+
+/** Keep legacy offset fields in sync with local position/target. */
+export function syncLegacyFollowOffsets(desc: LightDesc): void {
+  if (!isLightFollowing(desc)) return;
+  desc.followOffsetPosX = desc.position.x;
+  desc.followOffsetPosY = desc.position.y;
+  if (desc.type === 'directional' || desc.type === 'spot') {
+    desc.followOffsetTargetX = desc.target.x;
+    desc.followOffsetTargetY = desc.target.y;
+  } else {
+    desc.followOffsetTargetX = 0;
+    desc.followOffsetTargetY = 0;
+  }
+}
+
+function clearLegacyFollowOffsets(desc: LightDesc): void {
+  delete desc.followOffsetPosX;
+  delete desc.followOffsetTargetX;
+  delete desc.followOffsetPosY;
+  delete desc.followOffsetTargetY;
+}
+
+/**
+ * Convert **world** components into character-local offsets.
+ * `kind` limits which parts were just written as world (gizmo may edit one at a time).
+ */
 export function captureLightFollowOffsets(
   desc: LightDesc,
-  fighterWx: number,
+  origin: FighterFollowOrigin,
+  kind: 'position' | 'target' | 'both' = 'both',
 ): void {
   if (!lightSupportsFollow(desc.type)) return;
-  desc.followOffsetPosX = desc.position.x - fighterWx;
-  if (desc.type === 'directional' || desc.type === 'spot') {
-    desc.followOffsetTargetX = desc.target.x - fighterWx;
-  } else {
-    // point: no aim target
-    desc.followOffsetTargetX = 0;
+  if (kind === 'position' || kind === 'both') {
+    desc.position.x = desc.position.x - origin.x;
+    desc.position.y = desc.position.y - origin.y;
   }
+  if (
+    (kind === 'target' || kind === 'both') &&
+    (desc.type === 'directional' || desc.type === 'spot')
+  ) {
+    desc.target.x = desc.target.x - origin.x;
+    desc.target.y = desc.target.y - origin.y;
+  }
+  syncLegacyFollowOffsets(desc);
 }
 
 /** @deprecated use captureLightFollowOffsets */
 export const captureDirectionalFollowOffsets = captureLightFollowOffsets;
 
+/** Non-mutating world pose for Three sync. */
+export function resolveLightWorldPose(
+  desc: LightDesc,
+  p1Origin: FighterFollowOrigin,
+  p2Origin: FighterFollowOrigin,
+): { position: Vec3Desc; target: Vec3Desc } {
+  if (!isLightFollowing(desc)) {
+    return {
+      position: { ...desc.position },
+      target: { ...desc.target },
+    };
+  }
+  const o = desc.follow === 'p1' ? p1Origin : p2Origin;
+  return {
+    position: {
+      x: desc.position.x + o.x,
+      y: desc.position.y + o.y,
+      z: desc.position.z,
+    },
+    target: {
+      x: desc.target.x + o.x,
+      y: desc.target.y + o.y,
+      z: desc.target.z,
+    },
+  };
+}
+
 /**
- * Apply follow: move position.x (and target.x for dir/spot) with fighter.
- * Relative light→target X stays fixed for dir/spot; Y/Z absolute.
- * Returns true if any desc was updated.
+ * Ensure follow lights store local offsets (one-shot migrate if legacy offsets
+ * missing). Does **not** write world coords back into desc.
+ * Returns true if any follow light needs a Three transform push.
  */
 export function applyLightFollow(
   lights: LightDesc[],
-  p1LogicX: number,
-  p2LogicX: number,
-  worldScale: number,
+  p1Origin: FighterFollowOrigin,
+  p2Origin: FighterFollowOrigin,
 ): boolean {
   let any = false;
   for (const desc of lights) {
-    if (!lightSupportsFollow(desc.type)) continue;
-    if (desc.follow !== 'p1' && desc.follow !== 'p2') continue;
-    const logicX = desc.follow === 'p1' ? p1LogicX : p2LogicX;
-    const wx = fighterWorldX(logicX, worldScale);
-    const needPos =
+    if (!isLightFollowing(desc)) continue;
+    any = true;
+    const origin = desc.follow === 'p1' ? p1Origin : p2Origin;
+    const needPosX =
       desc.followOffsetPosX === undefined || !Number.isFinite(desc.followOffsetPosX);
-    const needTgt =
+    const needPosY =
+      desc.followOffsetPosY === undefined || !Number.isFinite(desc.followOffsetPosY);
+    const needTgtX =
       (desc.type === 'directional' || desc.type === 'spot') &&
       (desc.followOffsetTargetX === undefined ||
         !Number.isFinite(desc.followOffsetTargetX));
-    if (needPos || needTgt) {
-      captureLightFollowOffsets(desc, wx);
-    }
-    const ox = desc.followOffsetPosX!;
-    const nx = wx + ox;
-    let changed = desc.position.x !== nx;
-    desc.position.x = nx;
-    if (desc.type === 'directional' || desc.type === 'spot') {
-      const ot = desc.followOffsetTargetX ?? 0;
-      const ntx = wx + ot;
-      if (desc.target.x !== ntx) {
-        desc.target.x = ntx;
-        changed = true;
+    const needTgtY =
+      (desc.type === 'directional' || desc.type === 'spot') &&
+      (desc.followOffsetTargetY === undefined ||
+        !Number.isFinite(desc.followOffsetTargetY));
+    if (needPosX || needPosY || needTgtX || needTgtY) {
+      // Incomplete save: treat missing axes as still world and convert once.
+      // Already-local axes (with offsets) must not be subtracted again.
+      if (needPosX) desc.position.x -= origin.x;
+      if (needPosY) desc.position.y -= origin.y;
+      if (desc.type === 'directional' || desc.type === 'spot') {
+        if (needTgtX) desc.target.x -= origin.x;
+        if (needTgtY) desc.target.y -= origin.y;
       }
+      syncLegacyFollowOffsets(desc);
+    } else {
+      syncLegacyFollowOffsets(desc);
     }
-    if (changed) any = true;
   }
   return any;
 }
@@ -284,18 +438,48 @@ export const applyDirectionalLightFollow = applyLightFollow;
 export function enableLightFollow(
   desc: LightDesc,
   follow: LightFollowTarget,
-  p1LogicX: number,
-  p2LogicX: number,
-  worldScale: number,
+  p1Origin: FighterFollowOrigin,
+  p2Origin: FighterFollowOrigin,
 ): void {
   if (!lightSupportsFollow(desc.type)) {
     desc.follow = 'none';
+    clearLegacyFollowOffsets(desc);
     return;
   }
+  const prev: LightFollowTarget =
+    desc.follow === 'p1' || desc.follow === 'p2' ? desc.follow : 'none';
+  const originOf = (who: 'p1' | 'p2') => (who === 'p1' ? p1Origin : p2Origin);
+
+  if (prev !== 'none' && follow === 'none') {
+    const o = originOf(prev);
+    desc.position.x += o.x;
+    desc.position.y += o.y;
+    if (desc.type === 'directional' || desc.type === 'spot') {
+      desc.target.x += o.x;
+      desc.target.y += o.y;
+    }
+    desc.follow = 'none';
+    clearLegacyFollowOffsets(desc);
+    return;
+  }
+
+  if (prev === 'none' && (follow === 'p1' || follow === 'p2')) {
+    const o = originOf(follow);
+    desc.position.x -= o.x;
+    desc.position.y -= o.y;
+    if (desc.type === 'directional' || desc.type === 'spot') {
+      desc.target.x -= o.x;
+      desc.target.y -= o.y;
+    }
+    desc.follow = follow;
+    syncLegacyFollowOffsets(desc);
+    return;
+  }
+
   desc.follow = follow;
-  if (follow === 'none') return;
-  const logicX = follow === 'p1' ? p1LogicX : p2LogicX;
-  captureLightFollowOffsets(desc, fighterWorldX(logicX, worldScale));
+  if (follow === 'p1' || follow === 'p2') {
+    syncLegacyFollowOffsets(desc);
+  }
 }
 
 /** @deprecated use enableLightFollow */
@@ -304,7 +488,7 @@ export const enableDirectionalFollow = enableLightFollow;
 /** At most one directional castShadow; clamp enabled count. */
 export function enforceLightRules(
   lights: LightDesc[],
-  maxCount = 15,
+  maxCount = 30,
 ): LightDesc[] {
   const out = lights.map((l) => ({
     ...l,
@@ -313,11 +497,27 @@ export function enforceLightRules(
   }));
   let shadowOwner: string | null = null;
   for (const l of out) {
-    if (l.type === 'directional' && l.castShadow && l.enabled) {
-      if (shadowOwner == null) shadowOwner = l.id;
-      else l.castShadow = false;
-    } else if (l.type !== 'directional') {
+    if (l.type !== 'directional') {
       l.castShadow = false;
+      delete l.shadowOnly;
+      continue;
+    }
+    if (l.shadowOnly) {
+      l.castShadow = true;
+      if (l.follow === 'p1' || l.follow === 'p2') {
+        l.follow = 'none';
+        delete l.followOffsetPosX;
+        delete l.followOffsetTargetX;
+        delete l.followOffsetPosY;
+        delete l.followOffsetTargetY;
+      }
+    }
+    if (l.castShadow && l.enabled) {
+      if (shadowOwner == null) shadowOwner = l.id;
+      else {
+        l.castShadow = false;
+        l.shadowOnly = false;
+      }
     }
   }
   let ambient = 0;
@@ -430,7 +630,7 @@ export function stripFlatLightKeys(
 export function migrateFlatLightsToList(
   parsed: Record<string, unknown>,
 ): Record<string, unknown> {
-  const maxCount = num(parsed.lightMaxCount, 15);
+  const maxCount = num(parsed.lightMaxCount, 30);
   let lights: LightDesc[];
   if (Array.isArray(parsed.lights)) {
     const normalized = parsed.lights
@@ -462,7 +662,7 @@ export function migrateFlatLightsToList(
   if (typeof next.lightOrbitPipY !== 'number') next.lightOrbitPipY = 12;
   if (typeof next.lightOrbitPipWidth !== 'number') next.lightOrbitPipWidth = 320;
   if (typeof next.lightOrbitPipHeight !== 'number') next.lightOrbitPipHeight = 180;
-  if (typeof next.lightMaxCount !== 'number') next.lightMaxCount = 15;
+  if (typeof next.lightMaxCount !== 'number') next.lightMaxCount = 30;
   if (typeof next.lightUseDynamicLighting !== 'boolean') {
     next.lightUseDynamicLighting = true;
   }
@@ -493,6 +693,48 @@ export function newLightId(prefix = 'light'): string {
 }
 
 /**
+ * Clone all follow=p1 lights as follow=p2 with the **same** local offsets
+ * (parallel copy). Optional `mirrorX` flips local X for facing-symmetric setups.
+ */
+export function copyFollowLightsP1toP2(
+  lights: readonly LightDesc[],
+  opts: { mirrorX?: boolean; nameSuffix?: string } = {},
+): LightDesc[] {
+  const mirrorX = opts.mirrorX === true;
+  const nameSuffix = opts.nameSuffix ?? ' P2';
+  const out: LightDesc[] = [];
+  for (const src of lights) {
+    if (!lightSupportsFollow(src.type) || src.follow !== 'p1') continue;
+    const id = newLightId(src.type);
+    const mx = (v: number) => (mirrorX ? -v : v);
+    const copy: LightDesc = {
+      ...src,
+      id,
+      name: `${src.name}${nameSuffix}`,
+      castShadow: false,
+      shadowOnly: false,
+      follow: 'p2',
+      position: {
+        x: mx(src.position.x),
+        y: src.position.y,
+        z: src.position.z,
+      },
+      target: {
+        x:
+          src.type === 'directional' || src.type === 'spot'
+            ? mx(src.target.x)
+            : src.target.x,
+        y: src.target.y,
+        z: src.target.z,
+      },
+    };
+    syncLegacyFollowOffsets(copy);
+    out.push(copy);
+  }
+  return out;
+}
+
+/**
  * Duplicate a light for "复制为新灯":
  * - new unique id
  * - follow cleared (avoid stacking two selective lights on same offsets)
@@ -517,9 +759,12 @@ export function duplicateLightAsNew(src: LightDesc, nameSuffix = ' 副本'): Lig
       z: src.target.z,
     },
     castShadow: false,
+    shadowOnly: false,
     follow: 'none',
     followOffsetPosX: undefined,
     followOffsetTargetX: undefined,
+    followOffsetPosY: undefined,
+    followOffsetTargetY: undefined,
   };
 }
 

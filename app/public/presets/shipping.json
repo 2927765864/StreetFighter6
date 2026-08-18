@@ -253,7 +253,7 @@
     "lightSelectedId": "key",
     "lightHelpersVisible": true,
     "lightOrbitMode": false,
-    "lightMaxCount": 15,
+    "lightMaxCount": 30,
     "lightUseDynamicLighting": true,
     "shadowMapEnabled": true,
     "shadowMapSize": 2048,

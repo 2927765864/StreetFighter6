@@ -22,7 +22,11 @@ import {
   updateLightHelpers,
 } from './render/LightRig';
 import { createLightEditControls } from './render/LightEditControls';
-import { applyLightFollow } from './config/lightTypes';
+import {
+  applyLightFollow,
+  fighterFollowOriginFromLogic,
+  type FighterFollowOrigin,
+} from './config/lightTypes';
 import { applySelectiveLightNodes } from './render/LightSelective';
 import { DebugDraw } from './render/DebugDraw';
 import { DynamicLighting } from 'three/addons/lighting/DynamicLighting.js';
@@ -263,7 +267,25 @@ async function boot(): Promise<void> {
   };
 
   const lights = createLightRig(THREE, scene);
-  syncLightsFromConfig(THREE, scene, lights, cfg);
+  /** Logic-Y fallback until FighterViews exist; swapped to hips Y after load. */
+  const followOriginRef: {
+    get: (who: 'p1' | 'p2') => FighterFollowOrigin;
+  } = {
+    get: (who) => {
+      const f = who === 'p1' ? match.p1 : match.p2;
+      return fighterFollowOriginFromLogic(
+        f.x,
+        f.y,
+        cfg.worldScale,
+        cfg.modelYOffset,
+      );
+    },
+  };
+  const fighterFollowOrigins = () => ({
+    p1: followOriginRef.get('p1'),
+    p2: followOriginRef.get('p2'),
+  });
+  syncLightsFromConfig(THREE, scene, lights, cfg, fighterFollowOrigins());
   applyEnvironment(THREE, scene, cfg);
 
   const orbit = new OrbitControls(camera, renderer.domElement);
@@ -298,7 +320,7 @@ async function boot(): Promise<void> {
         updateLightHelpers(lights);
         refreshLightPanel?.();
       },
-      getFighterLogicX: (who) => (who === 'p1' ? match.p1.x : match.p2.x),
+      getFighterFollowOrigin: (who) => followOriginRef.get(who),
     },
   );
   lightEdit.attachSelected();
@@ -309,7 +331,7 @@ async function boot(): Promise<void> {
   const refreshLighting = () => {
     renderer.shadowMap.enabled = cfg.shadowMapEnabled;
     // 1) create/update Three lights  2) then bind material.lightsNode lists
-    syncLightsFromConfig(THREE, scene, lights, cfg);
+    syncLightsFromConfig(THREE, scene, lights, cfg, fighterFollowOrigins());
     applyEnvironment(THREE, scene, cfg);
     refreshSelectiveLights();
     // Second bind next frame: WebGPU + DynamicLighting sometimes miss brand-new lights
@@ -376,6 +398,15 @@ async function boot(): Promise<void> {
 
   const p1View = new FighterView(scene, 0x4a90d9);
   const p2View = new FighterView(scene, 0xd94a4a);
+  // Prefer hips world Y so crouch animation and jump both drive follow lights.
+  followOriginRef.get = (who) => {
+    const f = who === 'p1' ? match.p1 : match.p2;
+    const view = who === 'p1' ? p1View : p2View;
+    return {
+      x: f.x * cfg.worldScale,
+      y: view.getLightFollowAnchorY(),
+    };
+  };
 
   async function loadFighters(): Promise<void> {
     /**
@@ -540,6 +571,8 @@ async function boot(): Promise<void> {
       await reloadMoveFromPublic(match);
     },
     p1View,
+    p2View,
+    getLightFollowOrigin: (who: 'p1' | 'p2') => followOriginRef.get(who),
   };
   const panelApi = setupControlPanel(match, clock, hooks, {
     onChange: (key) => {
@@ -618,17 +651,6 @@ async function boot(): Promise<void> {
       }
     }
 
-    // Follow P1/P2 (dir / point / spot): slide X with fighter, keep relative.
-    // Skip while gizmo-dragging so offsets recapture from free move.
-    if (!lightDragActive) {
-      if (
-        applyLightFollow(cfg.lights, match.p1.x, match.p2.x, cfg.worldScale)
-      ) {
-        applyLightTransformsFromConfig(lights, cfg);
-      }
-    }
-    updateLightHelpers(lights);
-
     const fullW = window.innerWidth;
     const fullH = window.innerHeight;
     const fightPose = cameraRig.update(
@@ -680,6 +702,16 @@ async function boot(): Promise<void> {
     // Do NOT use fixed 1/60 per rAF — that doubles speed at 120fps.
     p1View.syncFromLogic(match.p1, cfg, wallDt);
     p2View.syncFromLogic(match.p2, cfg, wallDt);
+
+    // Follow after fighter sync so hips Y (jump + crouch) is current.
+    if (!lightDragActive) {
+      const origins = fighterFollowOrigins();
+      if (applyLightFollow(cfg.lights, origins.p1, origins.p2)) {
+        applyLightTransformsFromConfig(lights, cfg, origins);
+      }
+    }
+    updateLightHelpers(lights);
+
     debugDraw.update(match, cfg);
     hud.update(match, clock, cfg);
 

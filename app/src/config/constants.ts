@@ -234,7 +234,7 @@ export function createDefaultSimConfig(): MutableSimConfig {
     lightOrbitPipY: 12,
     lightOrbitPipWidth: 320,
     lightOrbitPipHeight: 180,
-    lightMaxCount: 15,
+    lightMaxCount: 30,
     lightUseDynamicLighting: true,
     shadowMapEnabled: true,
     shadowMapSize: 2048,

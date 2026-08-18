@@ -9,8 +9,8 @@ import { TransformControls } from 'three/addons/controls/TransformControls.js';
 import type { MutableSimConfig } from '../config/constants';
 import {
   captureLightFollowOffsets,
-  fighterWorldX,
-  lightSupportsFollow,
+  isLightFollowing,
+  type FighterFollowOrigin,
   type LightDesc,
 } from '../config/lightTypes';
 import type { LightRig } from './LightRig';
@@ -73,8 +73,8 @@ export function createLightEditControls(
       kind: 'position' | 'target';
       dragging: boolean;
     }) => void;
-    /** Fighter logic X for recapturing directional follow offsets after gizmo. */
-    getFighterLogicX?: (who: 'p1' | 'p2') => number;
+    /** World follow origin (logic X + hips/logic Y) for world→local writeback. */
+    getFighterFollowOrigin?: (who: 'p1' | 'p2') => FighterFollowOrigin;
   } = {},
 ): LightEditControls {
   void THREE;
@@ -93,8 +93,10 @@ export function createLightEditControls(
     if (!resolved) return;
     const { desc, kind } = resolved;
 
-    // TransformControls writes object.local position (parent = LightRig group @ origin).
-    if (kind === 'target' || mode === 'target') {
+    // TransformControls writes world position (LightRig group @ origin).
+    const editKind: 'position' | 'target' =
+      kind === 'target' || mode === 'target' ? 'target' : 'position';
+    if (editKind === 'target') {
       desc.target.x = obj.position.x;
       desc.target.y = obj.position.y;
       desc.target.z = obj.position.z;
@@ -104,22 +106,15 @@ export function createLightEditControls(
       desc.position.z = obj.position.z;
     }
 
-    // Keep follow offsets so next frame still tracks fighter with same relative X.
-    if (
-      lightSupportsFollow(desc.type) &&
-      (desc.follow === 'p1' || desc.follow === 'p2') &&
-      opts.getFighterLogicX
-    ) {
-      const wx = fighterWorldX(
-        opts.getFighterLogicX(desc.follow),
-        cfg.worldScale,
-      );
-      captureLightFollowOffsets(desc, wx);
+    // Follow lights store character-local offsets — convert only the edited part.
+    if (isLightFollowing(desc) && opts.getFighterFollowOrigin) {
+      const who = desc.follow as 'p1' | 'p2';
+      captureLightFollowOffsets(desc, opts.getFighterFollowOrigin(who), editKind);
     }
 
     opts.onLightsChanged?.({
       lightId: desc.id,
-      kind: kind === 'target' || mode === 'target' ? 'target' : 'position',
+      kind: editKind,
       dragging,
     });
   };

@@ -65,6 +65,44 @@ describe('bucketLightsByFollow', () => {
     expect(b.p1).toHaveLength(1);
     expect(b.p2).toHaveLength(1);
   });
+
+  it('excludes shadowOnly lights from illumination buckets', () => {
+    const rig = rigWith(['key', 'shade']);
+    const shade: LightDesc = {
+      ...desc('shade', 'none'),
+      type: 'directional',
+      castShadow: true,
+      shadowOnly: true,
+    };
+    const b = bucketLightsByFollow([desc('key', 'none'), shade], rig);
+    expect(b.global).toHaveLength(1);
+    expect(b.p1).toHaveLength(0);
+    expect(b.p2).toHaveLength(0);
+  });
+});
+
+describe('normalize shadowOnly', () => {
+  it('forces castShadow and clears follow', async () => {
+    const { normalizeLightDesc } = await import('../../src/config/lightTypes');
+    const n = normalizeLightDesc({
+      id: 's',
+      name: 'shade',
+      type: 'directional',
+      enabled: true,
+      color: 0xffffff,
+      intensity: 1,
+      position: { x: 0, y: 10, z: 4 },
+      target: { x: 0, y: 0, z: 0 },
+      castShadow: false,
+      shadowOnly: true,
+      follow: 'p1',
+      followOffsetPosX: 1,
+    });
+    expect(n).not.toBeNull();
+    expect(n!.shadowOnly).toBe(true);
+    expect(n!.castShadow).toBe(true);
+    expect(n!.follow).toBe('none');
+  });
 });
 
 describe('isHairLightingMesh', () => {

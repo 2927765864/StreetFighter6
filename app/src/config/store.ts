@@ -61,7 +61,7 @@ export function mergeConfig(
       if (normalized.length > 0) {
         out.lights = enforceLightRules(
           normalized,
-          typeof out.lightMaxCount === 'number' ? out.lightMaxCount : 15,
+          typeof out.lightMaxCount === 'number' ? out.lightMaxCount : 30,
         );
       }
       continue;

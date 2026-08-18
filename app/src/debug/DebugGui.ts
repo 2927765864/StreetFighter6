@@ -262,7 +262,7 @@ export function createDebugGui(
   light.add(cfg, 'shadowBias', -0.01, 0.01, 0.0001).name('阴影 bias');
   light.add(cfg, 'shadowNormalBias', 0, 0.2, 0.001).name('阴影 normalBias');
   light.add(cfg, 'shadowRadius', 0, 8, 0.1).name('阴影 radius');
-  light.add(cfg, 'lightMaxCount', 5, 15, 1).name('灯数量上限');
+  light.add(cfg, 'lightMaxCount', 5, 30, 1).name('灯数量上限');
   light.addColor(cfg, 'fogColor').name('雾色');
   light.add(cfg, 'fogNear', 1, 200, 1).name('雾近');
   light.add(cfg, 'fogFar', 10, 400, 1).name('雾远');
