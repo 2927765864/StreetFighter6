@@ -1348,33 +1348,44 @@ export class FighterView {
       return;
     }
 
-    // Jump: prejump/air hard-cut; land may dissolve from attack residual (§3.13.5)
+    // Jump: prejump/air hard-cut; land may dissolve from attack residual (§3.13.5).
+    // §3.13.7 neutral land snap: phase may stay `landing` while clip is idle/turn — fall through.
+    const landingOnLandClip =
+      fighter.phase === 'landing' &&
+      !fighter.turning &&
+      fighter.animRole === 'land';
     if (
       fighter.phase === 'prejump' ||
       fighter.phase === 'airborne' ||
-      fighter.phase === 'landing'
+      landingOnLandClip
     ) {
       const jumpFade =
-        fighter.phase === 'landing' && role === 'land' ? fadePolicy : HARD_CUT;
+        landingOnLandClip && role === 'land' ? fadePolicy : HARD_CUT;
       this.playBest(fighter.clipId, role, jumpFade);
       const action = this.resolveAction(fighter.clipId, role);
       if (action && this.mixer) {
-        const landVisual =
-          cfg.landingAnimFrames > cfg.landingFrames
-            ? cfg.landingAnimFrames
-            : cfg.landingFrames;
-        const mapTotal =
-          this.logicMap?.frameCountForRole(fighter.clipId, role) ??
-          (fighter.phase === 'prejump'
-            ? cfg.prejumpFrames
-            : fighter.phase === 'landing'
-              ? landVisual
-              : cfg.airFrames);
-        if (this.poseBlend && this.poseBlend.to === action) {
-          const w = this.stepPoseBlend(wallDtSec);
-          scrubTo(action, fighter.jumpFrame, mapTotal, w, true);
+        // Land clip: same 60Hz prefix as land residual tail (avoid uniform stretch + rewind).
+        if (landingOnLandClip) {
+          const t = visualFrameToClipTime(
+            fighter.jumpFrame,
+            action.getClip().duration,
+          );
+          if (this.poseBlend && this.poseBlend.to === action) {
+            const w = this.stepPoseBlend(wallDtSec);
+            this.scrubActionTo(action, t, w, true);
+          } else {
+            this.scrubActionTo(action, t);
+          }
         } else {
-          scrubTo(action, fighter.jumpFrame, mapTotal);
+          const mapTotal =
+            this.logicMap?.frameCountForRole(fighter.clipId, role) ??
+            (fighter.phase === 'prejump' ? cfg.prejumpFrames : cfg.airFrames);
+          if (this.poseBlend && this.poseBlend.to === action) {
+            const w = this.stepPoseBlend(wallDtSec);
+            scrubTo(action, fighter.jumpFrame, mapTotal, w, true);
+          } else {
+            scrubTo(action, fighter.jumpFrame, mapTotal);
+          }
         }
       }
       this.maybePlantAfterPose(fighter, cfg, wallDtSec);

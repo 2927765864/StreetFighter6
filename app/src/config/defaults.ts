@@ -11,6 +11,8 @@ export function defaultExpandedSections(): ExpandedSections {
     guardPush: true,
     locomotion: true,
     renderBoxes: true,
+    camera: true,
+    lighting: true,
     animDrive: false,
     commandProbe: false,
     moveEdit: false,

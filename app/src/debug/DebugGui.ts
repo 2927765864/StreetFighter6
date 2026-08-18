@@ -225,9 +225,49 @@ export function createDebugGui(
   render.add(cfg, 'worldScale', 0.01, 10, 0.01).name('世界缩放');
   render.add(cfg, 'modelScale', 0.01, 10, 0.01).name('模型缩放');
   render.add(cfg, 'modelYOffset', -2, 2, 0.01).name('模型 Y 偏移');
-  render.add(cfg, 'cameraZ', 1, 20, 0.1).name('相机 Z');
-  render.add(cfg, 'cameraY', 0, 5, 0.05).name('相机 Y');
+  render.add(cfg, 'stageFitWidth', 0, 40, 0.1).name('拟合宽度');
+  render.add(cfg, 'stageOriginX', -10, 10, 0.01).name('舞台原点 X');
+  render.add(cfg, 'stageOriginZ', -10, 10, 0.01).name('舞台原点 Z');
+  render.add(cfg, 'showFallbackGround').name('显示垫底地面');
+  render.add(cfg, 'showDebugGrid').name('显示调试网格');
+  render.add(cfg, 'showAxes').name('显示坐标轴');
   render.add(cfg, 'timeScaleAnim', 0, 2, 0.05).name('动画时间倍率');
+
+  const camera = gui.addFolder('摄影机');
+  camera.add(cfg, 'cameraZ', 1, 30, 0.1).name('相机距离 Z');
+  camera.add(cfg, 'cameraY', 0, 5, 0.05).name('相机高度 Y');
+  camera.add(cfg, 'cameraLookY', 0, 3, 0.05).name('看点高度');
+  camera.add(cfg, 'cameraFov', 20, 70, 0.5).name('视野 FOV');
+  camera.add(cfg, 'cameraZoomEnabled').name('开启间距变焦');
+  camera.add(cfg, 'cameraZoomSepK', 0, 3, 0.01).name('变焦系数');
+  camera.add(cfg, 'cameraZMax', 1, 40, 0.1).name('变焦最远');
+  camera.add(cfg, 'cameraNdcPad', 0, 0.3, 0.01).name('画面边距');
+  camera.add(cfg, 'cameraLerp', 0, 1, 0.01).name('镜头跟随平滑');
+  camera.add(cfg, 'cameraFollowDeadzone', 0, 2, 0.01).name('镜头跟随死区');
+  camera.add(cfg, 'cameraNear', 0.01, 1, 0.01).name('近裁');
+  camera.add(cfg, 'cameraFar', 50, 2000, 10).name('远裁');
+
+  const light = gui.addFolder('打光');
+  light.add(cfg, 'lightHelpersVisible').name('显示灯光辅助');
+  light.add(cfg, 'lightOrbitMode').name('摆灯自由视角');
+  light.add(cfg, 'lightOrbitPipX', 0, 800, 1).name('预览窗左边距');
+  light.add(cfg, 'lightOrbitPipY', 0, 800, 1).name('预览窗底边距');
+  light.add(cfg, 'lightOrbitPipWidth', 120, 960, 1).name('预览窗宽度');
+  light.add(cfg, 'lightOrbitPipHeight', 80, 540, 1).name('预览窗高度');
+  light.add(cfg, 'shadowMapEnabled').name('启用阴影');
+  light.add(cfg, 'shadowMapSize', 256, 4096, 256).name('阴影贴图边长');
+  light.add(cfg, 'shadowCameraExtent', 5, 80, 0.5).name('阴影范围');
+  light.add(cfg, 'shadowCameraNear', 0.01, 10, 0.01).name('阴影近裁');
+  light.add(cfg, 'shadowCameraFar', 10, 200, 1).name('阴影远裁');
+  light.add(cfg, 'shadowBias', -0.01, 0.01, 0.0001).name('阴影 bias');
+  light.add(cfg, 'shadowNormalBias', 0, 0.2, 0.001).name('阴影 normalBias');
+  light.add(cfg, 'shadowRadius', 0, 8, 0.1).name('阴影 radius');
+  light.add(cfg, 'lightMaxCount', 5, 15, 1).name('灯数量上限');
+  light.addColor(cfg, 'fogColor').name('雾色');
+  light.add(cfg, 'fogNear', 1, 200, 1).name('雾近');
+  light.add(cfg, 'fogFar', 10, 400, 1).name('雾远');
+  light.addColor(cfg, 'bgColor').name('背景色');
+  // Per-light list editing: primary UI is ControlPanel「打光」.
 
   const art = gui.addFolder('角色外观');
   const applyArt = () => applyArtConfigToViews(hooks.p1View, cfg);
@@ -460,6 +500,10 @@ export function createDebugGui(
   moveStateFolder
     .add(cfg, 'landingFrames', 1, 15, 1)
     .name('落地硬直(f)')
+    .onChange(syncOpts);
+  moveStateFolder
+    .add(cfg, 'neutralLandDissolveRatio', 0, 1, 0.01)
+    .name('中立落地溶图起点比例')
     .onChange(syncOpts);
   moveStateFolder
     .add(cfg, 'jumpApex', 0.5, 4, 0.01)

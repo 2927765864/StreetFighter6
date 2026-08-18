@@ -161,7 +161,8 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.02);
-  overflow: hidden;
+  /* visible: nested light cards expand; scroll lives on #panel-content */
+  overflow: visible;
 }
 .section-header {
   display: flex;
@@ -218,6 +219,151 @@
   color: #eef2fa;
   padding: 5px 7px;
   font: inherit;
+}
+.panel-row input[type='color'],
+.light-card input[type='color'] {
+  width: 40px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.light-color-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.light-color-row .panel-row-header {
+  margin: 0;
+  flex: 1;
+}
+.light-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 10px;
+}
+.light-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  /* No nested max-height: expanded cards scroll with #panel-content */
+  overflow: visible;
+  padding-bottom: 12px;
+}
+.light-card {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(10, 14, 22, 0.9);
+  overflow: visible;
+  flex-shrink: 0;
+}
+.light-card.is-selected {
+  border-color: rgba(100, 170, 255, 0.55);
+  box-shadow: 0 0 0 1px rgba(80, 140, 220, 0.25);
+}
+.light-card > summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  user-select: none;
+  background: rgba(28, 36, 54, 0.85);
+  border-radius: 8px 8px 0 0;
+}
+.light-card:not([open]) > summary {
+  border-radius: 8px;
+}
+.light-card > summary::-webkit-details-marker {
+  display: none;
+}
+.light-card-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  flex-shrink: 0;
+}
+.light-card-title {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  color: #e8eef8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.light-card-type {
+  color: #8b95a8;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+.light-card-body {
+  padding: 8px 10px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: visible;
+}
+.light-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 4px;
+}
+.light-card-actions button {
+  font-size: 11px;
+  padding: 4px 8px;
+}
+.light-field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+  margin: 6px 0;
+}
+.light-field-grid label,
+.light-card-body label.light-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  color: #9aa6bc;
+  font-size: 11px;
+  margin: 4px 0 6px;
+  min-width: 0;
+}
+.light-card-body label.light-field input[type='number'],
+.light-field-grid label input[type='number'] {
+  width: 100%;
+  min-height: 28px;
+  box-sizing: border-box;
+  background: #0c1018;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 4px;
+  color: #eef2fa;
+  padding: 5px 7px;
+  font: inherit;
+  cursor: ew-resize;
+}
+.light-card-body label.light-field input[type='number'].is-scrubbing,
+.light-field-grid label input[type='number'].is-scrubbing {
+  cursor: ew-resize;
+  border-color: rgba(100, 170, 255, 0.65);
+  background: #121a2a;
+}
+.light-card-body .light-field-full {
+  grid-column: 1 / -1;
+}
+.light-inline-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+  color: #b8c2d4;
 }
 .panel-row input[type='number'].is-scrubbing {
   cursor: ew-resize;

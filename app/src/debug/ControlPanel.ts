@@ -15,8 +15,21 @@ import {
   saveCurrentConfig,
   saveNamedPreset,
 } from '../config/persist';
+import {
+  captureLightFollowOffsets,
+  createLightByType,
+  duplicateLightAsNew,
+  enableLightFollow,
+  enforceLightRules,
+  fighterWorldX,
+  lightSupportsFollow,
+  newLightId,
+  type LightDesc,
+  type LightFollowTarget,
+  type LightType,
+} from '../config/lightTypes';
 import type { DummyMode } from '../combat/types';
-import { attachDragScrubAll } from './dragScrub';
+import { attachDragScrub, attachDragScrubAll } from './dragScrub';
 import {
   fetchRyuAnimCatalog,
   type AnimCatalogCategory,
@@ -30,6 +43,11 @@ export type ControlPanelHooks = {
   stepOnce: () => void;
   reloadMoveJson: () => Promise<void>;
   p1View?: FighterView;
+};
+
+export type LightEditPanelHooks = {
+  setGizmoMode: (mode: 'position' | 'target') => void;
+  reattach: () => void;
 };
 
 export type ControlPanelApi = {
@@ -368,6 +386,7 @@ function buildDom(): HTMLElement {
           ${rowNumber('prejumpFrames', 'Prejump (f)', 1, 10, 1)}
           ${rowNumber('airFrames', '滞空 (f)', 5, 60, 1)}
           ${rowNumber('landingFrames', '落地硬直 (f)', 1, 15, 1)}
+          ${rowNumber('neutralLandDissolveRatio', '中立落地溶图起点比例', 0, 1, 0.01)}
           ${rowNumber('jumpApex', '跳顶点高', 0.5, 4, 0.01)}
           ${rowNumber('jumpFwdDist', '前跳距', 0, 4, 0.01)}
           ${rowNumber('jumpBackDist', '后跳距', 0, 4, 0.01)}
@@ -394,7 +413,7 @@ function buildDom(): HTMLElement {
         <summary>渲染</summary>
         ${sectionShell(
           'renderBoxes',
-          '【渲染】相机 / 模型 / 框',
+          '【渲染】模型 / 框 / 舞台',
           `
           ${rowToggle('showHitboxes', '显示攻击框')}
           ${rowToggle('showHurtboxes', '显示受击框')}
@@ -403,11 +422,90 @@ function buildDom(): HTMLElement {
           ${rowNumber('worldScale', '世界缩放', 0.01, 10, 0.01)}
           ${rowNumber('modelScale', '模型缩放', 0.01, 10, 0.01)}
           ${rowNumber('modelYOffset', '模型 Y 偏移', -2, 2, 0.01)}
-          ${rowNumber('cameraZ', '相机 Z', 1, 20, 0.1)}
-          ${rowNumber('cameraY', '相机 Y', 0, 5, 0.05)}
+          ${rowNumber('stageFitWidth', '拟合宽度', 0, 40, 0.1)}
+          ${rowNumber('stageOriginX', '舞台原点 X', -10, 10, 0.01)}
+          ${rowNumber('stageOriginZ', '舞台原点 Z', -10, 10, 0.01)}
+          ${rowToggle('showFallbackGround', '显示垫底地面')}
+          ${rowToggle('showDebugGrid', '显示调试网格')}
+          ${rowToggle('showAxes', '显示坐标轴')}
           ${rowNumber('timeScaleAnim', '动画时间倍率', 0, 2, 0.05)}
           `,
           'expandRenderBoxes',
+        )}
+      </details>
+
+      <details class="panel-group" data-cat="摄影机">
+        <summary>摄影机</summary>
+        ${sectionShell(
+          'camera',
+          '【摄影机】平时对打镜头',
+          `
+          ${rowNumber('cameraZ', '相机距离 Z', 1, 30, 0.1)}
+          ${rowNumber('cameraY', '相机高度 Y', 0, 5, 0.05)}
+          ${rowNumber('cameraLookY', '看点高度', 0, 3, 0.05)}
+          ${rowNumber('cameraFov', '视野 FOV', 20, 70, 0.5)}
+          ${rowToggle('cameraZoomEnabled', '开启间距变焦')}
+          ${rowNumber('cameraZoomSepK', '变焦系数', 0, 3, 0.01)}
+          ${rowNumber('cameraZMax', '变焦最远', 1, 40, 0.1)}
+          ${rowNumber('cameraNdcPad', '画面边距', 0, 0.3, 0.01)}
+          ${rowNumber('cameraLerp', '镜头跟随平滑', 0, 1, 0.01)}
+          ${rowNumber('cameraFollowDeadzone', '镜头跟随死区', 0, 2, 0.01)}
+          ${rowNumber('cameraNear', '近裁', 0.01, 1, 0.01)}
+          ${rowNumber('cameraFar', '远裁', 50, 2000, 10)}
+          `,
+          'expandCamera',
+        )}
+      </details>
+
+      <details class="panel-group" data-cat="打光">
+        <summary>打光</summary>
+        ${sectionShell(
+          'lighting',
+          '【打光】全局与各灯卡片',
+          `
+          ${rowToggle('lightHelpersVisible', '显示灯光辅助')}
+          ${rowToggle('lightOrbitMode', '摆灯自由视角')}
+          ${rowNumber('lightOrbitPipX', '预览窗左边距 (px)', 0, 800, 1)}
+          ${rowNumber('lightOrbitPipY', '预览窗底边距 (px)', 0, 800, 1)}
+          ${rowNumber('lightOrbitPipWidth', '预览窗宽度 (px)', 120, 960, 1)}
+          ${rowNumber('lightOrbitPipHeight', '预览窗高度 (px)', 80, 540, 1)}
+          ${rowToggle('shadowMapEnabled', '启用阴影总开关')}
+          ${rowNumber('shadowMapSize', '阴影贴图边长', 256, 4096, 256)}
+          ${rowNumber('shadowCameraExtent', '阴影范围 extent', 5, 80, 0.5)}
+          ${rowNumber('shadowCameraNear', '阴影近裁', 0.01, 10, 0.01)}
+          ${rowNumber('shadowCameraFar', '阴影远裁', 10, 200, 1)}
+          ${rowNumber('shadowBias', '阴影 bias', -0.01, 0.01, 0.0001)}
+          ${rowNumber('shadowNormalBias', '阴影 normalBias', 0, 0.2, 0.001)}
+          ${rowNumber('shadowRadius', '阴影 radius', 0, 8, 0.1)}
+          <div class="panel-row light-color-row">
+            <div class="panel-row-header"><span>背景色</span></div>
+            <input id="inp-bgColorPicker" type="color" title="背景色" />
+          </div>
+          <div class="panel-row light-color-row">
+            <div class="panel-row-header"><span>雾色</span></div>
+            <input id="inp-fogColorPicker" type="color" title="雾色" />
+          </div>
+          ${rowNumber('fogNear', '雾近', 1, 200, 1)}
+          ${rowNumber('fogFar', '雾远', 10, 400, 1)}
+          ${rowNumber('lightMaxCount', '灯数量上限', 5, 15, 1)}
+          <div class="panel-row">
+            <div class="panel-row-header"><span>Gizmo 模式</span></div>
+            <select id="sel-lightGizmoMode">
+              <option value="position">位置</option>
+              <option value="target">目标点</option>
+            </select>
+          </div>
+          <div class="light-toolbar">
+            <button type="button" id="btn-lightAddDir">+ 方向光</button>
+            <button type="button" id="btn-lightAddPoint">+ 点光</button>
+            <button type="button" id="btn-lightAddSpot">+ 聚光</button>
+            <button type="button" id="btn-lightAddAmbient">+ 环境光</button>
+            <button type="button" id="btn-lightAddHemi">+ 半球光</button>
+            <button type="button" id="btn-lightPaste">粘贴灯</button>
+          </div>
+          <div id="light-cards" class="light-cards"></div>
+          `,
+          'expandLighting',
         )}
       </details>
 
@@ -576,6 +674,7 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'prejumpFrames', path: 'prejumpFrames' },
   { id: 'airFrames', path: 'airFrames' },
   { id: 'landingFrames', path: 'landingFrames' },
+  { id: 'neutralLandDissolveRatio', path: 'neutralLandDissolveRatio' },
   { id: 'jumpApex', path: 'jumpApex' },
   { id: 'jumpFwdDist', path: 'jumpFwdDist' },
   { id: 'jumpBackDist', path: 'jumpBackDist' },
@@ -594,6 +693,39 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'modelYOffset', path: 'modelYOffset' },
   { id: 'cameraZ', path: 'cameraZ' },
   { id: 'cameraY', path: 'cameraY' },
+  { id: 'cameraLookY', path: 'cameraLookY' },
+  { id: 'cameraFov', path: 'cameraFov' },
+  { id: 'cameraZoomEnabled', path: 'cameraZoomEnabled' },
+  { id: 'cameraZoomSepK', path: 'cameraZoomSepK' },
+  { id: 'cameraZMax', path: 'cameraZMax' },
+  { id: 'cameraNdcPad', path: 'cameraNdcPad' },
+  { id: 'cameraLerp', path: 'cameraLerp' },
+  { id: 'cameraFollowDeadzone', path: 'cameraFollowDeadzone' },
+  { id: 'cameraNear', path: 'cameraNear' },
+  { id: 'cameraFar', path: 'cameraFar' },
+  { id: 'stageFitWidth', path: 'stageFitWidth' },
+  { id: 'stageOriginX', path: 'stageOriginX' },
+  { id: 'stageOriginZ', path: 'stageOriginZ' },
+  { id: 'showFallbackGround', path: 'showFallbackGround' },
+  { id: 'showDebugGrid', path: 'showDebugGrid' },
+  { id: 'showAxes', path: 'showAxes' },
+  { id: 'lightHelpersVisible', path: 'lightHelpersVisible' },
+  { id: 'lightOrbitMode', path: 'lightOrbitMode' },
+  { id: 'lightOrbitPipX', path: 'lightOrbitPipX' },
+  { id: 'lightOrbitPipY', path: 'lightOrbitPipY' },
+  { id: 'lightOrbitPipWidth', path: 'lightOrbitPipWidth' },
+  { id: 'lightOrbitPipHeight', path: 'lightOrbitPipHeight' },
+  { id: 'shadowMapEnabled', path: 'shadowMapEnabled' },
+  { id: 'shadowMapSize', path: 'shadowMapSize' },
+  { id: 'shadowCameraExtent', path: 'shadowCameraExtent' },
+  { id: 'shadowCameraNear', path: 'shadowCameraNear' },
+  { id: 'shadowCameraFar', path: 'shadowCameraFar' },
+  { id: 'shadowBias', path: 'shadowBias' },
+  { id: 'shadowNormalBias', path: 'shadowNormalBias' },
+  { id: 'shadowRadius', path: 'shadowRadius' },
+  { id: 'fogNear', path: 'fogNear' },
+  { id: 'fogFar', path: 'fogFar' },
+  { id: 'lightMaxCount', path: 'lightMaxCount' },
   { id: 'timeScaleAnim', path: 'timeScaleAnim' },
   { id: 'scrubFromLogic', path: 'scrubFromLogic' },
   { id: 'footPlantEnabled', path: 'footPlantEnabled' },
@@ -625,13 +757,22 @@ const TOGGLE_IDS = new Set([
   'footPlantEnabled',
   'rootPoseLockAttack',
   'showFootDebug',
+  'cameraZoomEnabled',
+  'showFallbackGround',
+  'showDebugGrid',
+  'showAxes',
+  'lightHelpersVisible',
+  'lightOrbitMode',
+  'shadowMapEnabled',
+  'lightEnabled',
+  'lightCastShadow',
 ]);
 
 export function setupControlPanel(
   match: MatchSim,
   clock: FrameClock,
   hooks: ControlPanelHooks,
-  opts?: { onChange?: OnChange },
+  opts?: { onChange?: OnChange; lightEdit?: LightEditPanelHooks },
 ): ControlPanelApi {
   const host = buildDom();
   const panel = byId<HTMLElement>(host, 'control-panel');
@@ -639,6 +780,7 @@ export function setupControlPanel(
   const flashEl = byId<HTMLElement>(host, 'panel-flash');
   const syncers: Array<() => void> = [];
   const userOnChange = opts?.onChange;
+  const lightEditHooks = opts?.lightEdit;
 
   const setFlash = (msg: string) => {
     flashEl.textContent = msg;
@@ -652,6 +794,44 @@ export function setupControlPanel(
   const PURE_VIEW_KEYS = new Set([
     'cameraZ',
     'cameraY',
+    'cameraLookY',
+    'cameraFov',
+    'cameraZoomEnabled',
+    'cameraZoomSepK',
+    'cameraZMax',
+    'cameraNdcPad',
+    'cameraLerp',
+    'cameraFollowDeadzone',
+    'cameraNear',
+    'cameraFar',
+    'stageFitWidth',
+    'stageOriginX',
+    'stageOriginZ',
+    'showFallbackGround',
+    'showDebugGrid',
+    'showAxes',
+    'lights',
+    'lightSelectedId',
+    'lightHelpersVisible',
+    'lightOrbitMode',
+    'lightOrbitPipX',
+    'lightOrbitPipY',
+    'lightOrbitPipWidth',
+    'lightOrbitPipHeight',
+    'lightMaxCount',
+    'lightUseDynamicLighting',
+    'shadowMapEnabled',
+    'shadowMapSize',
+    'shadowCameraExtent',
+    'shadowCameraNear',
+    'shadowCameraFar',
+    'shadowBias',
+    'shadowNormalBias',
+    'shadowRadius',
+    'fogColor',
+    'fogNear',
+    'fogFar',
+    'bgColor',
     'modelScale',
     'modelYOffset',
     'worldScale',
@@ -739,6 +919,8 @@ export function setupControlPanel(
     ['expandGuardPush', 'guardPush', 'sect-guardPush'],
     ['expandLocomotion', 'locomotion', 'sect-locomotion'],
     ['expandRenderBoxes', 'renderBoxes', 'sect-renderBoxes'],
+    ['expandCamera', 'camera', 'sect-camera'],
+    ['expandLighting', 'lighting', 'sect-lighting'],
     ['expandAnimDrive', 'animDrive', 'sect-animDrive'],
     ['expandAnimTest', 'animTest', 'sect-animTest'],
     ['expandCommandProbe', 'commandProbe', 'sect-commandProbe'],
@@ -780,6 +962,668 @@ export function setupControlPanel(
   bindSelect(ctx, 'sel-scrubMode', 'scrubMode');
   bindSelect(ctx, 'sel-plantMode', 'plantMode');
   bindSelect(ctx, 'sel-crossfadeAdvanceMode', 'crossfadeAdvanceMode');
+
+  // --- Lights: accordion cards (all lights visible) ---
+  const TYPE_LABEL: Record<LightType, string> = {
+    ambient: '环境光',
+    hemisphere: '半球光',
+    directional: '方向光',
+    point: '点光',
+    spot: '聚光',
+  };
+
+  const hexToColorInput = (n: number): string =>
+    `#${(n >>> 0).toString(16).padStart(6, '0').slice(-6)}`;
+  const colorInputToHex = (s: string): number => {
+    const t = s.replace('#', '');
+    const v = Number.parseInt(t, 16);
+    return Number.isFinite(v) ? v & 0xffffff : 0xffffff;
+  };
+
+  let lightClipboard: LightDesc | null = null;
+  /** Remember which cards were open across rebuilds. */
+  const lightCardOpen = new Map<string, boolean>();
+  const lightCardsHost = byId<HTMLElement>(host, 'light-cards');
+  const gizmoModeSel = byId<HTMLSelectElement>(host, 'sel-lightGizmoMode');
+  const bgColorPicker = byId<HTMLInputElement>(host, 'inp-bgColorPicker');
+  const fogColorPicker = byId<HTMLInputElement>(host, 'inp-fogColorPicker');
+
+  const findLight = (id: string) => CONFIG.lights.find((l) => l.id === id);
+
+  const cloneLightDesc = (l: LightDesc, opts?: { newId?: boolean; nameSuffix?: string }): LightDesc => ({
+    ...l,
+    id: opts?.newId ? newLightId(l.type) : l.id,
+    name: opts?.nameSuffix ? `${l.name}${opts.nameSuffix}` : l.name,
+    position: { ...l.position },
+    target: { ...l.target },
+    castShadow: false,
+    follow: lightSupportsFollow(l.type) ? (l.follow ?? 'none') : 'none',
+    followOffsetPosX: l.followOffsetPosX,
+    followOffsetTargetX: l.followOffsetTargetX,
+  });
+
+  const recaptureFollowOffsetsFor = (ids: Iterable<string>) => {
+    const want = new Set(ids);
+    for (const l of CONFIG.lights) {
+      if (!want.has(l.id)) continue;
+      if (!lightSupportsFollow(l.type)) continue;
+      if (l.follow !== 'p1' && l.follow !== 'p2') continue;
+      const lx = l.follow === 'p1' ? match.p1.x : match.p2.x;
+      captureLightFollowOffsets(l, fighterWorldX(lx, CONFIG.worldScale));
+    }
+  };
+
+  /**
+   * @param recaptureIds - only these follow lights re-pin offsets (pos/target edits).
+   *   Default empty: do NOT recapture all lights (avoids disturbing siblings on dup/add).
+   */
+  const emitLights = (
+    rebuild: boolean,
+    recaptureIds: string[] = [],
+  ) => {
+    if (recaptureIds.length > 0) recaptureFollowOffsetsFor(recaptureIds);
+    // Drop accidental duplicate config ids (keep first).
+    const seen = new Set<string>();
+    CONFIG.lights = CONFIG.lights.filter((l) => {
+      if (seen.has(l.id)) return false;
+      seen.add(l.id);
+      return true;
+    });
+    CONFIG.lights = enforceLightRules(CONFIG.lights, CONFIG.lightMaxCount);
+    if (!CONFIG.lights.some((l) => l.id === CONFIG.lightSelectedId)) {
+      CONFIG.lightSelectedId = CONFIG.lights[0]?.id ?? '';
+    }
+    notify('lights', CONFIG.lights, CONFIG);
+    lightEditHooks?.reattach();
+    if (rebuild) renderLightCards();
+    else updateLightCardChrome();
+  };
+
+  const selectLight = (id: string) => {
+    if (CONFIG.lightSelectedId === id) return;
+    CONFIG.lightSelectedId = id;
+    notify('lightSelectedId', id, CONFIG);
+    lightEditHooks?.reattach();
+    updateLightCardChrome();
+  };
+
+  const setFieldIfIdle = (
+    card: HTMLElement,
+    key: string,
+    value: number,
+  ) => {
+    const inp = card.querySelector<HTMLInputElement>(
+      `input[data-light-field="${key}"]`,
+    );
+    if (!inp) return;
+    if (document.activeElement === inp) return;
+    const s = String(value);
+    if (inp.value !== s) inp.value = s;
+  };
+
+  /** Push CONFIG → open card fields (used after gizmo drag). */
+  const updateLightCardChrome = () => {
+    lightCardsHost.querySelectorAll<HTMLElement>('.light-card').forEach((card) => {
+      const id = card.dataset.lightId ?? '';
+      card.classList.toggle('is-selected', id === CONFIG.lightSelectedId);
+      const l = findLight(id);
+      if (!l) return;
+      const sw = card.querySelector<HTMLElement>('.light-card-swatch');
+      const title = card.querySelector<HTMLElement>('.light-card-title');
+      if (sw) sw.style.background = hexToColorInput(l.color);
+      if (title && document.activeElement?.closest(`[data-light-id="${id}"]`) == null) {
+        title.textContent = l.name;
+      }
+      const colorInp = card.querySelector<HTMLInputElement>('input[type="color"]');
+      // First color input is light color; ground is second if present.
+      const colorInputs = card.querySelectorAll<HTMLInputElement>('input[type="color"]');
+      if (colorInputs[0] && document.activeElement !== colorInputs[0]) {
+        colorInputs[0].value = hexToColorInput(l.color);
+      }
+      if (l.type === 'hemisphere' && colorInputs[1] && document.activeElement !== colorInputs[1]) {
+        colorInputs[1].value = hexToColorInput(l.groundColor ?? 0x444444);
+      }
+      void colorInp;
+      setFieldIfIdle(card, 'intensity', l.intensity);
+      setFieldIfIdle(card, 'posX', l.position.x);
+      setFieldIfIdle(card, 'posY', l.position.y);
+      setFieldIfIdle(card, 'posZ', l.position.z);
+      setFieldIfIdle(card, 'tgtX', l.target.x);
+      setFieldIfIdle(card, 'tgtY', l.target.y);
+      setFieldIfIdle(card, 'tgtZ', l.target.z);
+      const followSel = card.querySelector<HTMLSelectElement>(
+        'select[data-light-field="follow"]',
+      );
+      if (followSel && document.activeElement !== followSel) {
+        followSel.value =
+          l.follow === 'p1' || l.follow === 'p2' ? l.follow : 'none';
+      }
+      setFieldIfIdle(card, 'distance', l.distance ?? 0);
+      setFieldIfIdle(card, 'decay', l.decay ?? 2);
+      setFieldIfIdle(card, 'angle', l.angle ?? Math.PI / 6);
+      setFieldIfIdle(card, 'penumbra', l.penumbra ?? 0.2);
+    });
+  };
+
+  const fieldNum = (
+    label: string,
+    value: number,
+    step: string,
+    fieldKey: string,
+    onInput: (v: number) => void,
+    opts?: { min?: number; max?: number; recaptureId?: string },
+  ): HTMLLabelElement => {
+    const lab = el('label', 'light-field');
+    lab.appendChild(document.createTextNode(label));
+    const inp = document.createElement('input');
+    inp.type = 'number';
+    inp.step = step;
+    if (opts?.min != null) inp.min = String(opts.min);
+    if (opts?.max != null) inp.max = String(opts.max);
+    inp.value = String(value);
+    inp.dataset.lightField = fieldKey;
+    inp.addEventListener('input', () => {
+      const v = Number(inp.value);
+      if (!Number.isFinite(v)) return;
+      onInput(v);
+      emitLights(
+        false,
+        opts?.recaptureId ? [opts.recaptureId] : [],
+      );
+    });
+    // Cards are built after attachDragScrubAll(host); bind per-input.
+    attachDragScrub(inp);
+    lab.appendChild(inp);
+    return lab;
+  };
+
+  const fieldColor = (
+    label: string,
+    value: number,
+    onInput: (v: number) => void,
+  ): HTMLDivElement => {
+    const row = el('div', 'panel-row light-color-row');
+    const head = el('div', 'panel-row-header');
+    head.appendChild(el('span', undefined, label));
+    const inp = document.createElement('input');
+    inp.type = 'color';
+    inp.value = hexToColorInput(value);
+    inp.title = label;
+    inp.addEventListener('input', () => {
+      onInput(colorInputToHex(inp.value));
+      emitLights(false);
+    });
+    row.appendChild(head);
+    row.appendChild(inp);
+    return row;
+  };
+
+  const buildLightCard = (l: LightDesc): HTMLDetailsElement => {
+    const card = document.createElement('details');
+    card.className = 'light-card';
+    card.dataset.lightId = l.id;
+    if (lightCardOpen.get(l.id) ?? l.id === CONFIG.lightSelectedId) {
+      card.open = true;
+    }
+    if (l.id === CONFIG.lightSelectedId) card.classList.add('is-selected');
+
+    const summary = document.createElement('summary');
+    const swatch = el('span', 'light-card-swatch');
+    swatch.style.background = hexToColorInput(l.color);
+    const title = el('span', 'light-card-title', l.name);
+    const typeEl = el('span', 'light-card-type', TYPE_LABEL[l.type] ?? l.type);
+    summary.append(swatch, title, typeEl);
+    summary.addEventListener('click', () => {
+      selectLight(l.id);
+    });
+    card.addEventListener('toggle', () => {
+      lightCardOpen.set(l.id, card.open);
+      if (card.open) {
+        selectLight(l.id);
+        // Keep expanded body in the panel scrollport (avoid clipped lower fields).
+        requestAnimationFrame(() => {
+          card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        });
+      }
+    });
+
+    const body = el('div', 'light-card-body');
+
+    const nameRow = el('div', 'panel-row');
+    const nameHead = el('div', 'panel-row-header');
+    nameHead.appendChild(el('span', undefined, '名称'));
+    nameRow.appendChild(nameHead);
+    const nameInp = document.createElement('input');
+    nameInp.type = 'text';
+    nameInp.value = l.name;
+    nameInp.addEventListener('change', () => {
+      const cur = findLight(l.id);
+      if (!cur) return;
+      cur.name = nameInp.value.trim() || cur.id;
+      title.textContent = cur.name;
+      emitLights(false);
+    });
+    nameRow.appendChild(nameInp);
+    body.appendChild(nameRow);
+
+    const enRow = el('label', 'light-inline-toggle');
+    const enCb = document.createElement('input');
+    enCb.type = 'checkbox';
+    enCb.checked = l.enabled;
+    enCb.addEventListener('change', () => {
+      const cur = findLight(l.id);
+      if (!cur) return;
+      cur.enabled = enCb.checked;
+      emitLights(false);
+    });
+    enRow.append(enCb, document.createTextNode('启用'));
+    body.appendChild(enRow);
+
+    body.appendChild(
+      fieldColor('颜色', l.color, (v) => {
+        const cur = findLight(l.id);
+        if (!cur) return;
+        cur.color = v;
+        swatch.style.background = hexToColorInput(v);
+      }),
+    );
+
+    if (l.type === 'hemisphere') {
+      body.appendChild(
+        fieldColor('地面色', l.groundColor ?? 0x444444, (v) => {
+          const cur = findLight(l.id);
+          if (!cur) return;
+          cur.groundColor = v;
+        }),
+      );
+    }
+
+    body.appendChild(
+      fieldNum('强度', l.intensity, '0.05', 'intensity', (v) => {
+        const cur = findLight(l.id);
+        if (cur) cur.intensity = v;
+      }),
+    );
+
+    if (l.type !== 'ambient' && l.type !== 'hemisphere') {
+      const grid = el('div', 'light-field-grid');
+      const rid = l.id;
+      grid.append(
+        fieldNum(
+          '位置 X',
+          l.position.x,
+          '0.1',
+          'posX',
+          (v) => {
+            const cur = findLight(l.id);
+            if (cur) cur.position.x = v;
+          },
+          { recaptureId: rid },
+        ),
+        fieldNum(
+          '位置 Y',
+          l.position.y,
+          '0.1',
+          'posY',
+          (v) => {
+            const cur = findLight(l.id);
+            if (cur) cur.position.y = v;
+          },
+          { recaptureId: rid },
+        ),
+        fieldNum(
+          '位置 Z',
+          l.position.z,
+          '0.1',
+          'posZ',
+          (v) => {
+            const cur = findLight(l.id);
+            if (cur) cur.position.z = v;
+          },
+          { recaptureId: rid },
+        ),
+      );
+      body.appendChild(grid);
+    }
+
+    if (l.type === 'directional' || l.type === 'spot') {
+      const grid = el('div', 'light-field-grid');
+      const rid = l.id;
+      grid.append(
+        fieldNum(
+          '目标 X',
+          l.target.x,
+          '0.1',
+          'tgtX',
+          (v) => {
+            const cur = findLight(l.id);
+            if (cur) cur.target.x = v;
+          },
+          { recaptureId: rid },
+        ),
+        fieldNum(
+          '目标 Y',
+          l.target.y,
+          '0.1',
+          'tgtY',
+          (v) => {
+            const cur = findLight(l.id);
+            if (cur) cur.target.y = v;
+          },
+          { recaptureId: rid },
+        ),
+        fieldNum(
+          '目标 Z',
+          l.target.z,
+          '0.1',
+          'tgtZ',
+          (v) => {
+            const cur = findLight(l.id);
+            if (cur) cur.target.z = v;
+          },
+          { recaptureId: rid },
+        ),
+      );
+      body.appendChild(grid);
+    }
+
+    if (l.type === 'point' || l.type === 'spot') {
+      const grid = el('div', 'light-field-grid');
+      grid.append(
+        fieldNum('距离', l.distance ?? 0, '0.5', 'distance', (v) => {
+          const cur = findLight(l.id);
+          if (cur) cur.distance = v;
+        }),
+        fieldNum('衰减', l.decay ?? 2, '0.05', 'decay', (v) => {
+          const cur = findLight(l.id);
+          if (cur) cur.decay = v;
+        }),
+      );
+      if (l.type === 'spot') {
+        grid.append(
+          fieldNum('锥角', l.angle ?? Math.PI / 6, '0.01', 'angle', (v) => {
+            const cur = findLight(l.id);
+            if (cur) cur.angle = v;
+          }),
+          fieldNum('半影', l.penumbra ?? 0.2, '0.01', 'penumbra', (v) => {
+            const cur = findLight(l.id);
+            if (cur) cur.penumbra = v;
+          }),
+        );
+      }
+      body.appendChild(grid);
+    }
+
+    if (lightSupportsFollow(l.type)) {
+      const followRow = el('div', 'panel-row');
+      const followHead = el('div', 'panel-row-header');
+      followHead.appendChild(el('span', undefined, '跟随角色'));
+      followRow.appendChild(followHead);
+      const followSel = document.createElement('select');
+      followSel.dataset.lightField = 'follow';
+      for (const [val, label] of [
+        ['none', '不跟随'],
+        ['p1', '跟随 P1'],
+        ['p2', '跟随 P2'],
+      ] as const) {
+        const opt = document.createElement('option');
+        opt.value = val;
+        opt.textContent = label;
+        followSel.appendChild(opt);
+      }
+      followSel.value = l.follow === 'p1' || l.follow === 'p2' ? l.follow : 'none';
+      followSel.addEventListener('change', () => {
+        const cur = findLight(l.id);
+        if (!cur || !lightSupportsFollow(cur.type)) return;
+        const v = followSel.value as LightFollowTarget;
+        enableLightFollow(cur, v, match.p1.x, match.p2.x, CONFIG.worldScale);
+        // Only this light's offsets were just captured by enableLightFollow.
+        emitLights(false, []);
+        const hint =
+          cur.type === 'point'
+            ? '仅照该角色；位置 X 跟随'
+            : '仅照该角色；灯与目标相对 X 保持';
+        setFlash(
+          v === 'none'
+            ? `「${cur.name}」已取消跟随（恢复照全场）`
+            : `「${cur.name}」跟随 ${v.toUpperCase()}（${hint}）`,
+        );
+      });
+      followRow.appendChild(followSel);
+      body.appendChild(followRow);
+    }
+
+    if (l.type === 'directional') {
+      const sh = el('label', 'light-inline-toggle');
+      const shCb = document.createElement('input');
+      shCb.type = 'checkbox';
+      shCb.checked = !!l.castShadow;
+      shCb.addEventListener('change', () => {
+        const cur = findLight(l.id);
+        if (!cur) return;
+        cur.castShadow = shCb.checked;
+        if (cur.castShadow) {
+          for (const o of CONFIG.lights) {
+            if (o.id !== cur.id) o.castShadow = false;
+          }
+        }
+        emitLights(true);
+      });
+      sh.append(shCb, document.createTextNode('投射阴影（全场仅一盏）'));
+      body.appendChild(sh);
+    }
+
+    const actions = el('div', 'light-card-actions');
+    const btnCopy = el('button', undefined, '复制');
+    btnCopy.type = 'button';
+    btnCopy.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const cur = findLight(l.id);
+      if (!cur) return;
+      lightClipboard = cloneLightDesc(cur);
+      setFlash(`已复制「${cur.name}」`);
+    });
+    const btnPasteOver = el('button', undefined, '粘贴覆盖');
+    btnPasteOver.type = 'button';
+    btnPasteOver.title = '用剪贴板灯光参数覆盖本灯（保留 id/名称可选）';
+    btnPasteOver.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!lightClipboard) {
+        setFlash('剪贴板为空，请先复制一盏灯');
+        return;
+      }
+      const cur = findLight(l.id);
+      if (!cur) return;
+      const keepId = cur.id;
+      const keepName = cur.name;
+      Object.assign(cur, cloneLightDesc(lightClipboard, { newId: false }));
+      cur.id = keepId;
+      cur.name = keepName;
+      cur.type = lightClipboard.type;
+      cur.castShadow = false;
+      emitLights(true);
+      setFlash(`已粘贴覆盖「${keepName}」`);
+    });
+    const btnDup = el('button', undefined, '复制为新灯');
+    btnDup.type = 'button';
+    btnDup.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const cur = findLight(l.id);
+      if (!cur) return;
+      if (cur.type === 'ambient' && CONFIG.lights.some((x) => x.type === 'ambient' && x.id !== cur.id)) {
+        setFlash('已有环境光');
+        return;
+      }
+      if (
+        cur.type === 'hemisphere' &&
+        CONFIG.lights.some((x) => x.type === 'hemisphere' && x.id !== cur.id)
+      ) {
+        setFlash('已有半球光');
+        return;
+      }
+      if (CONFIG.lights.filter((x) => x.enabled).length >= CONFIG.lightMaxCount) {
+        setFlash(`已达上限 ${CONFIG.lightMaxCount}`);
+        return;
+      }
+      if (cur.type === 'ambient' || cur.type === 'hemisphere') {
+        setFlash('环境/半球光每种最多一盏，请用顶部「粘贴灯」仅在缺失时添加');
+        return;
+      }
+      // Independent lamp: new id, no follow, +X nudge — do not recapture siblings.
+      const copy = duplicateLightAsNew(cur, ' 副本');
+      if (CONFIG.lights.some((x) => x.id === copy.id)) {
+        setFlash('生成 id 冲突，请再点一次复制');
+        return;
+      }
+      CONFIG.lights.push(copy);
+      CONFIG.lightSelectedId = copy.id;
+      lightCardOpen.set(copy.id, true);
+      emitLights(true, []);
+      setFlash(
+        `已复制「${copy.name}」（已取消跟随、位置 +0.5X；可再手动开跟随）`,
+      );
+    });
+    const btnDel = el('button', undefined, '删除');
+    btnDel.type = 'button';
+    btnDel.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (CONFIG.lights.length <= 1) {
+        setFlash('至少保留一盏灯');
+        return;
+      }
+      CONFIG.lights = CONFIG.lights.filter((x) => x.id !== l.id);
+      lightCardOpen.delete(l.id);
+      CONFIG.lightSelectedId = CONFIG.lights[0]?.id ?? '';
+      emitLights(true);
+    });
+    actions.append(btnCopy, btnPasteOver, btnDup, btnDel);
+    body.appendChild(actions);
+
+    card.append(summary, body);
+    return card;
+  };
+
+  const renderLightCards = () => {
+    // Preserve open state from DOM
+    lightCardsHost.querySelectorAll<HTMLDetailsElement>('.light-card').forEach((c) => {
+      if (c.dataset.lightId) lightCardOpen.set(c.dataset.lightId, c.open);
+    });
+    lightCardsHost.replaceChildren();
+    for (const l of CONFIG.lights) {
+      lightCardsHost.appendChild(buildLightCard(l));
+    }
+  };
+
+  const syncGlobalColors = () => {
+    if (document.activeElement !== bgColorPicker) {
+      bgColorPicker.value = hexToColorInput(CONFIG.bgColor);
+    }
+    if (document.activeElement !== fogColorPicker) {
+      fogColorPicker.value = hexToColorInput(CONFIG.fogColor);
+    }
+  };
+  bgColorPicker.addEventListener('input', () => {
+    CONFIG.bgColor = colorInputToHex(bgColorPicker.value);
+    notify('bgColor', CONFIG.bgColor, CONFIG);
+  });
+  fogColorPicker.addEventListener('input', () => {
+    CONFIG.fogColor = colorInputToHex(fogColorPicker.value);
+    notify('fogColor', CONFIG.fogColor, CONFIG);
+  });
+
+  gizmoModeSel.addEventListener('change', () => {
+    const m = gizmoModeSel.value === 'target' ? 'target' : 'position';
+    lightEditHooks?.setGizmoMode(m);
+  });
+
+  const addLight = (type: LightType) => {
+    if (type === 'ambient' && CONFIG.lights.some((l) => l.type === 'ambient')) {
+      setFlash('已有环境光');
+      return;
+    }
+    if (type === 'hemisphere' && CONFIG.lights.some((l) => l.type === 'hemisphere')) {
+      setFlash('已有半球光');
+      return;
+    }
+    if (CONFIG.lights.filter((l) => l.enabled).length >= CONFIG.lightMaxCount) {
+      setFlash(`已达上限 ${CONFIG.lightMaxCount}`);
+      return;
+    }
+    const desc = createLightByType(type);
+    CONFIG.lights.push(desc);
+    CONFIG.lightSelectedId = desc.id;
+    lightCardOpen.set(desc.id, true);
+    emitLights(true);
+  };
+
+  byId<HTMLButtonElement>(host, 'btn-lightAddDir').addEventListener('click', () =>
+    addLight('directional'),
+  );
+  byId<HTMLButtonElement>(host, 'btn-lightAddPoint').addEventListener('click', () =>
+    addLight('point'),
+  );
+  byId<HTMLButtonElement>(host, 'btn-lightAddSpot').addEventListener('click', () =>
+    addLight('spot'),
+  );
+  byId<HTMLButtonElement>(host, 'btn-lightAddAmbient').addEventListener('click', () =>
+    addLight('ambient'),
+  );
+  byId<HTMLButtonElement>(host, 'btn-lightAddHemi').addEventListener('click', () =>
+    addLight('hemisphere'),
+  );
+  byId<HTMLButtonElement>(host, 'btn-lightPaste').addEventListener('click', () => {
+    if (!lightClipboard) {
+      setFlash('剪贴板为空，请先在某盏灯上点「复制」');
+      return;
+    }
+    if (
+      lightClipboard.type === 'ambient' &&
+      CONFIG.lights.some((l) => l.type === 'ambient')
+    ) {
+      setFlash('已有环境光，无法再粘贴');
+      return;
+    }
+    if (
+      lightClipboard.type === 'hemisphere' &&
+      CONFIG.lights.some((l) => l.type === 'hemisphere')
+    ) {
+      setFlash('已有半球光，无法再粘贴');
+      return;
+    }
+    if (CONFIG.lights.filter((l) => l.enabled).length >= CONFIG.lightMaxCount) {
+      setFlash(`已达上限 ${CONFIG.lightMaxCount}`);
+      return;
+    }
+    const copy = duplicateLightAsNew(lightClipboard, ' 粘贴');
+    if (CONFIG.lights.some((x) => x.id === copy.id)) {
+      setFlash('生成 id 冲突，请再点一次粘贴');
+      return;
+    }
+    CONFIG.lights.push(copy);
+    CONFIG.lightSelectedId = copy.id;
+    lightCardOpen.set(copy.id, true);
+    emitLights(true, []);
+    setFlash(`已粘贴「${copy.name}」（已取消跟随、位置 +0.5X）`);
+  });
+
+  const syncLightUi = () => {
+    syncGlobalColors();
+    // Full rebuild only when card count / ids mismatch (external load)
+    const ids = CONFIG.lights.map((l) => l.id).join('|');
+    const domIds = [...lightCardsHost.querySelectorAll('.light-card')]
+      .map((c) => (c as HTMLElement).dataset.lightId)
+      .join('|');
+    if (ids !== domIds) renderLightCards();
+    else updateLightCardChrome();
+  };
+
+  syncers.push(syncLightUi);
+  renderLightCards();
+  syncGlobalColors();
 
   // Match tools (not pure CONFIG)
   const dummySel = byId<HTMLSelectElement>(host, 'sel-dummyMode');

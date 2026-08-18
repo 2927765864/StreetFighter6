@@ -14,3 +14,30 @@ canvas {
   width: 100%;
   height: 100%;
 }
+
+/* Fight-camera picture-in-picture while placing lights (orbit mode). */
+#light-orbit-pip-frame {
+  position: fixed;
+  z-index: 40;
+  pointer-events: none;
+  box-sizing: border-box;
+  border: 2px solid rgba(140, 190, 255, 0.85);
+  border-radius: 6px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+#light-orbit-pip-frame .pip-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 3px 8px;
+  font: 11px/1.3 system-ui, sans-serif;
+  color: #e8f0ff;
+  background: linear-gradient(
+    180deg,
+    rgba(12, 18, 32, 0.82),
+    rgba(12, 18, 32, 0.15)
+  );
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}

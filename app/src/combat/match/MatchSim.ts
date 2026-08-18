@@ -7,6 +7,7 @@ import { Fighter } from '../fighter/Fighter';
 import { InputHistory } from '../input/InputHistory';
 import { ActionBuffer } from '../input/ActionBuffer';
 import { tryCommitLogicalFacing, toFacingRelative } from '../input/facing';
+import { heldPostureFromRelDir } from '../anim/AnimResidual';
 import { resolveIntent } from '../command/IntentResolver';
 import { RYU_FEEDBACK_COMMANDS } from '../command/ryuCommands';
 import type { CommandDef } from '../command/CommandDef';
@@ -54,8 +55,13 @@ export type MatchSimOptions = {
   prejumpFrames: number;
   airFrames: number;
   landingFrames: number;
-  /** Land clip visual length (map/glb); > landingFrames → residual. */
+  /** Land clip visual length (map/glb); base length for §3.13.7 dissolve ratio. */
   landingAnimFrames: number;
+  /**
+   * §3.13.7: fraction of landingAnimFrames to play as land before dissolve
+   * to idle / turn_std. 0 = open target as land starts; 1 = full land first.
+   */
+  neutralLandDissolveRatio: number;
   walkSpeed: number;
   walkBackSpeed: number;
   walkFirstFrameScale: number;
@@ -107,6 +113,7 @@ const DEFAULT_OPTS: MatchSimOptions = {
   airFrames: 38,
   landingFrames: 3,
   landingAnimFrames: 20,
+  neutralLandDissolveRatio: 0.05,
   walkSpeed: 0.047,
   walkBackSpeed: 0.032,
   walkFirstFrameScale: 0.25,
@@ -711,6 +718,11 @@ export class MatchSim {
     this.markWhiffIfNeeded();
 
     // 7. Advance timelines (no Place here)
+    const crouchHeld = heldPostureFromRelDir(input.relDir) === 'crouch';
+    // §3.13.6: sample early crouch while air / landing hardstun
+    if (crouchHeld) {
+      this.p1.notePreLandCrouchHold();
+    }
     const dashBack = this.p1.clipId === 'dash_back';
     const dashSpeed = dashBack ? this.opts.dashBackSpeed : this.opts.dashSpeed;
     const dashDx = dashBack ? this.opts.dashDxBack : this.opts.dashDxFwd;
@@ -726,6 +738,8 @@ export class MatchSim {
       jumpBackDist: this.opts.jumpBackDist,
       jumpNeutralDist: this.opts.jumpNeutralDist,
       landingAnimFrames: this.opts.landingAnimFrames,
+      neutralLandDissolveRatio: this.opts.neutralLandDissolveRatio,
+      crouchHeld,
     };
     if (!this.skipP1Advance) {
       this.p1.advance(adv);

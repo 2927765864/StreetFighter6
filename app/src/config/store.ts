@@ -1,4 +1,9 @@
 import { createDefaultRuntimeConfig } from './defaults';
+import {
+  enforceLightRules,
+  normalizeLightDesc,
+  type LightDesc,
+} from './lightTypes';
 import type { RuntimeConfig } from './types';
 import { CONFIG_VERSION } from './types';
 
@@ -49,6 +54,18 @@ export function mergeConfig(
       }
       continue;
     }
+    if (key === 'lights' && Array.isArray(value)) {
+      const normalized = value
+        .map((x, i) => normalizeLightDesc(x, i))
+        .filter((x): x is LightDesc => x != null);
+      if (normalized.length > 0) {
+        out.lights = enforceLightRules(
+          normalized,
+          typeof out.lightMaxCount === 'number' ? out.lightMaxCount : 15,
+        );
+      }
+      continue;
+    }
     const baseVal = (out as Record<string, unknown>)[key];
     if (typeof baseVal === 'number' && typeof value === 'number' && Number.isFinite(value)) {
       (out as Record<string, unknown>)[key] = value;
@@ -79,6 +96,14 @@ export function applyConfig(
   CONFIG.expandedSections = { ...merged.expandedSections };
   CONFIG.dashDxFwd = [...merged.dashDxFwd];
   CONFIG.dashDxBack = [...merged.dashDxBack];
+  CONFIG.lights = enforceLightRules(
+    merged.lights.map((l) => ({
+      ...l,
+      position: { ...l.position },
+      target: { ...l.target },
+    })),
+    merged.lightMaxCount,
+  );
 }
 
 export function applyShippingDefaults(

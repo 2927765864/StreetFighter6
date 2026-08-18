@@ -128,15 +128,21 @@ export function resolveCrossfadeSec(
   // 转身（§3.14 / §3.11.2）
   if (from === 'turn' || to === 'turn') {
     if (to === 'attack' || to === 'jump' || to === 'dash') return 0;
+    // 转身 → 站↔蹲过渡：硬切（松下蹲起须跟手，避免溶图钉在 turn 末帧）
+    if (from === 'stance' || to === 'stance') return 0;
     return Math.max(0, d.residualToMoveSec);
   }
 
-  // 跳（§3.11.2 / §3.13.5）
+  // 跳（§3.11.2 / §3.13.5 / §3.13.7）
   if (from === 'jump' || to === 'jump') {
     const fromRole = bindingParts(fromKey).role;
     const toRole = bindingParts(toKey).role;
-    // 落地画面 → 待机
+    // 中立落地 → 待机（速接溶图）
     if (from === 'jump' && fromRole === 'land' && isMoveLike(to)) {
+      return Math.max(0, d.residualToMoveSec);
+    }
+    // 中立落地 → 站转身（速接溶图 §3.13.7）
+    if (from === 'jump' && fromRole === 'land' && to === 'turn') {
       return Math.max(0, d.residualToMoveSec);
     }
     // 跳攻残留 → land / air（收招后溶；按下进招仍走 attack 锁定硬切）

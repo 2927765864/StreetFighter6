@@ -151,7 +151,8 @@ export function sanitizeObjectMaterials(root: THREE.Object3D): void {
 
     mesh.frustumCulled = false;
     // Do NOT force visible=true — pruneOutlierMeshes relies on remove, but be safe
-    mesh.castShadow = false;
+    // Shadows: plan lighting-system-v0 §S4 — fighters must cast for key dir light.
+    mesh.castShadow = true;
     mesh.receiveShadow = true;
 
     // Hide face shells + open-gi/cape (no clothing system — consensus: no cape).

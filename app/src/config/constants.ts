@@ -1,6 +1,10 @@
 /** Defaults from docs/plans/ai-execution-plan-character-control-p0-v0.md */
 
 import { buildFrontHeavyDashDx } from '../combat/loco/DashProfile';
+import {
+  createDefaultLights,
+  type LightDesc,
+} from './lightTypes';
 
 export const LOGIC_FPS = 60;
 export const LOGIC_DT = 1 / LOGIC_FPS;
@@ -32,6 +36,47 @@ export type MutableSimConfig = {
   modelYOffset: number;
   cameraZ: number;
   cameraY: number;
+  cameraLookY: number;
+  cameraFov: number;
+  cameraZoomEnabled: boolean;
+  cameraZoomSepK: number;
+  cameraZMax: number;
+  cameraNdcPad: number;
+  cameraLerp: number;
+  /** World-unit X deadzone for delayed follow. 0 = none. */
+  cameraFollowDeadzone: number;
+  cameraNear: number;
+  cameraFar: number;
+  stageFitWidth: number;
+  stageOriginX: number;
+  stageOriginZ: number;
+  showFallbackGround: boolean;
+  showDebugGrid: boolean;
+  showAxes: boolean;
+  /** Authoritative light list (replaces flat lightKey* fields). */
+  lights: LightDesc[];
+  lightSelectedId: string;
+  lightHelpersVisible: boolean;
+  lightOrbitMode: boolean;
+  /** PIP preview of fight camera while placing lights (CSS px, bottom-left origin). */
+  lightOrbitPipX: number;
+  lightOrbitPipY: number;
+  lightOrbitPipWidth: number;
+  lightOrbitPipHeight: number;
+  lightMaxCount: number;
+  lightUseDynamicLighting: boolean;
+  shadowMapEnabled: boolean;
+  shadowMapSize: number;
+  shadowCameraExtent: number;
+  shadowCameraNear: number;
+  shadowCameraFar: number;
+  shadowBias: number;
+  shadowNormalBias: number;
+  shadowRadius: number;
+  fogColor: number;
+  fogNear: number;
+  fogFar: number;
+  bgColor: number;
   timeScaleAnim: number;
   bufferFrames: number;
   showHitboxes: boolean;
@@ -83,6 +128,11 @@ export type MutableSimConfig = {
   airFrames: number;
   landingFrames: number;
   landingAnimFrames: number;
+  /**
+   * §3.13.7: fraction of landingAnimFrames to play as land before dissolve
+   * to idle / stand-turn. 0 = dissolve as soon as land starts; 1 = full land.
+   */
+  neutralLandDissolveRatio: number;
   walkSpeed: number;
   walkBackSpeed: number;
   walkFirstFrameScale: number;
@@ -157,8 +207,47 @@ export function createDefaultSimConfig(): MutableSimConfig {
     worldScale: WORLD_SCALE,
     modelScale: 0.9,
     modelYOffset: 0,
-    cameraZ: 6,
-    cameraY: 1.2,
+    cameraZ: 11,
+    cameraY: 1.55,
+    cameraLookY: 1.1,
+    cameraFov: 40,
+    cameraZoomEnabled: false,
+    cameraZoomSepK: 0.35,
+    cameraZMax: 16,
+    cameraNdcPad: 0.08,
+    cameraLerp: 0.12,
+    cameraFollowDeadzone: 0.2,
+    cameraNear: 0.05,
+    cameraFar: 500,
+    stageFitWidth: 18,
+    stageOriginX: 0,
+    stageOriginZ: 0,
+    showFallbackGround: false,
+    showDebugGrid: false,
+    showAxes: false,
+    // Training-stage look (unreviewed): migrated from flat key/fill/rim defaults.
+    lights: createDefaultLights(),
+    lightSelectedId: 'key',
+    lightHelpersVisible: true,
+    lightOrbitMode: false,
+    lightOrbitPipX: 12,
+    lightOrbitPipY: 12,
+    lightOrbitPipWidth: 320,
+    lightOrbitPipHeight: 180,
+    lightMaxCount: 15,
+    lightUseDynamicLighting: true,
+    shadowMapEnabled: true,
+    shadowMapSize: 2048,
+    shadowCameraExtent: 20,
+    shadowCameraNear: 0.5,
+    shadowCameraFar: 80,
+    shadowBias: -0.0001,
+    shadowNormalBias: 0.02,
+    shadowRadius: 2,
+    fogColor: 0x1a2030,
+    fogNear: 40,
+    fogFar: 80,
+    bgColor: 0x1a2030,
     timeScaleAnim: 1,
     bufferFrames: INPUT_BUFFER_FRAMES,
     showHitboxes: true,
@@ -212,6 +301,8 @@ export function createDefaultSimConfig(): MutableSimConfig {
     airFrames: 38,
     landingFrames: 3,
     landingAnimFrames: 20,
+    /** Almost immediate land → idle/turn dissolve (§3.13.7). */
+    neutralLandDissolveRatio: 0.05,
     walkSpeed: 0.047,
     walkBackSpeed: 0.032,
     walkFirstFrameScale: 0.25,
@@ -283,6 +374,7 @@ export function applyConfigToMatchOpts(cfg: MutableSimConfig) {
     airFrames: cfg.airFrames,
     landingFrames: cfg.landingFrames,
     landingAnimFrames: cfg.landingAnimFrames,
+    neutralLandDissolveRatio: cfg.neutralLandDissolveRatio,
     walkSpeed: cfg.walkSpeed,
     walkBackSpeed: cfg.walkBackSpeed,
     walkFirstFrameScale: cfg.walkFirstFrameScale,

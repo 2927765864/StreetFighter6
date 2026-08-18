@@ -12,6 +12,8 @@ export type ExpandedSections = {
   guardPush: boolean;
   locomotion: boolean;
   renderBoxes: boolean;
+  camera: boolean;
+  lighting: boolean;
   animDrive: boolean;
   commandProbe: boolean;
   moveEdit: boolean;

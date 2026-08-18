@@ -4,6 +4,7 @@ import {
   cloneConfig,
   CONFIG,
 } from './store';
+import { migrateFlatLightsToList } from './lightTypes';
 import type { RuntimeConfig } from './types';
 import { CONFIG_VERSION, isPresetEnvelope } from './types';
 
@@ -13,6 +14,29 @@ export const STORAGE_KEYS = {
 } as const;
 
 const SHIPPING_URL = '/presets/shipping.json';
+
+/**
+ * Factory used to ship cameraLerp=0 with no deadzone field. Drop that 0 so
+ * merge picks the delayed-follow default. Explicit 0 after this field exists
+ * is kept.
+ */
+export function migrateSavedCameraFollow(
+  parsed: Record<string, unknown>,
+): Record<string, unknown> {
+  if (parsed.cameraFollowDeadzone === undefined && parsed.cameraLerp === 0) {
+    const next = { ...parsed };
+    delete next.cameraLerp;
+    return next;
+  }
+  return parsed;
+}
+
+/** Camera follow migrate then flat lights → lights[]. */
+export function migrateSavedConfig(
+  parsed: Record<string, unknown>,
+): Record<string, unknown> {
+  return migrateFlatLightsToList(migrateSavedCameraFollow(parsed));
+}
 
 function backupLocal(raw: string, oldVersion: unknown): void {
   try {
@@ -35,7 +59,9 @@ export async function loadShippingConfig(): Promise<boolean> {
     const data: unknown = await res.json();
     const body = isPresetEnvelope(data) ? data.config : data;
     if (!body || typeof body !== 'object' || Array.isArray(body)) return false;
-    applyShippingDefaults(body as Record<string, unknown>);
+    applyShippingDefaults(
+      migrateSavedConfig(body as Record<string, unknown>),
+    );
     console.info('[config] shipping preset loaded');
     return true;
   } catch (e) {
@@ -59,7 +85,7 @@ export function loadSavedConfig(): boolean {
         '(backed up)',
       );
     }
-    applyConfig(parsed);
+    applyConfig(migrateSavedConfig(parsed));
     console.info('[config] local default applied');
     return true;
   } catch (e) {
@@ -103,7 +129,7 @@ export function loadNamedPreset(name: string): boolean {
   const map = listNamedPresets();
   const p = map[name];
   if (!p) return false;
-  applyConfig(p);
+  applyConfig(migrateSavedConfig(p as unknown as Record<string, unknown>));
   return true;
 }
 
@@ -139,7 +165,7 @@ export function importPresetFromObject(data: unknown): boolean {
   try {
     const body = isPresetEnvelope(data) ? data.config : data;
     if (!body || typeof body !== 'object') return false;
-    applyConfig(body as Record<string, unknown>);
+    applyConfig(migrateSavedConfig(body as Record<string, unknown>));
     return true;
   } catch {
     return false;
