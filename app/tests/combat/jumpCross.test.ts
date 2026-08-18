@@ -158,4 +158,72 @@ describe('jump-over / facing / push', () => {
     sim.step();
     expect(sim.p1.x).toBeGreaterThan(x0);
   });
+
+  it('buffered rejump after cross snaps visual facing on land (§3.14.3.a)', () => {
+    const sim = new MatchSim(fixture, undefined, {
+      enablePushResolve: true,
+      forceP2Guard: true,
+    });
+    sim.p1.x = 0.2;
+    sim.p2.x = 0.55;
+    sim.p1.facing = 1;
+    sim.p2.facing = -1;
+    sim.p1.visualFacing = 1;
+
+    sim.pendingInput = {
+      dir: 9,
+      relDir: 9,
+      buttons: 0,
+      pressed: 0,
+      released: 0,
+    };
+    sim.step();
+
+    let sawLogicalFlip = false;
+    let landed = false;
+    for (let i = 0; i < 80; i++) {
+      const air =
+        sim.p1.phase === 'airborne' ||
+        (sim.p1.phase === 'attack' && sim.p1.jumpPhase === 'air') ||
+        sim.p1.phase === 'landing';
+      if (air && !landed) {
+        if (sim.p1.facing !== 1) sawLogicalFlip = true;
+        sim.pendingInput = {
+          dir: 8,
+          relDir: 8,
+          buttons: 0,
+          pressed: 0,
+          released: 0,
+        };
+      } else {
+        sim.pendingInput = N;
+      }
+      sim.step();
+      if (
+        sim.p1.phase === 'prejump' &&
+        sim.p1.x > sim.p2.x &&
+        sawLogicalFlip
+      ) {
+        expect(sim.p1.visualFacing).toBe(sim.p1.facing);
+        expect(sim.p1.pendingTurnAfterLand).toBe(false);
+        landed = true;
+        break;
+      }
+      if (
+        sim.p1.phase === 'idle' ||
+        sim.p1.phase === 'crouch' ||
+        (sim.p1.phase === 'landing' && sim.p1.canAct())
+      ) {
+        if (sim.p1.facing !== sim.p1.visualFacing || sim.p1.pendingTurnAfterLand) {
+          sim.p1.startJump(4, 8);
+          expect(sim.p1.visualFacing).toBe(sim.p1.facing);
+          expect(sim.p1.pendingTurnAfterLand).toBe(false);
+          landed = true;
+          break;
+        }
+      }
+    }
+    expect(sawLogicalFlip || sim.p1.x > sim.p2.x).toBe(true);
+    expect(landed).toBe(true);
+  });
 });

@@ -95,4 +95,59 @@ describe('logical facing §3.14', () => {
     expect(f.pendingTurnAfterLand).toBe(false);
     expect(f.turning).toBe(false);
   });
+
+  it('land→rejump snaps visual facing after airborne logical turn (§3.14.3.a)', () => {
+    const f = new Fighter('p1', 0, 1, 10000);
+    f.phase = 'airborne';
+    f.y = 1;
+    f.facing = -1;
+    f.visualFacing = 1;
+    f.onLogicalTurn();
+    expect(f.pendingTurnAfterLand).toBe(true);
+    expect(f.visualFacing).toBe(1);
+
+    f.y = 0;
+    f.phase = 'landing';
+    f.startJump(4, 8);
+    expect(f.phase).toBe('prejump');
+    expect(f.pendingTurnAfterLand).toBe(false);
+    expect(f.turning).toBe(false);
+    expect(f.visualFacing).toBe(f.facing);
+    expect(f.visualFacing).toBe(-1);
+  });
+
+  it('mid turn-clip jump snaps visual facing', () => {
+    const f = new Fighter('p1', 0, 1, 10000);
+    f.setStanceTable(fallbackStanceTable());
+    f.phase = 'idle';
+    f.facing = -1;
+    f.visualFacing = 1;
+    f.beginTurnClip();
+    expect(f.turning).toBe(true);
+    expect(f.visualFacing).toBe(-1);
+
+    f.visualFacing = 1;
+    f.startJump(4, 9);
+    expect(f.turning).toBe(false);
+    expect(f.visualFacing).toBe(-1);
+    expect(f.jumpClipId).toBe('jump_f');
+  });
+
+  it('land→dash snaps visual facing after airborne logical turn (§3.14.3.a3)', () => {
+    const f = new Fighter('p1', 0, 1, 10000);
+    f.phase = 'airborne';
+    f.y = 1;
+    f.facing = -1;
+    f.visualFacing = 1;
+    f.onLogicalTurn();
+    expect(f.pendingTurnAfterLand).toBe(true);
+
+    f.y = 0;
+    f.phase = 'landing';
+    f.startDash(true, 19, 42);
+    expect(f.phase).toBe('dash');
+    expect(f.pendingTurnAfterLand).toBe(false);
+    expect(f.visualFacing).toBe(-1);
+    expect(f.visualFacing).toBe(f.facing);
+  });
 });

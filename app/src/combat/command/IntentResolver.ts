@@ -51,13 +51,18 @@ export function resolveIntent(
     if (hit) candidates.push(hit);
   }
 
-  // Dash / jump only on ground-actionable phases
+  // Locomotion presentation only when already free on the ground.
   const groundFree =
     ctx.phase === 'idle' ||
     ctx.phase === 'walk' ||
     ctx.phase === 'crouch';
 
-  if (groundFree) {
+  // §2.3.1: detect jump/dash even in lock phases so action buffer can register.
+  // Skip while already in prejump/dash (those moves own the phase).
+  const detectJumpDash =
+    ctx.phase !== 'prejump' && ctx.phase !== 'dash';
+
+  if (detectJumpDash) {
     if (detectDash(entries, now, 6, cfg.dashDirHoldMax, cfg.dashNeutralMax)) {
       candidates.push({
         kind: 'dash_fwd',
@@ -78,19 +83,18 @@ export function resolveIntent(
     const last = entries[entries.length - 1];
     const rel: NumpadDir = last?.relDir ?? 5;
 
+    // Hold-jump (§2.3.1): keeping 7/8/9 through air/land must rejump on canAct.
+    // Edge-only detection dropped held-up through landing.
     if (
       (JUMP_DIRS as readonly number[]).includes(rel) &&
       (last?.pressed ?? 0) === 0
     ) {
-      const prev = entries.length >= 2 ? entries[entries.length - 2]!.relDir : 5;
-      if (!(JUMP_DIRS as readonly number[]).includes(prev)) {
-        candidates.push({
-          kind: 'jump',
-          priority: INTENT_PRIORITY.jump,
-          bufferClass: 'standard',
-          commandId: 'jump',
-        });
-      }
+      candidates.push({
+        kind: 'jump',
+        priority: INTENT_PRIORITY.jump,
+        bufferClass: 'standard',
+        commandId: 'jump',
+      });
     }
   }
 

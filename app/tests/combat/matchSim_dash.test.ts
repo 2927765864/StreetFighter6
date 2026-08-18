@@ -73,4 +73,48 @@ describe('MatchSim dash', () => {
     }
     expect(sim.p1.phase).not.toBe('dash');
   });
+
+  it('66 completed during landing buffers and dashes on canAct (§2.3.1)', () => {
+    const sim = new MatchSim(fixture, undefined, {
+      dashDirHoldMax: 8,
+      dashNeutralMax: 8,
+      dashFrames: 15,
+      enableActionBuffer: true,
+      actionBufferDash: 7,
+      landingFrames: 8,
+    });
+    sim.p1.phase = 'landing';
+    sim.p1.jumpPhase = 'land';
+    sim.p1.stateTimer = 8;
+    sim.p1.jumpFrame = 0;
+    sim.p1.y = 0;
+    sim.p1.clipId = 'jump_n';
+    sim.p1.animRole = 'land';
+
+    for (const relDir of [6, 5, 6] as const) {
+      expect(sim.p1.phase).toBe('landing');
+      expect(sim.p1.canAct()).toBe(false);
+      sim.pendingInput = {
+        dir: relDir,
+        relDir,
+        buttons: 0,
+        pressed: 0,
+        released: 0,
+      };
+      sim.step();
+    }
+    let dashed = sim.p1.phase === 'dash';
+    for (let i = 0; i < 10 && !dashed; i++) {
+      sim.pendingInput = {
+        dir: 5,
+        relDir: 5,
+        buttons: 0,
+        pressed: 0,
+        released: 0,
+      };
+      sim.step();
+      dashed = sim.p1.phase === 'dash';
+    }
+    expect(dashed).toBe(true);
+  });
 });

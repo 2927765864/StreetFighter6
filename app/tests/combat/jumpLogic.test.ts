@@ -363,4 +363,43 @@ describe('jump §3.13', () => {
     );
     expect(idleLp.kind).not.toBe('normal');
   });
+
+  it('hold jump through air+land rejumps on first canAct (§2.3.1)', () => {
+    const s = sim();
+    jumpNeutral(s);
+    const up = {
+      dir: 8 as const,
+      relDir: 8 as const,
+      buttons: 0,
+      pressed: 0,
+      released: 0,
+    };
+    for (let i = 0; i < 4 + 38 + 3; i++) {
+      s.pendingInput = up;
+      s.step();
+    }
+    let sawPrejump = s.p1.phase === 'prejump';
+    for (let i = 0; i < 4 && !sawPrejump; i++) {
+      s.pendingInput = up;
+      s.step();
+      if (s.p1.phase === 'prejump') sawPrejump = true;
+    }
+    expect(sawPrejump).toBe(true);
+  });
+
+  it('resolver: held jump emits during landing/airborne (buffer path)', () => {
+    const cfg = {
+      motionStepGapMax: 9,
+      dashDirHoldMax: 8,
+      dashNeutralMax: 8,
+    };
+    const entries = [
+      { relDir: 8 as const, buttons: 0, pressed: 0, logicFrame: 1 },
+      { relDir: 8 as const, buttons: 0, pressed: 0, logicFrame: 2 },
+    ];
+    expect(resolveIntent(entries, 2, cfg, { phase: 'landing' }).kind).toBe('jump');
+    expect(resolveIntent(entries, 2, cfg, { phase: 'airborne' }).kind).toBe('jump');
+    expect(resolveIntent(entries, 2, cfg, { phase: 'idle' }).kind).toBe('jump');
+    expect(resolveIntent(entries, 2, cfg, { phase: 'prejump' }).kind).not.toBe('jump');
+  });
 });

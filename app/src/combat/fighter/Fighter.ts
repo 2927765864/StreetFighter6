@@ -1053,7 +1053,9 @@ export class Fighter {
     this.clearLoco();
     this.jumpPhase = 'none';
     this.usedAirNormal = false;
+    // §3.14.3.a3: land→dash snaps mesh after cross-up (same flip family as jump).
     this.clearTurn();
+    this.applyVisualFacing();
   }
 
   /**
@@ -1109,7 +1111,9 @@ export class Fighter {
     this.neutralLandRiseStarted = false;
     this.landRiseAge = 0;
     this.clearLoco();
+    // §3.14.3.a: land→rejump (incl. buffered) snaps mesh; do not keep pre-cross visualFacing.
     this.clearTurn();
+    this.applyVisualFacing();
     if (relDir === 9 || relDir === 3) {
       this.jumpHorizSign = 1;
       this.jumpClipId = 'jump_f';
