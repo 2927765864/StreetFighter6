@@ -129,10 +129,20 @@ export type MutableSimConfig = {
   landingFrames: number;
   landingAnimFrames: number;
   /**
-   * §3.13.7: fraction of landingAnimFrames to play as land before dissolve
-   * to idle / stand-turn. 0 = dissolve as soon as land starts; 1 = full land.
+   * §3.13.7: land → crouch_to_stand dissolve start (no pending turn / → idle).
+   * Fraction of landingAnimFrames. 0 = as land starts; 1 = full land.
    */
-  neutralLandDissolveRatio: number;
+  neutralLandToRiseIdleRatio: number;
+  /**
+   * §3.13.7: land → crouch_to_stand dissolve start (pending turn path).
+   * Fraction of landingAnimFrames. Independent of idle-path ratio.
+   */
+  neutralLandToRiseTurnRatio: number;
+  /**
+   * §3.13.7: crouch_to_stand → turn_std dissolve start (pending turn only).
+   * Fraction of crouchToStandFrames. 0 = as rise starts; 1 = full rise.
+   */
+  neutralRiseToTurnDissolveRatio: number;
   walkSpeed: number;
   walkBackSpeed: number;
   walkFirstFrameScale: number;
@@ -301,8 +311,12 @@ export function createDefaultSimConfig(): MutableSimConfig {
     airFrames: 38,
     landingFrames: 3,
     landingAnimFrames: 20,
-    /** Almost immediate land → idle/turn dissolve (§3.13.7). */
-    neutralLandDissolveRatio: 0.05,
+    /** Land → rise (→idle path) dissolve start (§3.13.7). */
+    neutralLandToRiseIdleRatio: 0.05,
+    /** Land → rise (→turn path) dissolve start (§3.13.7). */
+    neutralLandToRiseTurnRatio: 0.05,
+    /** Rise → turn_std dissolve start; 1 = full crouch_to_stand first. */
+    neutralRiseToTurnDissolveRatio: 1,
     walkSpeed: 0.047,
     walkBackSpeed: 0.032,
     walkFirstFrameScale: 0.25,
@@ -374,7 +388,9 @@ export function applyConfigToMatchOpts(cfg: MutableSimConfig) {
     airFrames: cfg.airFrames,
     landingFrames: cfg.landingFrames,
     landingAnimFrames: cfg.landingAnimFrames,
-    neutralLandDissolveRatio: cfg.neutralLandDissolveRatio,
+    neutralLandToRiseIdleRatio: cfg.neutralLandToRiseIdleRatio,
+    neutralLandToRiseTurnRatio: cfg.neutralLandToRiseTurnRatio,
+    neutralRiseToTurnDissolveRatio: cfg.neutralRiseToTurnDissolveRatio,
     walkSpeed: cfg.walkSpeed,
     walkBackSpeed: cfg.walkBackSpeed,
     walkFirstFrameScale: cfg.walkFirstFrameScale,

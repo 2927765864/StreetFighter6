@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   collapseDirs,
+  detectDash,
   matchMotion,
   tryMatchCommand,
 } from '../../src/combat/command/MotionMatcher';
@@ -54,5 +55,39 @@ describe('MotionMatcher', () => {
     // 2,6,3,6 — matching 2 then 3 then 6 from end works
     const intent = tryMatchCommand(entries, hado, { motionStepGapMax: 9 });
     expect(intent?.kind).toBe('special');
+  });
+});
+
+describe('detectDash', () => {
+  it('accepts 6-5-6 forward dash', () => {
+    const entries = hist([6, 5, 6]);
+    expect(detectDash(entries, 3, 6, 8, 8)).toBe(true);
+  });
+
+  it('accepts 4-5-4 back dash', () => {
+    const entries = hist([4, 5, 4]);
+    expect(detectDash(entries, 3, 4, 8, 8)).toBe(true);
+  });
+
+  it('rejects forward dash when opposite 4 appears between taps', () => {
+    const entries = hist([6, 4, 6]);
+    expect(detectDash(entries, 3, 6, 8, 8)).toBe(false);
+  });
+
+  it('rejects back dash when opposite 6 appears between taps', () => {
+    const entries = hist([4, 6, 4]);
+    expect(detectDash(entries, 3, 4, 8, 8)).toBe(false);
+  });
+
+  it('rejects rapid left/right alternating as either dash', () => {
+    const entries = hist([6, 4, 6, 4, 6]);
+    const now = 5;
+    expect(detectDash(entries, now, 6, 8, 8)).toBe(false);
+    expect(detectDash(entries, now, 4, 8, 8)).toBe(false);
+  });
+
+  it('still accepts dash when only neutral sits between taps', () => {
+    const entries = hist([6, 5, 5, 5, 6]);
+    expect(detectDash(entries, 5, 6, 8, 8)).toBe(true);
   });
 });

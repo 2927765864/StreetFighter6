@@ -41,7 +41,9 @@ const adv = {
   landingFrames: 3,
   dashSpeed: 0,
   landingAnimFrames: 20,
-  neutralLandDissolveRatio: 0,
+  neutralLandToRiseIdleRatio: 0,
+  neutralLandToRiseTurnRatio: 0,
+  neutralRiseToTurnDissolveRatio: 1,
   crouchHeld: false,
 };
 
@@ -88,8 +90,9 @@ describe('§3.13.6 land crouch early vs delayed', () => {
     expect(f.pendingTurnAfterLand).toBe(false);
   });
 
-  it('no early hold: neutral land opens turn (no land residual); delayed crouch flips to crouch loop', () => {
+  it('no early hold: neutral land opens crouch_to_stand then turn; delayed crouch flips to crouch loop', () => {
     const f = new Fighter('p1', 2, 1, 10000);
+    f.setStanceConfig({ crouchToStandFrames: 3 });
     f.facing = -1;
     f.visualFacing = 1;
     f.phase = 'airborne';
@@ -102,18 +105,25 @@ describe('§3.13.6 land crouch early vs delayed', () => {
 
     f.advance({ ...adv, crouchHeld: false });
     expect(f.phase).toBe('landing');
-    // §3.13.7: first landing advance snaps to stand-turn (no land residual)
+    // §3.13.7: first landing advance opens crouch_to_stand (not turn yet)
     f.advance({ ...adv, crouchHeld: false });
     expect(f.animTail).toBeNull();
+    expect(f.turning).toBe(false);
+    expect(f.animRole).toBe('crouch_to_stand');
+    expect(f.pendingTurnAfterLand).toBe(true);
+
+    // finish remaining landing hardstun while still rising
+    f.advance({ ...adv, crouchHeld: false });
+    f.advance({ ...adv, crouchHeld: false });
+    expect(f.canAct()).toBe(true);
+    expect(f.animRole).toBe('crouch_to_stand');
+
+    // rise completes → stand-turn
+    f.advance({ ...adv, crouchHeld: false });
     expect(f.turning).toBe(true);
     expect(f.clipId).toBe('turn_std');
     expect(f.visualFacing).toBe(-1);
-
-    // finish remaining landing hardstun
-    f.advance({ ...adv, crouchHeld: false });
-    f.advance({ ...adv, crouchHeld: false });
     expect(f.phase).toBe('idle');
-    expect(f.turning).toBe(true);
 
     f.applyPostureOrWalkIntent('crouch');
 

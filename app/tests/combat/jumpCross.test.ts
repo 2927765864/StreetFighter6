@@ -106,7 +106,11 @@ describe('jump-over / facing / push', () => {
     expect(sim.p1.x).toBeGreaterThan(sim.p2.x);
     expect(sim.p1.jumpWorldDir).toBe(worldDir0);
     expect(flips).toBeLessThan(4);
-    expect(sim.p1.phase === 'landing' || sim.p1.phase === 'idle').toBe(true);
+    expect(
+      sim.p1.phase === 'landing' ||
+        sim.p1.phase === 'idle' ||
+        sim.p1.phase === 'crouch',
+    ).toBe(true);
   });
 
   it('after logical turn, commands use new facing while mesh stays', () => {

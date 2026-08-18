@@ -53,4 +53,24 @@ describe('MatchSim dash', () => {
     sim.step();
     expect(sim.p1.phase).toBe('dash');
   });
+
+  it('opposite direction between taps does not dash', () => {
+    const sim = new MatchSim(fixture, undefined, {
+      dashDirHoldMax: 8,
+      dashNeutralMax: 8,
+      dashFrames: 15,
+    });
+    // 6, 4, 6 — opposite interrupt
+    for (const relDir of [6, 4, 6] as const) {
+      sim.pendingInput = {
+        dir: relDir,
+        relDir,
+        buttons: 0,
+        pressed: 0,
+        released: 0,
+      };
+      sim.step();
+    }
+    expect(sim.p1.phase).not.toBe('dash');
+  });
 });

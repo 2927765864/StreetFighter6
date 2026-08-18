@@ -82,16 +82,25 @@ describe('AnimCrossfade §3.11', () => {
     expect(resolveCrossfadeSec('idle::main', 'hitstun::main', d)).toBe(0);
   });
 
-  it('land → idle can sol; land → attack hard cut', () => {
-    expect(resolveCrossfadeSec('jump_f::land', 'idle::main', d)).toBe(0.1);
+  it('land → crouch_to_stand can sol; land → idle/attack hard cut', () => {
+    expect(
+      resolveCrossfadeSec('jump_f::land', 'crouch::crouch_to_stand', d),
+    ).toBe(0.1);
+    expect(resolveCrossfadeSec('jump_f::land', 'idle::main', d)).toBe(0);
     expect(resolveCrossfadeSec('jump_n::land', 'ryu_5lp::main', d)).toBe(0);
     expect(resolveCrossfadeSec('jump_f::air', 'idle::main', d)).toBe(0);
     expect(resolveCrossfadeSec('jump_f::prejump', 'idle::main', d)).toBe(0);
   });
 
-  it('turn → idle dissolves; turn → attack hard cut', () => {
+  it('turn → idle dissolves; crouch_to_stand → turn/idle soft; turn → attack hard', () => {
     expect(resolveCrossfadeSec('turn_std::main', 'idle::main', d)).toBe(0.1);
-    expect(resolveCrossfadeSec('jump_f::land', 'turn_std::main', d)).toBe(0.1);
+    expect(
+      resolveCrossfadeSec('crouch::crouch_to_stand', 'turn_std::main', d),
+    ).toBe(0.1);
+    expect(
+      resolveCrossfadeSec('crouch::crouch_to_stand', 'idle::main', d),
+    ).toBe(0.1);
+    expect(resolveCrossfadeSec('jump_f::land', 'turn_std::main', d)).toBe(0);
     expect(resolveCrossfadeSec('turn_std::main', 'ryu_5lp::main', d)).toBe(0);
   });
 

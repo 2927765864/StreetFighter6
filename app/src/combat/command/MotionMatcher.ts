@@ -138,6 +138,7 @@ export function tryMatchCommand(
 /**
  * Dash double-tap edge: second enter into dir (6 or 4) within window.
  * Plan: dual-edge on 6 / 4; fire on frame of second enter.
+ * Opposite horizontal (4 vs 6) between the two taps cancels the charge.
  */
 export function detectDash(
   entries: readonly HistoryEntry[],
@@ -146,6 +147,7 @@ export function detectDash(
   dirHoldMax: number,
   neutralMax: number,
 ): boolean {
+  const opposite: NumpadDir = dir === 6 ? 4 : 6;
   const window = dirHoldMax + neutralMax;
   const enters: number[] = [];
   let prev: NumpadDir | null = null;
@@ -160,5 +162,9 @@ export function detectDash(
   const b = enters[enters.length - 1]!;
   if (b - a < 1 || b - a > window) return false;
   if (now - b > 0) return false;
+  for (const e of entries) {
+    if (e.logicFrame <= a || e.logicFrame >= b) continue;
+    if (e.relDir === opposite) return false;
+  }
   return true;
 }

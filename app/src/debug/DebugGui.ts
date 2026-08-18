@@ -502,8 +502,16 @@ export function createDebugGui(
     .name('落地硬直(f)')
     .onChange(syncOpts);
   moveStateFolder
-    .add(cfg, 'neutralLandDissolveRatio', 0, 1, 0.01)
-    .name('中立落地溶图起点比例')
+    .add(cfg, 'neutralLandToRiseIdleRatio', 0, 1, 0.01)
+    .name('落地→蹲起(接待机)溶图起点比例')
+    .onChange(syncOpts);
+  moveStateFolder
+    .add(cfg, 'neutralLandToRiseTurnRatio', 0, 1, 0.01)
+    .name('落地→蹲起(接转身)溶图起点比例')
+    .onChange(syncOpts);
+  moveStateFolder
+    .add(cfg, 'neutralRiseToTurnDissolveRatio', 0, 1, 0.01)
+    .name('蹲起→转身溶图起点比例')
     .onChange(syncOpts);
   moveStateFolder
     .add(cfg, 'jumpApex', 0.5, 4, 0.01)

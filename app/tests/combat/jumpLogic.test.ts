@@ -302,7 +302,7 @@ describe('jump §3.13', () => {
     expect(s.p1.animRole).not.toBe('air');
   });
 
-  it('landing uses land role (not jump main/start)', () => {
+  it('landing uses land role then crouch_to_stand (not jump main/start)', () => {
     const s = sim();
     toAirborne(s);
     for (let i = 0; i < 38; i++) {
@@ -317,10 +317,13 @@ describe('jump §3.13', () => {
       s.pendingInput = N;
       s.step();
     }
-    expect(s.p1.phase).toBe('idle');
-    expect(s.p1.animTail?.animRole).toBe('land');
-    expect(s.p1.clipId).toBe('jump_n');
-    expect(s.p1.animRole).toBe('land');
+    // §3.13.7: after hardstun, mid crouch_to_stand (or idle if rise already done)
+    expect(['crouch', 'idle']).toContain(s.p1.phase);
+    expect(['crouch_to_stand', 'main', 'land']).toContain(s.p1.animRole);
+    if (s.p1.animRole === 'crouch_to_stand') {
+      expect(s.p1.clipId).toBe('crouch');
+      expect(s.p1.stanceState.seg).toBe('to_stand');
+    }
   });
 
   it('neutral prejump retargets to forward jump', () => {

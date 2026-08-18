@@ -125,31 +125,28 @@ export function resolveCrossfadeSec(
   // 受击等：通常不溶
   if (from === 'hit' || to === 'hit') return 0;
 
-  // 转身（§3.14 / §3.11.2）
-  if (from === 'turn' || to === 'turn') {
-    if (to === 'attack' || to === 'jump' || to === 'dash') return 0;
-    // 转身 → 站↔蹲过渡：硬切（松下蹲起须跟手，避免溶图钉在 turn 末帧）
-    if (from === 'stance' || to === 'stance') return 0;
-    return Math.max(0, d.residualToMoveSec);
-  }
-
-  // 跳（§3.11.2 / §3.13.5 / §3.13.7）
+  // 跳（§3.11.2 / §3.13.5 / §3.13.7）— 先于转身，避免 land→turn 误走转身边
   if (from === 'jump' || to === 'jump') {
     const fromRole = bindingParts(fromKey).role;
     const toRole = bindingParts(toKey).role;
-    // 中立落地 → 待机（速接溶图）
-    if (from === 'jump' && fromRole === 'land' && isMoveLike(to)) {
-      return Math.max(0, d.residualToMoveSec);
-    }
-    // 中立落地 → 站转身（速接溶图 §3.13.7）
-    if (from === 'jump' && fromRole === 'land' && to === 'turn') {
-      return Math.max(0, d.residualToMoveSec);
+    // 中立落地 → 蹲起（§3.13.7）
+    if (from === 'jump' && fromRole === 'land' && to === 'stance') {
+      return Math.max(0, d.residualToStanceSec);
     }
     // 跳攻残留 → land / air（收招后溶；按下进招仍走 attack 锁定硬切）
     if (from === 'attack' && to === 'jump' && (toRole === 'land' || toRole === 'air')) {
       return Math.max(0, d.residualToMoveSec);
     }
     return 0;
+  }
+
+  // 转身（§3.14 / §3.11.2）
+  if (from === 'turn' || to === 'turn') {
+    if (to === 'attack' || to === 'jump' || to === 'dash') return 0;
+    // 转身 → 站↔蹲过渡：硬切（松下蹲起须跟手，避免溶图钉在 turn 末帧）
+    if (from === 'turn' && to === 'stance') return 0;
+    // 蹲起 → 站转身、转身 → 待机：正常溶图
+    return Math.max(0, d.residualToMoveSec);
   }
 
   // 冲刺残留 → 待机/移动：可溶（§3.11 次要）
@@ -165,6 +162,11 @@ export function resolveCrossfadeSec(
   // 攻击残留 → 站↔蹲过渡（必接片仍播；只软化切入）
   if (from === 'attack' && to === 'stance') {
     return Math.max(0, d.residualToStanceSec);
+  }
+
+  // 蹲起 → 待机 / 移动：正常溶图（§3.13.7 中立落地末段）
+  if (from === 'stance' && isMoveLike(to)) {
+    return Math.max(0, d.residualToMoveSec);
   }
 
   // 其它涉及 stance 的边：默认可硬切（idle↔过渡姿势接近）

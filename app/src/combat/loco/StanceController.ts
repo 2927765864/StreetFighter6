@@ -100,6 +100,11 @@ function startToStand(cfg: StanceFrameConfig): StanceState {
   };
 }
 
+/** Open crouch_to_stand from frame 0 (neutral land rise / release-down). */
+export function beginToStand(cfg: StanceFrameConfig): StanceState {
+  return startToStand(cfg);
+}
+
 /** Advance one logic frame of transition; no-op if seg none. */
 export function tickStance(prev: StanceState): StanceState {
   if (prev.seg === 'none') return prev;

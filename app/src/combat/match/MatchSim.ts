@@ -57,11 +57,12 @@ export type MatchSimOptions = {
   landingFrames: number;
   /** Land clip visual length (map/glb); base length for §3.13.7 dissolve ratio. */
   landingAnimFrames: number;
-  /**
-   * §3.13.7: fraction of landingAnimFrames to play as land before dissolve
-   * to idle / turn_std. 0 = open target as land starts; 1 = full land first.
-   */
-  neutralLandDissolveRatio: number;
+  /** §3.13.7: land → crouch_to_stand start ratio (→ idle path). */
+  neutralLandToRiseIdleRatio: number;
+  /** §3.13.7: land → crouch_to_stand start ratio (→ turn path). */
+  neutralLandToRiseTurnRatio: number;
+  /** §3.13.7: crouch_to_stand → turn_std start ratio (pending turn only). */
+  neutralRiseToTurnDissolveRatio: number;
   walkSpeed: number;
   walkBackSpeed: number;
   walkFirstFrameScale: number;
@@ -113,7 +114,9 @@ const DEFAULT_OPTS: MatchSimOptions = {
   airFrames: 38,
   landingFrames: 3,
   landingAnimFrames: 20,
-  neutralLandDissolveRatio: 0.05,
+  neutralLandToRiseIdleRatio: 0.05,
+  neutralLandToRiseTurnRatio: 0.05,
+  neutralRiseToTurnDissolveRatio: 1,
   walkSpeed: 0.047,
   walkBackSpeed: 0.032,
   walkFirstFrameScale: 0.25,
@@ -738,7 +741,9 @@ export class MatchSim {
       jumpBackDist: this.opts.jumpBackDist,
       jumpNeutralDist: this.opts.jumpNeutralDist,
       landingAnimFrames: this.opts.landingAnimFrames,
-      neutralLandDissolveRatio: this.opts.neutralLandDissolveRatio,
+      neutralLandToRiseIdleRatio: this.opts.neutralLandToRiseIdleRatio,
+      neutralLandToRiseTurnRatio: this.opts.neutralLandToRiseTurnRatio,
+      neutralRiseToTurnDissolveRatio: this.opts.neutralRiseToTurnDissolveRatio,
       crouchHeld,
     };
     if (!this.skipP1Advance) {

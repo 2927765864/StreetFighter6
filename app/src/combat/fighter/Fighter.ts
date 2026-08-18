@@ -18,6 +18,7 @@ import {
   type WalkState,
 } from '../loco/WalkController';
 import {
+  beginToStand,
   clearStanceTo,
   DEFAULT_STANCE_FRAMES,
   initialStanceState,
@@ -91,17 +92,29 @@ export class Fighter {
    */
   preLandCrouchHold = false;
   /**
-   * §3.13.7 neutral land: dissolve land → idle/turn_std after ratio hold.
+   * §3.13.7 neutral land: dissolve land → crouch_to_stand after ratio hold.
    * Cleared on early crouch or when leave landing / open presentation.
    */
   neutralLandSnap = false;
+  /** True once mid-land opened crouch_to_stand for this landing (§3.13.7). */
+  private neutralLandRiseStarted = false;
   /**
-   * Fraction of landAnimFrameCount before dissolve (§3.13.7).
-   * 0 = land starts dissolve immediately; 1 = full land first.
+   * Land → crouch_to_stand start ratio when not pending turn (§3.13.7 → idle).
    */
-  neutralLandDissolveRatio = 0.05;
-  /** Frames elapsed in landing since enterLanding (for dissolve gate). */
+  neutralLandToRiseIdleRatio = 0.05;
+  /**
+   * Land → crouch_to_stand start ratio when pending turn (§3.13.7 → turn).
+   */
+  neutralLandToRiseTurnRatio = 0.05;
+  /**
+   * Crouch_to_stand → turn_std start ratio (pending turn only; §3.13.7).
+   * Relative to crouchToStandFrames. Default 1 = full rise first.
+   */
+  neutralRiseToTurnDissolveRatio = 1;
+  /** Frames elapsed in landing since enterLanding (for land→rise gate). */
   private landSnapAge = 0;
+  /** Frames elapsed since crouch_to_stand opened (for rise→turn gate). */
+  private landRiseAge = 0;
   /** Logic landing length (for residual tail). */
   private landLogicFrames = 3;
   /** glb/map frames for land residual; ≤ logic → no tail. */
@@ -565,44 +578,173 @@ export class Fighter {
     this.beginClipAnimTail(this.clipId, logic, anim, 'stand');
   }
 
+  private clamp01(n: number): number {
+    return Math.min(1, Math.max(0, n));
+  }
+
   /**
-   * Hold land this many logic frames before §3.13.7 dissolve.
-   * delay = floor(landingAnimFrames * clamp(ratio, 0, 1)).
+   * Hold land this many logic frames before land→crouch_to_stand dissolve.
+   * Uses idle-path or turn-path ratio depending on pendingTurnAfterLand.
    */
-  private neutralLandDissolveDelayFrames(): number {
-    const ratio = Math.min(1, Math.max(0, this.neutralLandDissolveRatio));
+  private landToRiseDelayFrames(): number {
+    const ratio = this.clamp01(
+      this.pendingTurnAfterLand
+        ? this.neutralLandToRiseTurnRatio
+        : this.neutralLandToRiseIdleRatio,
+    );
     const landLen = Math.max(1, this.landAnimFrameCount);
     return Math.floor(landLen * ratio);
   }
 
   /**
-   * §3.13.7: open idle or stand-turn presentation while logic may still be landing.
-   * Does not change phase (landing hardstun / canAct gates stay authoritative).
+   * Hold crouch_to_stand this many frames before rise→turn dissolve.
+   * delay = floor(crouchToStandFrames * clamp(ratio, 0, 1)).
    */
-  private applyNeutralLandPresentation(): void {
+  private riseToTurnDelayFrames(): number {
+    const ratio = this.clamp01(this.neutralRiseToTurnDissolveRatio);
+    const riseLen = Math.max(1, this.stanceCfg.crouchToStandFrames);
+    return Math.floor(riseLen * ratio);
+  }
+
+  private applyNeutralLandRatioOpts(opts: {
+    neutralLandToRiseIdleRatio?: number;
+    neutralLandToRiseTurnRatio?: number;
+    neutralRiseToTurnDissolveRatio?: number;
+  }): void {
+    if (
+      opts.neutralLandToRiseIdleRatio != null &&
+      Number.isFinite(opts.neutralLandToRiseIdleRatio)
+    ) {
+      this.neutralLandToRiseIdleRatio = this.clamp01(
+        opts.neutralLandToRiseIdleRatio,
+      );
+    }
+    if (
+      opts.neutralLandToRiseTurnRatio != null &&
+      Number.isFinite(opts.neutralLandToRiseTurnRatio)
+    ) {
+      this.neutralLandToRiseTurnRatio = this.clamp01(
+        opts.neutralLandToRiseTurnRatio,
+      );
+    }
+    if (
+      opts.neutralRiseToTurnDissolveRatio != null &&
+      Number.isFinite(opts.neutralRiseToTurnDissolveRatio)
+    ) {
+      this.neutralRiseToTurnDissolveRatio = this.clamp01(
+        opts.neutralRiseToTurnDissolveRatio,
+      );
+    }
+  }
+
+  /** Present crouch_to_stand clip without leaving current phase. */
+  private presentCrouchToStand(): void {
+    this.clipId = 'crouch';
+    this.animRole = 'crouch_to_stand';
+  }
+
+  /**
+   * §3.13.7: open / advance crouch_to_stand.
+   * Pending-turn path may finish early via neutralRiseToTurnDissolveRatio.
+   * Returns true when rise segment is done (hand off to idle or turn).
+   */
+  private tickNeutralLandRisePresentation(): boolean {
+    if (!this.neutralLandRiseStarted) {
+      this.stanceState = beginToStand(this.stanceCfg);
+      this.neutralLandRiseStarted = true;
+      this.landRiseAge = 0;
+      this.presentCrouchToStand();
+      if (
+        this.pendingTurnAfterLand &&
+        this.landRiseAge >= this.riseToTurnDelayFrames()
+      ) {
+        return true;
+      }
+      return false;
+    }
+
+    if (
+      this.pendingTurnAfterLand &&
+      this.landRiseAge >= this.riseToTurnDelayFrames()
+    ) {
+      return true;
+    }
+
+    if (this.stanceState.seg === 'to_stand') {
+      this.stanceState = tickStance(this.stanceState);
+      if (this.stanceState.seg === 'to_stand') {
+        this.presentCrouchToStand();
+        this.landRiseAge += 1;
+        return false;
+      }
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * After crouch_to_stand: idle or stand-turn presentation only.
+   * Keeps current phase unless opening stand-turn (must not use crouch turn).
+   */
+  private presentNeutralLandIdleOrTurn(): void {
     if (this.pendingTurnAfterLand || this.turning) {
+      // Neutral land rise always hands off to stand-turn, not crouch-turn.
+      this.stanceState = clearStanceTo(false);
+      if (this.phase === 'crouch') this.phase = 'idle';
       if (!this.turning) this.beginTurnClip();
       return;
     }
     this.stanceState = clearStanceTo(false);
     this.clipId = 'idle';
     this.animRole = 'main';
+    // Leave crouch phase after neutral rise; keep landing hardstun phase intact.
+    if (this.phase === 'crouch') this.phase = 'idle';
   }
 
   /**
-   * After hardstun: idle / stand-turn (turn may already be running from snap).
+   * After hardstun: continue rise, or idle / stand-turn if rise already done.
    */
-  private finishNeutralLandToIdleOrTurn(): void {
+  private finishNeutralLandAfterHardstun(): void {
     this.clearAnimTail();
+    this.neutralLandSnap = false;
+
+    if (!this.neutralLandRiseStarted) {
+      this.stanceState = beginToStand(this.stanceCfg);
+      this.neutralLandRiseStarted = true;
+      this.landRiseAge = 0;
+      this.phase = 'crouch';
+      this.presentCrouchToStand();
+      if (
+        this.pendingTurnAfterLand &&
+        this.landRiseAge >= this.riseToTurnDelayFrames()
+      ) {
+        this.phase = 'idle';
+        this.stanceState = clearStanceTo(false);
+        if (!this.turning) this.beginTurnClip();
+      }
+      return;
+    }
+
+    if (this.stanceState.seg === 'to_stand') {
+      // May early-exit to turn via rise→turn ratio.
+      if (
+        this.pendingTurnAfterLand &&
+        this.landRiseAge >= this.riseToTurnDelayFrames()
+      ) {
+        this.phase = 'idle';
+        this.stanceState = clearStanceTo(false);
+        if (!this.turning) this.beginTurnClip();
+        return;
+      }
+      this.phase = 'crouch';
+      this.presentCrouchToStand();
+      return;
+    }
+
     this.phase = 'idle';
     if (this.pendingTurnAfterLand) {
+      this.stanceState = clearStanceTo(false);
       if (!this.turning) this.beginTurnClip();
-      else {
-        this.phase =
-          this.stanceState.logicalCrouch || this.clipId === 'turn_crh'
-            ? 'crouch'
-            : 'idle';
-      }
     } else if (this.turning) {
       this.phase =
         this.clipId === 'turn_crh' || this.stanceState.logicalCrouch
@@ -622,15 +764,22 @@ export class Fighter {
 
     if (earlyCrouch) {
       this.neutralLandSnap = false;
+      this.neutralLandRiseStarted = false;
+      this.landRiseAge = 0;
       this.enterEarlyLandCrouch();
       return;
     }
 
     // §3.13.7: if dissolve delay still remaining after hardstun, brief land hold (canAct).
     // Continue the same 60Hz land timeline — do not rewind visualFrame to 0.
-    const delay = this.neutralLandDissolveDelayFrames();
+    const delay = this.landToRiseDelayFrames();
     const landFrame = Math.max(this.jumpFrame, this.landSnapAge);
-    if (this.neutralLandSnap && landFrame < delay && !this.turning) {
+    if (
+      this.neutralLandSnap &&
+      !this.neutralLandRiseStarted &&
+      landFrame < delay &&
+      !this.turning
+    ) {
       this.phase = 'idle';
       this.stanceState = clearStanceTo(false);
       // visualFrame already advanced through hardstun; stop at delay
@@ -648,8 +797,7 @@ export class Fighter {
       return;
     }
 
-    this.neutralLandSnap = false;
-    this.finishNeutralLandToIdleOrTurn();
+    this.finishNeutralLandAfterHardstun();
   }
 
   /**
@@ -689,23 +837,25 @@ export class Fighter {
     jumpBackDist?: number;
     jumpNeutralDist?: number;
     landingAnimFrames?: number;
-    neutralLandDissolveRatio?: number;
+    neutralLandToRiseIdleRatio?: number;
+    neutralLandToRiseTurnRatio?: number;
+    neutralRiseToTurnDissolveRatio?: number;
     crouchHeld?: boolean;
   }): void {
     if (this.jumpPhase !== 'air') return;
     if (this.tickJumpArc(opts)) {
-      this.enterLanding(
-        opts.landingFrames,
-        opts.landingAnimFrames,
-        opts.neutralLandDissolveRatio,
-      );
+      this.enterLanding(opts.landingFrames, opts.landingAnimFrames, opts);
     }
   }
 
   private enterLanding(
     landingFrames: number,
     landingAnimFrames?: number,
-    neutralLandDissolveRatio?: number,
+    ratioOpts?: {
+      neutralLandToRiseIdleRatio?: number;
+      neutralLandToRiseTurnRatio?: number;
+      neutralRiseToTurnDissolveRatio?: number;
+    },
   ): void {
     this.mover.move = null;
     this.clearAttackResidual();
@@ -721,13 +871,10 @@ export class Fighter {
     if (landingAnimFrames != null && landingAnimFrames > 0) {
       this.landAnimFrameCount = Math.floor(landingAnimFrames);
     }
-    if (neutralLandDissolveRatio != null && Number.isFinite(neutralLandDissolveRatio)) {
-      this.neutralLandDissolveRatio = Math.min(
-        1,
-        Math.max(0, neutralLandDissolveRatio),
-      );
-    }
+    if (ratioOpts) this.applyNeutralLandRatioOpts(ratioOpts);
     this.landSnapAge = 0;
+    this.landRiseAge = 0;
+    this.neutralLandRiseStarted = false;
     // §3.13.7: neutral unless crouch already held in air (early crouch path).
     this.neutralLandSnap = !this.preLandCrouchHold;
   }
@@ -744,7 +891,28 @@ export class Fighter {
         return;
       }
       const st = this.animTail.stance;
+      const wasLand = this.animTail.animRole === 'land';
       this.clearAnimTail();
+      // Post-hardstun land hold ended → open crouch_to_stand (§3.13.7), not idle/turn.
+      if (
+        wasLand &&
+        !this.neutralLandRiseStarted &&
+        (this.phase === 'idle' || this.phase === 'crouch') &&
+        !this.turning
+      ) {
+        this.stanceState = beginToStand(this.stanceCfg);
+        this.neutralLandRiseStarted = true;
+        this.landRiseAge = 0;
+        this.phase = 'crouch';
+        this.presentCrouchToStand();
+        if (
+          this.pendingTurnAfterLand &&
+          this.landRiseAge >= this.riseToTurnDelayFrames()
+        ) {
+          this.presentNeutralLandIdleOrTurn();
+        }
+        return;
+      }
       if (this.pendingTurnAfterLand && (this.phase === 'idle' || this.phase === 'crouch')) {
         this.beginTurnClip();
       } else if (this.phase === 'idle' || this.phase === 'crouch') {
@@ -938,6 +1106,8 @@ export class Fighter {
     this.usedAirNormal = false;
     this.preLandCrouchHold = false;
     this.neutralLandSnap = false;
+    this.neutralLandRiseStarted = false;
+    this.landRiseAge = 0;
     this.clearLoco();
     this.clearTurn();
     if (relDir === 9 || relDir === 3) {
@@ -1019,19 +1189,19 @@ export class Fighter {
     jumpBackDist?: number;
     jumpNeutralDist?: number;
     landingAnimFrames?: number;
-    /** §3.13.7: fraction of land anim before dissolve to idle/turn. */
-    neutralLandDissolveRatio?: number;
+    /** §3.13.7: land → rise (→idle path) dissolve start ratio. */
+    neutralLandToRiseIdleRatio?: number;
+    /** §3.13.7: land → rise (→turn path) dissolve start ratio. */
+    neutralLandToRiseTurnRatio?: number;
+    /** §3.13.7: rise → turn dissolve start ratio. */
+    neutralRiseToTurnDissolveRatio?: number;
     /** Holding down this frame (for §3.13.6 early crouch on land exit). */
     crouchHeld?: boolean;
   }): void {
     if (this.phase === 'attack') {
       if (this.jumpPhase === 'air') {
         if (this.tickJumpArc(opts)) {
-          this.enterLanding(
-            opts.landingFrames,
-            opts.landingAnimFrames,
-            opts.neutralLandDissolveRatio,
-          );
+          this.enterLanding(opts.landingFrames, opts.landingAnimFrames, opts);
           return;
         }
       }
@@ -1116,11 +1286,7 @@ export class Fighter {
         this.tickAnimTail();
       }
       if (this.tickJumpArc(opts)) {
-        this.enterLanding(
-          opts.landingFrames,
-          opts.landingAnimFrames,
-          opts.neutralLandDissolveRatio,
-        );
+        this.enterLanding(opts.landingFrames, opts.landingAnimFrames, opts);
       } else if (!this.animTail?.holdAir) {
         this.animRole = 'air';
         this.clipId = this.jumpClipId;
@@ -1128,30 +1294,28 @@ export class Fighter {
       return;
     }
     if (this.phase === 'landing') {
-      if (
-        opts.neutralLandDissolveRatio != null &&
-        Number.isFinite(opts.neutralLandDissolveRatio)
-      ) {
-        this.neutralLandDissolveRatio = Math.min(
-          1,
-          Math.max(0, opts.neutralLandDissolveRatio),
-        );
-      }
+      this.applyNeutralLandRatioOpts(opts);
       if (opts.landingAnimFrames != null && opts.landingAnimFrames > 0) {
         this.landAnimFrameCount = Math.floor(opts.landingAnimFrames);
       }
       // Crouch held mid-landing cancels neutral snap → stay on land until hardstun end.
       if (this.preLandCrouchHold) {
         this.neutralLandSnap = false;
+        this.neutralLandRiseStarted = false;
+        this.landRiseAge = 0;
       }
       this.jumpFrame += 1;
       this.stateTimer -= 1;
       this.y = 0;
       if (this.neutralLandSnap) {
-        const delay = this.neutralLandDissolveDelayFrames();
-        // landSnapAge: completed land-present frames; dissolve when age >= delay
+        const delay = this.landToRiseDelayFrames();
+        // landSnapAge: completed land-present frames; open crouch_to_stand when age >= delay
         if (this.landSnapAge >= delay) {
-          this.applyNeutralLandPresentation();
+          const riseDone = this.tickNeutralLandRisePresentation();
+          if (riseDone) {
+            this.presentNeutralLandIdleOrTurn();
+            this.neutralLandSnap = false;
+          }
           if (this.turning) {
             this.turnFrame += 1;
             this.clipId =
@@ -1171,6 +1335,27 @@ export class Fighter {
           this.clipId = this.jumpClipId;
         }
         this.landSnapAge += 1;
+      } else if (this.neutralLandRiseStarted && this.stanceState.seg === 'to_stand') {
+        // Rise still scrubbing (snap cleared after early handoff path, or mid-hardstun).
+        const riseDone = this.tickNeutralLandRisePresentation();
+        if (riseDone) {
+          this.presentNeutralLandIdleOrTurn();
+        }
+      } else if (this.turning) {
+        this.turnFrame += 1;
+        this.clipId =
+          this.clipId === 'turn_crh' || this.stanceState.logicalCrouch
+            ? 'turn_crh'
+            : 'turn_std';
+        this.animRole = 'main';
+        if (this.turnFrame >= this.turnTotal) {
+          this.clearTurn();
+          this.stanceState = clearStanceTo(false);
+          this.clipId = 'idle';
+          this.animRole = 'main';
+        }
+      } else if (this.neutralLandRiseStarted) {
+        // Rise already finished to idle/turn during hardstun — keep presentation.
       } else {
         this.animRole = 'land';
         this.clipId = this.jumpClipId;
@@ -1212,6 +1397,15 @@ export class Fighter {
             );
           }
           this.applyStancePresentation();
+        }
+      } else if (
+        this.neutralLandRiseStarted &&
+        this.stanceState.seg === 'to_stand'
+      ) {
+        this.applyNeutralLandRatioOpts(opts);
+        const riseDone = this.tickNeutralLandRisePresentation();
+        if (riseDone) {
+          this.presentNeutralLandIdleOrTurn();
         }
       } else if (this.stanceState.seg !== 'none') {
         this.stanceState = tickStance(this.stanceState);

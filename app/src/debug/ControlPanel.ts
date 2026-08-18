@@ -392,7 +392,9 @@ function buildDom(): HTMLElement {
           ${rowNumber('prejumpFrames', 'Prejump (f)', 1, 10, 1)}
           ${rowNumber('airFrames', '滞空 (f)', 5, 60, 1)}
           ${rowNumber('landingFrames', '落地硬直 (f)', 1, 15, 1)}
-          ${rowNumber('neutralLandDissolveRatio', '中立落地溶图起点比例', 0, 1, 0.01)}
+          ${rowNumber('neutralLandToRiseIdleRatio', '落地→蹲起(接待机)溶图起点比例', 0, 1, 0.01)}
+          ${rowNumber('neutralLandToRiseTurnRatio', '落地→蹲起(接转身)溶图起点比例', 0, 1, 0.01)}
+          ${rowNumber('neutralRiseToTurnDissolveRatio', '蹲起→转身溶图起点比例', 0, 1, 0.01)}
           ${rowNumber('jumpApex', '跳顶点高', 0.5, 4, 0.01)}
           ${rowNumber('jumpFwdDist', '前跳距', 0, 4, 0.01)}
           ${rowNumber('jumpBackDist', '后跳距', 0, 4, 0.01)}
@@ -681,7 +683,9 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'prejumpFrames', path: 'prejumpFrames' },
   { id: 'airFrames', path: 'airFrames' },
   { id: 'landingFrames', path: 'landingFrames' },
-  { id: 'neutralLandDissolveRatio', path: 'neutralLandDissolveRatio' },
+  { id: 'neutralLandToRiseIdleRatio', path: 'neutralLandToRiseIdleRatio' },
+  { id: 'neutralLandToRiseTurnRatio', path: 'neutralLandToRiseTurnRatio' },
+  { id: 'neutralRiseToTurnDissolveRatio', path: 'neutralRiseToTurnDissolveRatio' },
   { id: 'jumpApex', path: 'jumpApex' },
   { id: 'jumpFwdDist', path: 'jumpFwdDist' },
   { id: 'jumpBackDist', path: 'jumpBackDist' },
