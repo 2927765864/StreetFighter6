@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   LogicGlbMap,
@@ -90,6 +92,29 @@ describe('LogicGlbMap', () => {
     expect(RYU_MESH_ONLY_URL.endsWith('ryu_c1_mesh_only.glb')).toBe(true);
     expect(RYU_MESH_ONLY_URL.startsWith('/private-runtime/')).toBe(true);
     expect(RYU_MESH_PUBLIC_FALLBACK_URL.startsWith('/models/')).toBe(true);
+  });
+
+  it('runtime guard clips use idle DRD, not idle_tired GRD', () => {
+    const raw = JSON.parse(
+      readFileSync(
+        resolve(__dirname, '../../public/data/clips/ryu_logic_to_glb_map.json'),
+        'utf8',
+      ),
+    );
+    const guardMoves = (raw.moves as Array<{ moveId: string; clips?: Array<{ path?: string }> }>).filter(
+      (m) => m.moveId.startsWith('grd_') || m.moveId.startsWith('block_'),
+    );
+    expect(guardMoves.length).toBeGreaterThan(10);
+    for (const m of guardMoves) {
+      for (const c of m.clips ?? []) {
+        expect(c.path, m.moveId).toContain('esf001v00_idle/glb');
+        expect(c.path, m.moveId).not.toContain('idle_tired');
+        expect(c.path, m.moveId).toContain('DRD_');
+      }
+    }
+    expect(
+      LogicGlbMap.fromJson(raw).primaryPath('grd_hl_st'),
+    ).toBe('basic/esf001v00_idle/glb/024_esf001_5150_DRD_HL_ST_id5050_f17.glb');
   });
 
   it('pathForRole distinguishes walk start/loop/end', () => {

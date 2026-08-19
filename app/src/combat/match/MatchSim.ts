@@ -26,6 +26,7 @@ import {
 import {
   canGuard,
   normalizeGuard,
+  guardAnimForHit,
   selectGuardReactLogicId,
   stanceForBlockAll,
 } from '../systems/GuardPolicy';
@@ -222,6 +223,7 @@ export class MatchSim {
     p1StanceId: 'stand',
     p1HurtCount: 0,
     p1HitCount: 0,
+    hitsLandedThisMove: 0,
     hitstopTimer: 0,
     lastHitResult: 'none',
     forceP2Guard: true,
@@ -474,6 +476,7 @@ export class MatchSim {
         return false;
       }
       this.p1.startMove(move);
+      this.debugProbe.hitsLandedThisMove = 0;
       this.actionBuffer.clear();
       this.skipP1Advance = true;
       this.debugProbe.lastMoveMiss = '';
@@ -697,19 +700,24 @@ export class MatchSim {
 
     this.commitLogicalFacing();
 
-    // 6. Hit ∩ Hurt (throws: presentation only)
+    // 6. Hit ∩ Hurt (throws: presentation only). Multi-hit: one unlanded group / frame.
     if (
       this.p1.phase === 'attack' &&
-      !this.p1.mover.hasHitThisMove &&
       this.p1.mover.move?.clipId !== 'throw_fwd' &&
       this.p1.mover.move?.clipId !== 'throw_back'
     ) {
+      const pendingGroup = this.p1.mover.unresolvedHitGroupAtCurrentFrame();
       const hits = this.p1.worldHitBoxes();
       const hurts = this.p2.worldHurtBoxes(
         this.dummy.isCrouching() || this.p2.isHurtCrouching(),
       );
-      if (hits.length > 0 && anyHitOverlapsHurt(hits, hurts)) {
-        this.p1.mover.hasHitThisMove = true;
+      if (
+        pendingGroup != null &&
+        hits.length > 0 &&
+        anyHitOverlapsHurt(hits, hurts)
+      ) {
+        this.p1.mover.markHitGroupLanded(pendingGroup);
+        this.debugProbe.hitsLandedThisMove = this.p1.mover.landedHitGroups.size;
         const mv = this.p1.mover.move ?? this.move5lp;
         const level = normalizeGuard(mv.guard);
         this.debugProbe.lastGuardLevel =
@@ -739,6 +747,7 @@ export class MatchSim {
             guard: level,
             hitstopOnBlock: mv.hitstopOnBlock,
             guardStrength: mv.guardStrength,
+            guardAnim: guardAnimForHit(mv.guardAnim, pendingGroup),
           });
           this.debugProbe.guardClipFallback =
             reactClipId === 'block_stand' || reactClipId === 'block_crouch_loop';
@@ -881,15 +890,12 @@ export class MatchSim {
   markWhiffIfNeeded(): void {
     if (
       this.p1.phase === 'attack' &&
-      !this.p1.mover.isHitActive() &&
       !this.p1.mover.hasHitThisMove &&
       this.p1.mover.moveFrame > 0 &&
-      this.p1.mover.move
+      this.p1.mover.move &&
+      this.p1.mover.allHitWindowsPassed()
     ) {
-      const { startup, active } = this.p1.mover.move.frames;
-      if (this.p1.mover.moveFrame >= startup - 1 + active) {
-        this.lastHitResult = 'whiff';
-      }
+      this.lastHitResult = 'whiff';
     }
   }
 

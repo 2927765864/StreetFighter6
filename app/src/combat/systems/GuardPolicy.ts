@@ -9,6 +9,9 @@ export type DummyGuardPolicy = 'block_all' | 'stand_block' | 'crouch_block' | 'n
 
 export type GuardStrength = 'L' | 'M' | 'H';
 
+/** Stand-block animation letter; not Capcom H/M/L. */
+export type GuardAnimHeight = 'h' | 'm' | 'l';
+
 export function normalizeGuard(g: string | undefined | null): GuardLevel {
   if (g == null) return 'high';
   const s = String(g).trim().toLowerCase();
@@ -58,19 +61,45 @@ export function resolveGuardStrength(args: {
   return hitstopToStrength(args.hitstopOnBlock);
 }
 
+export function parseGuardAnimLetter(
+  raw: unknown,
+): GuardAnimHeight | undefined {
+  if (raw == null) return undefined;
+  const a = String(raw).trim().toLowerCase();
+  if (a === 'h' || a === 'high') return 'h';
+  if (a === 'm' || a === 'mid') return 'm';
+  if (a === 'l' || a === 'low') return 'l';
+  return undefined;
+}
+
+/** Scalar `guardAnim` or per-hit list (`["h","m"]`). */
+export function guardAnimForHit(
+  guardAnim: GuardAnimHeight | GuardAnimHeight[] | string | string[] | null | undefined,
+  hitGroup: number,
+): GuardAnimHeight | undefined {
+  if (guardAnim == null) return undefined;
+  if (Array.isArray(guardAnim)) {
+    if (guardAnim.length === 0) return undefined;
+    const i = Math.max(0, Math.min(hitGroup, guardAnim.length - 1));
+    return parseGuardAnimLetter(guardAnim[i]);
+  }
+  return parseGuardAnimLetter(guardAnim);
+}
+
 /**
- * GRD letter = *animation* height, not Capcom frame-data H/M/L.
- * Official H (both) = 中段 → M / crouch C
- * Official M (overhead) = 上段 → H
- * Official L = 下段 → L stand / D crouch
+ * GRD/DRD letter = *hit-height animation*, not Capcom block-property H/M/L.
+ * Stand `guardAnim` (per hit) wins. Crouch stays C / D.
  */
 export function guardToAnimHeight(
   level: GuardLevel,
   crouching: boolean,
+  guardAnim?: GuardAnimHeight | string | null,
 ): 'h' | 'm' | 'l' | 'c' | 'd' {
-  if (level === 'low') return crouching ? 'd' : 'l';
-  if (level === 'mid' || level === 'midHigh') return 'h';
-  return crouching ? 'c' : 'm';
+  if (crouching) return level === 'low' ? 'd' : 'c';
+  const a = parseGuardAnimLetter(guardAnim);
+  if (a) return a;
+  if (level === 'low') return 'l';
+  return 'h';
 }
 
 /** @deprecated use guardToAnimHeight */
@@ -87,9 +116,10 @@ export function selectGuardReactLogicId(args: {
   guard: GuardLevel;
   hitstopOnBlock?: number;
   guardStrength?: GuardStrength | string | null;
+  guardAnim?: GuardAnimHeight | string | null;
 }): string {
   const strength = resolveGuardStrength(args).toLowerCase();
-  const h = guardToAnimHeight(args.guard, args.crouching);
+  const h = guardToAnimHeight(args.guard, args.crouching, args.guardAnim);
   return `grd_${h}${strength}_st`;
 }
 

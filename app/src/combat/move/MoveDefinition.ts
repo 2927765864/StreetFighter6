@@ -7,6 +7,8 @@ export type TimedBox = Box & {
   /** base = full head+body+leg segment; extend = temporary deform */
   layer?: 'base' | 'extend';
   rectId?: number;
+  /** Optional explicit multi-hit index (0-based). */
+  hitGroup?: number;
 };
 
 export type CancelWindow = {
@@ -34,6 +36,8 @@ export type MoveDefinition = {
   };
   advantage: { onHit: number; onBlock: number };
   damage: number;
+  /** Independent contacts this move can land (4HK/6HP = 2). */
+  hitCount?: number;
   hitstun: number;
   blockstun: number;
   /**
@@ -42,6 +46,12 @@ export type MoveDefinition = {
   guard?: 'high' | 'mid' | 'low' | 'midHigh' | 'throw';
   /** HIT_DT _IsStrength / HitmarkStrength → L/M/H 格挡反应轻重。 */
   guardStrength?: 'L' | 'M' | 'H';
+  /**
+   * Stand-block *animation* height (GRD/DRD letter). Independent of `guard`
+   * (Capcom H/M/L). h = 上段, m = 中段, l = 下段. Crouch still uses C/D.
+   */
+  /** Stand-block anim height; array = per hit group (6MP m then l). */
+  guardAnim?: 'h' | 'm' | 'l' | Array<'h' | 'm' | 'l'>;
   cancel: {
     specialCancel: boolean;
     superOnly?: boolean;
@@ -286,6 +296,10 @@ export function parseMoveDefinition(raw: unknown): MoveDefinition {
           b.rectId != null && Number.isFinite(Number(b.rectId))
             ? Number(b.rectId)
             : undefined,
+        hitGroup:
+          b.hitGroup != null && Number.isFinite(Number(b.hitGroup))
+            ? Math.floor(Number(b.hitGroup))
+            : undefined,
       };
     });
   };
@@ -318,6 +332,24 @@ export function parseMoveDefinition(raw: unknown): MoveDefinition {
   const gs = o.guardStrength != null ? String(o.guardStrength).trim().toUpperCase() : '';
   if (gs === 'L' || gs === 'M' || gs === 'H') guardStrength = gs;
 
+  let guardAnim: MoveDefinition['guardAnim'];
+  const parseLetter = (v: unknown): 'h' | 'm' | 'l' | undefined => {
+    const a = String(v ?? '').trim().toLowerCase();
+    if (a === 'h' || a === 'high') return 'h';
+    if (a === 'm' || a === 'mid') return 'm';
+    if (a === 'l' || a === 'low') return 'l';
+    return undefined;
+  };
+  if (Array.isArray(o.guardAnim)) {
+    const list = (o.guardAnim as unknown[]).map(parseLetter).filter(
+      (x): x is 'h' | 'm' | 'l' => x != null,
+    );
+    if (list.length) guardAnim = list;
+  } else {
+    const one = parseLetter(o.guardAnim);
+    if (one) guardAnim = one;
+  }
+
   let mmdk: MoveDefinition['mmdk'];
   if (o.mmdk && typeof o.mmdk === 'object') {
     const mm = o.mmdk as Record<string, unknown>;
@@ -342,6 +374,10 @@ export function parseMoveDefinition(raw: unknown): MoveDefinition {
     frames: { startup, active, recovery, total },
     advantage: { onHit, onBlock },
     damage: asNum(o.damage, 0),
+    hitCount:
+      o.hitCount != null && Number.isFinite(Number(o.hitCount))
+        ? Math.max(1, Math.floor(Number(o.hitCount)))
+        : 1,
     hitstun,
     blockstun,
     cancel: {
@@ -381,6 +417,7 @@ export function parseMoveDefinition(raw: unknown): MoveDefinition {
     mmdk,
     guard,
     guardStrength,
+    guardAnim,
   };
 }
 

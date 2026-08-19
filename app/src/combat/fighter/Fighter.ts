@@ -1156,6 +1156,8 @@ export class Fighter {
 
   /** After blockstun, rest clip (idle / crouch) — not guard loop. */
   holdGuardLoopClipId: string | null = null;
+  /** Bumped on each block/hit react so the view hard-cuts even if clipId repeats. */
+  clipRestartSeq = 0;
 
   applyBlockstun(
     frames: number,
@@ -1172,9 +1174,10 @@ export class Fighter {
     this.phase = 'blockstun';
     this.stunTimer = frames;
     this.mover.move = null;
-    this.clipId = opts?.reactClipId ?? (crouching ? 'grd_cl_st' : 'grd_ml_st');
+    this.clipId = opts?.reactClipId ?? (crouching ? 'grd_cl_st' : 'grd_hl_st');
     this.animRole = 'main';
     this.holdGuardLoopClipId = opts?.holdLoopClipId ?? 'idle';
+    this.clipRestartSeq += 1;
     this.stateTimer = 0;
     this.airTimeRemain = 0;
     this.clearLoco();

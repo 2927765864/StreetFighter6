@@ -11,6 +11,7 @@
   },
   "type": "normal",
   "guard": "high",
+  "guardAnim": "m",
   "hitCount": 1,
   "frames": {
     "startup": 6,

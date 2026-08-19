@@ -20,7 +20,7 @@ MMDK DamageCollision is **segmented**, not smooth morph (typically ~4f hold sour
 
 Stand geometry (local ADR-002 center/wh):
 
-- **head**: x=0.000 y=1.661 w=0.600 h=0.379 rectId=1
+- **head**: x=0.000 y=1.661 w=0.800 h=0.379 rectId=1
 - **body**: x=0.000 y=1.070 w=0.800 h=0.936 rectId=2
 - **leg**: x=0.000 y=0.301 w=0.800 h=0.602 rectId=3
 

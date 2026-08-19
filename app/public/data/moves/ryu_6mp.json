@@ -11,6 +11,7 @@
   },
   "type": "commandNormal",
   "guard": "mid",
+  "guardAnim": ["m", "l"],
   "hitCount": 2,
   "frames": {
     "startup": 20,

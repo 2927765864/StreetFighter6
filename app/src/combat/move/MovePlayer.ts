@@ -1,6 +1,12 @@
 import type { Box } from '../boxes/Box2D';
 import type { MoveDefinition, TimedBox } from './MoveDefinition';
 import { inferTimelineFrames } from './MoveDefinition';
+import {
+  hitGroupAtFrame,
+  hitGroupRanges,
+  lastHitGroupFrame,
+  type HitGroupRange,
+} from './HitGroups';
 
 /**
  * Frame indexing (ADR-003):
@@ -13,7 +19,12 @@ import { inferTimelineFrames } from './MoveDefinition';
 export class MovePlayer {
   move: MoveDefinition | null = null;
   moveFrame = 0;
-  hasHitThisMove = false;
+  landedHitGroups = new Set<number>();
+  private groupCache: HitGroupRange[] | null = null;
+
+  get hasHitThisMove(): boolean {
+    return this.landedHitGroups.size > 0;
+  }
 
   get active(): boolean {
     return this.move !== null;
@@ -35,7 +46,34 @@ export class MovePlayer {
   start(move: MoveDefinition): void {
     this.move = move;
     this.moveFrame = 0;
-    this.hasHitThisMove = false;
+    this.landedHitGroups = new Set();
+    this.groupCache = null;
+  }
+
+  hitGroups(): HitGroupRange[] {
+    if (!this.move) return [];
+    if (!this.groupCache) {
+      this.groupCache = hitGroupRanges(this.move.boxes.hit, this.move.hitCount ?? 1, {
+        startup: this.move.frames.startup,
+        active: this.move.frames.active,
+      });
+    }
+    return this.groupCache;
+  }
+
+  unresolvedHitGroupAtCurrentFrame(): number | null {
+    const g = hitGroupAtFrame(this.hitGroups(), this.moveFrame);
+    if (g == null || this.landedHitGroups.has(g)) return null;
+    return g;
+  }
+
+  markHitGroupLanded(group: number): void {
+    this.landedHitGroups.add(group);
+  }
+
+  allHitWindowsPassed(): boolean {
+    if (!this.move) return true;
+    return this.moveFrame > lastHitGroupFrame(this.hitGroups());
   }
 
   /** Advance one logic frame. Returns true if logic total finished this step. */
@@ -45,7 +83,8 @@ export class MovePlayer {
     if (this.moveFrame >= this.move.frames.total) {
       this.move = null;
       this.moveFrame = 0;
-      this.hasHitThisMove = false;
+      this.landedHitGroups = new Set();
+      this.groupCache = null;
       return true;
     }
     return false;

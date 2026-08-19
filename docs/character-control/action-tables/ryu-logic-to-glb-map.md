@@ -61,7 +61,7 @@
 | ✅ mapped | `jump_f` | 9 | Forward jump | `basic/esf001v00_move/glb/005_esf001_BAS_JUMP_F_START_id0300_f4.glb` | 3 (prejump,air,land) |
 | ✅ mapped | `jump_b` | 7 | Back jump | `basic/esf001v00_move/glb/008_esf001_BAS_JUMP_B_START_id0400_f4.glb` | 3 (prejump,air,land) |
 | ✅ mapped | `hitstun_light` | — | Damage light stand (sample) | `basic/esf001v00_damage/glb/000_esf001_0010_DMG_HL_ST_id0010_f29.glb` | 1 (main) |
-| ✅ mapped | `block_stand` | 4 | Guard stand start (sample) | `basic/esf001v00_idle_tired/glb/008_esf001_5000_GRD_STD_START_id0500_f24.glb` | 1 (main) |
+| ✅ mapped | `block_stand` | 4 | Guard stand start (sample) | `basic/esf001v00_idle/glb/009_esf001_5000_DRD_STD_H_START_id0500_f11.glb` | 1 (main) |
 | ✅ mapped | `drive_parry` | MP+MK | Drive Parry | `basic/esf001v00_sabaki/glb/000_esf001_DPA_STD_START_id0400_f160.glb` | 3 (start,loop,end) |
 | ✅ mapped | `throw_fwd` | LP+LK | Throw forward (sample) | `basic/esf001v00_throw/glb/001_esf001_NGA_6_id0100_f122.glb` | 1 (main) |
 | ✅ mapped | `throw_back` | 4+LP+LK | Throw back (sample) | `basic/esf001v00_throw/glb/002_esf001_NGA_4_id0200_f127.glb` | 1 (main) |

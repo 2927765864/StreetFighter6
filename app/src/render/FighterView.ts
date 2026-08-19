@@ -92,6 +92,7 @@ export class FighterView {
   private currentClip = '';
   /** logicId::role binding key */
   private currentBinding = '';
+  private lastClipRestartSeq = -1;
   private loaded = false;
   private plantWorldXZ: { x: number; z: number } | null = null;
   private footDebug: THREE.Mesh | null = null;
@@ -955,6 +956,30 @@ export class FighterView {
     this.plantWorldXZ = null;
   }
 
+  /** Same logic clip, time 0, no blend (2nd hit of a 2-hit block). */
+  private restartLogicAction(
+    canon: string,
+    role: string,
+    action: THREE.AnimationAction,
+  ): void {
+    this.clearPoseBlend(true);
+    this.mixer?.stopAllAction();
+    action.reset();
+    action.time = 0;
+    const freeRun = this.isFreeRunLogic(canon, role);
+    action.setLoop(freeRun ? THREE.LoopRepeat : THREE.LoopOnce, Infinity);
+    action.clampWhenFinished = !freeRun;
+    action.paused = false;
+    action.enabled = true;
+    action.setEffectiveWeight(1);
+    action.play();
+    this.mixer?.update(0);
+    this.currentClip = canon;
+    this.currentBinding = this.bindingKey(canon, role);
+    this.attackHipsLockLocal = null;
+    this.plantWorldXZ = null;
+  }
+
   /**
    * Switch to logic clip + role. Does not thrash if binding unchanged.
    * @param durations §3.11 crossfade table (or HARD_CUT / all zeros)
@@ -963,6 +988,7 @@ export class FighterView {
     clipId: string,
     role = 'main',
     durations: CrossfadeDurations | number = HARD_CUT,
+    forceRestart = false,
   ): void {
     if (this.previewMode) return;
 
@@ -979,7 +1005,11 @@ export class FighterView {
     if (this.animsMode) {
       const canon = this.logicMap?.canonical(clipId) ?? clipId;
       const key = this.bindingKey(canon, role);
-      if (this.currentBinding === key && this.resolveLogicAction(clipId, role)) {
+      const readySame = this.resolveLogicAction(clipId, role);
+      if (this.currentBinding === key && readySame) {
+        if (forceRestart) {
+          this.restartLogicAction(canon, role, readySame);
+        }
         return;
       }
       const ready = this.resolveLogicAction(clipId, role);
@@ -1444,9 +1474,11 @@ export class FighterView {
     }
     if (fighter.phase === 'blockstun') {
       const react = fighter.clipId.startsWith('grd_');
+      const restart = fighter.clipRestartSeq !== this.lastClipRestartSeq;
+      this.lastClipRestartSeq = fighter.clipRestartSeq;
       if (react) {
         this.clearPoseBlend(true);
-        this.playBest(fighter.clipId, role, HARD_CUT);
+        this.playBest(fighter.clipId, role, HARD_CUT, restart);
       } else {
         this.playBest(fighter.clipId, role, fadePolicy);
       }

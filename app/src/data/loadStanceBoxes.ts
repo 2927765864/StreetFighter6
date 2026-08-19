@@ -223,7 +223,7 @@ function timedStackFromStatic(
 export function fallbackStanceTable(): StanceBoxTable {
   // Approx MMDK bucket-08 + yFit→1.85 (matches model targetHeight)
   const standHurt: StanceBoxPart[] = [
-    { part: 'head', x: 0, y: 1.66, w: 0.6, h: 0.38 },
+    { part: 'head', x: 0, y: 1.66, w: 0.8, h: 0.38 },
     { part: 'body', x: 0, y: 1.07, w: 0.8, h: 0.94 },
     { part: 'leg', x: 0, y: 0.3, w: 0.8, h: 0.6 },
   ];

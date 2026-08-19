@@ -1368,15 +1368,15 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5000_GRD_STD_START",
-          "path": "basic/esf001v00_idle_tired/glb/008_esf001_5000_GRD_STD_START_id0500_f24.glb",
-          "stem": "008_esf001_5000_GRD_STD_START_id0500_f24",
+          "assetKey": "5000_DRD_STD_H_START",
+          "path": "basic/esf001v00_idle/glb/009_esf001_5000_DRD_STD_H_START_id0500_f11.glb",
+          "stem": "009_esf001_5000_DRD_STD_H_START_id0500_f11",
           "motionId": 500,
-          "frameCount": 24
+          "frameCount": 11
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/008_esf001_5000_GRD_STD_START_id0500_f24.glb",
-      "notes": "Sample; full GRD_* family available."
+      "primaryPath": "basic/esf001v00_idle/glb/009_esf001_5000_DRD_STD_H_START_id0500_f11.glb",
+      "notes": "Sample; full GRD_* family available. | source: esf001v00_idle DRD (not tired GRD)"
     },
     {
       "moveId": "drive_parry",

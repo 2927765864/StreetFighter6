@@ -1541,14 +1541,14 @@
       "clips": [
         {
           "role": "start",
-          "assetKey": "5000_GRD_STD_START",
-          "path": "basic/esf001v00_idle_tired/glb/008_esf001_5000_GRD_STD_START_id0500_f24.glb",
-          "stem": "008_esf001_5000_GRD_STD_START_id0500_f24",
-          "frameCount": 24
+          "assetKey": "5000_DRD_STD_H_START",
+          "path": "basic/esf001v00_idle/glb/009_esf001_5000_DRD_STD_H_START_id0500_f11.glb",
+          "stem": "009_esf001_5000_DRD_STD_H_START_id0500_f11",
+          "frameCount": 11
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/008_esf001_5000_GRD_STD_START_id0500_f24.glb",
-      "notes": "GRD system pose"
+      "primaryPath": "basic/esf001v00_idle/glb/009_esf001_5000_DRD_STD_H_START_id0500_f11.glb",
+      "notes": "idle DRD system pose (not tired GRD)"
     },
     {
       "moveId": "block_stand_end",
@@ -1560,14 +1560,14 @@
       "clips": [
         {
           "role": "end",
-          "assetKey": "5020_GRD_STD_END",
-          "path": "basic/esf001v00_idle_tired/glb/010_esf001_5020_GRD_STD_END_id0520_f50.glb",
-          "stem": "010_esf001_5020_GRD_STD_END_id0520_f50",
-          "frameCount": 50
+          "assetKey": "5020_DRD_STD_H_END",
+          "path": "basic/esf001v00_idle/glb/011_esf001_5020_DRD_STD_H_END_id0520_f14.glb",
+          "stem": "011_esf001_5020_DRD_STD_H_END_id0520_f14",
+          "frameCount": 14
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/010_esf001_5020_GRD_STD_END_id0520_f50.glb",
-      "notes": "GRD system pose"
+      "primaryPath": "basic/esf001v00_idle/glb/011_esf001_5020_DRD_STD_H_END_id0520_f14.glb",
+      "notes": "idle DRD system pose (not tired GRD)"
     },
     {
       "moveId": "block_crouch_start",
@@ -1579,14 +1579,14 @@
       "clips": [
         {
           "role": "start",
-          "assetKey": "5090_GRD_CRH_START",
-          "path": "basic/esf001v00_idle_tired/glb/011_esf001_5090_GRD_CRH_START_id0530_f24.glb",
-          "stem": "011_esf001_5090_GRD_CRH_START_id0530_f24",
-          "frameCount": 24
+          "assetKey": "5090_DRD_CRH_H_START",
+          "path": "basic/esf001v00_idle/glb/018_esf001_5090_DRD_CRH_H_START_id0590_f11.glb",
+          "stem": "018_esf001_5090_DRD_CRH_H_START_id0590_f11",
+          "frameCount": 11
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/011_esf001_5090_GRD_CRH_START_id0530_f24.glb",
-      "notes": "GRD system pose"
+      "primaryPath": "basic/esf001v00_idle/glb/018_esf001_5090_DRD_CRH_H_START_id0590_f11.glb",
+      "notes": "idle DRD system pose (not tired GRD)"
     },
     {
       "moveId": "block_crouch_end",
@@ -1598,14 +1598,14 @@
       "clips": [
         {
           "role": "end",
-          "assetKey": "5110_GRD_CRH_END",
-          "path": "basic/esf001v00_idle_tired/glb/013_esf001_5110_GRD_CRH_END_id0550_f50.glb",
-          "stem": "013_esf001_5110_GRD_CRH_END_id0550_f50",
-          "frameCount": 50
+          "assetKey": "5110_DRD_CRH_H_END",
+          "path": "basic/esf001v00_idle/glb/020_esf001_5110_DRD_CRH_H_END_id5010_f14.glb",
+          "stem": "020_esf001_5110_DRD_CRH_H_END_id5010_f14",
+          "frameCount": 14
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/013_esf001_5110_GRD_CRH_END_id0550_f50.glb",
-      "notes": "GRD system pose"
+      "primaryPath": "basic/esf001v00_idle/glb/020_esf001_5110_DRD_CRH_H_END_id5010_f14.glb",
+      "notes": "idle DRD system pose (not tired GRD)"
     },
     {
       "moveId": "grd_hl_st",
@@ -1617,14 +1617,14 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5150_GRD_HL_ST",
-          "path": "basic/esf001v00_idle_tired/glb/014_esf001_5150_GRD_HL_ST_id0560_f29.glb",
-          "stem": "014_esf001_5150_GRD_HL_ST_id0560_f29",
-          "frameCount": 29
+          "assetKey": "5150_DRD_HL_ST",
+          "path": "basic/esf001v00_idle/glb/024_esf001_5150_DRD_HL_ST_id5050_f17.glb",
+          "stem": "024_esf001_5150_DRD_HL_ST_id5050_f17",
+          "frameCount": 17
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/014_esf001_5150_GRD_HL_ST_id0560_f29.glb",
-      "notes": "react ST"
+      "primaryPath": "basic/esf001v00_idle/glb/024_esf001_5150_DRD_HL_ST_id5050_f17.glb",
+      "notes": "idle DRD react ST (not tired GRD)"
     },
     {
       "moveId": "grd_hm_st",
@@ -1636,14 +1636,14 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5160_GRD_HM_ST",
-          "path": "basic/esf001v00_idle_tired/glb/015_esf001_5160_GRD_HM_ST_id0570_f39.glb",
-          "stem": "015_esf001_5160_GRD_HM_ST_id0570_f39",
-          "frameCount": 39
+          "assetKey": "5160_DRD_HM_ST",
+          "path": "basic/esf001v00_idle/glb/025_esf001_5160_DRD_HM_ST_id5060_f25.glb",
+          "stem": "025_esf001_5160_DRD_HM_ST_id5060_f25",
+          "frameCount": 25
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/015_esf001_5160_GRD_HM_ST_id0570_f39.glb",
-      "notes": "react ST"
+      "primaryPath": "basic/esf001v00_idle/glb/025_esf001_5160_DRD_HM_ST_id5060_f25.glb",
+      "notes": "idle DRD react ST (not tired GRD)"
     },
     {
       "moveId": "grd_hm_lt",
@@ -1655,14 +1655,14 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5170_GRD_HM_LT",
-          "path": "basic/esf001v00_idle_tired/glb/016_esf001_5170_GRD_HM_LT_id0580_f39.glb",
-          "stem": "016_esf001_5170_GRD_HM_LT_id0580_f39",
-          "frameCount": 39
+          "assetKey": "5170_DRD_HM_LT",
+          "path": "basic/esf001v00_idle/glb/026_esf001_5170_DRD_HM_LT_id5070_f25.glb",
+          "stem": "026_esf001_5170_DRD_HM_LT_id5070_f25",
+          "frameCount": 25
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/016_esf001_5170_GRD_HM_LT_id0580_f39.glb",
-      "notes": "mapped_unused LT/RT"
+      "primaryPath": "basic/esf001v00_idle/glb/026_esf001_5170_DRD_HM_LT_id5070_f25.glb",
+      "notes": "mapped_unused LT/RT; idle DRD (not tired GRD)"
     },
     {
       "moveId": "grd_hm_rt",
@@ -1674,14 +1674,14 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5180_GRD_HM_RT",
-          "path": "basic/esf001v00_idle_tired/glb/017_esf001_5180_GRD_HM_RT_id0590_f39.glb",
-          "stem": "017_esf001_5180_GRD_HM_RT_id0590_f39",
-          "frameCount": 39
+          "assetKey": "5180_DRD_HM_RT",
+          "path": "basic/esf001v00_idle/glb/027_esf001_5180_DRD_HM_RT_id5080_f25.glb",
+          "stem": "027_esf001_5180_DRD_HM_RT_id5080_f25",
+          "frameCount": 25
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/017_esf001_5180_GRD_HM_RT_id0590_f39.glb",
-      "notes": "mapped_unused LT/RT"
+      "primaryPath": "basic/esf001v00_idle/glb/027_esf001_5180_DRD_HM_RT_id5080_f25.glb",
+      "notes": "mapped_unused LT/RT; idle DRD (not tired GRD)"
     },
     {
       "moveId": "grd_hh_st",
@@ -1693,14 +1693,14 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5190_GRD_HH_ST",
-          "path": "basic/esf001v00_idle_tired/glb/018_esf001_5190_GRD_HH_ST_id5000_f49.glb",
-          "stem": "018_esf001_5190_GRD_HH_ST_id5000_f49",
-          "frameCount": 49
+          "assetKey": "5190_DRD_HH_ST",
+          "path": "basic/esf001v00_idle/glb/028_esf001_5190_DRD_HH_ST_id5090_f35.glb",
+          "stem": "028_esf001_5190_DRD_HH_ST_id5090_f35",
+          "frameCount": 35
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/018_esf001_5190_GRD_HH_ST_id5000_f49.glb",
-      "notes": "react ST"
+      "primaryPath": "basic/esf001v00_idle/glb/028_esf001_5190_DRD_HH_ST_id5090_f35.glb",
+      "notes": "idle DRD react ST (not tired GRD)"
     },
     {
       "moveId": "grd_hh_lt",
@@ -1712,14 +1712,14 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5200_GRD_HH_LT",
-          "path": "basic/esf001v00_idle_tired/glb/019_esf001_5200_GRD_HH_LT_id5010_f49.glb",
-          "stem": "019_esf001_5200_GRD_HH_LT_id5010_f49",
-          "frameCount": 49
+          "assetKey": "5200_DRD_HH_LT",
+          "path": "basic/esf001v00_idle/glb/029_esf001_5200_DRD_HH_LT_id5100_f35.glb",
+          "stem": "029_esf001_5200_DRD_HH_LT_id5100_f35",
+          "frameCount": 35
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/019_esf001_5200_GRD_HH_LT_id5010_f49.glb",
-      "notes": "mapped_unused LT/RT"
+      "primaryPath": "basic/esf001v00_idle/glb/029_esf001_5200_DRD_HH_LT_id5100_f35.glb",
+      "notes": "mapped_unused LT/RT; idle DRD (not tired GRD)"
     },
     {
       "moveId": "grd_hh_rt",
@@ -1731,14 +1731,14 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5210_GRD_HH_RT",
-          "path": "basic/esf001v00_idle_tired/glb/020_esf001_5210_GRD_HH_RT_id5020_f49.glb",
-          "stem": "020_esf001_5210_GRD_HH_RT_id5020_f49",
-          "frameCount": 49
+          "assetKey": "5210_DRD_HH_RT",
+          "path": "basic/esf001v00_idle/glb/030_esf001_5210_DRD_HH_RT_id5110_f35.glb",
+          "stem": "030_esf001_5210_DRD_HH_RT_id5110_f35",
+          "frameCount": 35
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/020_esf001_5210_GRD_HH_RT_id5020_f49.glb",
-      "notes": "mapped_unused LT/RT"
+      "primaryPath": "basic/esf001v00_idle/glb/030_esf001_5210_DRD_HH_RT_id5110_f35.glb",
+      "notes": "mapped_unused LT/RT; idle DRD (not tired GRD)"
     },
     {
       "moveId": "grd_ml_st",
@@ -1750,14 +1750,14 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5220_GRD_ML_ST",
-          "path": "basic/esf001v00_idle_tired/glb/021_esf001_5220_GRD_ML_ST_id5090_f29.glb",
-          "stem": "021_esf001_5220_GRD_ML_ST_id5090_f29",
-          "frameCount": 29
+          "assetKey": "5220_DRD_ML_ST",
+          "path": "basic/esf001v00_idle/glb/031_esf001_5220_DRD_ML_ST_id5120_f17.glb",
+          "stem": "031_esf001_5220_DRD_ML_ST_id5120_f17",
+          "frameCount": 17
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/021_esf001_5220_GRD_ML_ST_id5090_f29.glb",
-      "notes": "react ST"
+      "primaryPath": "basic/esf001v00_idle/glb/031_esf001_5220_DRD_ML_ST_id5120_f17.glb",
+      "notes": "idle DRD react ST (not tired GRD)"
     },
     {
       "moveId": "grd_mm_st",
@@ -1769,14 +1769,14 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5230_GRD_MM_ST",
-          "path": "basic/esf001v00_idle_tired/glb/022_esf001_5230_GRD_MM_ST_id5100_f39.glb",
-          "stem": "022_esf001_5230_GRD_MM_ST_id5100_f39",
-          "frameCount": 39
+          "assetKey": "5230_DRD_MM_ST",
+          "path": "basic/esf001v00_idle/glb/032_esf001_5230_DRD_MM_ST_id5130_f25.glb",
+          "stem": "032_esf001_5230_DRD_MM_ST_id5130_f25",
+          "frameCount": 25
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/022_esf001_5230_GRD_MM_ST_id5100_f39.glb",
-      "notes": "react ST"
+      "primaryPath": "basic/esf001v00_idle/glb/032_esf001_5230_DRD_MM_ST_id5130_f25.glb",
+      "notes": "idle DRD react ST (not tired GRD)"
     },
     {
       "moveId": "grd_mm_lt",
@@ -1788,14 +1788,14 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5240_GRD_MM_LT",
-          "path": "basic/esf001v00_idle_tired/glb/023_esf001_5240_GRD_MM_LT_id5110_f39.glb",
-          "stem": "023_esf001_5240_GRD_MM_LT_id5110_f39",
-          "frameCount": 39
+          "assetKey": "5240_DRD_MM_LT",
+          "path": "basic/esf001v00_idle/glb/033_esf001_5240_DRD_MM_LT_id5140_f25.glb",
+          "stem": "033_esf001_5240_DRD_MM_LT_id5140_f25",
+          "frameCount": 25
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/023_esf001_5240_GRD_MM_LT_id5110_f39.glb",
-      "notes": "mapped_unused LT/RT"
+      "primaryPath": "basic/esf001v00_idle/glb/033_esf001_5240_DRD_MM_LT_id5140_f25.glb",
+      "notes": "mapped_unused LT/RT; idle DRD (not tired GRD)"
     },
     {
       "moveId": "grd_mm_rt",
@@ -1807,14 +1807,14 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5250_GRD_MM_RT",
-          "path": "basic/esf001v00_idle_tired/glb/024_esf001_5250_GRD_MM_RT_id5150_f39.glb",
-          "stem": "024_esf001_5250_GRD_MM_RT_id5150_f39",
-          "frameCount": 39
+          "assetKey": "5250_DRD_MM_RT",
+          "path": "basic/esf001v00_idle/glb/034_esf001_5250_DRD_MM_RT_id5150_f25.glb",
+          "stem": "034_esf001_5250_DRD_MM_RT_id5150_f25",
+          "frameCount": 25
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/024_esf001_5250_GRD_MM_RT_id5150_f39.glb",
-      "notes": "mapped_unused LT/RT"
+      "primaryPath": "basic/esf001v00_idle/glb/034_esf001_5250_DRD_MM_RT_id5150_f25.glb",
+      "notes": "mapped_unused LT/RT; idle DRD (not tired GRD)"
     },
     {
       "moveId": "grd_mh_st",
@@ -1826,14 +1826,14 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5260_GRD_MH_ST",
-          "path": "basic/esf001v00_idle_tired/glb/025_esf001_5260_GRD_MH_ST_id5160_f49.glb",
-          "stem": "025_esf001_5260_GRD_MH_ST_id5160_f49",
-          "frameCount": 49
+          "assetKey": "5260_DRD_MH_ST",
+          "path": "basic/esf001v00_idle/glb/035_esf001_5260_DRD_MH_ST_id5160_f35.glb",
+          "stem": "035_esf001_5260_DRD_MH_ST_id5160_f35",
+          "frameCount": 35
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/025_esf001_5260_GRD_MH_ST_id5160_f49.glb",
-      "notes": "react ST"
+      "primaryPath": "basic/esf001v00_idle/glb/035_esf001_5260_DRD_MH_ST_id5160_f35.glb",
+      "notes": "idle DRD react ST (not tired GRD)"
     },
     {
       "moveId": "grd_mh_lt",
@@ -1845,14 +1845,14 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5270_GRD_MH_LT",
-          "path": "basic/esf001v00_idle_tired/glb/026_esf001_5270_GRD_MH_LT_id5170_f49.glb",
-          "stem": "026_esf001_5270_GRD_MH_LT_id5170_f49",
-          "frameCount": 49
+          "assetKey": "5270_DRD_MH_LT",
+          "path": "basic/esf001v00_idle/glb/036_esf001_5270_DRD_MH_LT_id5170_f35.glb",
+          "stem": "036_esf001_5270_DRD_MH_LT_id5170_f35",
+          "frameCount": 35
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/026_esf001_5270_GRD_MH_LT_id5170_f49.glb",
-      "notes": "mapped_unused LT/RT"
+      "primaryPath": "basic/esf001v00_idle/glb/036_esf001_5270_DRD_MH_LT_id5170_f35.glb",
+      "notes": "mapped_unused LT/RT; idle DRD (not tired GRD)"
     },
     {
       "moveId": "grd_mh_rt",
@@ -1864,14 +1864,14 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5280_GRD_MH_RT",
-          "path": "basic/esf001v00_idle_tired/glb/027_esf001_5280_GRD_MH_RT_id5180_f49.glb",
-          "stem": "027_esf001_5280_GRD_MH_RT_id5180_f49",
-          "frameCount": 49
+          "assetKey": "5280_DRD_MH_RT",
+          "path": "basic/esf001v00_idle/glb/037_esf001_5280_DRD_MH_RT_id5180_f35.glb",
+          "stem": "037_esf001_5280_DRD_MH_RT_id5180_f35",
+          "frameCount": 35
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/027_esf001_5280_GRD_MH_RT_id5180_f49.glb",
-      "notes": "mapped_unused LT/RT"
+      "primaryPath": "basic/esf001v00_idle/glb/037_esf001_5280_DRD_MH_RT_id5180_f35.glb",
+      "notes": "mapped_unused LT/RT; idle DRD (not tired GRD)"
     },
     {
       "moveId": "grd_ll_st",
@@ -1883,14 +1883,14 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5290_GRD_LL_ST",
-          "path": "basic/esf001v00_idle_tired/glb/028_esf001_5290_GRD_LL_ST_id5190_f29.glb",
-          "stem": "028_esf001_5290_GRD_LL_ST_id5190_f29",
-          "frameCount": 29
+          "assetKey": "5290_DRD_LL_ST",
+          "path": "basic/esf001v00_idle/glb/038_esf001_5290_DRD_LL_ST_id5190_f17.glb",
+          "stem": "038_esf001_5290_DRD_LL_ST_id5190_f17",
+          "frameCount": 17
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/028_esf001_5290_GRD_LL_ST_id5190_f29.glb",
-      "notes": "react ST"
+      "primaryPath": "basic/esf001v00_idle/glb/038_esf001_5290_DRD_LL_ST_id5190_f17.glb",
+      "notes": "idle DRD react ST (not tired GRD)"
     },
     {
       "moveId": "grd_lm_st",
@@ -1902,14 +1902,14 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5300_GRD_LM_ST",
-          "path": "basic/esf001v00_idle_tired/glb/029_esf001_5300_GRD_LM_ST_id5200_f39.glb",
-          "stem": "029_esf001_5300_GRD_LM_ST_id5200_f39",
-          "frameCount": 39
+          "assetKey": "5300_DRD_LM_ST",
+          "path": "basic/esf001v00_idle/glb/039_esf001_5300_DRD_LM_ST_id5200_f25.glb",
+          "stem": "039_esf001_5300_DRD_LM_ST_id5200_f25",
+          "frameCount": 25
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/029_esf001_5300_GRD_LM_ST_id5200_f39.glb",
-      "notes": "react ST"
+      "primaryPath": "basic/esf001v00_idle/glb/039_esf001_5300_DRD_LM_ST_id5200_f25.glb",
+      "notes": "idle DRD react ST (not tired GRD)"
     },
     {
       "moveId": "grd_lm_lt",
@@ -1921,14 +1921,14 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5310_GRD_LM_LT",
-          "path": "basic/esf001v00_idle_tired/glb/030_esf001_5310_GRD_LM_LT_id5210_f39.glb",
-          "stem": "030_esf001_5310_GRD_LM_LT_id5210_f39",
-          "frameCount": 39
+          "assetKey": "5310_DRD_LM_LT",
+          "path": "basic/esf001v00_idle/glb/040_esf001_5310_DRD_LM_LT_id5210_f25.glb",
+          "stem": "040_esf001_5310_DRD_LM_LT_id5210_f25",
+          "frameCount": 25
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/030_esf001_5310_GRD_LM_LT_id5210_f39.glb",
-      "notes": "mapped_unused LT/RT"
+      "primaryPath": "basic/esf001v00_idle/glb/040_esf001_5310_DRD_LM_LT_id5210_f25.glb",
+      "notes": "mapped_unused LT/RT; idle DRD (not tired GRD)"
     },
     {
       "moveId": "grd_lm_rt",
@@ -1940,14 +1940,14 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5320_GRD_LM_RT",
-          "path": "basic/esf001v00_idle_tired/glb/031_esf001_5320_GRD_LM_RT_id5220_f39.glb",
-          "stem": "031_esf001_5320_GRD_LM_RT_id5220_f39",
-          "frameCount": 39
+          "assetKey": "5320_DRD_LM_RT",
+          "path": "basic/esf001v00_idle/glb/041_esf001_5320_DRD_LM_RT_id5220_f25.glb",
+          "stem": "041_esf001_5320_DRD_LM_RT_id5220_f25",
+          "frameCount": 25
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/031_esf001_5320_GRD_LM_RT_id5220_f39.glb",
-      "notes": "mapped_unused LT/RT"
+      "primaryPath": "basic/esf001v00_idle/glb/041_esf001_5320_DRD_LM_RT_id5220_f25.glb",
+      "notes": "mapped_unused LT/RT; idle DRD (not tired GRD)"
     },
     {
       "moveId": "grd_lh_st",
@@ -1959,14 +1959,14 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5330_GRD_LH_ST",
-          "path": "basic/esf001v00_idle_tired/glb/032_esf001_5330_GRD_LH_ST_id5230_f49.glb",
-          "stem": "032_esf001_5330_GRD_LH_ST_id5230_f49",
-          "frameCount": 49
+          "assetKey": "5330_DRD_LH_ST",
+          "path": "basic/esf001v00_idle/glb/042_esf001_5330_DRD_LH_ST_id5230_f35.glb",
+          "stem": "042_esf001_5330_DRD_LH_ST_id5230_f35",
+          "frameCount": 35
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/032_esf001_5330_GRD_LH_ST_id5230_f49.glb",
-      "notes": "react ST"
+      "primaryPath": "basic/esf001v00_idle/glb/042_esf001_5330_DRD_LH_ST_id5230_f35.glb",
+      "notes": "idle DRD react ST (not tired GRD)"
     },
     {
       "moveId": "grd_lh_lt",
@@ -1978,14 +1978,14 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5340_GRD_LH_LT",
-          "path": "basic/esf001v00_idle_tired/glb/033_esf001_5340_GRD_LH_LT_id5240_f49.glb",
-          "stem": "033_esf001_5340_GRD_LH_LT_id5240_f49",
-          "frameCount": 49
+          "assetKey": "5340_DRD_LH_LT",
+          "path": "basic/esf001v00_idle/glb/043_esf001_5340_DRD_LH_LT_id5240_f35.glb",
+          "stem": "043_esf001_5340_DRD_LH_LT_id5240_f35",
+          "frameCount": 35
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/033_esf001_5340_GRD_LH_LT_id5240_f49.glb",
-      "notes": "mapped_unused LT/RT"
+      "primaryPath": "basic/esf001v00_idle/glb/043_esf001_5340_DRD_LH_LT_id5240_f35.glb",
+      "notes": "mapped_unused LT/RT; idle DRD (not tired GRD)"
     },
     {
       "moveId": "grd_lh_rt",
@@ -1997,14 +1997,14 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5350_GRD_LH_RT",
-          "path": "basic/esf001v00_idle_tired/glb/034_esf001_5350_GRD_LH_RT_id5250_f49.glb",
-          "stem": "034_esf001_5350_GRD_LH_RT_id5250_f49",
-          "frameCount": 49
+          "assetKey": "5350_DRD_LH_RT",
+          "path": "basic/esf001v00_idle/glb/044_esf001_5350_DRD_LH_RT_id5250_f35.glb",
+          "stem": "044_esf001_5350_DRD_LH_RT_id5250_f35",
+          "frameCount": 35
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/034_esf001_5350_GRD_LH_RT_id5250_f49.glb",
-      "notes": "mapped_unused LT/RT"
+      "primaryPath": "basic/esf001v00_idle/glb/044_esf001_5350_DRD_LH_RT_id5250_f35.glb",
+      "notes": "mapped_unused LT/RT; idle DRD (not tired GRD)"
     },
     {
       "moveId": "grd_cl_st",
@@ -2016,14 +2016,14 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5360_GRD_CL_ST",
-          "path": "basic/esf001v00_idle_tired/glb/035_esf001_5360_GRD_CL_ST_id5260_f29.glb",
-          "stem": "035_esf001_5360_GRD_CL_ST_id5260_f29",
-          "frameCount": 29
+          "assetKey": "5360_DRD_CL_ST",
+          "path": "basic/esf001v00_idle/glb/045_esf001_5360_DRD_CL_ST_id5260_f17.glb",
+          "stem": "045_esf001_5360_DRD_CL_ST_id5260_f17",
+          "frameCount": 17
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/035_esf001_5360_GRD_CL_ST_id5260_f29.glb",
-      "notes": "react ST"
+      "primaryPath": "basic/esf001v00_idle/glb/045_esf001_5360_DRD_CL_ST_id5260_f17.glb",
+      "notes": "idle DRD react ST (not tired GRD)"
     },
     {
       "moveId": "grd_cm_st",
@@ -2035,14 +2035,14 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5370_GRD_CM_ST",
-          "path": "basic/esf001v00_idle_tired/glb/036_esf001_5370_GRD_CM_ST_id5270_f39.glb",
-          "stem": "036_esf001_5370_GRD_CM_ST_id5270_f39",
-          "frameCount": 39
+          "assetKey": "5370_DRD_CM_ST",
+          "path": "basic/esf001v00_idle/glb/046_esf001_5370_DRD_CM_ST_id5270_f25.glb",
+          "stem": "046_esf001_5370_DRD_CM_ST_id5270_f25",
+          "frameCount": 25
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/036_esf001_5370_GRD_CM_ST_id5270_f39.glb",
-      "notes": "react ST"
+      "primaryPath": "basic/esf001v00_idle/glb/046_esf001_5370_DRD_CM_ST_id5270_f25.glb",
+      "notes": "idle DRD react ST (not tired GRD)"
     },
     {
       "moveId": "grd_cm_lt",
@@ -2054,14 +2054,14 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5380_GRD_CM_LT",
-          "path": "basic/esf001v00_idle_tired/glb/037_esf001_5380_GRD_CM_LT_id5280_f39.glb",
-          "stem": "037_esf001_5380_GRD_CM_LT_id5280_f39",
-          "frameCount": 39
+          "assetKey": "5380_DRD_CM_LT",
+          "path": "basic/esf001v00_idle/glb/047_esf001_5380_DRD_CM_LT_id5280_f25.glb",
+          "stem": "047_esf001_5380_DRD_CM_LT_id5280_f25",
+          "frameCount": 25
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/037_esf001_5380_GRD_CM_LT_id5280_f39.glb",
-      "notes": "mapped_unused LT/RT"
+      "primaryPath": "basic/esf001v00_idle/glb/047_esf001_5380_DRD_CM_LT_id5280_f25.glb",
+      "notes": "mapped_unused LT/RT; idle DRD (not tired GRD)"
     },
     {
       "moveId": "grd_cm_rt",
@@ -2073,14 +2073,14 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5390_GRD_CM_RT",
-          "path": "basic/esf001v00_idle_tired/glb/038_esf001_5390_GRD_CM_RT_id5290_f39.glb",
-          "stem": "038_esf001_5390_GRD_CM_RT_id5290_f39",
-          "frameCount": 39
+          "assetKey": "5390_DRD_CM_RT",
+          "path": "basic/esf001v00_idle/glb/048_esf001_5390_DRD_CM_RT_id5290_f25.glb",
+          "stem": "048_esf001_5390_DRD_CM_RT_id5290_f25",
+          "frameCount": 25
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/038_esf001_5390_GRD_CM_RT_id5290_f39.glb",
-      "notes": "mapped_unused LT/RT"
+      "primaryPath": "basic/esf001v00_idle/glb/048_esf001_5390_DRD_CM_RT_id5290_f25.glb",
+      "notes": "mapped_unused LT/RT; idle DRD (not tired GRD)"
     },
     {
       "moveId": "grd_ch_st",
@@ -2092,14 +2092,14 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5400_GRD_CH_ST",
-          "path": "basic/esf001v00_idle_tired/glb/039_esf001_5400_GRD_CH_ST_id5300_f49.glb",
-          "stem": "039_esf001_5400_GRD_CH_ST_id5300_f49",
-          "frameCount": 49
+          "assetKey": "5400_DRD_CH_ST",
+          "path": "basic/esf001v00_idle/glb/049_esf001_5400_DRD_CH_ST_id5300_f35.glb",
+          "stem": "049_esf001_5400_DRD_CH_ST_id5300_f35",
+          "frameCount": 35
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/039_esf001_5400_GRD_CH_ST_id5300_f49.glb",
-      "notes": "react ST"
+      "primaryPath": "basic/esf001v00_idle/glb/049_esf001_5400_DRD_CH_ST_id5300_f35.glb",
+      "notes": "idle DRD react ST (not tired GRD)"
     },
     {
       "moveId": "grd_ch_lt",
@@ -2111,14 +2111,14 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5410_GRD_CH_LT",
-          "path": "basic/esf001v00_idle_tired/glb/040_esf001_5410_GRD_CH_LT_id5310_f49.glb",
-          "stem": "040_esf001_5410_GRD_CH_LT_id5310_f49",
-          "frameCount": 49
+          "assetKey": "5410_DRD_CH_LT",
+          "path": "basic/esf001v00_idle/glb/050_esf001_5410_DRD_CH_LT_id5310_f35.glb",
+          "stem": "050_esf001_5410_DRD_CH_LT_id5310_f35",
+          "frameCount": 35
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/040_esf001_5410_GRD_CH_LT_id5310_f49.glb",
-      "notes": "mapped_unused LT/RT"
+      "primaryPath": "basic/esf001v00_idle/glb/050_esf001_5410_DRD_CH_LT_id5310_f35.glb",
+      "notes": "mapped_unused LT/RT; idle DRD (not tired GRD)"
     },
     {
       "moveId": "grd_ch_rt",
@@ -2130,14 +2130,14 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5420_GRD_CH_RT",
-          "path": "basic/esf001v00_idle_tired/glb/041_esf001_5420_GRD_CH_RT_id5320_f49.glb",
-          "stem": "041_esf001_5420_GRD_CH_RT_id5320_f49",
-          "frameCount": 49
+          "assetKey": "5420_DRD_CH_RT",
+          "path": "basic/esf001v00_idle/glb/051_esf001_5420_DRD_CH_RT_id5320_f35.glb",
+          "stem": "051_esf001_5420_DRD_CH_RT_id5320_f35",
+          "frameCount": 35
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/041_esf001_5420_GRD_CH_RT_id5320_f49.glb",
-      "notes": "mapped_unused LT/RT"
+      "primaryPath": "basic/esf001v00_idle/glb/051_esf001_5420_DRD_CH_RT_id5320_f35.glb",
+      "notes": "mapped_unused LT/RT; idle DRD (not tired GRD)"
     },
     {
       "moveId": "grd_dl_st",
@@ -2149,14 +2149,14 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5430_GRD_DL_ST",
-          "path": "basic/esf001v00_idle_tired/glb/042_esf001_5430_GRD_DL_ST_id5330_f29.glb",
-          "stem": "042_esf001_5430_GRD_DL_ST_id5330_f29",
-          "frameCount": 29
+          "assetKey": "5430_DRD_DL_ST",
+          "path": "basic/esf001v00_idle/glb/052_esf001_5430_DRD_DL_ST_id5330_f20.glb",
+          "stem": "052_esf001_5430_DRD_DL_ST_id5330_f20",
+          "frameCount": 20
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/042_esf001_5430_GRD_DL_ST_id5330_f29.glb",
-      "notes": "react ST"
+      "primaryPath": "basic/esf001v00_idle/glb/052_esf001_5430_DRD_DL_ST_id5330_f20.glb",
+      "notes": "idle DRD react ST (not tired GRD)"
     },
     {
       "moveId": "grd_dm_st",
@@ -2168,14 +2168,14 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5440_GRD_DM_ST",
-          "path": "basic/esf001v00_idle_tired/glb/043_esf001_5440_GRD_DM_ST_id5340_f39.glb",
-          "stem": "043_esf001_5440_GRD_DM_ST_id5340_f39",
-          "frameCount": 39
+          "assetKey": "5440_DRD_DM_ST",
+          "path": "basic/esf001v00_idle/glb/053_esf001_5440_DRD_DM_ST_id5340_f25.glb",
+          "stem": "053_esf001_5440_DRD_DM_ST_id5340_f25",
+          "frameCount": 25
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/043_esf001_5440_GRD_DM_ST_id5340_f39.glb",
-      "notes": "react ST"
+      "primaryPath": "basic/esf001v00_idle/glb/053_esf001_5440_DRD_DM_ST_id5340_f25.glb",
+      "notes": "idle DRD react ST (not tired GRD)"
     },
     {
       "moveId": "grd_dm_lt",
@@ -2187,14 +2187,14 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5450_GRD_DM_LT",
-          "path": "basic/esf001v00_idle_tired/glb/044_esf001_5450_GRD_DM_LT_id5350_f39.glb",
-          "stem": "044_esf001_5450_GRD_DM_LT_id5350_f39",
-          "frameCount": 39
+          "assetKey": "5450_DRD_DM_LT",
+          "path": "basic/esf001v00_idle/glb/054_esf001_5450_DRD_DM_LT_id5350_f25.glb",
+          "stem": "054_esf001_5450_DRD_DM_LT_id5350_f25",
+          "frameCount": 25
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/044_esf001_5450_GRD_DM_LT_id5350_f39.glb",
-      "notes": "mapped_unused LT/RT"
+      "primaryPath": "basic/esf001v00_idle/glb/054_esf001_5450_DRD_DM_LT_id5350_f25.glb",
+      "notes": "mapped_unused LT/RT; idle DRD (not tired GRD)"
     },
     {
       "moveId": "grd_dm_rt",
@@ -2206,14 +2206,14 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5460_GRD_DM_RT",
-          "path": "basic/esf001v00_idle_tired/glb/045_esf001_5460_GRD_DM_RT_id5360_f39.glb",
-          "stem": "045_esf001_5460_GRD_DM_RT_id5360_f39",
-          "frameCount": 39
+          "assetKey": "5460_DRD_DM_RT",
+          "path": "basic/esf001v00_idle/glb/055_esf001_5460_DRD_DM_RT_id5360_f25.glb",
+          "stem": "055_esf001_5460_DRD_DM_RT_id5360_f25",
+          "frameCount": 25
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/045_esf001_5460_GRD_DM_RT_id5360_f39.glb",
-      "notes": "mapped_unused LT/RT"
+      "primaryPath": "basic/esf001v00_idle/glb/055_esf001_5460_DRD_DM_RT_id5360_f25.glb",
+      "notes": "mapped_unused LT/RT; idle DRD (not tired GRD)"
     },
     {
       "moveId": "grd_dh_st",
@@ -2225,14 +2225,14 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5470_GRD_DH_ST",
-          "path": "basic/esf001v00_idle_tired/glb/046_esf001_5470_GRD_DH_ST_id5370_f49.glb",
-          "stem": "046_esf001_5470_GRD_DH_ST_id5370_f49",
-          "frameCount": 49
+          "assetKey": "5470_DRD_DH_ST",
+          "path": "basic/esf001v00_idle/glb/056_esf001_5470_DRD_DH_ST_id5370_f35.glb",
+          "stem": "056_esf001_5470_DRD_DH_ST_id5370_f35",
+          "frameCount": 35
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/046_esf001_5470_GRD_DH_ST_id5370_f49.glb",
-      "notes": "react ST"
+      "primaryPath": "basic/esf001v00_idle/glb/056_esf001_5470_DRD_DH_ST_id5370_f35.glb",
+      "notes": "idle DRD react ST (not tired GRD)"
     },
     {
       "moveId": "grd_dh_lt",
@@ -2244,14 +2244,14 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5480_GRD_DH_LT",
-          "path": "basic/esf001v00_idle_tired/glb/047_esf001_5480_GRD_DH_LT_id5380_f49.glb",
-          "stem": "047_esf001_5480_GRD_DH_LT_id5380_f49",
-          "frameCount": 49
+          "assetKey": "5480_DRD_DH_LT",
+          "path": "basic/esf001v00_idle/glb/057_esf001_5480_DRD_DH_LT_id5380_f35.glb",
+          "stem": "057_esf001_5480_DRD_DH_LT_id5380_f35",
+          "frameCount": 35
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/047_esf001_5480_GRD_DH_LT_id5380_f49.glb",
-      "notes": "mapped_unused LT/RT"
+      "primaryPath": "basic/esf001v00_idle/glb/057_esf001_5480_DRD_DH_LT_id5380_f35.glb",
+      "notes": "mapped_unused LT/RT; idle DRD (not tired GRD)"
     },
     {
       "moveId": "grd_dh_rt",
@@ -2263,14 +2263,14 @@
       "clips": [
         {
           "role": "main",
-          "assetKey": "5490_GRD_DH_RT",
-          "path": "basic/esf001v00_idle_tired/glb/048_esf001_5490_GRD_DH_RT_id5390_f49.glb",
-          "stem": "048_esf001_5490_GRD_DH_RT_id5390_f49",
-          "frameCount": 49
+          "assetKey": "5490_DRD_DH_RT",
+          "path": "basic/esf001v00_idle/glb/058_esf001_5490_DRD_DH_RT_id5390_f35.glb",
+          "stem": "058_esf001_5490_DRD_DH_RT_id5390_f35",
+          "frameCount": 35
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/048_esf001_5490_GRD_DH_RT_id5390_f49.glb",
-      "notes": "mapped_unused LT/RT"
+      "primaryPath": "basic/esf001v00_idle/glb/058_esf001_5490_DRD_DH_RT_id5390_f35.glb",
+      "notes": "mapped_unused LT/RT; idle DRD (not tired GRD)"
     },
     {
       "moveId": "block_stand_loop",
@@ -2282,14 +2282,14 @@
       "clips": [
         {
           "role": "loop",
-          "assetKey": "5010_GRD_STD_Loop",
-          "path": "basic/esf001v00_idle_tired/glb/009_esf001_5010_GRD_STD_Loop_id0510_f190.glb",
-          "stem": "009_esf001_5010_GRD_STD_Loop_id0510_f190",
-          "frameCount": 190
+          "assetKey": "5010_DRD_STD_H_Loop",
+          "path": "basic/esf001v00_idle/glb/010_esf001_5010_DRD_STD_H_Loop_id0510_f192.glb",
+          "stem": "010_esf001_5010_DRD_STD_H_Loop_id0510_f192",
+          "frameCount": 192
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/009_esf001_5010_GRD_STD_Loop_id0510_f190.glb",
-      "notes": "GRD stand hold loop"
+      "primaryPath": "basic/esf001v00_idle/glb/010_esf001_5010_DRD_STD_H_Loop_id0510_f192.glb",
+      "notes": "idle DRD hold loop (not tired GRD)"
     },
     {
       "moveId": "block_crouch_loop",
@@ -2301,14 +2301,14 @@
       "clips": [
         {
           "role": "loop",
-          "assetKey": "5100_GRD_CRH_Loop",
-          "path": "basic/esf001v00_idle_tired/glb/012_esf001_5100_GRD_CRH_Loop_id0540_f190.glb",
-          "stem": "012_esf001_5100_GRD_CRH_Loop_id0540_f190",
-          "frameCount": 190
+          "assetKey": "5100_DRD_CRH_H_Loop",
+          "path": "basic/esf001v00_idle/glb/019_esf001_5100_DRD_CRH_H_Loop_id5000_f269.glb",
+          "stem": "019_esf001_5100_DRD_CRH_H_Loop_id5000_f269",
+          "frameCount": 269
         }
       ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/012_esf001_5100_GRD_CRH_Loop_id0540_f190.glb",
-      "notes": "GRD crouch hold loop"
+      "primaryPath": "basic/esf001v00_idle/glb/019_esf001_5100_DRD_CRH_H_Loop_id5000_f269.glb",
+      "notes": "idle DRD hold loop (not tired GRD)"
     }
   ]
 }

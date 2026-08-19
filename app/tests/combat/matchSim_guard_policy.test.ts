@@ -72,7 +72,7 @@ describe('MatchSim dummy guard policy', () => {
     expect(sim.p2.phase).toBe('blockstun');
     expect(sim.p2.stunTimer).toBeGreaterThan(0);
     expect(sim.p2.hp).toBe(hp0);
-    expect(sim.p2.clipId).toBe('grd_ml_st');
+    expect(sim.p2.clipId).toBe('grd_hl_st');
   });
 
   it('2MK low + stand_block => hit', () => {
