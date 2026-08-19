@@ -108,5 +108,10 @@
     "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
   },
   "slug": "axe-kick",
-  "abbreviation": null
+  "abbreviation": null,
+  "blockPushMoveTime": 18,
+  "mmdk": {
+    "blockCurveTgtID": 16,
+    "blockMoveType": 24
+  }
 }

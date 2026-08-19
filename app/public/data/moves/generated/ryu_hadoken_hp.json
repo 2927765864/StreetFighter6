@@ -94,5 +94,10 @@
     "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed. totalFrames from 4rays=47; recovery filled as total-startup-active (was recovery=None, total=13)."
   },
   "slug": "ryu-hadoken-heavy",
-  "abbreviation": null
+  "abbreviation": null,
+  "blockPushMoveTime": 23,
+  "mmdk": {
+    "blockCurveTgtID": 4,
+    "blockMoveType": 24
+  }
 }

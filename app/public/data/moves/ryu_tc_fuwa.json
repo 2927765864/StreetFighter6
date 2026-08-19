@@ -186,7 +186,7 @@
     0.12992645263671876,
     0.12992645263671876,
     0.12992645263671876,
-    1.525878906005751e-7,
+    1.525878906005751e-07,
     0,
     0,
     0,
@@ -272,6 +272,11 @@
     "fabFrame": 83,
     "hitDtIndex": 103,
     "unitScale": 0.01,
-    "clampBaseHurtToTotal": true
-  }
+    "clampBaseHurtToTotal": true,
+    "blockCurveTgtID": 6,
+    "blockMoveType": 24,
+    "hitmarkStrength": 2
+  },
+  "blockPushMoveTime": 20,
+  "guardStrength": "H"
 }

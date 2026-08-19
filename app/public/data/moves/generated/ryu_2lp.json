@@ -106,5 +106,10 @@
     "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
   },
   "slug": "ryu-crouch-light-punch",
-  "abbreviation": "C.LP"
+  "abbreviation": "C.LP",
+  "blockPushMoveTime": 14,
+  "mmdk": {
+    "blockCurveTgtID": 1,
+    "blockMoveType": 24
+  }
 }

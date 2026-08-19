@@ -1,0 +1,67 @@
+category,moveName,numCmd,atkLvl,startup,active,recovery,total,hitstun,blockstun,hitstop,onHit,onBlock,onPC,dmg,range
+normal,Stand LP,5LP,H,4,3,7,13,14,9,9,4,-1,8,300,1.01
+normal,Stand MP,5MP,H,6,4,11(13),20(22),22,14,11,7,-1,11,600,1.01
+normal,Stand HP,5HP,H,10,5,18,32,27,21,13,4,-2,8,800,1.545
+normal,Stand LK,5LK,H,5,3,11,18,16,10,9,2,-4,6,300,1.3
+normal,Stand MK,5MK,H,9,3,18,29,25,17,11,4,-4,8,700,1.568
+normal,Stand HK,5HK,H,12,4,20,35,33,24,13,9,1,Crumple +84,900,1.572
+normal,Crouch LP,2LP,H,4,2,9,14,15,10,9,4,-1,8,300,0.94
+normal,Crouch MP,2MP,H,6,4,13(15),22(24),22,17,11,5,0,9,600,1.14
+normal,Crouch HP,2HP,H,9,6,21,35,27(22),19,13,1,-7,5,800,1.137
+normal,Crouch LK,2LK,L,5,2,10,16,15,11,9,3,-1,7,200,1.05
+normal,Crouch MK,2MK,L,8,3,19,29,23,16,9,1,-6,5,500,1.482
+normal,Crouch HK,2HK,L,9,3,23(29),34(40),,19,13,KD +40,-12,HKD +47,900,1.793
+normal,Jump LP,8LP,M,4,10,,,13,9,9,4~9,0~5,8~13,300,0.8
+normal,Jump MP,8MP,M,8,2*3,,,15*17 (19),11*13 (15),8*10,11~12 (KD),7~9,15~17 (KD),700 (350*350),0.85
+normal,Jump HP,8HP,M,9,6,,,19,15,13,8~15,4~11,12~19 (KD),800,1.06
+normal,Jump LK,8LK,M,6,10,,,14,10,9,5~10,1~6,9~14,300,0.55
+normal,Jump MK,8MK,M,7,6,,,17,13,11,8~13,4~9,12~17,500,1.15
+normal,Jump HK,8HK,M,10,8,,,19,15,13,9~15,5~11,13~19,800,1.2
+normal,Collarbone Breaker,6MP,M,20,1*3,19,42,19*25 (26),17*19 (20),8*10,3,-3,7,600 (300*300),1.552~1.701
+normal,Short Uppercut,4HP,H,7,4,25,35,30(22),16,13,1,-13,5,800,0.88
+normal,Solar Plexus Strike,6HP,H,20,2*3,16,40,25*25 (27),8*22 (24),10*12,6,3,10,800 (400*400),1.728~1.877
+normal,Axe Kick,4HK,H,10*20,5(5)3,21,43,20*24 (34),14*20 (30),10*12,0 (KD +14),-4,4,800 (400*400),0.766~1.564
+normal,Whirlwind Kick,6HK,H,16,4,20,39,26,20,13,2,-4,6,800,1.924
+normal,Fuwa Triple Strike 1,5MP > LK,H,5,3,16,23,22*20 (30),14*15 (25),10,1,-4,1,300,1.5
+normal,Fuwa Triple Strike 2,5MP > LK > HK,H,17,4,20,40,,16,13,KD +36,-8,KD +36,900,2.262~2.346
+normal,High Double Strike,5HP > HK,H,9,4,20,32,,16,13,KD +39,-8(-18),KD +37,1000,1.572
+normal,Shoulder Throw,LPLK,T,5,3,23,30,,,,KD +17,,HKD +17,1200(2040),0.8
+normal,Somersault Throw,4LPLK,T,5,3,23,30,,,,KD +11,,HKD +11,1200(2040),0.8
+normal,Drive Impact: Shingeki,HPHK,H,26,2,35,62,,34,25,KD (notes),-3,Crumple +104,800,2.541
+normal,Drive Reversal: Chest Strike,6HPHK,H,20(18),3,26,48(46),,21,20,KD +23,-6,KD +23,500,1.67
+normal,Drive Parry,MPMK,,1,12(2),33(1)notes,45(3),,,,,,,,
+normal,Drive Rush,MPMK / 66 (cancel),,9(11),45(46),24(23),24(23),,,,,,,,
+normal,Taunt,5PPPKKK,,,,,,,,,,,,,
+normal,Denjin Charge,22P,,50,,2,52,,,,,,,,
+normal,LP Hadoken,236LP,H,16,,31,47,34,27,8,2,-5,6,700,
+normal,MP Hadoken,236MP,H,14,,33,47,34,27,8,0,-7,4,700,
+normal,HP Hadoken,236HP,H,12,,35,47,34,27,8,-2,-9,2,700,
+normal,OD Hadoken,236PP,H,12,,28,40,,28 total,9*9,KD +54,-1,KD +54,1000 (500*500),
+normal,Denjin Charge Hadoken,236P,H,12,,28,40,,28 total,9*9,KD +54,-1,KD +54,1000 (500*500),
+normal,OD Denjin Charge Hadoken,236PP,H,12,,26,38,,29 total,5*5*8,KD +57,2,KD +57,1200 (400x3),
+normal,LP Shoryuken,623LP,H,5,10,21+12,47,,22,15(13),KD +38,-23,KD +38,1100,0.906 (1st)
+normal,MP Shoryuken,623MP,H,6,10,30+12,57,,22,15(13),KD +34,-32,KD +34,1200,0.966 (1st)
+normal,HP Shoryuken,623HP,H,7,10,34+12,62,,22,20(13),KD +37,-39,KD +37,1400,1.186 (1st)
+normal,OD Shoryuken,623PP,H,6,2*8,37+15,67,,22 total,20*13,KD +29,-40,KD +29,1600 (800*800),1.006 (1st)
+normal,LK Tatsumaki Senpukyaku,214LK,H,12,3,14+18,46,,21,15,KD +35,-15,KD +35,900,1.84~1.96
+normal,MK Tatsumaki Senpukyaku,214MK,H,14,2(13)2,11+20,61,,20 each,15*15,KD +23*38,-13(-28),KD +23*38,1000,1.94~2.98
+normal,HK Tatsumaki Senpukyaku,214HK,H,16,2(13)2(13)2,14+17,78,,20 each,15*15*15,KD +20*35*50,-13(-28)(-43),KD +20*35*50,1000,2.30~4.935
+normal,OD Tatsumaki Senpukyaku,214KK,H,13,2(4)2(4)2(3)2(4)2,10+13,60,,34 total,6*2x3*15,KD +57,-14(-32),KD +57,1000 (200x5),1.74
+normal,Air Tatsumaki Senpukyaku,214K (air),H,11,2(5)2(6)2,16 land,,,20(16),15,KD +46(52),-6(3),KD +46(52),900,1.12
+normal,OD Air Tatsumaki Senpukyaku,214KK (air),H,11,2(1)3(1)3(1)3(2)2,16 land,,,27 total,6*2x3*15,KD +45(51),-32(-29),KD +45(51),1500 (300*200x3*600),1.31~1.559
+normal,LK High Blade Kick,236LK,H,14,6,22,41,,20,15,KD +42,-11,KD +42,1100,1.751~1.962
+normal,MK High Blade Kick,236MK,H,18,9,19(22),45(48),,20,15,KD +40,-8,KD +40,1200,1.951~2.162
+normal,HK High Blade Kick,236HK,H,27,9,15,50,,21,20,KD +45,-3,KD +96 (Tumble),1300,1.969~2.612
+normal,OD High Blade Kick,236KK,H,17,5,33,54,,20,20,Wall Bounce +49(65),-18,Wall Bounce +49(65),800,1.851~2.062
+normal,LP Hashogeki,214LP,H,12,6,18,35,26,20,15,2,-3,KD +59,700,?
+normal,MP Hashogeki,214MP,H,19,6,17,41,25,17,15,2,-6,KD +58,800,?
+normal,HP Hashogeki,214HP,H,30,6,19,54,,27 total,15*15,KD +61,2,KD +61,800 (400*400),?
+normal,OD Hashogeki,214PP,H,18,6,20,43,29,29,15,3,3,7,1100,?
+normal,Denjin Charge Hashogeki,214P (charged),H,20,6,19,44,,41 total,15 / 17*15,KD +61,3,KD +61,800 (400*400),?
+normal,OD Denjin Charge Hashogeki,214PP (charged),H,18,6,19,42,,29,15,Crumple +87,4,Crumple +91,800,?
+normal,Shinku Hadoken,236236P,H,7,,79,86,,56 total,8x5,KD +26,-24,KD +26,2000 (400x5),
+normal,Denjin Hadoken,236236P (charged),H,7,,82,89,,59 total,"4x7,0 (5x7,8)",KD +27,-24,KD +27,2400 (200x7*1000),
+normal,Shin Hashogeki,214214P,H,12(18/50),6,39,56(62/94),,25,18 / 20 / 23,KD +20 (Tumble +78),-20,KD +20 (Tumble +78),2800 (2900~3000),?
+normal,Denjin Hashogeki,214214P (charged),H,12(18/50),6,39,56(62/94),,25,18 / 20 / 23,KD +20 (Tumble +78),-20,KD +20 (Tumble +78),3200 (3300~3400),?
+normal,Shin Shoryuken,236236K,H,5,12,32+39,87,,33(29) total,7*8*8*8,HKD +14,-50(-54),HKD +14,4000(3000~3600),1.10 (1st)
+normal,Shin Shoryuken (Critical Art),236236K (CA),H,5,12,32+39,87,,33(29) total,8*8*8*13,HKD +14,-50(-54),HKD +14,4500(4000~4400),1.10 (1st)

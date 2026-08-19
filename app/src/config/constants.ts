@@ -90,9 +90,11 @@ export type MutableSimConfig = {
   hurtboxColor: number;
   pushboxColor: number;
   forceP2Guard: boolean;
+  dummyGuardPolicy: 'block_all' | 'stand_block' | 'crouch_block' | 'none';
   enablePushResolve: boolean;
   enableBlockPush: boolean;
   blockPushbackTotal: number;
+  blockPushEasePower: number;
   blockstunOverride: number;
   damageScale: number;
   mmdkUnitScale: number;
@@ -270,9 +272,11 @@ export function createDefaultSimConfig(): MutableSimConfig {
     hurtboxColor: HURTBOX_COLOR,
     pushboxColor: PUSHBOX_COLOR,
     forceP2Guard: true,
+    dummyGuardPolicy: 'block_all',
     enablePushResolve: true,
     enableBlockPush: true,
     blockPushbackTotal: 0.22,
+    blockPushEasePower: 3,
     blockstunOverride: -1,
     damageScale: 1,
     mmdkUnitScale: 1,
@@ -403,9 +407,11 @@ export function applyConfigToMatchOpts(cfg: MutableSimConfig) {
     standToCrouchFrames: cfg.standToCrouchFrames,
     crouchToStandFrames: cfg.crouchToStandFrames,
     forceP2Guard: cfg.forceP2Guard,
+    dummyGuardPolicy: cfg.dummyGuardPolicy,
     enablePushResolve: cfg.enablePushResolve,
     enableBlockPush: cfg.enableBlockPush,
     blockPushbackTotal: cfg.blockPushbackTotal,
+    blockPushEasePower: cfg.blockPushEasePower,
     blockstunOverride: cfg.blockstunOverride,
     damageScale: cfg.damageScale,
     stageMinX: cfg.stageMinX,
@@ -419,10 +425,12 @@ export function syncMatchOpts(
     opts: ReturnType<typeof applyConfigToMatchOpts>;
     history: { setCapacity: (n: number) => void };
     ensureDashDxTables?: () => void;
+    dummy?: { setGuardPolicy: (p: MutableSimConfig['dummyGuardPolicy']) => void };
   },
   cfg: MutableSimConfig,
 ): void {
   Object.assign(match.opts, applyConfigToMatchOpts(cfg));
   match.history.setCapacity(cfg.motionHistoryCapacity);
   match.ensureDashDxTables?.();
+  match.dummy?.setGuardPolicy(cfg.dummyGuardPolicy);
 }

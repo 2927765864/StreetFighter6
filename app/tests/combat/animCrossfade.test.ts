@@ -26,6 +26,9 @@ describe('AnimCrossfade §3.11', () => {
     expect(categorizeBinding('crouch::crouch_to_stand')).toBe('stance');
     expect(categorizeBinding('crouch::main')).toBe('loco');
     expect(categorizeBinding('hitstun::main')).toBe('hit');
+    expect(categorizeBinding('grd_hl_st::main')).toBe('guard');
+    expect(categorizeBinding('block_stand_loop::loop')).toBe('guard');
+    expect(categorizeBinding('block_crouch_loop::loop')).toBe('guard');
   });
 
   it('walk ↔ stop / walk segments: blend with locoSec', () => {
@@ -109,5 +112,29 @@ describe('AnimCrossfade §3.11', () => {
     expect(resolveCrossfadeSec('ryu_jlp::main', 'jump_n::air', d)).toBe(0.1);
     expect(resolveCrossfadeSec('idle::main', 'jump_f::prejump', d)).toBe(0);
     expect(resolveCrossfadeSec('jump_f::air', 'ryu_jlp::main', d)).toBe(0);
+  });
+
+  it('guard: impact hard-cuts; leave stun / crouch-to-stand loop dissolves', () => {
+    expect(resolveCrossfadeSec('idle::main', 'grd_hl_st::main', d)).toBe(0);
+    expect(resolveCrossfadeSec('block_stand_loop::loop', 'grd_hl_st::main', d)).toBe(
+      0,
+    );
+    expect(resolveCrossfadeSec('grd_hl_st::main', 'grd_cl_st::main', d)).toBe(0);
+    expect(
+      resolveCrossfadeSec('grd_hl_st::main', 'block_stand_loop::loop', d),
+    ).toBe(0.1);
+    expect(
+      resolveCrossfadeSec('grd_cl_st::main', 'block_stand_loop::loop', d),
+    ).toBe(0.1);
+    expect(
+      resolveCrossfadeSec('block_crouch_loop::loop', 'block_stand_loop::loop', d),
+    ).toBe(0.1);
+    expect(
+      resolveCrossfadeSec('block_stand_loop::loop', 'idle::main', d),
+    ).toBe(0.1);
+    expect(
+      resolveCrossfadeSec('idle::main', 'block_stand_loop::loop', d),
+    ).toBe(0.12);
+    expect(resolveCrossfadeSec('idle::main', 'hitstun_light::main', d)).toBe(0);
   });
 });

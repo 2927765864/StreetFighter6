@@ -102,5 +102,10 @@
     "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
   },
   "slug": "ryu-stand-medium-punch",
-  "abbreviation": "S.MP"
+  "abbreviation": "S.MP",
+  "blockPushMoveTime": 18,
+  "mmdk": {
+    "blockCurveTgtID": 8,
+    "blockMoveType": 24
+  }
 }

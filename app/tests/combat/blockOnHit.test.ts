@@ -35,6 +35,7 @@ describe('resolveBlockOnHit', () => {
     expect(r.blockstun).toBe(9);
     expect(r.hitstop).toBe(6);
     expect(r.pushbackTotal).toBe(0.4);
+    expect(r.moveTime).toBe(9);
     expect(r.damage).toBe(0);
   });
 
@@ -54,5 +55,18 @@ describe('distributePushback', () => {
     const steps = distributePushback(0.3, 6);
     expect(steps.length).toBe(6);
     expect(steps.reduce((a, b) => a + b, 0)).toBeCloseTo(0.3);
+  });
+
+  it('ease-out is front-loaded (faster right after hitstop)', () => {
+    const steps = distributePushback(0.34, 13, { moveTime: 13, easePower: 3 });
+    expect(steps.length).toBe(13);
+    expect(steps.reduce((a, b) => a + b, 0)).toBeCloseTo(0.34);
+    expect(steps[0]!).toBeGreaterThan(0.34 / 13);
+    expect(steps[0]!).toBeGreaterThan(steps[steps.length - 1]!);
+  });
+
+  it('uses MoveTime not stun when shorter', () => {
+    const steps = distributePushback(0.3, 20, { moveTime: 8, easePower: 3 });
+    expect(steps.length).toBe(8);
   });
 });

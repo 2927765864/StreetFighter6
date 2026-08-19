@@ -887,6 +887,8 @@ export class FighterView {
   }
 
   private isFreeRunLogic(canon: string, role: string): boolean {
+    if (role === 'loop') return true;
+    if (canon === 'block_stand_loop' || canon === 'block_crouch_loop') return true;
     return (canon === 'idle' || canon === 'crouch') && role === 'main';
   }
 
@@ -1426,15 +1428,39 @@ export class FighterView {
       return;
     }
 
-    // Hitstun / blockstun — usually no sol (§3.11)
-    if (fighter.phase === 'hitstun' || fighter.phase === 'blockstun') {
+    // Hitstun: never sol. Blockstun *react* (grd_*): hard cut on impact.
+    // Leaving stun into guard loop uses the idle path + fadePolicy below.
+    if (fighter.phase === 'hitstun') {
       this.clearPoseBlend(true);
-      this.playBest(fighter.clipId, 'main', HARD_CUT);
-      const action = this.resolveAction(fighter.clipId, 'main');
+      this.playBest(fighter.clipId, role, HARD_CUT);
+      const action = this.resolveAction(fighter.clipId, role);
       if (action && this.mixer) {
         action.paused = false;
         action.setEffectiveWeight(1);
         this.mixer.update(animDt);
+      }
+      this.maybePlantAfterPose(fighter, cfg, wallDtSec);
+      return;
+    }
+    if (fighter.phase === 'blockstun') {
+      const react = fighter.clipId.startsWith('grd_');
+      if (react) {
+        this.clearPoseBlend(true);
+        this.playBest(fighter.clipId, role, HARD_CUT);
+      } else {
+        this.playBest(fighter.clipId, role, fadePolicy);
+      }
+      const action = this.resolveAction(fighter.clipId, role);
+      if (action && this.mixer) {
+        if (this.poseBlend && this.poseBlend.to === action) {
+          const w = this.stepPoseBlend(wallDtSec);
+          action.setEffectiveWeight(w);
+          this.mixer.update(animDt);
+        } else {
+          action.paused = false;
+          action.setEffectiveWeight(1);
+          this.mixer.update(animDt);
+        }
       }
       this.maybePlantAfterPose(fighter, cfg, wallDtSec);
       return;
@@ -1464,7 +1490,10 @@ export class FighterView {
       fadePolicy,
     );
     if (this.mixer) {
-      const action = this.resolveAction(fighter.clipId, 'main');
+      const action = this.resolveAction(
+        fighter.clipId,
+        role === 'main' ? 'main' : role,
+      );
       if (action) {
         if (this.poseBlend && this.poseBlend.to === action) {
           const w = this.stepPoseBlend(wallDtSec);

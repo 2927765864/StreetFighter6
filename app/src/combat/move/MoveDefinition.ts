@@ -36,6 +36,12 @@ export type MoveDefinition = {
   damage: number;
   hitstun: number;
   blockstun: number;
+  /**
+   * Official Capcom H/M/L: high = both, mid/midHigh = stand only, low = crouch only.
+   */
+  guard?: 'high' | 'mid' | 'low' | 'midHigh' | 'throw';
+  /** HIT_DT _IsStrength / HitmarkStrength → L/M/H 格挡反应轻重。 */
+  guardStrength?: 'L' | 'M' | 'H';
   cancel: {
     specialCancel: boolean;
     superOnly?: boolean;
@@ -70,6 +76,8 @@ export type MoveDefinition = {
   blockPushback?: number[];
   /** Total block pushback if array omitted. */
   blockPushbackTotal?: number;
+  /** HIT_DT MoveTime: frames to finish block MoveDest (not a speed). */
+  blockPushMoveTime?: number;
   /** Support-foot plant window (attack only). Consensus §3.9 */
   plant?: PlantWindow;
   /**
@@ -205,6 +213,10 @@ export function parseMoveDefinition(raw: unknown): MoveDefinition {
   if (o.blockPushbackTotal != null && Number.isFinite(Number(o.blockPushbackTotal))) {
     blockPushbackTotal = Number(o.blockPushbackTotal);
   }
+  let blockPushMoveTime: number | undefined;
+  if (o.blockPushMoveTime != null && Number.isFinite(Number(o.blockPushMoveTime))) {
+    blockPushMoveTime = Math.max(1, Math.floor(Number(o.blockPushMoveTime)));
+  }
 
   let hitstopOnBlock: number | undefined;
   if (o.hitstopOnBlock != null && Number.isFinite(Number(o.hitstopOnBlock))) {
@@ -294,6 +306,18 @@ export function parseMoveDefinition(raw: unknown): MoveDefinition {
     });
   }
 
+  let guard: MoveDefinition['guard'] = 'high';
+  const gRaw = o.guard != null ? String(o.guard).trim().toLowerCase() : '';
+  if (gRaw === 'high' || gRaw === 'h') guard = 'high';
+  else if (gRaw === 'mid' || gRaw === 'm') guard = 'mid';
+  else if (gRaw === 'low' || gRaw === 'l') guard = 'low';
+  else if (gRaw === 'midhigh' || gRaw === 'mid_high') guard = 'midHigh';
+  else if (gRaw === 'throw' || gRaw === 't') guard = 'throw';
+
+  let guardStrength: MoveDefinition['guardStrength'];
+  const gs = o.guardStrength != null ? String(o.guardStrength).trim().toUpperCase() : '';
+  if (gs === 'L' || gs === 'M' || gs === 'H') guardStrength = gs;
+
   let mmdk: MoveDefinition['mmdk'];
   if (o.mmdk && typeof o.mmdk === 'object') {
     const mm = o.mmdk as Record<string, unknown>;
@@ -349,11 +373,14 @@ export function parseMoveDefinition(raw: unknown): MoveDefinition {
     hitstopOnHit,
     blockPushback,
     blockPushbackTotal,
+    blockPushMoveTime,
     plant,
     animFrameCount,
     glbPath,
     stance,
     mmdk,
+    guard,
+    guardStrength,
   };
 }
 

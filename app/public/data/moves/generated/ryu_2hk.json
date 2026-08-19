@@ -81,12 +81,46 @@
   "glbPath": "attack/esf001v00_attack_11/glb/000_esf001_ATK_2HK_id2000_f145.glb",
   "facingRelative": true,
   "selfMovement": [
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0.008, 0.012, 0.014, 0.014, 0.012, 0.01, 0.008, 0.006,
-    0.005, 0.004, 0.003, 0.003, 0.002, 0.002, 0.001, 0.001,
-    0.001, 0, 0, 0, 0, 0
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0.008,
+    0.012,
+    0.014,
+    0.014,
+    0.012,
+    0.01,
+    0.008,
+    0.006,
+    0.005,
+    0.004,
+    0.003,
+    0.003,
+    0.002,
+    0.002,
+    0.001,
+    0.001,
+    0.001,
+    0,
+    0,
+    0,
+    0,
+    0
   ],
-  "plant": { "foot": "L", "fromFrame": 0, "toFrame": 20 },
+  "plant": {
+    "foot": "L",
+    "fromFrame": 0,
+    "toFrame": 20
+  },
   "review_selfMovement": "placeholder estimate until tools/estimate_root_motion; tune with selfMovementScale",
   "sources": [
     {
@@ -103,5 +137,10 @@
     "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
   },
   "slug": "ryu-crouch-heavy-kick",
-  "abbreviation": "C.HK"
+  "abbreviation": "C.HK",
+  "blockPushMoveTime": 22,
+  "mmdk": {
+    "blockCurveTgtID": 6,
+    "blockMoveType": 24
+  }
 }

@@ -65,6 +65,26 @@
   display: flex;
   gap: 6px;
 }
+#panel-header .panel-header-dummy {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  font-size: 11px;
+  color: #c8d0e0;
+  cursor: default;
+  user-select: none;
+}
+#panel-header .panel-header-dummy select {
+  appearance: none;
+  background: #243047;
+  color: #e8ecf4;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 5px;
+  padding: 4px 8px;
+  font: inherit;
+  max-width: 11.5em;
+}
 #control-panel button {
   appearance: none;
   border: 1px solid rgba(255, 255, 255, 0.18);

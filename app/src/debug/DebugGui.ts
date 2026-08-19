@@ -2,7 +2,7 @@ import GUI from 'three/addons/libs/lil-gui.module.min.js';
 import type { MatchSim } from '../combat/match/MatchSim';
 import type { FrameClock } from '../combat/frameClock';
 import { syncMatchOpts, type MutableSimConfig } from '../config/constants';
-import type { DummyMode } from '../combat/types';
+import type { DummyGuardPolicy } from '../combat/types';
 import { parseMoveDefinition } from '../combat/move/MoveDefinition';
 import {
   fetchRyuAnimCatalog,
@@ -87,7 +87,7 @@ export function createDebugGui(
 
   const matchFolder = gui.addFolder('对局');
   const matchState = {
-    dummyMode: match.dummy.mode as string,
+    dummyGuardPolicy: match.dummy.guardPolicy as string,
     p1Hp: match.p1.hp,
     p2Hp: match.p2.hp,
     driveBars: match.drive.currentBars,
@@ -99,18 +99,16 @@ export function createDebugGui(
     },
   };
   matchFolder
-    .add(matchState, 'dummyMode', {
-      站立: 'stand',
-      站立防御: 'stand_block',
-      下蹲: 'crouch',
-      下蹲防御: 'crouch_block',
+    .add(matchState, 'dummyGuardPolicy', {
+      全部格挡: 'block_all',
+      仅站立格挡: 'stand_block',
+      仅蹲下格挡: 'crouch_block',
     })
-    .name('人偶模式')
+    .name('人偶格挡')
     .onChange((v: string) => {
-      if (v === 'crouch' || v === 'crouch_block') {
-        console.warn('MVP: 下蹲模式使用下蹲受击框；防御路径共用');
-      }
-      match.dummy.setMode(v as DummyMode);
+      match.dummy.setGuardPolicy(v as DummyGuardPolicy);
+      cfg.dummyGuardPolicy = v as DummyGuardPolicy;
+      match.opts.dummyGuardPolicy = v as DummyGuardPolicy;
     });
   matchFolder.add(matchState, 'resetMatch').name('重置对局');
   matchFolder
@@ -363,18 +361,15 @@ export function createDebugGui(
   cancelFolder.add(cfg, 'showCancelWindow').name('HUD显示取消窗');
 
   const guardFolder = gui.addFolder('防住 / 推挤 / 位移');
-  guardFolder
-    .add(cfg, 'forceP2Guard')
-    .name('P2强制真格挡')
-    .onChange((v: boolean) => {
-      if (v) match.dummy.setMode('stand_block');
-      syncOpts();
-    });
   guardFolder.add(cfg, 'enablePushResolve').name('启用推挤').onChange(syncOpts);
   guardFolder.add(cfg, 'enableBlockPush').name('启用防御推开').onChange(syncOpts);
   guardFolder
     .add(cfg, 'blockPushbackTotal', 0, 1.5, 0.01)
     .name('防御推开总量')
+    .onChange(syncOpts);
+  guardFolder
+    .add(cfg, 'blockPushEasePower', 1, 8, 0.5)
+    .name('防推ease幂')
     .onChange(syncOpts);
   guardFolder
     .add(cfg, 'blockstunOverride', -1, 40, 1)
@@ -452,6 +447,13 @@ export function createDebugGui(
     .name('重载姿态框 JSON');
   assemblyFolder.add(probeTl, 'hitstopTimer').name('hitstop').listen();
   assemblyFolder.add(probeTl, 'lastHitResult').name('lastHit').listen();
+  assemblyFolder.add(probeTl, 'lastGuardLevel').name('lastGuardLevel').listen();
+  assemblyFolder.add(probeTl, 'lastGuardOk').name('lastGuardOk').listen();
+  assemblyFolder.add(probeTl, 'dummyGuardPolicy').name('dummyGuardPolicy').listen();
+  assemblyFolder.add(probeTl, 'p2Phase').name('P2 phase').listen();
+  assemblyFolder.add(probeTl, 'p2StunTimer').name('P2 stunTimer').listen();
+  assemblyFolder.add(probeTl, 'p2ClipId').name('P2 clipId').listen();
+  assemblyFolder.add(probeTl, 'p2Crouching').name('P2 crouching').listen();
   assemblyFolder.add(probeTl, 'pushOverlapX').name('pushOverlapX').listen();
   assemblyFolder.add(probe, 'p1SelfDx').name('P1 selfDx').listen();
   assemblyFolder.add(probeTl, 'p2BlockPushDx').name('P2 blockPushDx').listen();

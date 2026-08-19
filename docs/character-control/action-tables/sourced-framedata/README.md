@@ -142,8 +142,41 @@ curl -sL "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml" \
 
 ---
 
-## 7. 修订
+## 7. 格挡相关帧表（2026-08-19 补搜）
+
+> 详细齐全度见 **`block-frame-inventory-2026-08-19.md`**。
+
+| 文件 | 内容 |
+|------|------|
+| `FAT-SF6FrameData.json` | FAT 全角色社区帧表（含 blockstun / atkLvl） |
+| `FAT-ryu.json` / `FAT-ryu-block-fields.csv` | Ryu 摘录 |
+| `mmdk-ryu-hitdt-block-fields.json` | 本机 HIT_DT 命中/防住 HitStun、MoveDest |
+| `block-frame-local-vs-FAT.json` | 本地招式 vs FAT 对照 |
+| `block-frame-inventory-2026-08-19.md` | **齐全度结论**：不齐全；MMDK 与 FAT blockstun 常差约 +4 |
+
+4rays **无** hitstun/blockstun。运行时这两项目前来自 MMDK 转换，不是 4rays。
+
+### 防住推开运动（2026-08-19）
+
+| 文件 | 内容 |
+|------|------|
+| `mmdk-ryu-block-push-motion.json` | 每招 `MoveDest` / `MoveTime` / `MoveType` / `CurveTgtID` |
+
+**曲线表**：公开渠道 **没有** `CurveTgtID` 控制点 JSON。运行时代替：在 `MoveTime` 帧上做 **cubic ease-out**（`blockPushEasePower`，默认 3）。不是走路速度。
+
+### 格挡反应轻重（2026-08-19）
+
+| 文件 | 内容 |
+|------|------|
+| `mmdk-ryu-guard-strength.json` | `_IsStrength_L/M/H` + `HitmarkStrength` → `guardStrength` |
+
+2LK/2MK 的 `hitstopOnBlock` 同为 9，不能用来分轻中。轻重以 HIT 表强度旗为准：下段蹲防 `GRD_DL` / `DM` / `DH`。
+
+---
+
+## 8. 修订
 
 | 日期 | 说明 |
 |------|------|
 | 2026-08-10 | 拉取 4rays ryu.toml；转换 60+ 招 JSON+占位盒；四类缺口检索结论落盘 |
+| 2026-08-19 | 拉取 FAT SF6FrameData；MMDK 防住字段摘录；格挡帧表齐全度盘点 |

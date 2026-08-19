@@ -218,7 +218,7 @@
   "abbreviation": null,
   "selfMovement": [
     0,
-    0.000029754638671875,
+    2.9754638671875e-05,
     0.000506439208984375,
     0.002115020751953125,
     0.03342193603515625,
@@ -264,6 +264,9 @@
     "fabFrame": 35,
     "hitDtIndex": 134,
     "unitScale": 0.01,
-    "clampBaseHurtToTotal": true
-  }
+    "clampBaseHurtToTotal": true,
+    "blockCurveTgtID": 13,
+    "blockMoveType": 24
+  },
+  "blockPushMoveTime": 24
 }

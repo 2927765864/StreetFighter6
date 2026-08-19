@@ -34,6 +34,7 @@ export type ClipCategory =
   | 'jump'
   | 'dash'
   | 'hit'
+  | 'guard'
   | 'turn'
   | 'other';
 
@@ -91,11 +92,19 @@ export function categorizeBinding(bindingKey: string): ClipCategory {
   if (id.startsWith('turn')) return 'turn';
 
   if (
+    id.startsWith('grd_') ||
+    id.startsWith('block_') ||
+    id === 'guard' ||
+    id === 'block'
+  ) {
+    return 'guard';
+  }
+
+  if (
     id.includes('hitstun') ||
     id.includes('blockstun') ||
     id.includes('hit_') ||
-    id === 'damage' ||
-    id === 'guard'
+    id === 'damage'
   ) {
     return 'hit';
   }
@@ -124,6 +133,31 @@ export function resolveCrossfadeSec(
 
   // 受击等：通常不溶
   if (from === 'hit' || to === 'hit') return 0;
+
+  // 格挡（§3.11.2 2026-08-19）：打上硬切；出硬直进 loop / 蹲回站 可溶
+  if (from === 'guard' || to === 'guard') {
+    const fromP = bindingParts(fromKey);
+    const toP = bindingParts(toKey);
+    const toReact = toP.id.startsWith('grd_');
+    const fromReact = fromP.id.startsWith('grd_');
+    const toLoop = toP.id.includes('_loop') || toP.role === 'loop';
+    const fromLoop = fromP.id.includes('_loop') || fromP.role === 'loop';
+    if (toReact) return 0;
+    if (fromReact && toReact) return 0;
+    if (toLoop && (fromReact || fromLoop || from === 'guard')) {
+      return Math.max(0, d.residualToStanceSec);
+    }
+    if (from === 'guard' && isMoveLike(to)) {
+      return Math.max(0, d.residualToMoveSec);
+    }
+    if (isMoveLike(from) && toLoop) {
+      return Math.max(0, d.locoSec);
+    }
+    if (from === 'guard' && to === 'guard') {
+      return Math.max(0, d.residualToStanceSec);
+    }
+    return 0;
+  }
 
   // 跳（§3.11.2 / §3.13.5 / §3.13.7）— 先于转身，避免 land→turn 误走转身边
   if (from === 'jump' || to === 'jump') {

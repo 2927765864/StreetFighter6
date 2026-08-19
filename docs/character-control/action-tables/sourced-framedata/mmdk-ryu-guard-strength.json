@@ -1,0 +1,238 @@
+{
+  "retrieved": "2026-08-19",
+  "source": "private/mmdk/Ryu/hit_dt.json common[1] _IsStrength_L/M/H + HitmarkStrength",
+  "note": "2LK/2MK share hitstop=9; strength flags distinguish L vs M for GRD_DL vs GRD_DM.",
+  "moves": [
+    {
+      "moveId": "ryu_2hk",
+      "guard": "low",
+      "guardStrength": "H",
+      "hitstopOnBlock": 13,
+      "HitmarkStrength": 2
+    },
+    {
+      "moveId": "ryu_2hp",
+      "guard": "high",
+      "guardStrength": "H",
+      "hitstopOnBlock": 13,
+      "HitmarkStrength": 2
+    },
+    {
+      "moveId": "ryu_2lk",
+      "guard": "low",
+      "guardStrength": "L",
+      "hitstopOnBlock": 9,
+      "HitmarkStrength": 0
+    },
+    {
+      "moveId": "ryu_2lp",
+      "guard": "high",
+      "guardStrength": "L",
+      "hitstopOnBlock": 9,
+      "HitmarkStrength": 0
+    },
+    {
+      "moveId": "ryu_2mk",
+      "guard": "low",
+      "guardStrength": "M",
+      "hitstopOnBlock": 9,
+      "HitmarkStrength": 1
+    },
+    {
+      "moveId": "ryu_2mp",
+      "guard": "high",
+      "guardStrength": "M",
+      "hitstopOnBlock": 11,
+      "HitmarkStrength": 1
+    },
+    {
+      "moveId": "ryu_4hk",
+      "guard": "high",
+      "guardStrength": "H",
+      "hitstopOnBlock": 10,
+      "HitmarkStrength": 2
+    },
+    {
+      "moveId": "ryu_4hp",
+      "guard": "high",
+      "guardStrength": "H",
+      "hitstopOnBlock": 13,
+      "HitmarkStrength": 2
+    },
+    {
+      "moveId": "ryu_5hk",
+      "guard": "high",
+      "guardStrength": "H",
+      "hitstopOnBlock": 13,
+      "HitmarkStrength": 2
+    },
+    {
+      "moveId": "ryu_5hp",
+      "guard": "high",
+      "guardStrength": "H",
+      "hitstopOnBlock": 13,
+      "HitmarkStrength": 2
+    },
+    {
+      "moveId": "ryu_5lk",
+      "guard": "high",
+      "guardStrength": "L",
+      "hitstopOnBlock": 9,
+      "HitmarkStrength": 0
+    },
+    {
+      "moveId": "ryu_5lp",
+      "guard": "high",
+      "guardStrength": "L",
+      "hitstopOnBlock": 9,
+      "HitmarkStrength": 0
+    },
+    {
+      "moveId": "ryu_5mk",
+      "guard": "high",
+      "guardStrength": "M",
+      "hitstopOnBlock": 11,
+      "HitmarkStrength": 1
+    },
+    {
+      "moveId": "ryu_5mp",
+      "guard": "high",
+      "guardStrength": "M",
+      "hitstopOnBlock": 11,
+      "HitmarkStrength": 1
+    },
+    {
+      "moveId": "ryu_6hk",
+      "guard": "high",
+      "guardStrength": "H",
+      "hitstopOnBlock": 13,
+      "HitmarkStrength": 2
+    },
+    {
+      "moveId": "ryu_6hp",
+      "guard": "high",
+      "guardStrength": "H",
+      "hitstopOnBlock": 12,
+      "HitmarkStrength": 2
+    },
+    {
+      "moveId": "ryu_6mp",
+      "guard": "mid",
+      "guardStrength": "M",
+      "hitstopOnBlock": 10,
+      "HitmarkStrength": 1
+    },
+    {
+      "moveId": "ryu_air_tatsu_hk",
+      "guard": "high",
+      "guardStrength": "H",
+      "hitstopOnBlock": 15,
+      "HitmarkStrength": 3
+    },
+    {
+      "moveId": "ryu_air_tatsu_mk",
+      "guard": "high",
+      "guardStrength": "H",
+      "hitstopOnBlock": 2,
+      "HitmarkStrength": 3
+    },
+    {
+      "moveId": "ryu_hadoken_hp",
+      "guard": "high",
+      "guardStrength": "L",
+      "hitstopOnBlock": 8,
+      "HitmarkStrength": 0
+    },
+    {
+      "moveId": "ryu_hadoken_lp",
+      "guard": "high",
+      "guardStrength": "L",
+      "hitstopOnBlock": 8,
+      "HitmarkStrength": 0
+    },
+    {
+      "moveId": "ryu_hadoken_mp",
+      "guard": "high",
+      "guardStrength": "L",
+      "hitstopOnBlock": 8,
+      "HitmarkStrength": 0
+    },
+    {
+      "moveId": "ryu_hashogeki_hp",
+      "guard": "high",
+      "guardStrength": "M",
+      "hitstopOnBlock": 17,
+      "HitmarkStrength": 1
+    },
+    {
+      "moveId": "ryu_hashogeki_lp",
+      "guard": "high",
+      "guardStrength": "M",
+      "hitstopOnBlock": 15,
+      "HitmarkStrength": 1
+    },
+    {
+      "moveId": "ryu_hashogeki_mp",
+      "guard": "high",
+      "guardStrength": "M",
+      "hitstopOnBlock": 15,
+      "HitmarkStrength": 1
+    },
+    {
+      "moveId": "ryu_jhk",
+      "guard": "mid",
+      "guardStrength": "H",
+      "hitstopOnBlock": 13,
+      "HitmarkStrength": 2
+    },
+    {
+      "moveId": "ryu_jhp",
+      "guard": "mid",
+      "guardStrength": "H",
+      "hitstopOnBlock": 13,
+      "HitmarkStrength": 2
+    },
+    {
+      "moveId": "ryu_jlk",
+      "guard": "mid",
+      "guardStrength": "L",
+      "hitstopOnBlock": 9,
+      "HitmarkStrength": 0
+    },
+    {
+      "moveId": "ryu_jlp",
+      "guard": "mid",
+      "guardStrength": "L",
+      "hitstopOnBlock": 9,
+      "HitmarkStrength": 0
+    },
+    {
+      "moveId": "ryu_jmk",
+      "guard": "mid",
+      "guardStrength": "M",
+      "hitstopOnBlock": 11,
+      "HitmarkStrength": 1
+    },
+    {
+      "moveId": "ryu_jmp",
+      "guard": "midHigh",
+      "guardStrength": "M",
+      "hitstopOnBlock": 10,
+      "HitmarkStrength": 1
+    },
+    {
+      "moveId": "ryu_tc_fuwa",
+      "guard": "high",
+      "guardStrength": "H",
+      "hitstopOnBlock": 13,
+      "HitmarkStrength": 2
+    },
+    {
+      "moveId": "ryu_tc_hp_hk",
+      "guard": "high",
+      "guardStrength": "H",
+      "hitstopOnBlock": 13,
+      "HitmarkStrength": 2
+    }
+  ]
+}

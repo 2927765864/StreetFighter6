@@ -27,6 +27,7 @@
     "hurtboxColor": 3407718,
     "pushboxColor": 16763955,
     "forceP2Guard": true,
+    "dummyGuardPolicy": "block_all",
     "enablePushResolve": true,
     "enableBlockPush": true,
     "blockPushbackTotal": 0.22,

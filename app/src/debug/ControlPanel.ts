@@ -31,7 +31,7 @@ import {
   type LightFollowTarget,
   type LightType,
 } from '../config/lightTypes';
-import type { DummyMode } from '../combat/types';
+import type { DummyGuardPolicy } from '../combat/types';
 import { attachDragScrub, attachDragScrubAll } from './dragScrub';
 import {
   fetchRyuAnimCatalog,
@@ -233,6 +233,14 @@ function buildDom(): HTMLElement {
 <aside id="control-panel" aria-hidden="true">
   <div id="panel-header">
     <span class="panel-title">控制面板 · SF6 训练</span>
+    <label class="panel-header-dummy">
+      <span>人偶格挡</span>
+      <select id="sel-dummyMode" title="对手格挡策略">
+        <option value="block_all">全部格挡</option>
+        <option value="stand_block">仅站立格挡</option>
+        <option value="crouch_block">仅蹲下格挡</option>
+      </select>
+    </label>
     <div class="panel-actions">
       <button type="button" id="btn-panel-hide">隐藏</button>
     </div>
@@ -300,15 +308,7 @@ function buildDom(): HTMLElement {
           'matchTools',
           '【对局】工具',
           `
-          <div class="panel-row">
-            <div class="panel-row-header"><span>人偶模式</span></div>
-            <select id="sel-dummyMode">
-              <option value="stand">站立</option>
-              <option value="stand_block">站立防御</option>
-              <option value="crouch">下蹲</option>
-              <option value="crouch_block">下蹲防御</option>
-            </select>
-          </div>
+          <p class="panel-hint">人偶格挡（全部 / 仅站立 / 仅蹲下）在面板<strong>顶栏</strong>，以及左侧「战斗」分页的防住一节。</p>
           ${rowNumber('p1Hp', 'P1 血量', 0, 10000, 1)}
           ${rowNumber('p2Hp', 'P2 血量', 0, 10000, 1)}
           ${rowNumber('driveBars', 'Drive 条数', 0, 6, 1)}
@@ -359,10 +359,18 @@ function buildDom(): HTMLElement {
           'guardPush',
           '【战斗】防住 / 推挤 / 位移',
           `
-          ${rowToggle('forceP2Guard', 'P2 强制真格挡')}
+          <div class="panel-row">
+            <div class="panel-row-header"><span>人偶格挡</span></div>
+            <select id="sel-dummyMode-combat" title="对手格挡策略">
+              <option value="block_all">全部格挡</option>
+              <option value="stand_block">仅站立格挡</option>
+              <option value="crouch_block">仅蹲下格挡</option>
+            </select>
+          </div>
           ${rowToggle('enablePushResolve', '启用推挤')}
           ${rowToggle('enableBlockPush', '启用防御推开')}
           ${rowNumber('blockPushbackTotal', '防御推开总量', 0, 1.5, 0.01)}
+          ${rowNumber('blockPushEasePower', '防推 ease-out 幂', 1, 8, 0.5)}
           ${rowNumber('blockstunOverride', 'blockstun 覆盖 (-1=表)', -1, 40, 1)}
           ${rowNumber('damageScale', '伤害倍率', 0, 2, 0.05)}
           ${rowToggle('applySelfMovement', '启用攻击 Place 位移')}
@@ -661,10 +669,10 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'hitstopFramesOnHit', path: 'hitstopFramesOnHit' },
   { id: 'hitstopFramesOnBlock', path: 'hitstopFramesOnBlock' },
   { id: 'showCancelWindow', path: 'showCancelWindow' },
-  { id: 'forceP2Guard', path: 'forceP2Guard' },
   { id: 'enablePushResolve', path: 'enablePushResolve' },
   { id: 'enableBlockPush', path: 'enableBlockPush' },
   { id: 'blockPushbackTotal', path: 'blockPushbackTotal' },
+  { id: 'blockPushEasePower', path: 'blockPushEasePower' },
   { id: 'blockstunOverride', path: 'blockstunOverride' },
   { id: 'damageScale', path: 'damageScale' },
   { id: 'applySelfMovement', path: 'applySelfMovement' },
@@ -756,7 +764,6 @@ const TOGGLE_IDS = new Set([
   'enableSpecials',
   'enableThrows',
   'showCancelWindow',
-  'forceP2Guard',
   'enablePushResolve',
   'enableBlockPush',
   'applySelfMovement',
@@ -879,8 +886,8 @@ export function setupControlPanel(
     if (key === 'motionHistoryCapacity') {
       CONFIG.bufferFrames = CONFIG.motionHistoryCapacity;
     }
-    if (key === 'forceP2Guard' && CONFIG.forceP2Guard) {
-      match.dummy.setMode('stand_block');
+    if (key === 'dummyGuardPolicy') {
+      match.dummy.setGuardPolicy(CONFIG.dummyGuardPolicy);
     }
     const isUiOnly =
       key.startsWith('expandedSections.') || (key !== '*' && PURE_VIEW_KEYS.has(key));
@@ -1741,15 +1748,26 @@ export function setupControlPanel(
 
   // Match tools (not pure CONFIG)
   const dummySel = byId<HTMLSelectElement>(host, 'sel-dummyMode');
+  const dummySelCombat = byId<HTMLSelectElement>(host, 'sel-dummyMode-combat');
+  const applyDummyPolicy = (v: DummyGuardPolicy) => {
+    match.dummy.setGuardPolicy(v);
+    CONFIG.dummyGuardPolicy = v;
+    match.opts.dummyGuardPolicy = v;
+    dummySel.value = v;
+    dummySelCombat.value = v;
+  };
   const syncDummy = () => {
-    dummySel.value = match.dummy.mode;
+    const v = (
+      match.dummy.guardPolicy === 'none' ? 'block_all' : match.dummy.guardPolicy
+    ) as DummyGuardPolicy;
+    dummySel.value = v;
+    dummySelCombat.value = v;
   };
   dummySel.addEventListener('change', () => {
-    const v = dummySel.value as DummyMode;
-    if (v === 'crouch' || v === 'crouch_block') {
-      console.warn('MVP: 下蹲模式使用下蹲受击框；防御路径共用');
-    }
-    match.dummy.setMode(v);
+    applyDummyPolicy(dummySel.value as DummyGuardPolicy);
+  });
+  dummySelCombat.addEventListener('change', () => {
+    applyDummyPolicy(dummySelCombat.value as DummyGuardPolicy);
   });
   syncers.push(syncDummy);
 
@@ -1904,6 +1922,13 @@ export function setupControlPanel(
     ['当前招 review', () => String(match.debugProbe.reviewStatus)],
     ['hitstop', () => String(match.debugProbe.hitstopTimer)],
     ['lastHit', () => String(match.debugProbe.lastHitResult)],
+    ['lastGuardLevel', () => String(match.debugProbe.lastGuardLevel)],
+    ['lastGuardOk', () => String(match.debugProbe.lastGuardOk)],
+    ['dummyGuardPolicy', () => String(match.debugProbe.dummyGuardPolicy)],
+    ['P2 phase', () => String(match.debugProbe.p2Phase)],
+    ['P2 stunTimer', () => String(match.debugProbe.p2StunTimer)],
+    ['P2 clipId', () => String(match.debugProbe.p2ClipId)],
+    ['P2 crouching', () => String(match.debugProbe.p2Crouching)],
     ['pushOverlapX', () => String(match.debugProbe.pushOverlapX)],
     ['P2 blockPushDx', () => String(match.debugProbe.p2BlockPushDx)],
   ];

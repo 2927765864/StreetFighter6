@@ -13,9 +13,9 @@
     "atk3hkIsWhirlwind": true
   },
   "summary": {
-    "entries": 48,
-    "mapped": 45,
-    "unmapped_or_deferred": 3
+    "entries": 88,
+    "mapped": 65,
+    "grdFamily": 39
   },
   "aliasIndex": {
     "ryu_5lp": "ryu_5lp",
@@ -130,15 +130,56 @@
     "hitstun_light": "hitstun_light",
     "hit": "hitstun_light",
     "hitstun": "hitstun_light",
-    "block_stand": "block_stand",
-    "block": "block_stand",
-    "guard": "block_stand",
+    "block_stand": "block_stand_start",
+    "block": "block_stand_start",
+    "guard": "block_stand_start",
     "drive_parry": "drive_parry",
     "parry": "drive_parry",
     "throw_fwd": "throw_fwd",
     "throw": "throw_fwd",
     "throw_back": "throw_back",
-    "throw_b": "throw_back"
+    "throw_b": "throw_back",
+    "block_stand_loop": "block_stand_loop",
+    "block_crouch_loop": "block_crouch_loop",
+    "block_stand_start": "block_stand_start",
+    "block_stand_end": "block_stand_end",
+    "block_crouch_start": "block_crouch_start",
+    "block_crouch_end": "block_crouch_end",
+    "grd_hl_st": "grd_hl_st",
+    "grd_hm_st": "grd_hm_st",
+    "grd_hm_lt": "grd_hm_lt",
+    "grd_hm_rt": "grd_hm_rt",
+    "grd_hh_st": "grd_hh_st",
+    "grd_hh_lt": "grd_hh_lt",
+    "grd_hh_rt": "grd_hh_rt",
+    "grd_ml_st": "grd_ml_st",
+    "grd_mm_st": "grd_mm_st",
+    "grd_mm_lt": "grd_mm_lt",
+    "grd_mm_rt": "grd_mm_rt",
+    "grd_mh_st": "grd_mh_st",
+    "grd_mh_lt": "grd_mh_lt",
+    "grd_mh_rt": "grd_mh_rt",
+    "grd_ll_st": "grd_ll_st",
+    "grd_lm_st": "grd_lm_st",
+    "grd_lm_lt": "grd_lm_lt",
+    "grd_lm_rt": "grd_lm_rt",
+    "grd_lh_st": "grd_lh_st",
+    "grd_lh_lt": "grd_lh_lt",
+    "grd_lh_rt": "grd_lh_rt",
+    "grd_cl_st": "grd_cl_st",
+    "grd_cm_st": "grd_cm_st",
+    "grd_cm_lt": "grd_cm_lt",
+    "grd_cm_rt": "grd_cm_rt",
+    "grd_ch_st": "grd_ch_st",
+    "grd_ch_lt": "grd_ch_lt",
+    "grd_ch_rt": "grd_ch_rt",
+    "grd_dl_st": "grd_dl_st",
+    "grd_dm_st": "grd_dm_st",
+    "grd_dm_lt": "grd_dm_lt",
+    "grd_dm_rt": "grd_dm_rt",
+    "grd_dh_st": "grd_dh_st",
+    "grd_dh_lt": "grd_dh_lt",
+    "grd_dh_rt": "grd_dh_rt"
   },
   "moves": [
     {
@@ -1362,29 +1403,6 @@
       "notes": "Sample hit react; full damage set is large — extend later."
     },
     {
-      "moveId": "block_stand",
-      "command": "4",
-      "displayName": "Guard stand start (sample)",
-      "category": "system",
-      "status": "mapped",
-      "aliases": [
-        "block",
-        "guard"
-      ],
-      "clips": [
-        {
-          "role": "main",
-          "assetKey": "5000_GRD_STD_START",
-          "path": "basic/esf001v00_idle_tired/glb/008_esf001_5000_GRD_STD_START_id0500_f24.glb",
-          "stem": "008_esf001_5000_GRD_STD_START_id0500_f24",
-          "motionId": 500,
-          "frameCount": 24
-        }
-      ],
-      "primaryPath": "basic/esf001v00_idle_tired/glb/008_esf001_5000_GRD_STD_START_id0500_f24.glb",
-      "notes": "Sample; full GRD_* family available."
-    },
-    {
       "moveId": "drive_parry",
       "command": "MP+MK",
       "displayName": "Drive Parry",
@@ -1473,7 +1491,9 @@
       "displayName": "Stand turn",
       "category": "movement",
       "status": "mapped",
-      "aliases": ["turn_stand"],
+      "aliases": [
+        "turn_stand"
+      ],
       "clips": [
         {
           "role": "main",
@@ -1492,7 +1512,9 @@
       "displayName": "Crouch turn",
       "category": "movement",
       "status": "mapped",
-      "aliases": ["turn_crouch"],
+      "aliases": [
+        "turn_crouch"
+      ],
       "clips": [
         {
           "role": "main",
@@ -1504,6 +1526,789 @@
       ],
       "primaryPath": "basic/esf001v00_idle/glb/005_esf001_BAS_TRN_CRH_id0110_f65.glb",
       "notes": "§3.14 presentation."
+    },
+    {
+      "moveId": "block_stand_start",
+      "command": "4/1",
+      "displayName": "Guard stand start",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [
+        "block_stand",
+        "block",
+        "guard"
+      ],
+      "clips": [
+        {
+          "role": "start",
+          "assetKey": "5000_GRD_STD_START",
+          "path": "basic/esf001v00_idle_tired/glb/008_esf001_5000_GRD_STD_START_id0500_f24.glb",
+          "stem": "008_esf001_5000_GRD_STD_START_id0500_f24",
+          "frameCount": 24
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/008_esf001_5000_GRD_STD_START_id0500_f24.glb",
+      "notes": "GRD system pose"
+    },
+    {
+      "moveId": "block_stand_end",
+      "command": "4/1",
+      "displayName": "Guard stand end",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "end",
+          "assetKey": "5020_GRD_STD_END",
+          "path": "basic/esf001v00_idle_tired/glb/010_esf001_5020_GRD_STD_END_id0520_f50.glb",
+          "stem": "010_esf001_5020_GRD_STD_END_id0520_f50",
+          "frameCount": 50
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/010_esf001_5020_GRD_STD_END_id0520_f50.glb",
+      "notes": "GRD system pose"
+    },
+    {
+      "moveId": "block_crouch_start",
+      "command": "4/1",
+      "displayName": "Guard crouch start",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "start",
+          "assetKey": "5090_GRD_CRH_START",
+          "path": "basic/esf001v00_idle_tired/glb/011_esf001_5090_GRD_CRH_START_id0530_f24.glb",
+          "stem": "011_esf001_5090_GRD_CRH_START_id0530_f24",
+          "frameCount": 24
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/011_esf001_5090_GRD_CRH_START_id0530_f24.glb",
+      "notes": "GRD system pose"
+    },
+    {
+      "moveId": "block_crouch_end",
+      "command": "4/1",
+      "displayName": "Guard crouch end",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "end",
+          "assetKey": "5110_GRD_CRH_END",
+          "path": "basic/esf001v00_idle_tired/glb/013_esf001_5110_GRD_CRH_END_id0550_f50.glb",
+          "stem": "013_esf001_5110_GRD_CRH_END_id0550_f50",
+          "frameCount": 50
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/013_esf001_5110_GRD_CRH_END_id0550_f50.glb",
+      "notes": "GRD system pose"
+    },
+    {
+      "moveId": "grd_hl_st",
+      "command": "4/1",
+      "displayName": "GRD_HL_ST",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5150_GRD_HL_ST",
+          "path": "basic/esf001v00_idle_tired/glb/014_esf001_5150_GRD_HL_ST_id0560_f29.glb",
+          "stem": "014_esf001_5150_GRD_HL_ST_id0560_f29",
+          "frameCount": 29
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/014_esf001_5150_GRD_HL_ST_id0560_f29.glb",
+      "notes": "react ST"
+    },
+    {
+      "moveId": "grd_hm_st",
+      "command": "4/1",
+      "displayName": "GRD_HM_ST",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5160_GRD_HM_ST",
+          "path": "basic/esf001v00_idle_tired/glb/015_esf001_5160_GRD_HM_ST_id0570_f39.glb",
+          "stem": "015_esf001_5160_GRD_HM_ST_id0570_f39",
+          "frameCount": 39
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/015_esf001_5160_GRD_HM_ST_id0570_f39.glb",
+      "notes": "react ST"
+    },
+    {
+      "moveId": "grd_hm_lt",
+      "command": "4/1",
+      "displayName": "GRD_HM_LT",
+      "category": "system",
+      "status": "mapped_unused",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5170_GRD_HM_LT",
+          "path": "basic/esf001v00_idle_tired/glb/016_esf001_5170_GRD_HM_LT_id0580_f39.glb",
+          "stem": "016_esf001_5170_GRD_HM_LT_id0580_f39",
+          "frameCount": 39
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/016_esf001_5170_GRD_HM_LT_id0580_f39.glb",
+      "notes": "mapped_unused LT/RT"
+    },
+    {
+      "moveId": "grd_hm_rt",
+      "command": "4/1",
+      "displayName": "GRD_HM_RT",
+      "category": "system",
+      "status": "mapped_unused",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5180_GRD_HM_RT",
+          "path": "basic/esf001v00_idle_tired/glb/017_esf001_5180_GRD_HM_RT_id0590_f39.glb",
+          "stem": "017_esf001_5180_GRD_HM_RT_id0590_f39",
+          "frameCount": 39
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/017_esf001_5180_GRD_HM_RT_id0590_f39.glb",
+      "notes": "mapped_unused LT/RT"
+    },
+    {
+      "moveId": "grd_hh_st",
+      "command": "4/1",
+      "displayName": "GRD_HH_ST",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5190_GRD_HH_ST",
+          "path": "basic/esf001v00_idle_tired/glb/018_esf001_5190_GRD_HH_ST_id5000_f49.glb",
+          "stem": "018_esf001_5190_GRD_HH_ST_id5000_f49",
+          "frameCount": 49
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/018_esf001_5190_GRD_HH_ST_id5000_f49.glb",
+      "notes": "react ST"
+    },
+    {
+      "moveId": "grd_hh_lt",
+      "command": "4/1",
+      "displayName": "GRD_HH_LT",
+      "category": "system",
+      "status": "mapped_unused",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5200_GRD_HH_LT",
+          "path": "basic/esf001v00_idle_tired/glb/019_esf001_5200_GRD_HH_LT_id5010_f49.glb",
+          "stem": "019_esf001_5200_GRD_HH_LT_id5010_f49",
+          "frameCount": 49
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/019_esf001_5200_GRD_HH_LT_id5010_f49.glb",
+      "notes": "mapped_unused LT/RT"
+    },
+    {
+      "moveId": "grd_hh_rt",
+      "command": "4/1",
+      "displayName": "GRD_HH_RT",
+      "category": "system",
+      "status": "mapped_unused",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5210_GRD_HH_RT",
+          "path": "basic/esf001v00_idle_tired/glb/020_esf001_5210_GRD_HH_RT_id5020_f49.glb",
+          "stem": "020_esf001_5210_GRD_HH_RT_id5020_f49",
+          "frameCount": 49
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/020_esf001_5210_GRD_HH_RT_id5020_f49.glb",
+      "notes": "mapped_unused LT/RT"
+    },
+    {
+      "moveId": "grd_ml_st",
+      "command": "4/1",
+      "displayName": "GRD_ML_ST",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5220_GRD_ML_ST",
+          "path": "basic/esf001v00_idle_tired/glb/021_esf001_5220_GRD_ML_ST_id5090_f29.glb",
+          "stem": "021_esf001_5220_GRD_ML_ST_id5090_f29",
+          "frameCount": 29
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/021_esf001_5220_GRD_ML_ST_id5090_f29.glb",
+      "notes": "react ST"
+    },
+    {
+      "moveId": "grd_mm_st",
+      "command": "4/1",
+      "displayName": "GRD_MM_ST",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5230_GRD_MM_ST",
+          "path": "basic/esf001v00_idle_tired/glb/022_esf001_5230_GRD_MM_ST_id5100_f39.glb",
+          "stem": "022_esf001_5230_GRD_MM_ST_id5100_f39",
+          "frameCount": 39
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/022_esf001_5230_GRD_MM_ST_id5100_f39.glb",
+      "notes": "react ST"
+    },
+    {
+      "moveId": "grd_mm_lt",
+      "command": "4/1",
+      "displayName": "GRD_MM_LT",
+      "category": "system",
+      "status": "mapped_unused",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5240_GRD_MM_LT",
+          "path": "basic/esf001v00_idle_tired/glb/023_esf001_5240_GRD_MM_LT_id5110_f39.glb",
+          "stem": "023_esf001_5240_GRD_MM_LT_id5110_f39",
+          "frameCount": 39
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/023_esf001_5240_GRD_MM_LT_id5110_f39.glb",
+      "notes": "mapped_unused LT/RT"
+    },
+    {
+      "moveId": "grd_mm_rt",
+      "command": "4/1",
+      "displayName": "GRD_MM_RT",
+      "category": "system",
+      "status": "mapped_unused",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5250_GRD_MM_RT",
+          "path": "basic/esf001v00_idle_tired/glb/024_esf001_5250_GRD_MM_RT_id5150_f39.glb",
+          "stem": "024_esf001_5250_GRD_MM_RT_id5150_f39",
+          "frameCount": 39
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/024_esf001_5250_GRD_MM_RT_id5150_f39.glb",
+      "notes": "mapped_unused LT/RT"
+    },
+    {
+      "moveId": "grd_mh_st",
+      "command": "4/1",
+      "displayName": "GRD_MH_ST",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5260_GRD_MH_ST",
+          "path": "basic/esf001v00_idle_tired/glb/025_esf001_5260_GRD_MH_ST_id5160_f49.glb",
+          "stem": "025_esf001_5260_GRD_MH_ST_id5160_f49",
+          "frameCount": 49
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/025_esf001_5260_GRD_MH_ST_id5160_f49.glb",
+      "notes": "react ST"
+    },
+    {
+      "moveId": "grd_mh_lt",
+      "command": "4/1",
+      "displayName": "GRD_MH_LT",
+      "category": "system",
+      "status": "mapped_unused",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5270_GRD_MH_LT",
+          "path": "basic/esf001v00_idle_tired/glb/026_esf001_5270_GRD_MH_LT_id5170_f49.glb",
+          "stem": "026_esf001_5270_GRD_MH_LT_id5170_f49",
+          "frameCount": 49
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/026_esf001_5270_GRD_MH_LT_id5170_f49.glb",
+      "notes": "mapped_unused LT/RT"
+    },
+    {
+      "moveId": "grd_mh_rt",
+      "command": "4/1",
+      "displayName": "GRD_MH_RT",
+      "category": "system",
+      "status": "mapped_unused",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5280_GRD_MH_RT",
+          "path": "basic/esf001v00_idle_tired/glb/027_esf001_5280_GRD_MH_RT_id5180_f49.glb",
+          "stem": "027_esf001_5280_GRD_MH_RT_id5180_f49",
+          "frameCount": 49
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/027_esf001_5280_GRD_MH_RT_id5180_f49.glb",
+      "notes": "mapped_unused LT/RT"
+    },
+    {
+      "moveId": "grd_ll_st",
+      "command": "4/1",
+      "displayName": "GRD_LL_ST",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5290_GRD_LL_ST",
+          "path": "basic/esf001v00_idle_tired/glb/028_esf001_5290_GRD_LL_ST_id5190_f29.glb",
+          "stem": "028_esf001_5290_GRD_LL_ST_id5190_f29",
+          "frameCount": 29
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/028_esf001_5290_GRD_LL_ST_id5190_f29.glb",
+      "notes": "react ST"
+    },
+    {
+      "moveId": "grd_lm_st",
+      "command": "4/1",
+      "displayName": "GRD_LM_ST",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5300_GRD_LM_ST",
+          "path": "basic/esf001v00_idle_tired/glb/029_esf001_5300_GRD_LM_ST_id5200_f39.glb",
+          "stem": "029_esf001_5300_GRD_LM_ST_id5200_f39",
+          "frameCount": 39
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/029_esf001_5300_GRD_LM_ST_id5200_f39.glb",
+      "notes": "react ST"
+    },
+    {
+      "moveId": "grd_lm_lt",
+      "command": "4/1",
+      "displayName": "GRD_LM_LT",
+      "category": "system",
+      "status": "mapped_unused",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5310_GRD_LM_LT",
+          "path": "basic/esf001v00_idle_tired/glb/030_esf001_5310_GRD_LM_LT_id5210_f39.glb",
+          "stem": "030_esf001_5310_GRD_LM_LT_id5210_f39",
+          "frameCount": 39
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/030_esf001_5310_GRD_LM_LT_id5210_f39.glb",
+      "notes": "mapped_unused LT/RT"
+    },
+    {
+      "moveId": "grd_lm_rt",
+      "command": "4/1",
+      "displayName": "GRD_LM_RT",
+      "category": "system",
+      "status": "mapped_unused",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5320_GRD_LM_RT",
+          "path": "basic/esf001v00_idle_tired/glb/031_esf001_5320_GRD_LM_RT_id5220_f39.glb",
+          "stem": "031_esf001_5320_GRD_LM_RT_id5220_f39",
+          "frameCount": 39
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/031_esf001_5320_GRD_LM_RT_id5220_f39.glb",
+      "notes": "mapped_unused LT/RT"
+    },
+    {
+      "moveId": "grd_lh_st",
+      "command": "4/1",
+      "displayName": "GRD_LH_ST",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5330_GRD_LH_ST",
+          "path": "basic/esf001v00_idle_tired/glb/032_esf001_5330_GRD_LH_ST_id5230_f49.glb",
+          "stem": "032_esf001_5330_GRD_LH_ST_id5230_f49",
+          "frameCount": 49
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/032_esf001_5330_GRD_LH_ST_id5230_f49.glb",
+      "notes": "react ST"
+    },
+    {
+      "moveId": "grd_lh_lt",
+      "command": "4/1",
+      "displayName": "GRD_LH_LT",
+      "category": "system",
+      "status": "mapped_unused",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5340_GRD_LH_LT",
+          "path": "basic/esf001v00_idle_tired/glb/033_esf001_5340_GRD_LH_LT_id5240_f49.glb",
+          "stem": "033_esf001_5340_GRD_LH_LT_id5240_f49",
+          "frameCount": 49
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/033_esf001_5340_GRD_LH_LT_id5240_f49.glb",
+      "notes": "mapped_unused LT/RT"
+    },
+    {
+      "moveId": "grd_lh_rt",
+      "command": "4/1",
+      "displayName": "GRD_LH_RT",
+      "category": "system",
+      "status": "mapped_unused",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5350_GRD_LH_RT",
+          "path": "basic/esf001v00_idle_tired/glb/034_esf001_5350_GRD_LH_RT_id5250_f49.glb",
+          "stem": "034_esf001_5350_GRD_LH_RT_id5250_f49",
+          "frameCount": 49
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/034_esf001_5350_GRD_LH_RT_id5250_f49.glb",
+      "notes": "mapped_unused LT/RT"
+    },
+    {
+      "moveId": "grd_cl_st",
+      "command": "4/1",
+      "displayName": "GRD_CL_ST",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5360_GRD_CL_ST",
+          "path": "basic/esf001v00_idle_tired/glb/035_esf001_5360_GRD_CL_ST_id5260_f29.glb",
+          "stem": "035_esf001_5360_GRD_CL_ST_id5260_f29",
+          "frameCount": 29
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/035_esf001_5360_GRD_CL_ST_id5260_f29.glb",
+      "notes": "react ST"
+    },
+    {
+      "moveId": "grd_cm_st",
+      "command": "4/1",
+      "displayName": "GRD_CM_ST",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5370_GRD_CM_ST",
+          "path": "basic/esf001v00_idle_tired/glb/036_esf001_5370_GRD_CM_ST_id5270_f39.glb",
+          "stem": "036_esf001_5370_GRD_CM_ST_id5270_f39",
+          "frameCount": 39
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/036_esf001_5370_GRD_CM_ST_id5270_f39.glb",
+      "notes": "react ST"
+    },
+    {
+      "moveId": "grd_cm_lt",
+      "command": "4/1",
+      "displayName": "GRD_CM_LT",
+      "category": "system",
+      "status": "mapped_unused",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5380_GRD_CM_LT",
+          "path": "basic/esf001v00_idle_tired/glb/037_esf001_5380_GRD_CM_LT_id5280_f39.glb",
+          "stem": "037_esf001_5380_GRD_CM_LT_id5280_f39",
+          "frameCount": 39
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/037_esf001_5380_GRD_CM_LT_id5280_f39.glb",
+      "notes": "mapped_unused LT/RT"
+    },
+    {
+      "moveId": "grd_cm_rt",
+      "command": "4/1",
+      "displayName": "GRD_CM_RT",
+      "category": "system",
+      "status": "mapped_unused",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5390_GRD_CM_RT",
+          "path": "basic/esf001v00_idle_tired/glb/038_esf001_5390_GRD_CM_RT_id5290_f39.glb",
+          "stem": "038_esf001_5390_GRD_CM_RT_id5290_f39",
+          "frameCount": 39
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/038_esf001_5390_GRD_CM_RT_id5290_f39.glb",
+      "notes": "mapped_unused LT/RT"
+    },
+    {
+      "moveId": "grd_ch_st",
+      "command": "4/1",
+      "displayName": "GRD_CH_ST",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5400_GRD_CH_ST",
+          "path": "basic/esf001v00_idle_tired/glb/039_esf001_5400_GRD_CH_ST_id5300_f49.glb",
+          "stem": "039_esf001_5400_GRD_CH_ST_id5300_f49",
+          "frameCount": 49
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/039_esf001_5400_GRD_CH_ST_id5300_f49.glb",
+      "notes": "react ST"
+    },
+    {
+      "moveId": "grd_ch_lt",
+      "command": "4/1",
+      "displayName": "GRD_CH_LT",
+      "category": "system",
+      "status": "mapped_unused",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5410_GRD_CH_LT",
+          "path": "basic/esf001v00_idle_tired/glb/040_esf001_5410_GRD_CH_LT_id5310_f49.glb",
+          "stem": "040_esf001_5410_GRD_CH_LT_id5310_f49",
+          "frameCount": 49
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/040_esf001_5410_GRD_CH_LT_id5310_f49.glb",
+      "notes": "mapped_unused LT/RT"
+    },
+    {
+      "moveId": "grd_ch_rt",
+      "command": "4/1",
+      "displayName": "GRD_CH_RT",
+      "category": "system",
+      "status": "mapped_unused",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5420_GRD_CH_RT",
+          "path": "basic/esf001v00_idle_tired/glb/041_esf001_5420_GRD_CH_RT_id5320_f49.glb",
+          "stem": "041_esf001_5420_GRD_CH_RT_id5320_f49",
+          "frameCount": 49
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/041_esf001_5420_GRD_CH_RT_id5320_f49.glb",
+      "notes": "mapped_unused LT/RT"
+    },
+    {
+      "moveId": "grd_dl_st",
+      "command": "4/1",
+      "displayName": "GRD_DL_ST",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5430_GRD_DL_ST",
+          "path": "basic/esf001v00_idle_tired/glb/042_esf001_5430_GRD_DL_ST_id5330_f29.glb",
+          "stem": "042_esf001_5430_GRD_DL_ST_id5330_f29",
+          "frameCount": 29
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/042_esf001_5430_GRD_DL_ST_id5330_f29.glb",
+      "notes": "react ST"
+    },
+    {
+      "moveId": "grd_dm_st",
+      "command": "4/1",
+      "displayName": "GRD_DM_ST",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5440_GRD_DM_ST",
+          "path": "basic/esf001v00_idle_tired/glb/043_esf001_5440_GRD_DM_ST_id5340_f39.glb",
+          "stem": "043_esf001_5440_GRD_DM_ST_id5340_f39",
+          "frameCount": 39
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/043_esf001_5440_GRD_DM_ST_id5340_f39.glb",
+      "notes": "react ST"
+    },
+    {
+      "moveId": "grd_dm_lt",
+      "command": "4/1",
+      "displayName": "GRD_DM_LT",
+      "category": "system",
+      "status": "mapped_unused",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5450_GRD_DM_LT",
+          "path": "basic/esf001v00_idle_tired/glb/044_esf001_5450_GRD_DM_LT_id5350_f39.glb",
+          "stem": "044_esf001_5450_GRD_DM_LT_id5350_f39",
+          "frameCount": 39
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/044_esf001_5450_GRD_DM_LT_id5350_f39.glb",
+      "notes": "mapped_unused LT/RT"
+    },
+    {
+      "moveId": "grd_dm_rt",
+      "command": "4/1",
+      "displayName": "GRD_DM_RT",
+      "category": "system",
+      "status": "mapped_unused",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5460_GRD_DM_RT",
+          "path": "basic/esf001v00_idle_tired/glb/045_esf001_5460_GRD_DM_RT_id5360_f39.glb",
+          "stem": "045_esf001_5460_GRD_DM_RT_id5360_f39",
+          "frameCount": 39
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/045_esf001_5460_GRD_DM_RT_id5360_f39.glb",
+      "notes": "mapped_unused LT/RT"
+    },
+    {
+      "moveId": "grd_dh_st",
+      "command": "4/1",
+      "displayName": "GRD_DH_ST",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5470_GRD_DH_ST",
+          "path": "basic/esf001v00_idle_tired/glb/046_esf001_5470_GRD_DH_ST_id5370_f49.glb",
+          "stem": "046_esf001_5470_GRD_DH_ST_id5370_f49",
+          "frameCount": 49
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/046_esf001_5470_GRD_DH_ST_id5370_f49.glb",
+      "notes": "react ST"
+    },
+    {
+      "moveId": "grd_dh_lt",
+      "command": "4/1",
+      "displayName": "GRD_DH_LT",
+      "category": "system",
+      "status": "mapped_unused",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5480_GRD_DH_LT",
+          "path": "basic/esf001v00_idle_tired/glb/047_esf001_5480_GRD_DH_LT_id5380_f49.glb",
+          "stem": "047_esf001_5480_GRD_DH_LT_id5380_f49",
+          "frameCount": 49
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/047_esf001_5480_GRD_DH_LT_id5380_f49.glb",
+      "notes": "mapped_unused LT/RT"
+    },
+    {
+      "moveId": "grd_dh_rt",
+      "command": "4/1",
+      "displayName": "GRD_DH_RT",
+      "category": "system",
+      "status": "mapped_unused",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "5490_GRD_DH_RT",
+          "path": "basic/esf001v00_idle_tired/glb/048_esf001_5490_GRD_DH_RT_id5390_f49.glb",
+          "stem": "048_esf001_5490_GRD_DH_RT_id5390_f49",
+          "frameCount": 49
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/048_esf001_5490_GRD_DH_RT_id5390_f49.glb",
+      "notes": "mapped_unused LT/RT"
+    },
+    {
+      "moveId": "block_stand_loop",
+      "command": "4/1",
+      "displayName": "Guard stand loop",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "loop",
+          "assetKey": "5010_GRD_STD_Loop",
+          "path": "basic/esf001v00_idle_tired/glb/009_esf001_5010_GRD_STD_Loop_id0510_f190.glb",
+          "stem": "009_esf001_5010_GRD_STD_Loop_id0510_f190",
+          "frameCount": 190
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/009_esf001_5010_GRD_STD_Loop_id0510_f190.glb",
+      "notes": "GRD stand hold loop"
+    },
+    {
+      "moveId": "block_crouch_loop",
+      "command": "4/1",
+      "displayName": "Guard crouch loop",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "loop",
+          "assetKey": "5100_GRD_CRH_Loop",
+          "path": "basic/esf001v00_idle_tired/glb/012_esf001_5100_GRD_CRH_Loop_id0540_f190.glb",
+          "stem": "012_esf001_5100_GRD_CRH_Loop_id0540_f190",
+          "frameCount": 190
+        }
+      ],
+      "primaryPath": "basic/esf001v00_idle_tired/glb/012_esf001_5100_GRD_CRH_Loop_id0540_f190.glb",
+      "notes": "GRD crouch hold loop"
     }
   ]
 }

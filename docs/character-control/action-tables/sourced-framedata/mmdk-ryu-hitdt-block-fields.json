@@ -1,0 +1,1109 @@
+{
+  "retrieved": "2026-08-19",
+  "source": "private/mmdk/Ryu/hit_dt.json",
+  "scale_note": "MoveDest.x is raw; runtime blockPushbackTotal uses unitScale 0.01 in convert script",
+  "moves": [
+    {
+      "moveId": "ryu_2hk",
+      "hitDtIndex": 52,
+      "mmdk_hit": {
+        "HitStun": 20,
+        "HitStopOwner": 13,
+        "HitStopTarget": 13,
+        "MoveDest_x": 20,
+        "MoveTime": 20,
+        "DmgValue": 900,
+        "DmgPart": 0
+      },
+      "mmdk_block": {
+        "HitStun": 22,
+        "HitStopOwner": 13,
+        "HitStopTarget": 13,
+        "MoveDest_x": 30,
+        "MoveTime": 22,
+        "DmgValue": 0,
+        "DmgPart": 3
+      },
+      "local_blockstun": 22,
+      "local_blockPushbackTotal": 0.3,
+      "local_hitstun": 20
+    },
+    {
+      "moveId": "ryu_2hp",
+      "hitDtIndex": 41,
+      "mmdk_hit": {
+        "HitStun": 22,
+        "HitStopOwner": 13,
+        "HitStopTarget": 13,
+        "MoveDest_x": 20,
+        "MoveTime": 22,
+        "DmgValue": 800,
+        "DmgPart": 1
+      },
+      "mmdk_block": {
+        "HitStun": 23,
+        "HitStopOwner": 13,
+        "HitStopTarget": 13,
+        "MoveDest_x": 20,
+        "MoveTime": 23,
+        "DmgValue": 0,
+        "DmgPart": 0
+      },
+      "local_blockstun": 23,
+      "local_blockPushbackTotal": 0.2,
+      "local_hitstun": 22
+    },
+    {
+      "moveId": "ryu_2lk",
+      "hitDtIndex": 46,
+      "mmdk_hit": {
+        "HitStun": 15,
+        "HitStopOwner": 9,
+        "HitStopTarget": 9,
+        "MoveDest_x": 30,
+        "MoveTime": 15,
+        "DmgValue": 200,
+        "DmgPart": 0
+      },
+      "mmdk_block": {
+        "HitStun": 13,
+        "HitStopOwner": 9,
+        "HitStopTarget": 9,
+        "MoveDest_x": 30,
+        "MoveTime": 13,
+        "DmgValue": 0,
+        "DmgPart": 0
+      },
+      "local_blockstun": 13,
+      "local_blockPushbackTotal": 0.3,
+      "local_hitstun": 15
+    },
+    {
+      "moveId": "ryu_2lp",
+      "hitDtIndex": 33,
+      "mmdk_hit": {
+        "HitStun": 15,
+        "HitStopOwner": 9,
+        "HitStopTarget": 9,
+        "MoveDest_x": 26,
+        "MoveTime": 15,
+        "DmgValue": 300,
+        "DmgPart": 0
+      },
+      "mmdk_block": {
+        "HitStun": 14,
+        "HitStopOwner": 9,
+        "HitStopTarget": 9,
+        "MoveDest_x": 30,
+        "MoveTime": 14,
+        "DmgValue": 0,
+        "DmgPart": 0
+      },
+      "local_blockstun": 14,
+      "local_blockPushbackTotal": 0.3,
+      "local_hitstun": 15
+    },
+    {
+      "moveId": "ryu_2mk",
+      "hitDtIndex": 49,
+      "mmdk_hit": {
+        "HitStun": 23,
+        "HitStopOwner": 9,
+        "HitStopTarget": 9,
+        "MoveDest_x": 50,
+        "MoveTime": 23,
+        "DmgValue": 500,
+        "DmgPart": 0
+      },
+      "mmdk_block": {
+        "HitStun": 20,
+        "HitStopOwner": 9,
+        "HitStopTarget": 9,
+        "MoveDest_x": 55,
+        "MoveTime": 20,
+        "DmgValue": 0,
+        "DmgPart": 0
+      },
+      "local_blockstun": 20,
+      "local_blockPushbackTotal": 0.55,
+      "local_hitstun": 23
+    },
+    {
+      "moveId": "ryu_2mp",
+      "hitDtIndex": 36,
+      "mmdk_hit": {
+        "HitStun": 22,
+        "HitStopOwner": 11,
+        "HitStopTarget": 11,
+        "MoveDest_x": 50,
+        "MoveTime": 22,
+        "DmgValue": 600,
+        "DmgPart": 0
+      },
+      "mmdk_block": {
+        "HitStun": 21,
+        "HitStopOwner": 11,
+        "HitStopTarget": 11,
+        "MoveDest_x": 50,
+        "MoveTime": 21,
+        "DmgValue": 0,
+        "DmgPart": 0
+      },
+      "local_blockstun": 21,
+      "local_blockPushbackTotal": 0.5,
+      "local_hitstun": 22
+    },
+    {
+      "moveId": "ryu_4hk",
+      "hitDtIndex": 87,
+      "mmdk_hit": {
+        "HitStun": 20,
+        "HitStopOwner": 10,
+        "HitStopTarget": 10,
+        "MoveDest_x": 20,
+        "MoveTime": 20,
+        "DmgValue": 400,
+        "DmgPart": 1
+      },
+      "mmdk_block": {
+        "HitStun": 18,
+        "HitStopOwner": 10,
+        "HitStopTarget": 10,
+        "MoveDest_x": 20,
+        "MoveTime": 18,
+        "DmgValue": 0,
+        "DmgPart": 0
+      },
+      "local_blockstun": 18,
+      "local_blockPushbackTotal": 0.2,
+      "local_hitstun": 20
+    },
+    {
+      "moveId": "ryu_4hp",
+      "hitDtIndex": 77,
+      "mmdk_hit": {
+        "HitStun": 22,
+        "HitStopOwner": 13,
+        "HitStopTarget": 13,
+        "MoveDest_x": 20,
+        "MoveTime": 22,
+        "DmgValue": 800,
+        "DmgPart": 1
+      },
+      "mmdk_block": {
+        "HitStun": 20,
+        "HitStopOwner": 13,
+        "HitStopTarget": 13,
+        "MoveDest_x": 20,
+        "MoveTime": 20,
+        "DmgValue": 0,
+        "DmgPart": 0
+      },
+      "local_blockstun": 20,
+      "local_blockPushbackTotal": 0.2,
+      "local_hitstun": 22
+    },
+    {
+      "moveId": "ryu_5hk",
+      "hitDtIndex": 30,
+      "mmdk_hit": {
+        "HitStun": 33,
+        "HitStopOwner": 13,
+        "HitStopTarget": 13,
+        "MoveDest_x": 70,
+        "MoveTime": 33,
+        "DmgValue": 900,
+        "DmgPart": 1
+      },
+      "mmdk_block": {
+        "HitStun": 28,
+        "HitStopOwner": 13,
+        "HitStopTarget": 13,
+        "MoveDest_x": 30,
+        "MoveTime": 28,
+        "DmgValue": 0,
+        "DmgPart": 1
+      },
+      "local_blockstun": 28,
+      "local_blockPushbackTotal": 0.3,
+      "local_hitstun": 33
+    },
+    {
+      "moveId": "ryu_5hp",
+      "hitDtIndex": 21,
+      "mmdk_hit": {
+        "HitStun": 27,
+        "HitStopOwner": 13,
+        "HitStopTarget": 13,
+        "MoveDest_x": 60,
+        "MoveTime": 27,
+        "DmgValue": 800,
+        "DmgPart": 1
+      },
+      "mmdk_block": {
+        "HitStun": 25,
+        "HitStopOwner": 13,
+        "HitStopTarget": 13,
+        "MoveDest_x": 60,
+        "MoveTime": 25,
+        "DmgValue": 0,
+        "DmgPart": 1
+      },
+      "local_blockstun": 25,
+      "local_blockPushbackTotal": 0.6,
+      "local_hitstun": 27
+    },
+    {
+      "moveId": "ryu_5lk",
+      "hitDtIndex": 24,
+      "mmdk_hit": {
+        "HitStun": 16,
+        "HitStopOwner": 9,
+        "HitStopTarget": 9,
+        "MoveDest_x": 40,
+        "MoveTime": 16,
+        "DmgValue": 300,
+        "DmgPart": 3
+      },
+      "mmdk_block": {
+        "HitStun": 14,
+        "HitStopOwner": 9,
+        "HitStopTarget": 9,
+        "MoveDest_x": 40,
+        "MoveTime": 14,
+        "DmgValue": 0,
+        "DmgPart": 0
+      },
+      "local_blockstun": 14,
+      "local_blockPushbackTotal": 0.4,
+      "local_hitstun": 16
+    },
+    {
+      "moveId": "ryu_5lp",
+      "hitDtIndex": 15,
+      "mmdk_hit": {
+        "HitStun": 14,
+        "HitStopOwner": 9,
+        "HitStopTarget": 9,
+        "MoveDest_x": 27,
+        "MoveTime": 14,
+        "DmgValue": 300,
+        "DmgPart": 0
+      },
+      "mmdk_block": {
+        "HitStun": 13,
+        "HitStopOwner": 9,
+        "HitStopTarget": 9,
+        "MoveDest_x": 34,
+        "MoveTime": 13,
+        "DmgValue": 0,
+        "DmgPart": 0
+      },
+      "local_blockstun": 13,
+      "local_blockPushbackTotal": 0.34,
+      "local_hitstun": 14
+    },
+    {
+      "moveId": "ryu_5mk",
+      "hitDtIndex": 27,
+      "mmdk_hit": {
+        "HitStun": 25,
+        "HitStopOwner": 11,
+        "HitStopTarget": 11,
+        "MoveDest_x": 60,
+        "MoveTime": 25,
+        "DmgValue": 700,
+        "DmgPart": 0
+      },
+      "mmdk_block": {
+        "HitStun": 21,
+        "HitStopOwner": 11,
+        "HitStopTarget": 11,
+        "MoveDest_x": 60,
+        "MoveTime": 21,
+        "DmgValue": 0,
+        "DmgPart": 0
+      },
+      "local_blockstun": 21,
+      "local_blockPushbackTotal": 0.6,
+      "local_hitstun": 25
+    },
+    {
+      "moveId": "ryu_5mp",
+      "hitDtIndex": 18,
+      "mmdk_hit": {
+        "HitStun": 22,
+        "HitStopOwner": 11,
+        "HitStopTarget": 11,
+        "MoveDest_x": 51,
+        "MoveTime": 22,
+        "DmgValue": 600,
+        "DmgPart": 2
+      },
+      "mmdk_block": {
+        "HitStun": 18,
+        "HitStopOwner": 11,
+        "HitStopTarget": 11,
+        "MoveDest_x": 40,
+        "MoveTime": 18,
+        "DmgValue": 0,
+        "DmgPart": 2
+      },
+      "local_blockstun": 18,
+      "local_blockPushbackTotal": 0.4,
+      "local_hitstun": 22
+    },
+    {
+      "moveId": "ryu_6hk",
+      "hitDtIndex": 92,
+      "mmdk_hit": {
+        "HitStun": 26,
+        "HitStopOwner": 13,
+        "HitStopTarget": 13,
+        "MoveDest_x": 50,
+        "MoveTime": 26,
+        "DmgValue": 800,
+        "DmgPart": 2
+      },
+      "mmdk_block": {
+        "HitStun": 24,
+        "HitStopOwner": 13,
+        "HitStopTarget": 13,
+        "MoveDest_x": 60,
+        "MoveTime": 24,
+        "DmgValue": 0,
+        "DmgPart": 2
+      },
+      "local_blockstun": 24,
+      "local_blockPushbackTotal": 0.6,
+      "local_hitstun": 26
+    },
+    {
+      "moveId": "ryu_6hp",
+      "hitDtIndex": 83,
+      "mmdk_hit": {
+        "HitStun": 25,
+        "HitStopOwner": 12,
+        "HitStopTarget": 12,
+        "MoveDest_x": 28,
+        "MoveTime": 25,
+        "DmgValue": 400,
+        "DmgPart": 0
+      },
+      "mmdk_block": {
+        "HitStun": 26,
+        "HitStopOwner": 12,
+        "HitStopTarget": 12,
+        "MoveDest_x": 45,
+        "MoveTime": 26,
+        "DmgValue": 0,
+        "DmgPart": 0
+      },
+      "local_blockstun": 26,
+      "local_blockPushbackTotal": 0.45,
+      "local_hitstun": 25
+    },
+    {
+      "moveId": "ryu_6mp",
+      "hitDtIndex": 71,
+      "mmdk_hit": {
+        "HitStun": 25,
+        "HitStopOwner": 10,
+        "HitStopTarget": 10,
+        "MoveDest_x": 20,
+        "MoveTime": 25,
+        "DmgValue": 300,
+        "DmgPart": 0
+      },
+      "mmdk_block": {
+        "HitStun": 25,
+        "HitStopOwner": 10,
+        "HitStopTarget": 10,
+        "MoveDest_x": 30,
+        "MoveTime": 25,
+        "DmgValue": 0,
+        "DmgPart": 0
+      },
+      "local_blockstun": 25,
+      "local_blockPushbackTotal": 0.3,
+      "local_hitstun": 25
+    },
+    {
+      "moveId": "ryu_air_tatsu_hk",
+      "hitDtIndex": 160,
+      "mmdk_hit": {
+        "HitStun": 36,
+        "HitStopOwner": 15,
+        "HitStopTarget": 15,
+        "MoveDest_x": 130,
+        "MoveTime": 36,
+        "DmgValue": 600,
+        "DmgPart": 0
+      },
+      "mmdk_block": {
+        "HitStun": 15,
+        "HitStopOwner": 15,
+        "HitStopTarget": 15,
+        "MoveDest_x": 40,
+        "MoveTime": 15,
+        "DmgValue": 150,
+        "DmgPart": 0
+      },
+      "local_blockstun": 15,
+      "local_blockPushbackTotal": 0.4,
+      "local_hitstun": 36
+    },
+    {
+      "moveId": "ryu_air_tatsu_lk",
+      "hitDtIndex": 155,
+      "mmdk_hit": {
+        "HitStun": 24,
+        "HitStopOwner": 15,
+        "HitStopTarget": 15,
+        "MoveDest_x": 160,
+        "MoveTime": 24,
+        "DmgValue": 900,
+        "DmgPart": 0
+      },
+      "mmdk_block": {
+        "HitStun": 24,
+        "HitStopOwner": 15,
+        "HitStopTarget": 15,
+        "MoveDest_x": 50,
+        "MoveTime": 24,
+        "DmgValue": 225,
+        "DmgPart": 0
+      },
+      "local_blockstun": 24,
+      "local_blockPushbackTotal": 0.5,
+      "local_hitstun": 24
+    },
+    {
+      "moveId": "ryu_air_tatsu_mk",
+      "hitDtIndex": 158,
+      "mmdk_hit": {
+        "HitStun": 20,
+        "HitStopOwner": 2,
+        "HitStopTarget": 2,
+        "MoveDest_x": -150,
+        "MoveTime": 20,
+        "DmgValue": 200,
+        "DmgPart": 0
+      },
+      "mmdk_block": {
+        "HitStun": 20,
+        "HitStopOwner": 2,
+        "HitStopTarget": 2,
+        "MoveDest_x": 10,
+        "MoveTime": 20,
+        "DmgValue": 50,
+        "DmgPart": 0
+      },
+      "local_blockstun": 20,
+      "local_blockPushbackTotal": 0.1,
+      "local_hitstun": 20
+    },
+    {
+      "moveId": "ryu_blade_hk",
+      "hitDtIndex": 182,
+      "mmdk_hit": {
+        "HitStun": 23,
+        "HitStopOwner": 15,
+        "HitStopTarget": 15,
+        "MoveDest_x": 200,
+        "MoveTime": 23,
+        "DmgValue": 1200,
+        "DmgPart": 0
+      },
+      "mmdk_block": {
+        "HitStun": 24,
+        "HitStopOwner": 15,
+        "HitStopTarget": 15,
+        "MoveDest_x": 75,
+        "MoveTime": 24,
+        "DmgValue": 300,
+        "DmgPart": 0
+      },
+      "local_blockstun": 24,
+      "local_blockPushbackTotal": 0.75,
+      "local_hitstun": 23
+    },
+    {
+      "moveId": "ryu_blade_lk",
+      "hitDtIndex": 181,
+      "mmdk_hit": {
+        "HitStun": 24,
+        "HitStopOwner": 15,
+        "HitStopTarget": 15,
+        "MoveDest_x": 170,
+        "MoveTime": 24,
+        "DmgValue": 1100,
+        "DmgPart": 0
+      },
+      "mmdk_block": {
+        "HitStun": 21,
+        "HitStopOwner": 15,
+        "HitStopTarget": 15,
+        "MoveDest_x": 30,
+        "MoveTime": 21,
+        "DmgValue": 275,
+        "DmgPart": 0
+      },
+      "local_blockstun": 21,
+      "local_blockPushbackTotal": 0.3,
+      "local_hitstun": 24
+    },
+    {
+      "moveId": "ryu_blade_mk",
+      "hitDtIndex": 182,
+      "mmdk_hit": {
+        "HitStun": 23,
+        "HitStopOwner": 15,
+        "HitStopTarget": 15,
+        "MoveDest_x": 200,
+        "MoveTime": 23,
+        "DmgValue": 1200,
+        "DmgPart": 0
+      },
+      "mmdk_block": {
+        "HitStun": 24,
+        "HitStopOwner": 15,
+        "HitStopTarget": 15,
+        "MoveDest_x": 75,
+        "MoveTime": 24,
+        "DmgValue": 300,
+        "DmgPart": 0
+      },
+      "local_blockstun": 24,
+      "local_blockPushbackTotal": 0.75,
+      "local_hitstun": 23
+    },
+    {
+      "moveId": "ryu_denjin_charge",
+      "hitDtIndex": null,
+      "mmdk_hit": null,
+      "mmdk_block": null,
+      "local_blockstun": null,
+      "local_blockPushbackTotal": null,
+      "local_hitstun": null
+    },
+    {
+      "moveId": "ryu_hadoken_hp",
+      "hitDtIndex": 163,
+      "mmdk_hit": {
+        "HitStun": 25,
+        "HitStopOwner": 0,
+        "HitStopTarget": 8,
+        "MoveDest_x": 50,
+        "MoveTime": 25,
+        "DmgValue": 600,
+        "DmgPart": 0
+      },
+      "mmdk_block": {
+        "HitStun": 23,
+        "HitStopOwner": 0,
+        "HitStopTarget": 8,
+        "MoveDest_x": 50,
+        "MoveTime": 23,
+        "DmgValue": 150,
+        "DmgPart": 0
+      },
+      "local_blockstun": 23,
+      "local_blockPushbackTotal": 0.5,
+      "local_hitstun": 25
+    },
+    {
+      "moveId": "ryu_hadoken_lp",
+      "hitDtIndex": 163,
+      "mmdk_hit": {
+        "HitStun": 25,
+        "HitStopOwner": 0,
+        "HitStopTarget": 8,
+        "MoveDest_x": 50,
+        "MoveTime": 25,
+        "DmgValue": 600,
+        "DmgPart": 0
+      },
+      "mmdk_block": {
+        "HitStun": 23,
+        "HitStopOwner": 0,
+        "HitStopTarget": 8,
+        "MoveDest_x": 50,
+        "MoveTime": 23,
+        "DmgValue": 150,
+        "DmgPart": 0
+      },
+      "local_blockstun": 23,
+      "local_blockPushbackTotal": 0.5,
+      "local_hitstun": 25
+    },
+    {
+      "moveId": "ryu_hadoken_mp",
+      "hitDtIndex": 163,
+      "mmdk_hit": {
+        "HitStun": 25,
+        "HitStopOwner": 0,
+        "HitStopTarget": 8,
+        "MoveDest_x": 50,
+        "MoveTime": 25,
+        "DmgValue": 600,
+        "DmgPart": 0
+      },
+      "mmdk_block": {
+        "HitStun": 23,
+        "HitStopOwner": 0,
+        "HitStopTarget": 8,
+        "MoveDest_x": 50,
+        "MoveTime": 23,
+        "DmgValue": 150,
+        "DmgPart": 0
+      },
+      "local_blockstun": 23,
+      "local_blockPushbackTotal": 0.5,
+      "local_hitstun": 25
+    },
+    {
+      "moveId": "ryu_hashogeki_hp",
+      "hitDtIndex": 176,
+      "mmdk_hit": {
+        "HitStun": 40,
+        "HitStopOwner": 15,
+        "HitStopTarget": 17,
+        "MoveDest_x": 20,
+        "MoveTime": 40,
+        "DmgValue": 400,
+        "DmgPart": 0
+      },
+      "mmdk_block": {
+        "HitStun": 20,
+        "HitStopOwner": 15,
+        "HitStopTarget": 17,
+        "MoveDest_x": 0,
+        "MoveTime": 20,
+        "DmgValue": 100,
+        "DmgPart": 2
+      },
+      "local_blockstun": 20,
+      "local_blockPushbackTotal": 0,
+      "local_hitstun": 40
+    },
+    {
+      "moveId": "ryu_hashogeki_lp",
+      "hitDtIndex": 171,
+      "mmdk_hit": {
+        "HitStun": 26,
+        "HitStopOwner": 15,
+        "HitStopTarget": 15,
+        "MoveDest_x": 50,
+        "MoveTime": 26,
+        "DmgValue": 700,
+        "DmgPart": 2
+      },
+      "mmdk_block": {
+        "HitStun": 25,
+        "HitStopOwner": 15,
+        "HitStopTarget": 15,
+        "MoveDest_x": 50,
+        "MoveTime": 25,
+        "DmgValue": 175,
+        "DmgPart": 2
+      },
+      "local_blockstun": 25,
+      "local_blockPushbackTotal": 0.5,
+      "local_hitstun": 26
+    },
+    {
+      "moveId": "ryu_hashogeki_mp",
+      "hitDtIndex": 173,
+      "mmdk_hit": {
+        "HitStun": 40,
+        "HitStopOwner": 15,
+        "HitStopTarget": 15,
+        "MoveDest_x": 20,
+        "MoveTime": 40,
+        "DmgValue": 400,
+        "DmgPart": 0
+      },
+      "mmdk_block": {
+        "HitStun": 20,
+        "HitStopOwner": 15,
+        "HitStopTarget": 15,
+        "MoveDest_x": 0,
+        "MoveTime": 20,
+        "DmgValue": 100,
+        "DmgPart": 2
+      },
+      "local_blockstun": 20,
+      "local_blockPushbackTotal": 0,
+      "local_hitstun": 40
+    },
+    {
+      "moveId": "ryu_jhk",
+      "hitDtIndex": 68,
+      "mmdk_hit": {
+        "HitStun": 19,
+        "HitStopOwner": 13,
+        "HitStopTarget": 13,
+        "MoveDest_x": 35,
+        "MoveTime": 19,
+        "DmgValue": 800,
+        "DmgPart": 0
+      },
+      "mmdk_block": {
+        "HitStun": 19,
+        "HitStopOwner": 13,
+        "HitStopTarget": 13,
+        "MoveDest_x": 35,
+        "MoveTime": 19,
+        "DmgValue": 0,
+        "DmgPart": 0
+      },
+      "local_blockstun": 19,
+      "local_blockPushbackTotal": 0.35000000000000003,
+      "local_hitstun": 19
+    },
+    {
+      "moveId": "ryu_jhp",
+      "hitDtIndex": 60,
+      "mmdk_hit": {
+        "HitStun": 19,
+        "HitStopOwner": 13,
+        "HitStopTarget": 13,
+        "MoveDest_x": 35,
+        "MoveTime": 19,
+        "DmgValue": 800,
+        "DmgPart": 0
+      },
+      "mmdk_block": {
+        "HitStun": 19,
+        "HitStopOwner": 13,
+        "HitStopTarget": 13,
+        "MoveDest_x": 35,
+        "MoveTime": 19,
+        "DmgValue": 0,
+        "DmgPart": 0
+      },
+      "local_blockstun": 19,
+      "local_blockPushbackTotal": 0.35000000000000003,
+      "local_hitstun": 19
+    },
+    {
+      "moveId": "ryu_jlk",
+      "hitDtIndex": 63,
+      "mmdk_hit": {
+        "HitStun": 14,
+        "HitStopOwner": 9,
+        "HitStopTarget": 9,
+        "MoveDest_x": 20,
+        "MoveTime": 14,
+        "DmgValue": 300,
+        "DmgPart": 0
+      },
+      "mmdk_block": {
+        "HitStun": 14,
+        "HitStopOwner": 9,
+        "HitStopTarget": 9,
+        "MoveDest_x": 20,
+        "MoveTime": 14,
+        "DmgValue": 0,
+        "DmgPart": 0
+      },
+      "local_blockstun": 14,
+      "local_blockPushbackTotal": 0.2,
+      "local_hitstun": 14
+    },
+    {
+      "moveId": "ryu_jlp",
+      "hitDtIndex": 55,
+      "mmdk_hit": {
+        "HitStun": 13,
+        "HitStopOwner": 9,
+        "HitStopTarget": 9,
+        "MoveDest_x": 20,
+        "MoveTime": 13,
+        "DmgValue": 300,
+        "DmgPart": 0
+      },
+      "mmdk_block": {
+        "HitStun": 13,
+        "HitStopOwner": 9,
+        "HitStopTarget": 9,
+        "MoveDest_x": 20,
+        "MoveTime": 13,
+        "DmgValue": 0,
+        "DmgPart": 0
+      },
+      "local_blockstun": 13,
+      "local_blockPushbackTotal": 0.2,
+      "local_hitstun": 13
+    },
+    {
+      "moveId": "ryu_jmk",
+      "hitDtIndex": 65,
+      "mmdk_hit": {
+        "HitStun": 17,
+        "HitStopOwner": 11,
+        "HitStopTarget": 11,
+        "MoveDest_x": 25,
+        "MoveTime": 17,
+        "DmgValue": 500,
+        "DmgPart": 0
+      },
+      "mmdk_block": {
+        "HitStun": 17,
+        "HitStopOwner": 11,
+        "HitStopTarget": 11,
+        "MoveDest_x": 25,
+        "MoveTime": 17,
+        "DmgValue": 0,
+        "DmgPart": 0
+      },
+      "local_blockstun": 17,
+      "local_blockPushbackTotal": 0.25,
+      "local_hitstun": 17
+    },
+    {
+      "moveId": "ryu_jmp",
+      "hitDtIndex": 58,
+      "mmdk_hit": {
+        "HitStun": 17,
+        "HitStopOwner": 10,
+        "HitStopTarget": 10,
+        "MoveDest_x": 30,
+        "MoveTime": 17,
+        "DmgValue": 350,
+        "DmgPart": 0
+      },
+      "mmdk_block": {
+        "HitStun": 17,
+        "HitStopOwner": 10,
+        "HitStopTarget": 10,
+        "MoveDest_x": 30,
+        "MoveTime": 17,
+        "DmgValue": 0,
+        "DmgPart": 0
+      },
+      "local_blockstun": 17,
+      "local_blockPushbackTotal": 0.3,
+      "local_hitstun": 17
+    },
+    {
+      "moveId": "ryu_shoryuken_hp",
+      "hitDtIndex": 138,
+      "mmdk_hit": {
+        "HitStun": 37,
+        "HitStopOwner": 13,
+        "HitStopTarget": 13,
+        "MoveDest_x": 150,
+        "MoveTime": 37,
+        "DmgValue": 800,
+        "DmgPart": 0
+      },
+      "mmdk_block": {
+        "HitStun": 24,
+        "HitStopOwner": 13,
+        "HitStopTarget": 13,
+        "MoveDest_x": 30,
+        "MoveTime": 24,
+        "DmgValue": 200,
+        "DmgPart": 0
+      },
+      "local_blockstun": 24,
+      "local_blockPushbackTotal": 0.3,
+      "local_hitstun": 37
+    },
+    {
+      "moveId": "ryu_shoryuken_lp",
+      "hitDtIndex": 134,
+      "mmdk_hit": {
+        "HitStun": 29,
+        "HitStopOwner": 13,
+        "HitStopTarget": 13,
+        "MoveDest_x": 150,
+        "MoveTime": 29,
+        "DmgValue": 800,
+        "DmgPart": 0
+      },
+      "mmdk_block": {
+        "HitStun": 24,
+        "HitStopOwner": 13,
+        "HitStopTarget": 13,
+        "MoveDest_x": 30,
+        "MoveTime": 24,
+        "DmgValue": 200,
+        "DmgPart": 0
+      },
+      "local_blockstun": 24,
+      "local_blockPushbackTotal": 0.3,
+      "local_hitstun": 29
+    },
+    {
+      "moveId": "ryu_shoryuken_mp",
+      "hitDtIndex": 136,
+      "mmdk_hit": {
+        "HitStun": 32,
+        "HitStopOwner": 13,
+        "HitStopTarget": 13,
+        "MoveDest_x": 130,
+        "MoveTime": 32,
+        "DmgValue": 800,
+        "DmgPart": 0
+      },
+      "mmdk_block": {
+        "HitStun": 24,
+        "HitStopOwner": 13,
+        "HitStopTarget": 13,
+        "MoveDest_x": 30,
+        "MoveTime": 24,
+        "DmgValue": 200,
+        "DmgPart": 0
+      },
+      "local_blockstun": 24,
+      "local_blockPushbackTotal": 0.3,
+      "local_hitstun": 32
+    },
+    {
+      "moveId": "ryu_tatsu_hk",
+      "hitDtIndex": 146,
+      "mmdk_hit": {
+        "HitStun": 40,
+        "HitStopOwner": 15,
+        "HitStopTarget": 15,
+        "MoveDest_x": 120,
+        "MoveTime": 40,
+        "DmgValue": 1200,
+        "DmgPart": 0
+      },
+      "mmdk_block": {
+        "HitStun": 24,
+        "HitStopOwner": 15,
+        "HitStopTarget": 15,
+        "MoveDest_x": 50,
+        "MoveTime": 24,
+        "DmgValue": 300,
+        "DmgPart": 0
+      },
+      "local_blockstun": 24,
+      "local_blockPushbackTotal": 0.5,
+      "local_hitstun": 40
+    },
+    {
+      "moveId": "ryu_tatsu_lk",
+      "hitDtIndex": 144,
+      "mmdk_hit": {
+        "HitStun": 25,
+        "HitStopOwner": 15,
+        "HitStopTarget": 15,
+        "MoveDest_x": 160,
+        "MoveTime": 25,
+        "DmgValue": 900,
+        "DmgPart": 0
+      },
+      "mmdk_block": {
+        "HitStun": 24,
+        "HitStopOwner": 15,
+        "HitStopTarget": 15,
+        "MoveDest_x": 50,
+        "MoveTime": 24,
+        "DmgValue": 225,
+        "DmgPart": 0
+      },
+      "local_blockstun": 24,
+      "local_blockPushbackTotal": 0.5,
+      "local_hitstun": 25
+    },
+    {
+      "moveId": "ryu_tatsu_mk",
+      "hitDtIndex": 145,
+      "mmdk_hit": {
+        "HitStun": 26,
+        "HitStopOwner": 15,
+        "HitStopTarget": 15,
+        "MoveDest_x": 230,
+        "MoveTime": 26,
+        "DmgValue": 1000,
+        "DmgPart": 0
+      },
+      "mmdk_block": {
+        "HitStun": 24,
+        "HitStopOwner": 15,
+        "HitStopTarget": 15,
+        "MoveDest_x": 50,
+        "MoveTime": 24,
+        "DmgValue": 250,
+        "DmgPart": 0
+      },
+      "local_blockstun": 24,
+      "local_blockPushbackTotal": 0.5,
+      "local_hitstun": 26
+    },
+    {
+      "moveId": "ryu_tc_fuwa",
+      "hitDtIndex": 103,
+      "mmdk_hit": {
+        "HitStun": 22,
+        "HitStopOwner": 13,
+        "HitStopTarget": 13,
+        "MoveDest_x": 120,
+        "MoveTime": 22,
+        "DmgValue": 1000,
+        "DmgPart": 1
+      },
+      "mmdk_block": {
+        "HitStun": 20,
+        "HitStopOwner": 13,
+        "HitStopTarget": 13,
+        "MoveDest_x": 70,
+        "MoveTime": 20,
+        "DmgValue": 0,
+        "DmgPart": 1
+      },
+      "local_blockstun": 20,
+      "local_blockPushbackTotal": 0.7000000000000001,
+      "local_hitstun": 22
+    },
+    {
+      "moveId": "ryu_tc_hp_hk",
+      "hitDtIndex": 104,
+      "mmdk_hit": {
+        "HitStun": 22,
+        "HitStopOwner": 13,
+        "HitStopTarget": 13,
+        "MoveDest_x": 140,
+        "MoveTime": 22,
+        "DmgValue": 900,
+        "DmgPart": 1
+      },
+      "mmdk_block": {
+        "HitStun": 20,
+        "HitStopOwner": 13,
+        "HitStopTarget": 13,
+        "MoveDest_x": 70,
+        "MoveTime": 20,
+        "DmgValue": 0,
+        "DmgPart": 1
+      },
+      "local_blockstun": 20,
+      "local_blockPushbackTotal": 0.7000000000000001,
+      "local_hitstun": 22
+    },
+    {
+      "moveId": "ryu_throw_back",
+      "hitDtIndex": null,
+      "mmdk_hit": null,
+      "mmdk_block": null,
+      "local_blockstun": 0,
+      "local_blockPushbackTotal": null,
+      "local_hitstun": 0
+    },
+    {
+      "moveId": "ryu_throw_fwd",
+      "hitDtIndex": null,
+      "mmdk_hit": null,
+      "mmdk_block": null,
+      "local_blockstun": 0,
+      "local_blockPushbackTotal": null,
+      "local_hitstun": 0
+    }
+  ]
+}

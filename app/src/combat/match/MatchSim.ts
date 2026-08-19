@@ -12,7 +12,7 @@ import { resolveIntent } from '../command/IntentResolver';
 import { RYU_FEEDBACK_COMMANDS } from '../command/ryuCommands';
 import type { CommandDef } from '../command/CommandDef';
 import { DriveStub } from '../systems/DriveStub';
-import type { Facing, HitResult, InputSample, Intent } from '../types';
+import type { DummyGuardPolicy, Facing, HitResult, InputSample, Intent } from '../types';
 import { DummyController } from './DummyController';
 import { stepWalk } from '../loco/WalkController';
 import type { RyuMovementTable } from '../../data/loadRyuMovement';
@@ -23,6 +23,12 @@ import {
   distributePushback,
   resolveBlockOnHit,
 } from '../systems/BlockResolve';
+import {
+  canGuard,
+  normalizeGuard,
+  selectGuardReactLogicId,
+  stanceForBlockAll,
+} from '../systems/GuardPolicy';
 import type { StanceBoxTable } from '../../data/loadStanceBoxes';
 
 export type MatchSimOptions = {
@@ -74,11 +80,16 @@ export type MatchSimOptions = {
   selfMovementScale: number;
   standToCrouchFrames: number;
   crouchToStandFrames: number;
-  /** Consensus §4.6 scheme A: P2 always true-guards. */
+  /**
+   * @deprecated Prefer dummyGuardPolicy. false → none; true → block_all if policy omitted.
+   */
   forceP2Guard: boolean;
+  dummyGuardPolicy: DummyGuardPolicy;
   enablePushResolve: boolean;
   enableBlockPush: boolean;
   blockPushbackTotal: number;
+  /** Ease-out power for block push (3 = cubic). Substitute for missing CurveTgtID table. */
+  blockPushEasePower: number;
   /** -1 = use move.blockstun */
   blockstunOverride: number;
   /** 0 = no chip on block path; 1 = full damage on hit path */
@@ -129,9 +140,11 @@ const DEFAULT_OPTS: MatchSimOptions = {
   standToCrouchFrames: 60,
   crouchToStandFrames: 38,
   forceP2Guard: true,
+  dummyGuardPolicy: 'block_all',
   enablePushResolve: true,
   enableBlockPush: true,
   blockPushbackTotal: 0.22,
+  blockPushEasePower: 3,
   blockstunOverride: -1,
   damageScale: 1,
   stageMinX: -4.5,
@@ -212,6 +225,14 @@ export class MatchSim {
     hitstopTimer: 0,
     lastHitResult: 'none',
     forceP2Guard: true,
+    dummyGuardPolicy: 'block_all' as DummyGuardPolicy,
+    lastGuardLevel: '',
+    lastGuardOk: false,
+    p2Phase: 'idle',
+    p2StunTimer: 0,
+    p2ClipId: 'idle',
+    p2Crouching: false,
+    guardClipFallback: false,
     catalogCount: 0,
     lastMoveMiss: '',
     lastExecuteOk: false,
@@ -242,11 +263,17 @@ export class MatchSim {
       standToCrouchFrames: this.opts.standToCrouchFrames,
       crouchToStandFrames: this.opts.crouchToStandFrames,
     });
-    if (this.opts.forceP2Guard) {
-      this.dummy.setMode('stand_block');
+    if (opts?.dummyGuardPolicy != null) {
+      this.opts.dummyGuardPolicy = opts.dummyGuardPolicy;
+    } else if (opts?.forceP2Guard === false) {
+      this.opts.dummyGuardPolicy = 'none';
+    } else {
+      this.opts.dummyGuardPolicy = 'block_all';
     }
+    this.dummy.setGuardPolicy(this.opts.dummyGuardPolicy);
     this.debugProbe.catalogCount = this.catalog.size;
     this.debugProbe.forceP2Guard = this.opts.forceP2Guard;
+    this.debugProbe.dummyGuardPolicy = this.dummy.guardPolicy;
   }
 
   /** Rebuild front-heavy |dx| tables from frames × avg speed (= distance). */
@@ -684,16 +711,43 @@ export class MatchSim {
       if (hits.length > 0 && anyHitOverlapsHurt(hits, hurts)) {
         this.p1.mover.hasHitThisMove = true;
         const mv = this.p1.mover.move ?? this.move5lp;
-        const guard = this.opts.forceP2Guard || this.dummy.isBlocking();
-        if (guard) {
+        const level = normalizeGuard(mv.guard);
+        this.debugProbe.lastGuardLevel =
+          level === 'midHigh' ? 'M' : level === 'throw' ? 'T' : level === 'high' ? 'H' : level === 'low' ? 'L' : 'M';
+        if (this.dummy.guardPolicy === 'block_all') {
+          const want = stanceForBlockAll(level, this.dummy.isCrouching());
+          this.dummy.applyBlockAllStance(want);
+        } else if (this.opts.dummyGuardPolicy === 'stand_block') {
+          this.dummy.setGuardPolicy('stand_block');
+        } else if (this.opts.dummyGuardPolicy === 'crouch_block') {
+          this.dummy.setGuardPolicy('crouch_block');
+        }
+        const crouching = this.dummy.isCrouching();
+        const trying = this.dummy.isBlocking();
+        const ok = trying && canGuard(level, crouching);
+        this.debugProbe.lastGuardOk = ok;
+        this.debugProbe.p2Crouching = crouching;
+        if (ok) {
           const br = resolveBlockOnHit(mv, {
             hitstopFramesOnBlock: this.opts.hitstopFramesOnBlock,
             blockstunOverride: this.opts.blockstunOverride,
             blockPushbackTotal: this.opts.blockPushbackTotal,
-            // guard path: chip optional; keep damage 0 unless scale wants chip later
             damageScale: 0,
           });
-          this.p2.applyBlockstun(br.blockstun);
+          const reactClipId = selectGuardReactLogicId({
+            crouching,
+            guard: level,
+            hitstopOnBlock: mv.hitstopOnBlock,
+            guardStrength: mv.guardStrength,
+          });
+          this.debugProbe.guardClipFallback =
+            reactClipId === 'block_stand' || reactClipId === 'block_crouch_loop';
+          this.p2.applyBlockstun(br.blockstun, {
+            crouching,
+            reactClipId,
+            // Rest is idle (not guard loop). crouch_block dummy still stands idle between hits.
+            holdLoopClipId: 'idle',
+          });
           if (this.opts.enableBlockPush && br.pushbackTotal !== 0) {
             let away: Facing = this.p1.facing;
             if (this.p2.x < this.p1.x) away = -1;
@@ -701,7 +755,10 @@ export class MatchSim {
             const steps =
               mv.blockPushback && mv.blockPushback.length > 0
                 ? mv.blockPushback.slice()
-                : distributePushback(br.pushbackTotal, br.blockstun);
+                : distributePushback(br.pushbackTotal, br.blockstun, {
+                    moveTime: br.moveTime,
+                    easePower: this.opts.blockPushEasePower,
+                  });
             this.p2.queueBlockPush(steps, away);
           }
           this.lastHitResult = 'block';
@@ -709,6 +766,7 @@ export class MatchSim {
         } else {
           const dmg = Math.floor(mv.damage * this.opts.damageScale);
           this.p2.applyHitstun(mv.hitstun, dmg);
+          this.p2.holdGuardLoopClipId = null;
           this.lastHitResult = 'hit';
           this.hitstopTimer =
             mv.hitstopOnHit != null
@@ -752,6 +810,7 @@ export class MatchSim {
       this.p1.continueJumpArc(adv);
     }
     this.p2.advance(adv);
+    this.syncP2GuardPresentation();
     // Residual Place frame tick after advance (same sample used this frame)
     if (this.p1.attackResidual) this.p1.tickAttackResidual();
     if (this.p2.attackResidual) this.p2.tickAttackResidual();
@@ -787,7 +846,36 @@ export class MatchSim {
     this.debugProbe.hitstopTimer = this.hitstopTimer;
     this.debugProbe.lastHitResult = this.lastHitResult;
     this.debugProbe.forceP2Guard = this.opts.forceP2Guard;
+    this.debugProbe.dummyGuardPolicy = this.dummy.guardPolicy;
+    this.debugProbe.p2Phase = this.p2.phase;
+    this.debugProbe.p2StunTimer = this.p2.stunTimer;
+    this.debugProbe.p2ClipId = this.p2.clipId;
+    this.debugProbe.p2Crouching = this.dummy.isCrouching() || this.p2.isHurtCrouching();
     this.debugProbe.catalogCount = this.catalog.size;
+  }
+
+  private syncP2GuardPresentation(): void {
+    if (this.p2.phase === 'blockstun') {
+      const wantCrouch = this.dummy.isCrouching();
+      if (wantCrouch !== this.p2.isHurtCrouching()) {
+        this.p2.syncGuardHold(wantCrouch);
+      }
+      return;
+    }
+    if (this.dummy.guardPolicy === 'block_all' && this.p2.canAct()) {
+      this.dummy.applyBlockAllStance('stand');
+    }
+    if (this.p2.canAct()) {
+      this.p2.holdGuardLoopClipId = 'idle';
+      this.p2.syncGuardIdleStance(false);
+      if (
+        this.p2.clipId.startsWith('block_') ||
+        this.p2.clipId.startsWith('grd_')
+      ) {
+        this.p2.clipId = 'idle';
+        this.p2.animRole = 'main';
+      }
+    }
   }
 
   markWhiffIfNeeded(): void {

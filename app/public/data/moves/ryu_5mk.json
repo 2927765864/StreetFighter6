@@ -321,6 +321,11 @@
     "fabFrame": 89,
     "hitDtIndex": 27,
     "unitScale": 0.01,
-    "clampBaseHurtToTotal": true
-  }
+    "clampBaseHurtToTotal": true,
+    "blockCurveTgtID": 8,
+    "blockMoveType": 24,
+    "hitmarkStrength": 1
+  },
+  "blockPushMoveTime": 21,
+  "guardStrength": "M"
 }

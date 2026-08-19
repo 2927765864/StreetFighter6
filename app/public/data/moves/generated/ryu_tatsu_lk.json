@@ -96,5 +96,10 @@
     "notes": "Converted from 4rays TOML (may lag current patch). Boxes are PLACEHOLDER AABBs, not mined. Cross-check SuperCombo/UFD/Capcom before reviewed."
   },
   "slug": "ryu-tatsumaki-senpukyaku-light",
-  "abbreviation": null
+  "abbreviation": null,
+  "blockPushMoveTime": 24,
+  "mmdk": {
+    "blockCurveTgtID": 5,
+    "blockMoveType": 24
+  }
 }

@@ -1154,16 +1154,27 @@ export class Fighter {
     this.y = 0;
   }
 
-  applyBlockstun(frames: number): void {
+  /** After blockstun, rest clip (idle / crouch) — not guard loop. */
+  holdGuardLoopClipId: string | null = null;
+
+  applyBlockstun(
+    frames: number,
+    opts?: {
+      crouching?: boolean;
+      reactClipId?: string;
+      holdLoopClipId?: string;
+    },
+  ): void {
     this.clearAnimTail();
     this.clearAttackResidual();
-    // block push queue is set by MatchSim after this call
-    this.stanceState = clearStanceTo(false);
+    const crouching = !!opts?.crouching;
+    this.stanceState = clearStanceTo(crouching);
     this.phase = 'blockstun';
     this.stunTimer = frames;
     this.mover.move = null;
-    this.clipId = 'block_stand';
+    this.clipId = opts?.reactClipId ?? (crouching ? 'grd_cl_st' : 'grd_ml_st');
     this.animRole = 'main';
+    this.holdGuardLoopClipId = opts?.holdLoopClipId ?? 'idle';
     this.stateTimer = 0;
     this.airTimeRemain = 0;
     this.clearLoco();
@@ -1172,6 +1183,17 @@ export class Fighter {
     this.clearTurn();
     this.applyVisualFacing();
     this.y = 0;
+  }
+
+  /** Mid-stun dummy stance for boxes; do not reset stun or swap rest clip. */
+  syncGuardHold(crouching: boolean, _loopClipId?: string): void {
+    this.stanceState = clearStanceTo(crouching);
+  }
+
+  /** After stun: rest guard pose (block_all returns to stand). */
+  syncGuardIdleStance(crouching: boolean): void {
+    this.stanceState = clearStanceTo(crouching);
+    this.phase = crouching ? 'crouch' : 'idle';
   }
 
   /**
@@ -1239,10 +1261,20 @@ export class Fighter {
     if (this.phase === 'hitstun' || this.phase === 'blockstun') {
       this.stunTimer -= 1;
       if (this.stunTimer <= 0) {
-        this.phase = 'idle';
-        this.clipId = 'idle';
-        this.animRole = 'main';
         this.stunTimer = 0;
+        if (this.phase === 'blockstun' && this.holdGuardLoopClipId) {
+          const rest = this.holdGuardLoopClipId;
+          const crouchHold = rest === 'crouch' || rest.includes('crouch');
+          this.stanceState = clearStanceTo(crouchHold);
+          this.phase = crouchHold ? 'crouch' : 'idle';
+          this.clipId = rest === 'block_stand_loop' || rest === 'block_crouch_loop' ? 'idle' : rest;
+          this.animRole = 'main';
+        } else {
+          this.phase = 'idle';
+          this.clipId = 'idle';
+          this.animRole = 'main';
+          this.holdGuardLoopClipId = null;
+        }
       }
       return;
     }

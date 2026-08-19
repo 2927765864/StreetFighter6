@@ -618,6 +618,15 @@ function extractFromAction(action, rectTable, hitDt, scale) {
         );
         const md = block.MoveDest?.x ?? block.MoveDest?.X;
         if (md != null) hitMeta.blockPushbackTotal = num(md) * scale;
+        const mt = block.MoveTime;
+        if (mt != null) hitMeta.blockPushMoveTime = Math.max(1, Math.floor(num(mt, 0)));
+        if (block.CurveTgtID != null) hitMeta.blockCurveTgtID = num(block.CurveTgtID, 0);
+        if (block._IsStrength_L) hitMeta.guardStrength = 'L';
+        else if (block._IsStrength_M) hitMeta.guardStrength = 'M';
+        else if (block._IsStrength_H) hitMeta.guardStrength = 'H';
+        else if (block.HitmarkStrength === 0) hitMeta.guardStrength = 'L';
+        else if (block.HitmarkStrength === 1) hitMeta.guardStrength = 'M';
+        else if (block.HitmarkStrength === 2) hitMeta.guardStrength = 'H';
       }
     }
   }
@@ -716,6 +725,8 @@ function mergePublicAndMmdk(publicMove, part, meta) {
   if (hm.hitstopOnHit != null) out.hitstopOnHit = hm.hitstopOnHit;
   if (hm.hitstopOnBlock != null) out.hitstopOnBlock = hm.hitstopOnBlock;
   if (hm.blockPushbackTotal != null) out.blockPushbackTotal = hm.blockPushbackTotal;
+  if (hm.blockPushMoveTime != null) out.blockPushMoveTime = hm.blockPushMoveTime;
+  if (hm.guardStrength) out.guardStrength = hm.guardStrength;
 
   out.mmdk = {
     actionName: meta.actionName,
@@ -724,6 +735,7 @@ function mergePublicAndMmdk(publicMove, part, meta) {
     unitScale: UNIT_SCALE,
     clampBaseHurtToTotal: CLAMP_BASE_HURT_TO_TOTAL,
     hitManualOverride: Boolean(hitOverride?.length),
+    ...(hm.blockCurveTgtID != null ? { blockCurveTgtID: hm.blockCurveTgtID } : {}),
   };
   out.review = {
     status: hitOverride?.length

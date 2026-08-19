@@ -10,7 +10,7 @@
     "motion": null
   },
   "type": "commandNormal",
-  "guard": "high",
+  "guard": "mid",
   "hitCount": 2,
   "frames": {
     "startup": 20,
@@ -354,6 +354,11 @@
     "fabFrame": 115,
     "hitDtIndex": 71,
     "unitScale": 0.01,
-    "clampBaseHurtToTotal": true
-  }
+    "clampBaseHurtToTotal": true,
+    "blockCurveTgtID": 2,
+    "blockMoveType": 24,
+    "hitmarkStrength": 1
+  },
+  "blockPushMoveTime": 25,
+  "guardStrength": "M"
 }

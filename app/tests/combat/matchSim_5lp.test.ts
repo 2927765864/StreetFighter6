@@ -50,8 +50,11 @@ function neutral() {
 }
 
 describe('MatchSim 5LP', () => {
-  it('LP leads to hitstun when forceP2Guard is off', () => {
-    const sim = new MatchSim(fixture, undefined, { forceP2Guard: false });
+  it('LP leads to hitstun when dummy is not blocking', () => {
+    const sim = new MatchSim(fixture, undefined, {
+      forceP2Guard: false,
+      dummyGuardPolicy: 'none',
+    });
     sim.dummy.setMode('stand');
     const hp0 = sim.p2.hp;
     sim.pendingInput = pressLp();
@@ -68,9 +71,9 @@ describe('MatchSim 5LP', () => {
     expect(sim.lastHitResult).toBe('hit');
   });
 
-  it('default forceP2Guard yields blockstun + hitstop + pushback queue', () => {
+  it('default block_all yields blockstun + hitstop + pushback queue', () => {
     const sim = new MatchSim(fixture, undefined, {
-      forceP2Guard: true,
+      dummyGuardPolicy: 'block_all',
       blockPushbackTotal: 0.3,
       hitstopFramesOnBlock: 4,
     });
