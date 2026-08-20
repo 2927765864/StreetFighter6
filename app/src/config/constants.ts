@@ -91,6 +91,14 @@ export type MutableSimConfig = {
   pushboxColor: number;
   forceP2Guard: boolean;
   dummyGuardPolicy: 'block_all' | 'stand_block' | 'crouch_block' | 'none';
+  dummyUnguardedStance: 'stand' | 'crouch';
+  dummyWakeupStyle: 'normal' | 'back';
+  enableHitPush: boolean;
+  hitPushbackTotal: number;
+  hitstunOverride: number;
+  knockdownFramesOverride: number;
+  knockdownDownHoldOverride: number;
+  wakeupBackDxTotal: number;
   enablePushResolve: boolean;
   enableBlockPush: boolean;
   blockPushbackTotal: number;
@@ -273,6 +281,14 @@ export function createDefaultSimConfig(): MutableSimConfig {
     pushboxColor: PUSHBOX_COLOR,
     forceP2Guard: true,
     dummyGuardPolicy: 'block_all',
+    dummyUnguardedStance: 'stand',
+    dummyWakeupStyle: 'normal',
+    enableHitPush: true,
+    hitPushbackTotal: 0,
+    hitstunOverride: -1,
+    knockdownFramesOverride: -1,
+    knockdownDownHoldOverride: -1,
+    wakeupBackDxTotal: 0.8,
     enablePushResolve: true,
     enableBlockPush: true,
     blockPushbackTotal: 0.22,
@@ -408,6 +424,14 @@ export function applyConfigToMatchOpts(cfg: MutableSimConfig) {
     crouchToStandFrames: cfg.crouchToStandFrames,
     forceP2Guard: cfg.forceP2Guard,
     dummyGuardPolicy: cfg.dummyGuardPolicy,
+    dummyUnguardedStance: cfg.dummyUnguardedStance,
+    dummyWakeupStyle: cfg.dummyWakeupStyle,
+    enableHitPush: cfg.enableHitPush,
+    hitPushbackTotal: cfg.hitPushbackTotal,
+    hitstunOverride: cfg.hitstunOverride,
+    knockdownFramesOverride: cfg.knockdownFramesOverride,
+    knockdownDownHoldOverride: cfg.knockdownDownHoldOverride,
+    wakeupBackDxTotal: cfg.wakeupBackDxTotal,
     enablePushResolve: cfg.enablePushResolve,
     enableBlockPush: cfg.enableBlockPush,
     blockPushbackTotal: cfg.blockPushbackTotal,
@@ -425,12 +449,18 @@ export function syncMatchOpts(
     opts: ReturnType<typeof applyConfigToMatchOpts>;
     history: { setCapacity: (n: number) => void };
     ensureDashDxTables?: () => void;
-    dummy?: { setGuardPolicy: (p: MutableSimConfig['dummyGuardPolicy']) => void };
+    dummy?: {
+      setGuardPolicy: (p: MutableSimConfig['dummyGuardPolicy']) => void;
+      setWakeupStyle?: (s: MutableSimConfig['dummyWakeupStyle']) => void;
+      setUnguardedStance?: (s: MutableSimConfig['dummyUnguardedStance']) => void;
+    };
   },
   cfg: MutableSimConfig,
 ): void {
   Object.assign(match.opts, applyConfigToMatchOpts(cfg));
   match.history.setCapacity(cfg.motionHistoryCapacity);
   match.ensureDashDxTables?.();
+  match.dummy?.setUnguardedStance?.(cfg.dummyUnguardedStance);
+  match.dummy?.setWakeupStyle?.(cfg.dummyWakeupStyle);
   match.dummy?.setGuardPolicy(cfg.dummyGuardPolicy);
 }

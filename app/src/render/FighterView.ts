@@ -676,6 +676,16 @@ export class FighterView {
     // in switchToLogicAction. Attack uses support-foot XZ window only.
     const phase = fighter.phase;
     const prev = this.lastPlantPolicyPhase;
+    if (phase === 'knockdown') {
+      if (prev !== 'knockdown') this.resetModelGroundOffset();
+      this.lastPlantPolicyPhase = phase;
+      this.plantWorldXZ = null;
+      return;
+    }
+    if (prev === 'knockdown') {
+      this.resetModelGroundOffset();
+      this.plantFeetOnGround();
+    }
     const grounded =
       phase === 'idle' ||
       phase === 'walk' ||
@@ -887,6 +897,11 @@ export class FighterView {
     };
   }
 
+  /** Prone/sweep/bound: soles are not the ground contact — plantFeet would sink the torso. */
+  private isKnockdownLogicClip(canon: string): boolean {
+    return canon.startsWith('kd_');
+  }
+
   private isFreeRunLogic(canon: string, role: string): boolean {
     if (role === 'loop') return true;
     if (canon === 'block_stand_loop' || canon === 'block_crouch_loop') return true;
@@ -907,13 +922,18 @@ export class FighterView {
     if (this.currentBinding === bind) return;
 
     const prevKey = this.currentBinding;
+    const prevCanon = prevKey ? prevKey.split('::')[0]! : '';
     const prev =
       prevKey && this.logicActions.has(prevKey)
         ? this.logicActions.get(prevKey)!
         : null;
     const freeRun = this.isFreeRunLogic(canon, role);
-    const blendSec = resolveCrossfadeSec(prevKey, bind, durations);
-    const soft = prev != null && blendSec > 1e-4;
+    const leavingKd =
+      this.isKnockdownLogicClip(prevCanon) && !this.isKnockdownLogicClip(canon);
+    const blendSec = leavingKd
+      ? 0
+      : resolveCrossfadeSec(prevKey, bind, durations);
+    const soft = !leavingKd && prev != null && blendSec > 1e-4;
 
     if (soft && prev) {
       this.beginPoseBlend(
@@ -945,7 +965,10 @@ export class FighterView {
         this.resetModelGroundOffset();
         this.plantFeetOnGround();
         this.pendingLandPlant = false;
+      } else if (this.isKnockdownLogicClip(canon)) {
+        this.resetModelGroundOffset();
       } else {
+        if (leavingKd) this.resetModelGroundOffset();
         this.plantFeetOnGround();
       }
     }
@@ -1458,16 +1481,51 @@ export class FighterView {
       return;
     }
 
-    // Hitstun: never sol. Blockstun *react* (grd_*): hard cut on impact.
-    // Leaving stun into guard loop uses the idle path + fadePolicy below.
-    if (fighter.phase === 'hitstun') {
+    // Hitstun / knockdown: scrub to logic elapsed; LoopOnce+clamp (plan E7/E8).
+    if (fighter.phase === 'hitstun' || fighter.phase === 'knockdown') {
+      const restart = fighter.clipRestartSeq !== this.lastClipRestartSeq;
+      this.lastClipRestartSeq = fighter.clipRestartSeq;
       this.clearPoseBlend(true);
-      this.playBest(fighter.clipId, role, HARD_CUT);
+      this.playBest(fighter.clipId, role, HARD_CUT, restart);
       const action = this.resolveAction(fighter.clipId, role);
       if (action && this.mixer) {
-        action.paused = false;
-        action.setEffectiveWeight(1);
-        this.mixer.update(animDt);
+        const downLoop = fighter.phase === 'knockdown' && fighter.kdPhase === 'down';
+        action.setLoop(
+          downLoop ? THREE.LoopRepeat : THREE.LoopOnce,
+          Infinity,
+        );
+        action.clampWhenFinished = !downLoop;
+        let localElapsed = 0;
+        let localTotal = 1;
+        if (fighter.phase === 'hitstun') {
+          localElapsed = Math.max(0, fighter.stunDuration - fighter.stunTimer);
+          localTotal = Math.max(1, fighter.stunDuration);
+        } else if (fighter.kdPhase === 'sweep') {
+          localElapsed = Math.max(
+            0,
+            fighter.kdSweepLen -
+              (fighter.kdTimer - fighter.kdBoundLen - fighter.kdDownLen - fighter.kdRiseLen),
+          );
+          localTotal = Math.max(1, fighter.kdSweepLen);
+        } else if (fighter.kdPhase === 'bound') {
+          localElapsed = Math.max(
+            0,
+            fighter.kdBoundLen - (fighter.kdTimer - fighter.kdDownLen - fighter.kdRiseLen),
+          );
+          localTotal = Math.max(1, fighter.kdBoundLen);
+        } else if (fighter.kdPhase === 'down') {
+          const downRem = fighter.kdTimer - fighter.kdRiseLen;
+          localElapsed = Math.max(0, fighter.kdDownLen - downRem);
+          localTotal = Math.max(1, fighter.kdDownLen);
+        } else {
+          localElapsed = Math.max(0, fighter.kdRiseLen - fighter.kdTimer);
+          localTotal = Math.max(1, fighter.kdRiseLen);
+        }
+        const t = visualFrameToClipTime(
+          downLoop ? localElapsed % localTotal : localElapsed,
+          action.getClip().duration,
+        );
+        this.scrubActionTo(action, t);
       }
       this.maybePlantAfterPose(fighter, cfg, wallDtSec);
       return;

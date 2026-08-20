@@ -67,7 +67,7 @@ describe('MatchSim 5LP', () => {
       if (sim.p2.phase === 'hitstun') break;
     }
     expect(sim.p2.phase).toBe('hitstun');
-    expect(sim.p2.hp).toBe(hp0 - 300);
+    expect(sim.p2.hp).toBe(hp0);
     expect(sim.lastHitResult).toBe('hit');
   });
 

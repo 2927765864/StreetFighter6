@@ -239,6 +239,7 @@ function buildDom(): HTMLElement {
         <option value="block_all">全部格挡</option>
         <option value="stand_block">仅站立格挡</option>
         <option value="crouch_block">仅蹲下格挡</option>
+        <option value="none">不防（挨打）</option>
       </select>
     </label>
     <div class="panel-actions">
@@ -365,8 +366,29 @@ function buildDom(): HTMLElement {
               <option value="block_all">全部格挡</option>
               <option value="stand_block">仅站立格挡</option>
               <option value="crouch_block">仅蹲下格挡</option>
+              <option value="none">不防（挨打）</option>
             </select>
           </div>
+          <div class="panel-row">
+            <div class="panel-row-header"><span>不防姿势</span></div>
+            <select id="sel-dummyUnguardedStance" title="none 时站/蹲">
+              <option value="stand">站立</option>
+              <option value="crouch">蹲下</option>
+            </select>
+          </div>
+          <div class="panel-row">
+            <div class="panel-row-header"><span>Dummy 起身</span></div>
+            <select id="sel-dummyWakeupStyle" title="倒地起身">
+              <option value="normal">普通起</option>
+              <option value="back">后跳起</option>
+            </select>
+          </div>
+          ${rowNumber('hitstunOverride', '击中硬直覆盖 (-1=表)', -1, 60, 1)}
+          ${rowNumber('knockdownFramesOverride', '倒地总帧覆盖 (-1=表)', -1, 180, 1)}
+          ${rowNumber('knockdownDownHoldOverride', '躺地保持覆盖 (-1=表)', -1, 120, 1)}
+          ${rowNumber('wakeupBackDxTotal', '后跳起位移', 0, 2, 0.05)}
+          ${rowToggle('enableHitPush', '启用命中推开')}
+          ${rowNumber('hitPushbackTotal', '命中推开 fallback', 0, 1.5, 0.01)}
           ${rowToggle('enablePushResolve', '启用推挤')}
           ${rowToggle('enableBlockPush', '启用防御推开')}
           ${rowNumber('blockPushbackTotal', '防御推开总量', 0, 1.5, 0.01)}
@@ -674,6 +696,12 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'blockPushbackTotal', path: 'blockPushbackTotal' },
   { id: 'blockPushEasePower', path: 'blockPushEasePower' },
   { id: 'blockstunOverride', path: 'blockstunOverride' },
+  { id: 'hitstunOverride', path: 'hitstunOverride' },
+  { id: 'knockdownFramesOverride', path: 'knockdownFramesOverride' },
+  { id: 'knockdownDownHoldOverride', path: 'knockdownDownHoldOverride' },
+  { id: 'wakeupBackDxTotal', path: 'wakeupBackDxTotal' },
+  { id: 'enableHitPush', path: 'enableHitPush' },
+  { id: 'hitPushbackTotal', path: 'hitPushbackTotal' },
   { id: 'damageScale', path: 'damageScale' },
   { id: 'applySelfMovement', path: 'applySelfMovement' },
   { id: 'selfMovementScale', path: 'selfMovementScale' },
@@ -1757,9 +1785,7 @@ export function setupControlPanel(
     dummySelCombat.value = v;
   };
   const syncDummy = () => {
-    const v = (
-      match.dummy.guardPolicy === 'none' ? 'block_all' : match.dummy.guardPolicy
-    ) as DummyGuardPolicy;
+    const v = match.dummy.guardPolicy as DummyGuardPolicy;
     dummySel.value = v;
     dummySelCombat.value = v;
   };
@@ -1770,6 +1796,27 @@ export function setupControlPanel(
     applyDummyPolicy(dummySelCombat.value as DummyGuardPolicy);
   });
   syncers.push(syncDummy);
+
+  const stanceSel = byId<HTMLSelectElement>(host, 'sel-dummyUnguardedStance');
+  const wakeupSel = byId<HTMLSelectElement>(host, 'sel-dummyWakeupStyle');
+  stanceSel.value = CONFIG.dummyUnguardedStance;
+  wakeupSel.value = CONFIG.dummyWakeupStyle;
+  stanceSel.addEventListener('change', () => {
+    const v = stanceSel.value as 'stand' | 'crouch';
+    CONFIG.dummyUnguardedStance = v;
+    match.opts.dummyUnguardedStance = v;
+    match.dummy.setUnguardedStance(v);
+  });
+  wakeupSel.addEventListener('change', () => {
+    const v = wakeupSel.value as 'normal' | 'back';
+    CONFIG.dummyWakeupStyle = v;
+    match.opts.dummyWakeupStyle = v;
+    match.dummy.setWakeupStyle(v);
+  });
+  syncers.push(() => {
+    stanceSel.value = CONFIG.dummyUnguardedStance;
+    wakeupSel.value = CONFIG.dummyWakeupStyle;
+  });
 
   const p1Hp = byId<HTMLInputElement>(host, 'inp-p1Hp');
   const p2Hp = byId<HTMLInputElement>(host, 'inp-p2Hp');
@@ -1928,6 +1975,11 @@ export function setupControlPanel(
     ['P2 phase', () => String(match.debugProbe.p2Phase)],
     ['P2 stunTimer', () => String(match.debugProbe.p2StunTimer)],
     ['P2 clipId', () => String(match.debugProbe.p2ClipId)],
+    ['P2 kdPhase', () => String(match.debugProbe.p2KdPhase)],
+    ['lastHitReaction', () => String(match.debugProbe.lastHitReaction)],
+    ['lastHitClipId', () => String(match.debugProbe.lastHitClipId)],
+    ['hitClipFallback', () => String(match.debugProbe.hitClipFallback)],
+    ['dummyWakeup', () => String(match.debugProbe.dummyWakeupStyle)],
     ['P2 crouching', () => String(match.debugProbe.p2Crouching)],
     ['pushOverlapX', () => String(match.debugProbe.pushOverlapX)],
     ['P2 blockPushDx', () => String(match.debugProbe.p2BlockPushDx)],

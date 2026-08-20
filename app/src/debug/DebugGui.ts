@@ -103,6 +103,7 @@ export function createDebugGui(
       全部格挡: 'block_all',
       仅站立格挡: 'stand_block',
       仅蹲下格挡: 'crouch_block',
+      不防挨打: 'none',
     })
     .name('人偶格挡')
     .onChange((v: string) => {
@@ -376,6 +377,35 @@ export function createDebugGui(
     .name('blockstun覆盖(-1表)')
     .onChange(syncOpts);
   guardFolder
+    .add(cfg, 'dummyUnguardedStance', { 站: 'stand', 蹲: 'crouch' })
+    .name('不防姿势')
+    .onChange(syncOpts);
+  guardFolder
+    .add(cfg, 'dummyWakeupStyle', { 普通起: 'normal', 后跳起: 'back' })
+    .name('Dummy起身')
+    .onChange(syncOpts);
+  guardFolder
+    .add(cfg, 'hitstunOverride', -1, 60, 1)
+    .name('击中硬直覆盖')
+    .onChange(syncOpts);
+  guardFolder
+    .add(cfg, 'knockdownFramesOverride', -1, 180, 1)
+    .name('倒地总帧覆盖')
+    .onChange(syncOpts);
+  guardFolder
+    .add(cfg, 'knockdownDownHoldOverride', -1, 120, 1)
+    .name('躺地保持覆盖')
+    .onChange(syncOpts);
+  guardFolder
+    .add(cfg, 'wakeupBackDxTotal', 0, 2, 0.05)
+    .name('后跳起位移')
+    .onChange(syncOpts);
+  guardFolder.add(cfg, 'enableHitPush').name('启用命中推开').onChange(syncOpts);
+  guardFolder
+    .add(cfg, 'hitPushbackTotal', 0, 1.5, 0.01)
+    .name('命中推开fallback')
+    .onChange(syncOpts);
+  guardFolder
     .add(cfg, 'damageScale', 0, 2, 0.05)
     .name('伤害倍率')
     .onChange(syncOpts);
@@ -453,6 +483,9 @@ export function createDebugGui(
   assemblyFolder.add(probeTl, 'p2Phase').name('P2 phase').listen();
   assemblyFolder.add(probeTl, 'p2StunTimer').name('P2 stunTimer').listen();
   assemblyFolder.add(probeTl, 'p2ClipId').name('P2 clipId').listen();
+  assemblyFolder.add(probeTl, 'p2KdPhase').name('P2 kdPhase').listen();
+  assemblyFolder.add(probeTl, 'lastHitReaction').name('lastHitReaction').listen();
+  assemblyFolder.add(probeTl, 'lastHitClipId').name('lastHitClipId').listen();
   assemblyFolder.add(probeTl, 'p2Crouching').name('P2 crouching').listen();
   assemblyFolder.add(probeTl, 'pushOverlapX').name('pushOverlapX').listen();
   assemblyFolder.add(probe, 'p1SelfDx').name('P1 selfDx').listen();

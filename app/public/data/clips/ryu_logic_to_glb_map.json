@@ -13,11 +13,13 @@
     "atk3hkIsWhirlwind": true
   },
   "summary": {
-    "entries": 88,
-    "mapped": 65,
+    "entries": 113,
+    "mapped": 84,
     "grdFamily": 39
   },
   "aliasIndex": {
+    "44": "dash_back",
+    "66": "dash_fwd",
     "ryu_5lp": "ryu_5lp",
     "5lp": "ryu_5lp",
     "attack_l": "ryu_5lp",
@@ -119,17 +121,15 @@
     "crouch": "crouch",
     "dash_fwd": "dash_fwd",
     "dash": "dash_fwd",
-    "66": "dash_fwd",
     "dash_back": "dash_back",
     "backdash": "dash_back",
-    "44": "dash_back",
     "jump_n": "jump_n",
     "jump": "jump_n",
     "jump_f": "jump_f",
     "jump_b": "jump_b",
-    "hitstun_light": "hitstun_light",
-    "hit": "hitstun_light",
-    "hitstun": "hitstun_light",
+    "hitstun_light": "dmg_hl_st",
+    "hit": "dmg_hl_st",
+    "hitstun": "dmg_hl_st",
     "block_stand": "block_stand_start",
     "block": "block_stand_start",
     "guard": "block_stand_start",
@@ -179,7 +179,31 @@
     "grd_dm_rt": "grd_dm_rt",
     "grd_dh_st": "grd_dh_st",
     "grd_dh_lt": "grd_dh_lt",
-    "grd_dh_rt": "grd_dh_rt"
+    "grd_dh_rt": "grd_dh_rt",
+    "dmg_hl_st": "dmg_hl_st",
+    "dmg_hm_st": "dmg_hm_st",
+    "dmg_hh_st": "dmg_hh_st",
+    "dmg_ml_st": "dmg_ml_st",
+    "dmg_mm_st": "dmg_mm_st",
+    "dmg_mh_st": "dmg_mh_st",
+    "dmg_ll_st": "dmg_ll_st",
+    "dmg_lm_st": "dmg_lm_st",
+    "dmg_cl_st": "dmg_cl_st",
+    "dmg_cm_st": "dmg_cm_st",
+    "dmg_ch_st": "dmg_ch_st",
+    "dmg_dl_st": "dmg_dl_st",
+    "dmg_dm_st": "dmg_dm_st",
+    "kd_sweep": "kd_sweep",
+    "kd_bound": "kd_bound",
+    "kd_down_loop": "kd_down_loop",
+    "kd_rise_normal": "kd_rise_normal",
+    "kd_rise_back": "kd_rise_back",
+    "dmg_mm_lt": "dmg_mm_lt",
+    "dmg_hm_lt": "dmg_hm_lt",
+    "dmg_mh_lt": "dmg_mh_lt",
+    "dmg_lm_lt": "dmg_lm_lt",
+    "dmg_hh_lt": "dmg_hh_lt",
+    "dmg_hh_rt": "dmg_hh_rt"
   },
   "moves": [
     {
@@ -2309,6 +2333,490 @@
       ],
       "primaryPath": "basic/esf001v00_idle/glb/019_esf001_5100_DRD_CRH_H_Loop_id5000_f269.glb",
       "notes": "idle DRD hold loop (not tired GRD)"
+    },
+    {
+      "moveId": "dmg_hl_st",
+      "command": "—",
+      "displayName": "Damage HL ST",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [
+        "hitstun_light",
+        "hit",
+        "hitstun"
+      ],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "0010_DMG_HL_ST",
+          "path": "basic/esf001v00_damage/glb/000_esf001_0010_DMG_HL_ST_id0010_f29.glb",
+          "stem": "000_esf001_0010_DMG_HL_ST_id0010_f29",
+          "motionId": 10,
+          "frameCount": 29
+        }
+      ],
+      "primaryPath": "basic/esf001v00_damage/glb/000_esf001_0010_DMG_HL_ST_id0010_f29.glb",
+      "notes": "ungarded-hit-kd v0 ST-only"
+    },
+    {
+      "moveId": "dmg_hm_st",
+      "command": "—",
+      "displayName": "Damage HM ST",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "0020_DMG_HM_ST",
+          "path": "basic/esf001v00_damage/glb/001_esf001_0020_DMG_HM_ST_id0020_f49.glb",
+          "stem": "001_esf001_0020_DMG_HM_ST_id0020_f49",
+          "motionId": 20,
+          "frameCount": 49
+        }
+      ],
+      "primaryPath": "basic/esf001v00_damage/glb/001_esf001_0020_DMG_HM_ST_id0020_f49.glb",
+      "notes": "ungarded-hit-kd v0 ST-only"
+    },
+    {
+      "moveId": "dmg_hh_st",
+      "command": "—",
+      "displayName": "Damage HH ST",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "0050_DMG_HH_ST",
+          "path": "basic/esf001v00_damage/glb/004_esf001_0050_DMG_HH_ST_id0050_f69.glb",
+          "stem": "004_esf001_0050_DMG_HH_ST_id0050_f69",
+          "motionId": 50,
+          "frameCount": 69
+        }
+      ],
+      "primaryPath": "basic/esf001v00_damage/glb/004_esf001_0050_DMG_HH_ST_id0050_f69.glb",
+      "notes": "ungarded-hit-kd v0 ST-only"
+    },
+    {
+      "moveId": "dmg_ml_st",
+      "command": "—",
+      "displayName": "Damage ML ST",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "0110_DMG_ML_ST",
+          "path": "basic/esf001v00_damage/glb/007_esf001_0110_DMG_ML_ST_id0080_f29.glb",
+          "stem": "007_esf001_0110_DMG_ML_ST_id0080_f29",
+          "motionId": 80,
+          "frameCount": 29
+        }
+      ],
+      "primaryPath": "basic/esf001v00_damage/glb/007_esf001_0110_DMG_ML_ST_id0080_f29.glb",
+      "notes": "ungarded-hit-kd v0 ST-only"
+    },
+    {
+      "moveId": "dmg_mm_st",
+      "command": "—",
+      "displayName": "Damage MM ST",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "0120_DMG_MM_ST",
+          "path": "basic/esf001v00_damage/glb/008_esf001_0120_DMG_MM_ST_id0090_f49.glb",
+          "stem": "008_esf001_0120_DMG_MM_ST_id0090_f49",
+          "motionId": 90,
+          "frameCount": 49
+        }
+      ],
+      "primaryPath": "basic/esf001v00_damage/glb/008_esf001_0120_DMG_MM_ST_id0090_f49.glb",
+      "notes": "ungarded-hit-kd v0 ST-only"
+    },
+    {
+      "moveId": "dmg_mh_st",
+      "command": "—",
+      "displayName": "Damage MH ST",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "0150_DMG_MH_ST",
+          "path": "basic/esf001v00_damage/glb/011_esf001_0150_DMG_MH_ST_id0130_f69.glb",
+          "stem": "011_esf001_0150_DMG_MH_ST_id0130_f69",
+          "motionId": 130,
+          "frameCount": 69
+        }
+      ],
+      "primaryPath": "basic/esf001v00_damage/glb/011_esf001_0150_DMG_MH_ST_id0130_f69.glb",
+      "notes": "ungarded-hit-kd v0 ST-only"
+    },
+    {
+      "moveId": "dmg_ll_st",
+      "command": "—",
+      "displayName": "Damage LL ST",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "0210_DMG_LL_ST",
+          "path": "basic/esf001v00_damage/glb/014_esf001_0210_DMG_LL_ST_id0160_f29.glb",
+          "stem": "014_esf001_0210_DMG_LL_ST_id0160_f29",
+          "motionId": 160,
+          "frameCount": 29
+        }
+      ],
+      "primaryPath": "basic/esf001v00_damage/glb/014_esf001_0210_DMG_LL_ST_id0160_f29.glb",
+      "notes": "ungarded-hit-kd v0 ST-only"
+    },
+    {
+      "moveId": "dmg_lm_st",
+      "command": "—",
+      "displayName": "Damage LM ST",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "0220_DMG_LM_ST",
+          "path": "basic/esf001v00_damage/glb/015_esf001_0220_DMG_LM_ST_id0170_f39.glb",
+          "stem": "015_esf001_0220_DMG_LM_ST_id0170_f39",
+          "motionId": 170,
+          "frameCount": 39
+        }
+      ],
+      "primaryPath": "basic/esf001v00_damage/glb/015_esf001_0220_DMG_LM_ST_id0170_f39.glb",
+      "notes": "ungarded-hit-kd v0 ST-only"
+    },
+    {
+      "moveId": "dmg_cl_st",
+      "command": "—",
+      "displayName": "Damage CL ST",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "0310_DMG_CL_ST",
+          "path": "basic/esf001v00_damage/glb/018_esf001_0310_DMG_CL_ST_id0210_f29.glb",
+          "stem": "018_esf001_0310_DMG_CL_ST_id0210_f29",
+          "motionId": 210,
+          "frameCount": 29
+        }
+      ],
+      "primaryPath": "basic/esf001v00_damage/glb/018_esf001_0310_DMG_CL_ST_id0210_f29.glb",
+      "notes": "ungarded-hit-kd v0 ST-only"
+    },
+    {
+      "moveId": "dmg_cm_st",
+      "command": "—",
+      "displayName": "Damage CM ST",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "0320_DMG_CM_ST",
+          "path": "basic/esf001v00_damage/glb/019_esf001_0320_DMG_CM_ST_id0220_f49.glb",
+          "stem": "019_esf001_0320_DMG_CM_ST_id0220_f49",
+          "motionId": 220,
+          "frameCount": 49
+        }
+      ],
+      "primaryPath": "basic/esf001v00_damage/glb/019_esf001_0320_DMG_CM_ST_id0220_f49.glb",
+      "notes": "ungarded-hit-kd v0 ST-only"
+    },
+    {
+      "moveId": "dmg_ch_st",
+      "command": "—",
+      "displayName": "Damage CH ST",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "0350_DMG_CH_ST",
+          "path": "basic/esf001v00_damage/glb/022_esf001_0350_DMG_CH_ST_id0280_f69.glb",
+          "stem": "022_esf001_0350_DMG_CH_ST_id0280_f69",
+          "motionId": 280,
+          "frameCount": 69
+        }
+      ],
+      "primaryPath": "basic/esf001v00_damage/glb/022_esf001_0350_DMG_CH_ST_id0280_f69.glb",
+      "notes": "ungarded-hit-kd v0 ST-only"
+    },
+    {
+      "moveId": "dmg_dl_st",
+      "command": "—",
+      "displayName": "Damage DL ST",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "0410_DMG_DL_ST",
+          "path": "basic/esf001v00_damage/glb/025_esf001_0410_DMG_DL_ST_id0330_f29.glb",
+          "stem": "025_esf001_0410_DMG_DL_ST_id0330_f29",
+          "motionId": 330,
+          "frameCount": 29
+        }
+      ],
+      "primaryPath": "basic/esf001v00_damage/glb/025_esf001_0410_DMG_DL_ST_id0330_f29.glb",
+      "notes": "ungarded-hit-kd v0 ST-only"
+    },
+    {
+      "moveId": "dmg_dm_st",
+      "command": "—",
+      "displayName": "Damage DM ST",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "0420_DMG_DM_ST",
+          "path": "basic/esf001v00_damage/glb/026_esf001_0420_DMG_DM_ST_id0340_f39.glb",
+          "stem": "026_esf001_0420_DMG_DM_ST_id0340_f39",
+          "motionId": 340,
+          "frameCount": 39
+        }
+      ],
+      "primaryPath": "basic/esf001v00_damage/glb/026_esf001_0420_DMG_DM_ST_id0340_f39.glb",
+      "notes": "ungarded-hit-kd v0 ST-only"
+    },
+    {
+      "moveId": "kd_sweep",
+      "command": "—",
+      "displayName": "Sweep knockdown",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "2510_DMG_ASHIBARAI_RT",
+          "path": "basic/esf001v00_damage/glb/097_esf001_2510_DMG_ASHIBARAI_RT_id2420_f20.glb",
+          "stem": "097_esf001_2510_DMG_ASHIBARAI_RT_id2420_f20",
+          "motionId": 2420,
+          "frameCount": 20
+        }
+      ],
+      "primaryPath": "basic/esf001v00_damage/glb/097_esf001_2510_DMG_ASHIBARAI_RT_id2420_f20.glb",
+      "notes": "ungarded-hit-kd v0 ST-only"
+    },
+    {
+      "moveId": "kd_bound",
+      "command": "—",
+      "displayName": "Prone ground bounce",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "2460_DMG_BND_L_UT",
+          "path": "basic/esf001v00_damage/glb/092_esf001_2460_DMG_BND_L_UT_id2370_f15.glb",
+          "stem": "092_esf001_2460_DMG_BND_L_UT_id2370_f15",
+          "motionId": 2370,
+          "frameCount": 15
+        }
+      ],
+      "primaryPath": "basic/esf001v00_damage/glb/092_esf001_2460_DMG_BND_L_UT_id2370_f15.glb",
+      "notes": "Ashibarai → BND_L_UT → UT_Loop"
+    },
+    {
+      "moveId": "kd_down_loop",
+      "command": "—",
+      "displayName": "Down loop UT (prone)",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "2470_BAS_DN_UT_Loop",
+          "path": "basic/esf001v00_damage/glb/093_esf001_2470_BAS_DN_UT_Loop_id2380_f85.glb",
+          "stem": "093_esf001_2470_BAS_DN_UT_Loop_id2380_f85",
+          "motionId": 2380,
+          "frameCount": 85
+        }
+      ],
+      "primaryPath": "basic/esf001v00_damage/glb/093_esf001_2470_BAS_DN_UT_Loop_id2380_f85.glb",
+      "notes": "Sweep ashibarai ends prone; AO=supine, UT=prone"
+    },
+    {
+      "moveId": "kd_rise_normal",
+      "command": "—",
+      "displayName": "Normal rise from prone",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "2480_BAS_DN_STD_UT",
+          "path": "basic/esf001v00_damage/glb/094_esf001_2480_BAS_DN_STD_UT_id2390_f42.glb",
+          "stem": "094_esf001_2480_BAS_DN_STD_UT_id2390_f42",
+          "motionId": 2390,
+          "frameCount": 42
+        }
+      ],
+      "primaryPath": "basic/esf001v00_damage/glb/094_esf001_2480_BAS_DN_STD_UT_id2390_f42.glb",
+      "notes": "UT family matches ashibarai face-down"
+    },
+    {
+      "moveId": "kd_rise_back",
+      "command": "—",
+      "displayName": "Back rise from prone",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "2500_BAS_TECH_BR_UT",
+          "path": "basic/esf001v00_damage/glb/096_esf001_2500_BAS_TECH_BR_UT_id2410_f44.glb",
+          "stem": "096_esf001_2500_BAS_TECH_BR_UT_id2410_f44",
+          "motionId": 2410,
+          "frameCount": 44
+        }
+      ],
+      "primaryPath": "basic/esf001v00_damage/glb/096_esf001_2500_BAS_TECH_BR_UT_id2410_f44.glb",
+      "notes": "UT family matches ashibarai face-down"
+    },
+    {
+      "moveId": "dmg_mm_lt",
+      "command": "—",
+      "displayName": "dmg_mm_lt",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "0130_DMG_MM_LT",
+          "path": "basic/esf001v00_damage/glb/009_esf001_0130_DMG_MM_LT_id0110_f49.glb",
+          "stem": "009_esf001_0130_DMG_MM_LT_id0110_f49",
+          "motionId": 110,
+          "frameCount": 49
+        }
+      ],
+      "primaryPath": "basic/esf001v00_damage/glb/009_esf001_0130_DMG_MM_LT_id0110_f49.glb",
+      "notes": "DMG LT take"
+    },
+    {
+      "moveId": "dmg_hm_lt",
+      "command": "—",
+      "displayName": "dmg_hm_lt",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "0030_DMG_HM_LT",
+          "path": "basic/esf001v00_damage/glb/002_esf001_0030_DMG_HM_LT_id0030_f49.glb",
+          "stem": "002_esf001_0030_DMG_HM_LT_id0030_f49",
+          "motionId": 30,
+          "frameCount": 49
+        }
+      ],
+      "primaryPath": "basic/esf001v00_damage/glb/002_esf001_0030_DMG_HM_LT_id0030_f49.glb",
+      "notes": "DMG LT take"
+    },
+    {
+      "moveId": "dmg_mh_lt",
+      "command": "—",
+      "displayName": "dmg_mh_lt",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "0160_DMG_MH_LT",
+          "path": "basic/esf001v00_damage/glb/012_esf001_0160_DMG_MH_LT_id0140_f69.glb",
+          "stem": "012_esf001_0160_DMG_MH_LT_id0140_f69",
+          "motionId": 140,
+          "frameCount": 69
+        }
+      ],
+      "primaryPath": "basic/esf001v00_damage/glb/012_esf001_0160_DMG_MH_LT_id0140_f69.glb",
+      "notes": "DMG LT take"
+    },
+    {
+      "moveId": "dmg_lm_lt",
+      "command": "—",
+      "displayName": "dmg_lm_lt",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "0230_DMG_LM_LT",
+          "path": "basic/esf001v00_damage/glb/016_esf001_0230_DMG_LM_LT_id0180_f39.glb",
+          "stem": "016_esf001_0230_DMG_LM_LT_id0180_f39",
+          "motionId": 180,
+          "frameCount": 39
+        }
+      ],
+      "primaryPath": "basic/esf001v00_damage/glb/016_esf001_0230_DMG_LM_LT_id0180_f39.glb",
+      "notes": "DMG LT take"
+    },
+    {
+      "moveId": "dmg_hh_lt",
+      "command": "—",
+      "displayName": "dmg_hh_lt",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "DMG_HH_LT",
+          "path": "basic/esf001v00_damage/glb/005_esf001_0060_DMG_HH_LT_id0060_f69.glb",
+          "stem": "005_esf001_0060_DMG_HH_LT_id0060_f69",
+          "motionId": 60,
+          "frameCount": 69
+        }
+      ],
+      "primaryPath": "basic/esf001v00_damage/glb/005_esf001_0060_DMG_HH_LT_id0060_f69.glb",
+      "notes": "DMG HH side take"
+    },
+    {
+      "moveId": "dmg_hh_rt",
+      "command": "—",
+      "displayName": "dmg_hh_rt",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "DMG_HH_RT",
+          "path": "basic/esf001v00_damage/glb/006_esf001_0070_DMG_HH_RT_id0070_f69.glb",
+          "stem": "006_esf001_0070_DMG_HH_RT_id0070_f69",
+          "motionId": 70,
+          "frameCount": 69
+        }
+      ],
+      "primaryPath": "basic/esf001v00_damage/glb/006_esf001_0070_DMG_HH_RT_id0070_f69.glb",
+      "notes": "DMG HH side take"
     }
   ]
 }

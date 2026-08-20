@@ -12,6 +12,8 @@
   "type": "normal",
   "guard": "high",
   "guardAnim": "h",
+  "hitAnim": "h",
+  "hitAnimDir": "st",
   "hitCount": 1,
   "frames": {
     "startup": 4,
@@ -216,6 +218,8 @@
   ],
   "timelineFrames": 40,
   "hitstun": 14,
+  "hitPushbackTotal": 0.27,
+  "hitPushMoveTime": 14,
   "blockstun": 13,
   "hitstopOnHit": 9,
   "hitstopOnBlock": 9,
@@ -231,5 +235,21 @@
     "hitmarkStrength": 0
   },
   "blockPushMoveTime": 13,
-  "guardStrength": "L"
+  "guardStrength": "L",
+  "hitPushback": [
+    0.05382288629737608,
+    0.04614795918367344,
+    0.03906341107871726,
+    0.03256924198250725,
+    0.026665451895043796,
+    0.021352040816326502,
+    0.01662900874635568,
+    0.012496355685131199,
+    0.008954081632653065,
+    0.006002186588921276,
+    0.0036406705539358633,
+    0.0018695335276967962,
+    0.0006887755102040749,
+    0.0000983965014577648
+  ]
 }

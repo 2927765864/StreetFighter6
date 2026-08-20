@@ -12,7 +12,15 @@ import { resolveIntent } from '../command/IntentResolver';
 import { RYU_FEEDBACK_COMMANDS } from '../command/ryuCommands';
 import type { CommandDef } from '../command/CommandDef';
 import { DriveStub } from '../systems/DriveStub';
-import type { DummyGuardPolicy, Facing, HitResult, InputSample, Intent } from '../types';
+import type {
+  DummyGuardPolicy,
+  DummyUnguardedStance,
+  DummyWakeupStyle,
+  Facing,
+  HitResult,
+  InputSample,
+  Intent,
+} from '../types';
 import { DummyController } from './DummyController';
 import { stepWalk } from '../loco/WalkController';
 import type { RyuMovementTable } from '../../data/loadRyuMovement';
@@ -30,6 +38,8 @@ import {
   selectGuardReactLogicId,
   stanceForBlockAll,
 } from '../systems/GuardPolicy';
+import { hitAnimForHit, selectHitReactLogicId } from '../systems/HitPolicy';
+import { resolveHitOnHit } from '../systems/HitResolve';
 import type { StanceBoxTable } from '../../data/loadStanceBoxes';
 
 export type MatchSimOptions = {
@@ -86,6 +96,14 @@ export type MatchSimOptions = {
    */
   forceP2Guard: boolean;
   dummyGuardPolicy: DummyGuardPolicy;
+  dummyUnguardedStance: DummyUnguardedStance;
+  dummyWakeupStyle: DummyWakeupStyle;
+  enableHitPush: boolean;
+  hitPushbackTotal: number;
+  hitstunOverride: number;
+  knockdownFramesOverride: number;
+  knockdownDownHoldOverride: number;
+  wakeupBackDxTotal: number;
   enablePushResolve: boolean;
   enableBlockPush: boolean;
   blockPushbackTotal: number;
@@ -142,6 +160,14 @@ const DEFAULT_OPTS: MatchSimOptions = {
   crouchToStandFrames: 38,
   forceP2Guard: true,
   dummyGuardPolicy: 'block_all',
+  dummyUnguardedStance: 'stand',
+  dummyWakeupStyle: 'normal',
+  enableHitPush: true,
+  hitPushbackTotal: 0,
+  hitstunOverride: -1,
+  knockdownFramesOverride: -1,
+  knockdownDownHoldOverride: -1,
+  wakeupBackDxTotal: 0.8,
   enablePushResolve: true,
   enableBlockPush: true,
   blockPushbackTotal: 0.22,
@@ -235,6 +261,13 @@ export class MatchSim {
     p2ClipId: 'idle',
     p2Crouching: false,
     guardClipFallback: false,
+    hitClipFallback: false,
+    lastHitReaction: '',
+    lastHitClipId: '',
+    p2KdPhase: 'none',
+    dummyWakeupStyle: 'normal' as DummyWakeupStyle,
+    moveHitstun: 0,
+    moveKnockdownFrames: 0,
     catalogCount: 0,
     lastMoveMiss: '',
     lastExecuteOk: false,
@@ -272,6 +305,8 @@ export class MatchSim {
     } else {
       this.opts.dummyGuardPolicy = 'block_all';
     }
+    this.dummy.setUnguardedStance(this.opts.dummyUnguardedStance);
+    this.dummy.setWakeupStyle(this.opts.dummyWakeupStyle);
     this.dummy.setGuardPolicy(this.opts.dummyGuardPolicy);
     this.debugProbe.catalogCount = this.catalog.size;
     this.debugProbe.forceP2Guard = this.opts.forceP2Guard;
@@ -690,7 +725,7 @@ export class MatchSim {
         this.p2.applyAttackResidualDisplacement(scale);
       }
     }
-    if (this.opts.enableBlockPush) {
+    if (this.opts.enableBlockPush || this.opts.enableHitPush) {
       this.p1.applyBlockPushDisplacement();
       this.p2.applyBlockPushDisplacement();
     }
@@ -708,7 +743,8 @@ export class MatchSim {
     if (
       this.p1.phase === 'attack' &&
       this.p1.mover.move?.clipId !== 'throw_fwd' &&
-      this.p1.mover.move?.clipId !== 'throw_back'
+      this.p1.mover.move?.clipId !== 'throw_back' &&
+      this.p2.phase !== 'knockdown'
     ) {
       const pendingGroup = this.p1.mover.unresolvedHitGroupAtCurrentFrame();
       const hits = this.p1.worldHitBoxes();
@@ -777,14 +813,60 @@ export class MatchSim {
           this.lastHitResult = 'block';
           this.hitstopTimer = br.hitstop;
         } else {
-          const dmg = Math.floor(mv.damage * this.opts.damageScale);
-          this.p2.applyHitstun(mv.hitstun, dmg);
+          const hr = resolveHitOnHit(mv, {
+            hitstopFramesOnHit: this.opts.hitstopFramesOnHit,
+            hitstunOverride: this.opts.hitstunOverride,
+            hitPushbackTotal: this.opts.hitPushbackTotal,
+            knockdownFramesOverride: this.opts.knockdownFramesOverride,
+          });
+          const hitSel = selectHitReactLogicId({
+            crouching,
+            guard: level,
+            hitstopOnHit: mv.hitstopOnHit,
+            guardStrength: mv.guardStrength,
+            hitAnim: hitAnimForHit(mv.hitAnim, pendingGroup),
+            hitAnimDir: mv.hitAnimDir,
+          });
+          const reactClipId = hitSel.logicId;
+          this.debugProbe.hitClipFallback = hitSel.fallback;
+          this.debugProbe.lastHitClipId = reactClipId;
+          this.debugProbe.lastHitReaction = hr.hitReaction;
+          this.debugProbe.moveHitstun = hr.hitstun;
+          this.debugProbe.moveKnockdownFrames = hr.knockdownFrames;
           this.p2.holdGuardLoopClipId = null;
+          if (hr.hitReaction === 'knockdown') {
+            this.p2.applyKnockdown(hr.knockdownFrames, {
+              sweepClipId: 'kd_sweep',
+              boundClipId: 'kd_bound',
+              downClipId: 'kd_down_loop',
+              riseClipId:
+                this.dummy.wakeupStyle === 'back' ? 'kd_rise_back' : 'kd_rise_normal',
+              backDx:
+                this.dummy.wakeupStyle === 'back' ? this.opts.wakeupBackDxTotal : 0,
+              downHoldOverride: this.opts.knockdownDownHoldOverride,
+            });
+          } else {
+            this.p2.applyHitstun(hr.hitstun, hr.damage, { reactClipId });
+          }
+          if (this.opts.enableHitPush && hr.pushbackTotal !== 0) {
+            let away: Facing = this.p1.facing;
+            if (this.p2.x < this.p1.x) away = -1;
+            else if (this.p2.x > this.p1.x) away = 1;
+            const steps =
+              mv.hitPushback && mv.hitPushback.length > 0
+                ? mv.hitPushback.slice()
+                : distributePushback(hr.pushbackTotal, hr.hitstun, {
+                    moveTime: hr.moveTime,
+                    easePower: this.opts.blockPushEasePower,
+                  });
+            if (hr.hitReaction === 'knockdown') {
+              this.p2.addBlockPushFront(steps, away);
+            } else {
+              this.p2.queueBlockPush(steps, away);
+            }
+          }
           this.lastHitResult = 'hit';
-          this.hitstopTimer =
-            mv.hitstopOnHit != null
-              ? mv.hitstopOnHit
-              : this.opts.hitstopFramesOnHit;
+          this.hitstopTimer = hr.hitstop;
         }
       }
     }
@@ -863,11 +945,14 @@ export class MatchSim {
     this.debugProbe.p2Phase = this.p2.phase;
     this.debugProbe.p2StunTimer = this.p2.stunTimer;
     this.debugProbe.p2ClipId = this.p2.clipId;
+    this.debugProbe.p2KdPhase = this.p2.kdPhase;
+    this.debugProbe.dummyWakeupStyle = this.dummy.wakeupStyle;
     this.debugProbe.p2Crouching = this.dummy.isCrouching() || this.p2.isHurtCrouching();
     this.debugProbe.catalogCount = this.catalog.size;
   }
 
   private syncP2GuardPresentation(): void {
+    if (this.p2.phase === 'knockdown') return;
     if (this.p2.phase === 'blockstun') {
       const wantCrouch = this.dummy.isCrouching();
       if (wantCrouch !== this.p2.isHurtCrouching()) {

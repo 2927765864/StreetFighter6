@@ -6,19 +6,499 @@
     "logicFps": 60,
     "maxLogicStepsPerRaf": 4,
     "maxFrameTimeMs": 100,
-    "worldScale": 1,
+    "worldScale": 0.9,
     "modelScale": 0.9,
     "modelYOffset": 0,
-    "cameraZ": 11,
-    "cameraY": 1.55,
+    "cameraZ": 5.3,
+    "cameraY": 1.25,
     "cameraLookY": 1.1,
-    "cameraFov": 40,
-    "cameraLerp": 0.12,
+    "cameraFov": 30,
+    "cameraZoomEnabled": true,
+    "cameraZoomSepK": 0.35,
+    "cameraZMax": 6,
+    "cameraNdcPad": 0.2,
+    "cameraLerp": 0.3,
     "cameraFollowDeadzone": 0.2,
+    "cameraNear": 0.05,
+    "cameraFar": 500,
+    "stageFitWidth": 18,
+    "stageOriginX": 0,
+    "stageOriginZ": 0,
+    "showFallbackGround": false,
+    "showDebugGrid": false,
+    "showAxes": false,
+    "lights": [
+      {
+        "id": "ambient",
+        "name": "环境光",
+        "type": "ambient",
+        "enabled": true,
+        "color": 15921896,
+        "intensity": 0.6,
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "target": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "castShadow": false,
+        "follow": "none"
+      },
+      {
+        "id": "point_msx665oa_1087",
+        "name": "点光左1",
+        "type": "point",
+        "enabled": true,
+        "color": 16777205,
+        "intensity": 3.6,
+        "position": {
+          "x": -1.6,
+          "y": 3.8,
+          "z": -7.247715342408959
+        },
+        "target": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "castShadow": false,
+        "distance": 0,
+        "decay": 0.9,
+        "follow": "none"
+      },
+      {
+        "id": "point_msx66spd_6983",
+        "name": "点光右1",
+        "type": "point",
+        "enabled": true,
+        "color": 16777205,
+        "intensity": 3.6,
+        "position": {
+          "x": 1.6,
+          "y": 3.8,
+          "z": -7.247715342408959
+        },
+        "target": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "castShadow": false,
+        "distance": 0,
+        "decay": 0.9,
+        "follow": "none"
+      },
+      {
+        "id": "point_msx67ubx_2632",
+        "name": "点光左2",
+        "type": "point",
+        "enabled": true,
+        "color": 16777205,
+        "intensity": 3.6,
+        "position": {
+          "x": -7.5,
+          "y": 3.8,
+          "z": -7.247715342408959
+        },
+        "target": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "castShadow": false,
+        "distance": 0,
+        "decay": 0.9,
+        "follow": "none"
+      },
+      {
+        "id": "point_msx68fp5_3559",
+        "name": "点光右2",
+        "type": "point",
+        "enabled": true,
+        "color": 16777205,
+        "intensity": 3.6,
+        "position": {
+          "x": 7.5,
+          "y": 3.8,
+          "z": -7.247715342408959
+        },
+        "target": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "castShadow": false,
+        "distance": 0,
+        "decay": 0.9,
+        "follow": "none"
+      },
+      {
+        "id": "point_msx69lls_9589",
+        "name": "p1点光1",
+        "type": "point",
+        "enabled": true,
+        "color": 16777205,
+        "intensity": 1.65,
+        "position": {
+          "x": 0.5541516047932795,
+          "y": 1.5615317917581446,
+          "z": 0.09688260066998983
+        },
+        "target": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "castShadow": false,
+        "distance": 0,
+        "decay": 0.95,
+        "follow": "p1",
+        "followOffsetPosX": 0.5541516047932795,
+        "followOffsetPosY": 1.5615317917581446,
+        "followOffsetTargetX": 0,
+        "followOffsetTargetY": 0
+      },
+      {
+        "id": "point_msx6iub9_2865",
+        "name": "p1点光2",
+        "type": "point",
+        "enabled": true,
+        "color": 13816319,
+        "intensity": 17.5,
+        "position": {
+          "x": -0.9564181032005408,
+          "y": 1.678050925280878,
+          "z": 0.1319056015948914
+        },
+        "target": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "castShadow": false,
+        "distance": 0,
+        "decay": 1.05,
+        "follow": "p1",
+        "followOffsetPosX": -0.9564181032005408,
+        "followOffsetPosY": 1.678050925280878,
+        "followOffsetTargetX": 0,
+        "followOffsetTargetY": 0
+      },
+      {
+        "id": "point_msx6lq0b_1931",
+        "name": "p1点光3",
+        "type": "point",
+        "enabled": true,
+        "color": 14474239,
+        "intensity": 1.2,
+        "position": {
+          "x": -0.6082207716955554,
+          "y": 0.2515409974041317,
+          "z": -0.4241941906376485
+        },
+        "target": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "castShadow": false,
+        "distance": 0,
+        "decay": 2.45,
+        "follow": "p1",
+        "followOffsetPosX": -0.6082207716955554,
+        "followOffsetPosY": 0.2515409974041317,
+        "followOffsetTargetX": 0,
+        "followOffsetTargetY": 0
+      },
+      {
+        "id": "point_4576ed44-f1b3-4112-ac41-c937f4077d42",
+        "name": "p1点光4",
+        "type": "point",
+        "enabled": true,
+        "color": 15329012,
+        "intensity": 3.2,
+        "position": {
+          "x": 1.2343211278266553,
+          "y": 1.0941698811470806,
+          "z": -0.4438351223615715
+        },
+        "target": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "castShadow": false,
+        "distance": 0,
+        "decay": 0.45,
+        "follow": "p1",
+        "followOffsetPosX": 1.2343211278266553,
+        "followOffsetPosY": 1.0941698811470806,
+        "followOffsetTargetX": 0,
+        "followOffsetTargetY": 0
+      },
+      {
+        "id": "spot_c836134d-e9bb-4260-9553-a60f88aa10c9",
+        "name": "p1聚光1",
+        "type": "spot",
+        "enabled": true,
+        "color": 16777215,
+        "intensity": 24.4,
+        "position": {
+          "x": 0.08000000000000007,
+          "y": 8.151036325479968,
+          "z": 8.22493856210377
+        },
+        "target": {
+          "x": 0.08000000000000007,
+          "y": 0.007242541876650755,
+          "z": 4.4
+        },
+        "castShadow": false,
+        "distance": 0,
+        "decay": 0.55,
+        "angle": 0.42,
+        "penumbra": 0.2,
+        "follow": "p1",
+        "followOffsetPosX": 0.08000000000000007,
+        "followOffsetPosY": 8.151036325479968,
+        "followOffsetTargetX": 0.08000000000000007,
+        "followOffsetTargetY": 0.007242541876650755
+      },
+      {
+        "id": "point_7ae18fd4-9cee-4736-b749-17ce39681d25",
+        "name": "p1点光5",
+        "type": "point",
+        "enabled": true,
+        "color": 16777215,
+        "intensity": 1.05,
+        "position": {
+          "x": 0.5794239348570926,
+          "y": 1.6920989688810493,
+          "z": 0.5078343303693067
+        },
+        "target": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "castShadow": false,
+        "distance": 0,
+        "decay": 2.9,
+        "follow": "p1",
+        "followOffsetPosX": 0.5794239348570926,
+        "followOffsetPosY": 1.6920989688810493,
+        "followOffsetTargetX": 0,
+        "followOffsetTargetY": 0
+      },
+      {
+        "id": "point_c24bdfaa-fe8e-4a74-979b-a8b5d4d2373e",
+        "name": "p1点光1 P2",
+        "type": "point",
+        "enabled": true,
+        "color": 16777215,
+        "intensity": 1.65,
+        "position": {
+          "x": 0.5541516047932795,
+          "y": 1.5615317917581446,
+          "z": 0.09688260066998983
+        },
+        "target": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "castShadow": false,
+        "distance": 0,
+        "decay": 0.95,
+        "follow": "p2",
+        "followOffsetPosX": 0.5541516047932795,
+        "followOffsetPosY": 1.5615317917581446,
+        "followOffsetTargetX": 0,
+        "followOffsetTargetY": 0
+      },
+      {
+        "id": "point_2ad8a0aa-a858-4c73-8eaf-bfa9bbf0c6bf",
+        "name": "p1点光2 P2",
+        "type": "point",
+        "enabled": true,
+        "color": 13816319,
+        "intensity": 17.5,
+        "position": {
+          "x": -0.9564181032005408,
+          "y": 1.678050925280878,
+          "z": 0.1319056015948914
+        },
+        "target": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "castShadow": false,
+        "distance": 0,
+        "decay": 1.05,
+        "follow": "p2",
+        "followOffsetPosX": -0.9564181032005408,
+        "followOffsetPosY": 1.678050925280878,
+        "followOffsetTargetX": 0,
+        "followOffsetTargetY": 0
+      },
+      {
+        "id": "point_8306baf5-7ac6-4ee3-b0cf-01194d8ba39d",
+        "name": "p1点光3 P2",
+        "type": "point",
+        "enabled": true,
+        "color": 14474239,
+        "intensity": 1.2,
+        "position": {
+          "x": -0.6082207716955554,
+          "y": 0.2515409974041317,
+          "z": -0.4241941906376485
+        },
+        "target": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "castShadow": false,
+        "distance": 0,
+        "decay": 2.45,
+        "follow": "p2",
+        "followOffsetPosX": -0.6082207716955554,
+        "followOffsetPosY": 0.2515409974041317,
+        "followOffsetTargetX": 0,
+        "followOffsetTargetY": 0
+      },
+      {
+        "id": "point_e1915794-67a5-40f6-9eea-f298a277c1ac",
+        "name": "p1点光4 P2",
+        "type": "point",
+        "enabled": true,
+        "color": 15329012,
+        "intensity": 3.2,
+        "position": {
+          "x": 1.2343211278266553,
+          "y": 1.0941698811470806,
+          "z": -0.4438351223615715
+        },
+        "target": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "castShadow": false,
+        "distance": 0,
+        "decay": 0.45,
+        "follow": "p2",
+        "followOffsetPosX": 1.2343211278266553,
+        "followOffsetPosY": 1.0941698811470806,
+        "followOffsetTargetX": 0,
+        "followOffsetTargetY": 0
+      },
+      {
+        "id": "spot_5899d4b4-66fe-4ea0-b5ca-4297556e9480",
+        "name": "p1聚光1 P2",
+        "type": "spot",
+        "enabled": true,
+        "color": 16777215,
+        "intensity": 24.4,
+        "position": {
+          "x": 0.08000000000000007,
+          "y": 8.151036325479968,
+          "z": 8.22493856210377
+        },
+        "target": {
+          "x": 0.08000000000000007,
+          "y": 0.007242541876650755,
+          "z": 4.4
+        },
+        "castShadow": false,
+        "distance": 0,
+        "decay": 0.55,
+        "angle": 0.42,
+        "penumbra": 0.2,
+        "follow": "p2",
+        "followOffsetPosX": 0.08000000000000007,
+        "followOffsetPosY": 8.151036325479968,
+        "followOffsetTargetX": 0.08000000000000007,
+        "followOffsetTargetY": 0.007242541876650755
+      },
+      {
+        "id": "point_40a36a26-7362-4824-aac1-3938b2fa8f86",
+        "name": "p1点光5 P2",
+        "type": "point",
+        "enabled": true,
+        "color": 16777215,
+        "intensity": 1.05,
+        "position": {
+          "x": 0.5794239348570926,
+          "y": 1.6920989688810493,
+          "z": 0.5078343303693067
+        },
+        "target": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "castShadow": false,
+        "distance": 0,
+        "decay": 2.9,
+        "follow": "p2",
+        "followOffsetPosX": 0.5794239348570926,
+        "followOffsetPosY": 1.6920989688810493,
+        "followOffsetTargetX": 0,
+        "followOffsetTargetY": 0
+      },
+      {
+        "id": "directional_4bbfe1fe-b7f2-4699-a21e-b07935d26712",
+        "name": "方向光",
+        "type": "directional",
+        "enabled": true,
+        "color": 16777215,
+        "intensity": 1.85,
+        "position": {
+          "x": 0,
+          "y": 2.430747696209427,
+          "z": 2.909122519128485
+        },
+        "target": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "castShadow": true,
+        "shadowOnly": true,
+        "follow": "none"
+      }
+    ],
+    "lightSelectedId": "directional_4bbfe1fe-b7f2-4699-a21e-b07935d26712",
+    "lightHelpersVisible": false,
+    "lightOrbitMode": false,
+    "lightOrbitPipX": 12,
+    "lightOrbitPipY": 12,
+    "lightOrbitPipWidth": 367,
+    "lightOrbitPipHeight": 212,
+    "lightMaxCount": 30,
+    "lightUseDynamicLighting": true,
+    "shadowMapEnabled": true,
+    "shadowMapSize": 2048,
+    "shadowCameraExtent": 20,
+    "shadowCameraNear": 0.5,
+    "shadowCameraFar": 80,
+    "shadowBias": -0.0001,
+    "shadowNormalBias": 0.02,
+    "shadowRadius": 2,
+    "fogColor": 1712176,
+    "fogNear": 40,
+    "fogFar": 80,
+    "bgColor": 1712176,
     "timeScaleAnim": 1,
     "bufferFrames": 32,
-    "showHitboxes": false,
-    "showHurtboxes": false,
+    "showHitboxes": true,
+    "showHurtboxes": true,
     "showPushboxes": false,
     "hurtPartColors": true,
     "showBuffer": false,
@@ -27,10 +507,19 @@
     "hurtboxColor": 3407718,
     "pushboxColor": 16763955,
     "forceP2Guard": true,
-    "dummyGuardPolicy": "block_all",
+    "dummyGuardPolicy": "none",
+    "dummyUnguardedStance": "stand",
+    "dummyWakeupStyle": "normal",
+    "enableHitPush": true,
+    "hitPushbackTotal": 0,
+    "hitstunOverride": -1,
+    "knockdownFramesOverride": -1,
+    "knockdownDownHoldOverride": -1,
+    "wakeupBackDxTotal": 0.8,
     "enablePushResolve": true,
     "enableBlockPush": true,
     "blockPushbackTotal": 0.22,
+    "blockPushEasePower": 3,
     "blockstunOverride": -1,
     "damageScale": 1,
     "mmdkUnitScale": 1,
@@ -107,7 +596,7 @@
     "landingAnimFrames": 20,
     "neutralLandToRiseIdleRatio": 0.2,
     "neutralLandToRiseTurnRatio": 0.2,
-    "neutralRiseToTurnDissolveRatio": 1,
+    "neutralRiseToTurnDissolveRatio": 0.1,
     "walkSpeed": 0.047,
     "walkBackSpeed": 0.032,
     "walkFirstFrameScale": 0.25,
@@ -154,117 +643,6 @@
       "extendedSim": false,
       "extendedLoco": false,
       "extendedAnim": false
-    },
-    "lights": [
-      {
-        "id": "ambient",
-        "name": "环境光",
-        "type": "ambient",
-        "enabled": true,
-        "color": 16777215,
-        "intensity": 0.3,
-        "position": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "target": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "castShadow": false
-      },
-      {
-        "id": "hemi",
-        "name": "半球光",
-        "type": "hemisphere",
-        "enabled": true,
-        "color": 15254766,
-        "intensity": 0.5,
-        "position": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "target": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "groundColor": 9078400,
-        "castShadow": false
-      },
-      {
-        "id": "key",
-        "name": "主光",
-        "type": "directional",
-        "enabled": true,
-        "color": 16054510,
-        "intensity": 1.05,
-        "position": {
-          "x": 0,
-          "y": 16,
-          "z": 4
-        },
-        "target": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "castShadow": true
-      },
-      {
-        "id": "fill",
-        "name": "补光",
-        "type": "directional",
-        "enabled": true,
-        "color": 11193600,
-        "intensity": 0,
-        "position": {
-          "x": -9,
-          "y": 5,
-          "z": -3
-        },
-        "target": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "castShadow": false
-      },
-      {
-        "id": "rim",
-        "name": "轮廓光",
-        "type": "directional",
-        "enabled": true,
-        "color": 16777215,
-        "intensity": 0.32,
-        "position": {
-          "x": 0,
-          "y": 8,
-          "z": -10
-        },
-        "target": {
-          "x": 0,
-          "y": 0,
-          "z": 0
-        },
-        "castShadow": false
-      }
-    ],
-    "lightSelectedId": "key",
-    "lightHelpersVisible": true,
-    "lightOrbitMode": false,
-    "lightMaxCount": 30,
-    "lightUseDynamicLighting": true,
-    "shadowMapEnabled": true,
-    "shadowMapSize": 2048,
-    "shadowCameraExtent": 20,
-    "shadowCameraNear": 0.5,
-    "shadowCameraFar": 80,
-    "shadowBias": -0.0001,
-    "shadowNormalBias": 0.02,
-    "shadowRadius": 2
+    }
   }
 }

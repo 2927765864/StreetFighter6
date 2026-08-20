@@ -1,0 +1,280 @@
+{
+  "retrieved": "2026-08-20",
+  "source": "private/mmdk/Ryu/hit_dt.json",
+  "hitDtIndex": {
+    "ryu_5lp": 15,
+    "ryu_2hk": 52
+  },
+  "note": "DownTime differs (3 vs 10). Used as knockdown *down-hold* segment, not full wakeup. DmgType 3 vs 6.",
+  "common0_keys": [
+    "ArmorPoint",
+    "Attr0",
+    "Attr1",
+    "Attr2",
+    "Attr3",
+    "BoundDest",
+    "ComboAdd",
+    "CurveOwnID",
+    "CurveTgtID",
+    "DmgKind",
+    "DmgPart",
+    "DmgPower",
+    "DmgRecover",
+    "DmgRecover0",
+    "DmgType",
+    "DmgValue",
+    "DmgValue0",
+    "DmgVari",
+    "DownTime",
+    "DriveJust",
+    "DriveNorm",
+    "Ext0",
+    "Ext1",
+    "FloorDest",
+    "FloorTime",
+    "FocusOwn",
+    "FocusTgt",
+    "HitStopOwner",
+    "HitStopTarget",
+    "HitStun",
+    "Hitmark",
+    "HitmarkDirX",
+    "HitmarkDirY",
+    "HitmarkDirZ",
+    "HitmarkID",
+    "HitmarkStrength",
+    "IsDummy",
+    "Juggle1st",
+    "JuggleAdd",
+    "JuggleLimit",
+    "MoveDest",
+    "MoveTime",
+    "MoveType",
+    "MutekiTime",
+    "ParryStopOwner",
+    "ParryStopTarget",
+    "PiyoPoint",
+    "ScreenVib",
+    "SndAttr",
+    "SndDelay",
+    "SndDown",
+    "SndExtra",
+    "SndExtra2",
+    "SndPower",
+    "SndPrio",
+    "SndType",
+    "SndVcKO",
+    "SndVoice",
+    "SuperOwn",
+    "SuperTgt",
+    "ThrowRelease",
+    "WallDest",
+    "WallStop",
+    "WallTime",
+    "_IsStrength_H",
+    "_IsStrength_L",
+    "_IsStrength_M",
+    "_IsStrength_S",
+    "_aerial_finish",
+    "_apply_hit_pos",
+    "_apply_master",
+    "_apply_velocity",
+    "_back_damage",
+    "_black_combo",
+    "_bomb_burst",
+    "_bound_piyo",
+    "_bound_piyo_WTM",
+    "_catch_adj",
+    "_chara_forward",
+    "_chara_reverse",
+    "_cho_bu",
+    "_dmg_catch",
+    "_front_damage",
+    "_grd_catch",
+    "_hit_catch",
+    "_jimen_bound",
+    "_kabe_bound",
+    "_kabe_bound_1st",
+    "_kabe_bound_stg",
+    "_kabe_tataki",
+    "_kezu_down",
+    "_kezu_stand",
+    "_no_combo",
+    "_no_death",
+    "_no_esc",
+    "_no_gauge_gain",
+    "_no_hit_stop",
+    "_no_kezu_death",
+    "_no_rolling",
+    "_no_zu",
+    "_nrm_catch",
+    "_poison_burst",
+    "_shl_catch",
+    "_weak_attack"
+  ],
+  "DownTime": {
+    "ryu_5lp": 3,
+    "ryu_2hk": 10
+  },
+  "DmgType": {
+    "ryu_5lp": 3,
+    "ryu_2hk": 6
+  },
+  "HitStun": {
+    "ryu_5lp": 14,
+    "ryu_2hk": 20
+  },
+  "MoveDest": {
+    "ryu_5lp": {
+      "x": 27,
+      "y": 0
+    },
+    "ryu_2hk": {
+      "x": 20,
+      "y": 50
+    }
+  },
+  "diff": [
+    {
+      "key": "Attr1",
+      "ryu_5lp": 0,
+      "ryu_2hk": 64
+    },
+    {
+      "key": "Attr3",
+      "ryu_5lp": 0,
+      "ryu_2hk": 8
+    },
+    {
+      "key": "CurveOwnID",
+      "ryu_5lp": 1,
+      "ryu_2hk": 3
+    },
+    {
+      "key": "CurveTgtID",
+      "ryu_5lp": 1,
+      "ryu_2hk": 6
+    },
+    {
+      "key": "DmgPower",
+      "ryu_5lp": 0,
+      "ryu_2hk": 2
+    },
+    {
+      "key": "DmgType",
+      "ryu_5lp": 3,
+      "ryu_2hk": 6
+    },
+    {
+      "key": "DmgValue",
+      "ryu_5lp": 300,
+      "ryu_2hk": 900
+    },
+    {
+      "key": "DmgVari",
+      "ryu_5lp": 0,
+      "ryu_2hk": 1
+    },
+    {
+      "key": "DownTime",
+      "ryu_5lp": 3,
+      "ryu_2hk": 10
+    },
+    {
+      "key": "FocusOwn",
+      "ryu_5lp": 250,
+      "ryu_2hk": 3000
+    },
+    {
+      "key": "HitStopOwner",
+      "ryu_5lp": 9,
+      "ryu_2hk": 13
+    },
+    {
+      "key": "HitStopTarget",
+      "ryu_5lp": 9,
+      "ryu_2hk": 13
+    },
+    {
+      "key": "HitStun",
+      "ryu_5lp": 14,
+      "ryu_2hk": 20
+    },
+    {
+      "key": "HitmarkStrength",
+      "ryu_5lp": 0,
+      "ryu_2hk": 2
+    },
+    {
+      "key": "JuggleLimit",
+      "ryu_5lp": 0,
+      "ryu_2hk": 5
+    },
+    {
+      "key": "MoveDest",
+      "ryu_5lp": {
+        "x": 27,
+        "y": 0
+      },
+      "ryu_2hk": {
+        "x": 20,
+        "y": 50
+      }
+    },
+    {
+      "key": "MoveTime",
+      "ryu_5lp": 14,
+      "ryu_2hk": 20
+    },
+    {
+      "key": "MoveType",
+      "ryu_5lp": 0,
+      "ryu_2hk": 18
+    },
+    {
+      "key": "ScreenVib",
+      "ryu_5lp": -1,
+      "ryu_2hk": 2
+    },
+    {
+      "key": "SndPower",
+      "ryu_5lp": 1,
+      "ryu_2hk": 0
+    },
+    {
+      "key": "SndVoice",
+      "ryu_5lp": 600,
+      "ryu_2hk": 602
+    },
+    {
+      "key": "SuperOwn",
+      "ryu_5lp": 300,
+      "ryu_2hk": 1000
+    },
+    {
+      "key": "SuperTgt",
+      "ryu_5lp": 210,
+      "ryu_2hk": 700
+    },
+    {
+      "key": "_IsStrength_H",
+      "ryu_5lp": false,
+      "ryu_2hk": true
+    },
+    {
+      "key": "_IsStrength_L",
+      "ryu_5lp": true,
+      "ryu_2hk": false
+    },
+    {
+      "key": "_back_damage",
+      "ryu_5lp": false,
+      "ryu_2hk": true
+    },
+    {
+      "key": "_no_rolling",
+      "ryu_5lp": false,
+      "ryu_2hk": true
+    }
+  ]
+}

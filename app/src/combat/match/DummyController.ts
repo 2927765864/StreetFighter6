@@ -1,4 +1,9 @@
-import type { DummyGuardPolicy, DummyMode } from '../types';
+import type {
+  DummyGuardPolicy,
+  DummyMode,
+  DummyUnguardedStance,
+  DummyWakeupStyle,
+} from '../types';
 
 /**
  * D2: preset stand / crouch / block modes. No record-playback.
@@ -7,6 +12,8 @@ import type { DummyGuardPolicy, DummyMode } from '../types';
 export class DummyController {
   mode: DummyMode = 'stand_block';
   guardPolicy: DummyGuardPolicy = 'block_all';
+  wakeupStyle: DummyWakeupStyle = 'normal';
+  unguardedStance: DummyUnguardedStance = 'stand';
 
   setMode(mode: DummyMode): void {
     this.mode = mode;
@@ -25,10 +32,23 @@ export class DummyController {
       if (this.mode !== 'stand_block' && this.mode !== 'crouch_block') {
         this.mode = 'stand_block';
       }
+    } else if (policy === 'none') {
+      this.mode = this.unguardedStance === 'crouch' ? 'crouch' : 'stand';
     } else if (this.mode === 'stand_block') {
       this.mode = 'stand';
     } else if (this.mode === 'crouch_block') {
       this.mode = 'crouch';
+    }
+  }
+
+  setWakeupStyle(style: DummyWakeupStyle): void {
+    this.wakeupStyle = style;
+  }
+
+  setUnguardedStance(stance: DummyUnguardedStance): void {
+    this.unguardedStance = stance;
+    if (this.guardPolicy === 'none') {
+      this.mode = stance === 'crouch' ? 'crouch' : 'stand';
     }
   }
 

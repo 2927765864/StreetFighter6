@@ -609,6 +609,8 @@ function extractFromAction(action, rectTable, hitDt, scale) {
         hitMeta.hitstopOnHit = num(stand.HitStopTarget, num(stand.HitStopOwner, 0));
         const md = stand.MoveDest?.x ?? stand.MoveDest?.X;
         if (md != null) hitMeta.hitPushTotal = num(md) * scale;
+        const mtHit = stand.MoveTime;
+        if (mtHit != null) hitMeta.hitPushMoveTime = Math.max(1, Math.floor(num(mtHit, 0)));
       }
       if (block) {
         hitMeta.blockstun = num(block.HitStun, hitMeta.hitstun ?? 0);
@@ -726,6 +728,8 @@ function mergePublicAndMmdk(publicMove, part, meta) {
   if (hm.hitstopOnBlock != null) out.hitstopOnBlock = hm.hitstopOnBlock;
   if (hm.blockPushbackTotal != null) out.blockPushbackTotal = hm.blockPushbackTotal;
   if (hm.blockPushMoveTime != null) out.blockPushMoveTime = hm.blockPushMoveTime;
+  if (hm.hitPushTotal != null) out.hitPushbackTotal = hm.hitPushTotal;
+  if (hm.hitPushMoveTime != null) out.hitPushMoveTime = hm.hitPushMoveTime;
   if (hm.guardStrength) out.guardStrength = hm.guardStrength;
 
   out.mmdk = {

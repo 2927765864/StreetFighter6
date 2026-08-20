@@ -16,6 +16,17 @@
 
 ---
 
+## 0.1 命中推开（2026-08-20）
+
+公开 FAT **没有**逐帧受击位移曲线。权威在本机 MMDK `HIT_DT` 命中侧 `MoveDest` + `MoveTime`（`CurveTgtID` 无公开采样表）。
+
+| 落盘 | 内容 |
+|------|------|
+| `mmdk-ryu-hit-push-fields.json` | 43 招 MoveDest/MoveTime 摘录 |
+| `app/public/data/moves/ryu_*.json` | 已写 `hitPushbackTotal` / `hitPushMoveTime` / `hitPushback[]`（ease-out 按 MoveTime 烘焙，与格挡推开同一算法） |
+
+投技 / 电刃蓄力无 HIT_DT，未写。
+
 ## 1. 逐招帧 JSON — 已搜集并转换
 
 ### 1.1 公开机器可读源（本次采用）

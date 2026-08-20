@@ -24,6 +24,12 @@ export type DummyMode = 'stand' | 'crouch' | 'stand_block' | 'crouch_block';
 /** Training dummy guard policy (consensus-block-guard-v0). `none` = not guarding. */
 export type DummyGuardPolicy = 'block_all' | 'stand_block' | 'crouch_block' | 'none';
 
+export type DummyWakeupStyle = 'normal' | 'back';
+
+export type DummyUnguardedStance = 'stand' | 'crouch';
+
+export type KnockdownPhase = 'none' | 'sweep' | 'bound' | 'down' | 'rise';
+
 export type HitResult = 'whiff' | 'hit' | 'block' | 'none';
 
 export type NumpadDir = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;

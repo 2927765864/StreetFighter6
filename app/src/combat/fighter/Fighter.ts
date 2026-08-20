@@ -10,6 +10,7 @@ import type {
   Facing,
   FighterPhase,
   JumpPhase,
+  KnockdownPhase,
   LocoPhase,
   NumpadDir,
 } from '../types';
@@ -34,6 +35,7 @@ import {
   type MoveStance,
 } from '../anim/AnimResidual';
 import type { StanceBoxTable } from '../../data/loadStanceBoxes';
+import { splitKnockdown } from '../systems/HitResolve';
 
 function normalizeMoveKey(id: string): string {
   return id.replace(/^ryu_/i, '').replace(/[-_\s]/g, '').toLowerCase();
@@ -65,6 +67,19 @@ export class Fighter {
   visualFacing: Facing;
   hp: number;
   stunTimer = 0;
+  /** Frames passed to last applyHitstun (for view scrub). */
+  stunDuration = 0;
+  kdPhase: KnockdownPhase = 'none';
+  kdTimer = 0;
+  knockdownFrames = 0;
+  kdSweepLen = 20;
+  kdBoundLen = 15;
+  kdDownLen = 1;
+  kdRiseLen = 42;
+  kdSweepClipId = 'kd_sweep';
+  kdBoundClipId = 'kd_bound';
+  kdDownClipId = 'kd_down_loop';
+  kdRiseClipId = 'kd_rise_normal';
   /** dash / prejump / air / landing timers */
   stateTimer = 0;
   dashDir: Facing = 1;
@@ -283,7 +298,8 @@ export class Fighter {
       this.phase === 'attack' ||
       this.phase === 'dash' ||
       this.phase === 'hitstun' ||
-      this.phase === 'blockstun'
+      this.phase === 'blockstun' ||
+      this.phase === 'knockdown'
     ) {
       this.clearTurn();
       if (!this.airborne) this.applyVisualFacing();
@@ -408,6 +424,21 @@ export class Fighter {
     this.blockPushDir = awayDir;
   }
 
+  /** Add per-frame dx onto the front of an existing push queue (knockdown + hit slide). */
+  addBlockPushFront(steps: number[], awayDir: Facing): void {
+    this.blockPushDir = awayDir;
+    if (this.blockPushQueue.length === 0) {
+      this.blockPushQueue = steps.slice();
+      return;
+    }
+    const n = Math.max(this.blockPushQueue.length, steps.length);
+    const next = new Array(n).fill(0);
+    for (let i = 0; i < n; i++) {
+      next[i] = (this.blockPushQueue[i] ?? 0) + (steps[i] ?? 0);
+    }
+    this.blockPushQueue = next;
+  }
+
   /**
    * Apply attack Place at current locked moveFrame (before advance).
    * Does not advance the frame counter.
@@ -495,7 +526,8 @@ export class Fighter {
       this.phase === 'airborne' ||
       this.phase === 'landing' ||
       this.phase === 'hitstun' ||
-      this.phase === 'blockstun'
+      this.phase === 'blockstun' ||
+      this.phase === 'knockdown'
     ) {
       return;
     }
@@ -1155,17 +1187,25 @@ export class Fighter {
     }
   }
 
-  applyHitstun(frames: number, damage: number): void {
+  applyHitstun(
+    frames: number,
+    damage: number,
+    opts?: { reactClipId?: string },
+  ): void {
+    if (frames <= 0) return;
     this.clearAnimTail();
     this.clearAttackResidual();
     this.clearBlockPush();
+    this.clearKnockdown();
     this.stanceState = clearStanceTo(false);
     this.phase = 'hitstun';
     this.stunTimer = frames;
+    this.stunDuration = frames;
     this.hp = Math.max(0, this.hp - damage);
     this.mover.move = null;
-    this.clipId = 'hitstun_light';
+    this.clipId = opts?.reactClipId ?? 'dmg_hl_st';
     this.animRole = 'main';
+    this.clipRestartSeq += 1;
     this.stateTimer = 0;
     this.airTimeRemain = 0;
     this.clearLoco();
@@ -1174,6 +1214,95 @@ export class Fighter {
     this.clearTurn();
     this.applyVisualFacing();
     this.y = 0;
+  }
+
+  clearKnockdown(): void {
+    this.kdPhase = 'none';
+    this.kdTimer = 0;
+    this.knockdownFrames = 0;
+  }
+
+  applyKnockdown(
+    frames: number,
+    opts: {
+      sweepClipId: string;
+      boundClipId?: string;
+      downClipId: string;
+      riseClipId: string;
+      backDx?: number;
+      downHoldOverride?: number;
+    },
+  ): void {
+    const parts = splitKnockdown(frames, opts.downHoldOverride ?? -1);
+    this.clearAnimTail();
+    this.clearAttackResidual();
+    this.stanceState = clearStanceTo(false);
+    this.phase = 'knockdown';
+    this.kdSweepLen = parts.sweepLen;
+    this.kdBoundLen = parts.boundLen;
+    this.kdDownLen = parts.downLen;
+    this.kdRiseLen = parts.riseLen;
+    this.knockdownFrames = parts.total;
+    this.kdTimer = parts.total;
+    this.stunTimer = parts.total;
+    this.stunDuration = parts.total;
+    this.kdSweepClipId = opts.sweepClipId;
+    this.kdBoundClipId = opts.boundClipId ?? 'kd_bound';
+    this.kdDownClipId = opts.downClipId;
+    this.kdRiseClipId = opts.riseClipId;
+    this.mover.move = null;
+    this.animRole = 'main';
+    this.clipRestartSeq += 1;
+    this.stateTimer = 0;
+    this.airTimeRemain = 0;
+    this.clearLoco();
+    this.jumpPhase = 'none';
+    this.usedAirNormal = false;
+    this.clearTurn();
+    this.applyVisualFacing();
+    this.y = 0;
+    this.syncKnockdownClip();
+    const back = opts.backDx ?? 0;
+    this.clearBlockPush();
+    if (back !== 0 && parts.riseLen > 0) {
+      const zeros = new Array(
+        Math.max(0, parts.sweepLen + parts.boundLen + parts.downLen),
+      ).fill(0);
+      const riseSteps: number[] = [];
+      const n = parts.riseLen;
+      for (let i = 0; i < n; i++) riseSteps.push(back / n);
+      const away: Facing = this.facing === 1 ? -1 : 1;
+      this.queueBlockPush([...zeros, ...riseSteps], away);
+    }
+  }
+
+  private syncKnockdownClip(): void {
+    const rem = this.kdTimer;
+    const rise = this.kdRiseLen;
+    const down = this.kdDownLen;
+    const bound = this.kdBoundLen;
+    let next: KnockdownPhase;
+    let clip: string;
+    if (rem > rise + down + bound) {
+      next = 'sweep';
+      clip = this.kdSweepClipId;
+    } else if (rem > rise + down) {
+      next = 'bound';
+      clip = this.kdBoundClipId;
+    } else if (rem > rise) {
+      next = 'down';
+      clip = this.kdDownClipId;
+    } else {
+      next = 'rise';
+      clip = this.kdRiseClipId;
+    }
+    if (next !== this.kdPhase) {
+      this.kdPhase = next;
+      this.clipId = clip;
+      this.clipRestartSeq += 1;
+    } else {
+      this.clipId = clip;
+    }
   }
 
   /** After blockstun, rest clip (idle / crouch) — not guard loop. */
@@ -1301,6 +1430,22 @@ export class Fighter {
           this.holdGuardLoopClipId = null;
         }
       }
+      return;
+    }
+    if (this.phase === 'knockdown') {
+      this.kdTimer -= 1;
+      this.stunTimer = this.kdTimer;
+      if (this.kdTimer <= 0) {
+        this.kdTimer = 0;
+        this.stunTimer = 0;
+        this.clearKnockdown();
+        this.phase = 'idle';
+        this.clipId = 'idle';
+        this.animRole = 'main';
+        this.stanceState = clearStanceTo(false);
+        return;
+      }
+      this.syncKnockdownClip();
       return;
     }
     if (this.phase === 'dash') {

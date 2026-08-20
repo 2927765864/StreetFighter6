@@ -52,6 +52,13 @@ export type MoveDefinition = {
    */
   /** Stand-block anim height; array = per hit group (6MP m then l). */
   guardAnim?: 'h' | 'm' | 'l' | Array<'h' | 'm' | 'l'>;
+  /**
+   * Ungarded hit *body* height (DMG letter). Independent of guardAnim.
+   * 5HP guardAnim=m (block chest) but hitAnim=h (head reel).
+   */
+  hitAnim?: 'h' | 'm' | 'l' | Array<'h' | 'm' | 'l'>;
+  /** DMG suffix st/lt/rt. Default st. 5MP = lt. */
+  hitAnimDir?: 'st' | 'lt' | 'rt';
   cancel: {
     specialCancel: boolean;
     superOnly?: boolean;
@@ -88,6 +95,15 @@ export type MoveDefinition = {
   blockPushbackTotal?: number;
   /** HIT_DT MoveTime: frames to finish block MoveDest (not a speed). */
   blockPushMoveTime?: number;
+  /** HIT_DT hit-side MoveDest.x × scale. */
+  hitPushbackTotal?: number;
+  hitPushMoveTime?: number;
+  /** Per-frame defender push on hit (logical units). */
+  hitPushback?: number[];
+  /** stun (default) or grounded knockdown. */
+  hitReaction?: 'stun' | 'knockdown';
+  /** Contact→canAct frames for knockdown (not hitstun). */
+  knockdownFrames?: number;
   /** Support-foot plant window (attack only). Consensus §3.9 */
   plant?: PlantWindow;
   /**
@@ -227,6 +243,24 @@ export function parseMoveDefinition(raw: unknown): MoveDefinition {
   if (o.blockPushMoveTime != null && Number.isFinite(Number(o.blockPushMoveTime))) {
     blockPushMoveTime = Math.max(1, Math.floor(Number(o.blockPushMoveTime)));
   }
+  let hitPushbackTotal: number | undefined;
+  if (o.hitPushbackTotal != null && Number.isFinite(Number(o.hitPushbackTotal))) {
+    hitPushbackTotal = Number(o.hitPushbackTotal);
+  }
+  let hitPushMoveTime: number | undefined;
+  if (o.hitPushMoveTime != null && Number.isFinite(Number(o.hitPushMoveTime))) {
+    hitPushMoveTime = Math.max(1, Math.floor(Number(o.hitPushMoveTime)));
+  }
+  let hitPushback: number[] | undefined;
+  if (Array.isArray(o.hitPushback)) {
+    hitPushback = (o.hitPushback as unknown[]).map((v) => asNum(v, 0));
+  }
+  const hitReaction: MoveDefinition['hitReaction'] =
+    String(o.hitReaction ?? '').toLowerCase() === 'knockdown' ? 'knockdown' : 'stun';
+  let knockdownFrames: number | undefined;
+  if (o.knockdownFrames != null && Number.isFinite(Number(o.knockdownFrames))) {
+    knockdownFrames = Math.max(0, Math.floor(Number(o.knockdownFrames)));
+  }
 
   let hitstopOnBlock: number | undefined;
   if (o.hitstopOnBlock != null && Number.isFinite(Number(o.hitstopOnBlock))) {
@@ -350,6 +384,20 @@ export function parseMoveDefinition(raw: unknown): MoveDefinition {
     if (one) guardAnim = one;
   }
 
+  let hitAnim: MoveDefinition['hitAnim'];
+  if (Array.isArray(o.hitAnim)) {
+    const list = (o.hitAnim as unknown[]).map(parseLetter).filter(
+      (x): x is 'h' | 'm' | 'l' => x != null,
+    );
+    if (list.length) hitAnim = list;
+  } else {
+    const one = parseLetter(o.hitAnim);
+    if (one) hitAnim = one;
+  }
+  let hitAnimDir: MoveDefinition['hitAnimDir'];
+  const hd = String(o.hitAnimDir ?? '').trim().toLowerCase();
+  if (hd === 'st' || hd === 'lt' || hd === 'rt') hitAnimDir = hd;
+
   let mmdk: MoveDefinition['mmdk'];
   if (o.mmdk && typeof o.mmdk === 'object') {
     const mm = o.mmdk as Record<string, unknown>;
@@ -410,6 +458,11 @@ export function parseMoveDefinition(raw: unknown): MoveDefinition {
     blockPushback,
     blockPushbackTotal,
     blockPushMoveTime,
+    hitPushbackTotal,
+    hitPushMoveTime,
+    hitPushback,
+    hitReaction,
+    knockdownFrames,
     plant,
     animFrameCount,
     glbPath,
@@ -418,6 +471,8 @@ export function parseMoveDefinition(raw: unknown): MoveDefinition {
     guard,
     guardStrength,
     guardAnim,
+    hitAnim,
+    hitAnimDir,
   };
 }
 
