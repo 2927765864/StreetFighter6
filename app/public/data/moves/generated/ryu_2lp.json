@@ -36,7 +36,7 @@
       {
         "fromFrame": 3,
         "toFrame": 13,
-        "into": "special|super|di|dr",
+        "into": "special|super|di|dr|self",
         "placeholder": true
       }
     ]

@@ -35,6 +35,16 @@ import {
 } from '../anim/AnimResidual';
 import type { StanceBoxTable } from '../../data/loadStanceBoxes';
 
+function normalizeMoveKey(id: string): string {
+  return id.replace(/^ryu_/i, '').replace(/[-_\s]/g, '').toLowerCase();
+}
+
+function sameMoveId(move: MoveDefinition, intoMoveId: string): boolean {
+  const want = normalizeMoveKey(intoMoveId);
+  const ids = [move.id, move.moveId, move.clipId].filter(Boolean);
+  return ids.some((id) => normalizeMoveKey(id) === want);
+}
+
 /**
  * Post-total action timeline for Place / Hurt / Push (consensus §3.12).
  * Alias of action timeline residual (plan §2.3 / §6 migration note).
@@ -311,6 +321,18 @@ export class Fighter {
     if (this.phase !== 'attack' || !this.mover.move) return false;
     if (!this.mover.move.cancel.specialCancel) return false;
     return this.mover.inCancelWindow('special');
+  }
+
+  /**
+   * Rapid / self-cancel: current normal may interrupt into the same move
+   * (SF6 5LP mash, 2LP mash), including on whiff, while a `self` window is open.
+   */
+  canSelfCancel(enableCancel: boolean, intoMoveId?: string): boolean {
+    if (!enableCancel) return false;
+    if (this.phase !== 'attack' || !this.mover.move) return false;
+    if (!this.mover.inCancelWindow('self')) return false;
+    if (!intoMoveId) return true;
+    return sameMoveId(this.mover.move, intoMoveId);
   }
 
   clearLoco(): void {

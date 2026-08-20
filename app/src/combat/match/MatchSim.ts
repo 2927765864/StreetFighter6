@@ -424,7 +424,11 @@ export class MatchSim {
     }
     if (intent.kind === 'normal') {
       if (intent.airOnly) return this.p1.canAirAct();
-      return this.p1.canAct() || this.p1.canLandingAttack();
+      return (
+        this.p1.canAct() ||
+        this.p1.canLandingAttack() ||
+        this.p1.canSelfCancel(this.opts.enableCancel, intent.moveId)
+      );
     }
     if (intent.kind === 'dash_fwd' || intent.kind === 'dash_back') {
       return this.p1.canAct();

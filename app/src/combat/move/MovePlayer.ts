@@ -173,8 +173,9 @@ export class MovePlayer {
     if (!this.move) return '—';
     const c = this.move.cancel;
     const inSp = this.inCancelWindow('special');
+    const inSelf = this.inCancelWindow('self');
     const w0 = c.windows[0];
     const win = w0 ? `${w0.fromFrame}-${w0.toFrame}` : 'none';
-    return `special=${c.specialCancel} in=${inSp ? 1 : 0} win=${win}`;
+    return `special=${c.specialCancel} in=${inSp ? 1 : 0} self=${inSelf ? 1 : 0} win=${win}`;
   }
 }
