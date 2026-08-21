@@ -1,0 +1,157 @@
+{
+  "id": "ryu_jlp",
+  "characterId": "ryu",
+  "moveId": "ryu_jlp",
+  "displayName": "Jumping Light Punch",
+  "frames": {
+    "startup": 4,
+    "active": 10,
+    "recovery": 0,
+    "total": 14
+  },
+  "advantage": {
+    "onHit": 0,
+    "onBlock": 0
+  },
+  "damage": 300,
+  "hitCount": 1,
+  "hitstun": 13,
+  "blockstun": 13,
+  "cancel": {
+    "specialCancel": false,
+    "superOnly": false,
+    "targetCombo": [],
+    "windows": []
+  },
+  "boxes": {
+    "hurt": [
+      {
+        "x": 0,
+        "y": 1.6159638554216869,
+        "w": 0.8,
+        "h": 0.8915662650602411,
+        "from": 0,
+        "to": 12,
+        "part": "body",
+        "layer": "base",
+        "rectId": 144
+      },
+      {
+        "x": 0,
+        "y": 0.947289156626506,
+        "w": 0.8,
+        "h": 0.44578313253012053,
+        "from": 0,
+        "to": 12,
+        "part": "body",
+        "layer": "base",
+        "rectId": 145
+      },
+      {
+        "x": 0.5,
+        "y": 1.3039156626506025,
+        "w": 0.22,
+        "h": 0.6240963855421687,
+        "from": 3,
+        "to": 14,
+        "part": "body",
+        "layer": "extend",
+        "rectId": 143
+      }
+    ],
+    "hit": [
+      {
+        "x": 0.5259387809490246,
+        "y": 1.021226971492949,
+        "w": 0.45812243810195075,
+        "h": 0.48402811015843383,
+        "from": 3,
+        "to": 13,
+        "rectId": 26
+      }
+    ],
+    "push": [
+      {
+        "x": 0,
+        "y": 0.30090361445783137,
+        "w": 0.8,
+        "h": 0.6018072289156627,
+        "from": 0,
+        "to": 47,
+        "rectId": 3
+      },
+      {
+        "x": 0,
+        "y": 0.8915662650602411,
+        "w": 0.5,
+        "h": 1.560240963855422,
+        "from": 0,
+        "to": 16,
+        "rectId": 32
+      }
+    ]
+  },
+  "clipId": "ryu_jlp",
+  "facingRelative": true,
+  "review": {
+    "status": "mmdk_converted",
+    "notes": "MMDK convert unitScale=0.01; public frames kept; layer/part on hurt; CLAMP_BASE=true | box-editor override"
+  },
+  "sources": [
+    {
+      "name": "4rays/sf6-move-data",
+      "url": "https://github.com/4rays/sf6-move-data",
+      "file": "moves/ryu.toml",
+      "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+      "retrieved": "2026-08-10",
+      "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+    }
+  ],
+  "selfMovement": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "timelineFrames": 48,
+  "hitstopOnBlock": 9,
+  "hitstopOnHit": 9,
+  "blockPushbackTotal": 0.2,
+  "blockPushMoveTime": 13,
+  "hitPushbackTotal": 0.2,
+  "hitPushMoveTime": 13,
+  "hitPushback": [
+    0.04269458352298588,
+    0.03614019116977698,
+    0.030131998179335498,
+    0.02467000455166133,
+    0.01975421028675466,
+    0.015384615384615398,
+    0.011561219845243498,
+    0.008284023668639052,
+    0.005553026854802013,
+    0.003368229403732359,
+    0.0017296313154301357,
+    0.000637232589895298,
+    0.00009103322712791795
+  ],
+  "hitReaction": "stun",
+  "animFrameCount": 47,
+  "glbPath": "attack/esf001v00_attack_12/glb/000_esf001_ATK_8LP_id3000_f47.glb",
+  "stance": "air",
+  "mmdk": {
+    "actionName": "ATK_8LP",
+    "fabFrame": 47
+  },
+  "guard": "mid",
+  "guardStrength": "L"
+}

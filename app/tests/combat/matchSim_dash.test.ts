@@ -74,6 +74,45 @@ describe('MatchSim dash', () => {
     expect(sim.p1.phase).not.toBe('dash');
   });
 
+  it('hold forward + double crouch tap does not dash', () => {
+    const sim = new MatchSim(fixture, undefined, {
+      dashDirHoldMax: 8,
+      dashNeutralMax: 8,
+      dashFrames: 15,
+    });
+    // Hold 6, tap crouch twice → 6,3,6,3,6 (forward never released)
+    for (const relDir of [6, 3, 6, 3, 6] as const) {
+      sim.pendingInput = {
+        dir: relDir,
+        relDir,
+        buttons: 0,
+        pressed: 0,
+        released: 0,
+      };
+      sim.step();
+    }
+    expect(sim.p1.phase).not.toBe('dash');
+  });
+
+  it('hold back + double crouch tap does not dash', () => {
+    const sim = new MatchSim(fixture, undefined, {
+      dashDirHoldMax: 8,
+      dashNeutralMax: 8,
+      dashFrames: 15,
+    });
+    for (const relDir of [4, 1, 4, 1, 4] as const) {
+      sim.pendingInput = {
+        dir: relDir,
+        relDir,
+        buttons: 0,
+        pressed: 0,
+        released: 0,
+      };
+      sim.step();
+    }
+    expect(sim.p1.phase).not.toBe('dash');
+  });
+
   it('66 completed during landing buffers and dashes on canAct (§2.3.1)', () => {
     const sim = new MatchSim(fixture, undefined, {
       dashDirHoldMax: 8,

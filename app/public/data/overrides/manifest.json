@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "moves": {
+    "ryu_5lp": {
+      "updatedAt": "2026-08-21T08:12:12.571Z"
+    },
+    "ryu_5lk": {
+      "updatedAt": "2026-08-21T08:13:26.708Z"
+    },
+    "ryu_5mk": {
+      "updatedAt": "2026-08-21T08:13:58.319Z"
+    },
+    "ryu_5hk": {
+      "updatedAt": "2026-08-21T08:14:22.125Z"
+    },
+    "ryu_2lp": {
+      "updatedAt": "2026-08-21T08:14:41.501Z"
+    },
+    "ryu_2mp": {
+      "updatedAt": "2026-08-21T08:15:01.751Z"
+    },
+    "ryu_2hp": {
+      "updatedAt": "2026-08-21T08:16:47.886Z"
+    },
+    "ryu_2lk": {
+      "updatedAt": "2026-08-21T08:17:07.753Z"
+    },
+    "ryu_2mk": {
+      "updatedAt": "2026-08-21T08:17:25.822Z"
+    },
+    "ryu_2hk": {
+      "updatedAt": "2026-08-21T08:17:59.388Z"
+    },
+    "ryu_jlp": {
+      "updatedAt": "2026-08-21T08:23:03.520Z"
+    },
+    "ryu_jmp": {
+      "updatedAt": "2026-08-21T08:25:01.364Z"
+    },
+    "ryu_jhp": {
+      "updatedAt": "2026-08-21T08:25:26.306Z"
+    },
+    "ryu_jlk": {
+      "updatedAt": "2026-08-21T08:25:42.933Z"
+    },
+    "ryu_jmk": {
+      "updatedAt": "2026-08-21T08:26:53.497Z"
+    },
+    "ryu_jhk": {
+      "updatedAt": "2026-08-21T08:27:17.069Z"
+    },
+    "ryu_6mp": {
+      "updatedAt": "2026-08-21T08:28:27.437Z"
+    },
+    "ryu_6hp": {
+      "updatedAt": "2026-08-21T08:29:19.275Z"
+    },
+    "ryu_4hp": {
+      "updatedAt": "2026-08-21T08:31:29.269Z"
+    },
+    "ryu_4hk": {
+      "updatedAt": "2026-08-21T08:33:11.725Z"
+    },
+    "ryu_6hk": {
+      "updatedAt": "2026-08-21T08:33:46.298Z"
+    },
+    "ryu_5hp": {
+      "updatedAt": "2026-08-21T08:36:21.525Z"
+    },
+    "ryu_5mp": {
+      "updatedAt": "2026-08-21T08:36:54.387Z"
+    }
+  },
+  "stance": true
+}

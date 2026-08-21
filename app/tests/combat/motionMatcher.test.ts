@@ -90,4 +90,35 @@ describe('detectDash', () => {
     const entries = hist([6, 5, 5, 5, 6]);
     expect(detectDash(entries, 5, 6, 8, 8)).toBe(true);
   });
+
+  it('rejects hold-forward + double crouch taps (6-3-6-3-6 is not 66)', () => {
+    // Hold 6, tap 2 twice → 6↔3↔6; forward never released.
+    const entries = hist([6, 3, 6, 3, 6]);
+    expect(detectDash(entries, 5, 6, 8, 8)).toBe(false);
+  });
+
+  it('rejects hold-back + double crouch taps (4-1-4-1-4 is not 44)', () => {
+    const entries = hist([4, 1, 4, 1, 4]);
+    expect(detectDash(entries, 5, 4, 8, 8)).toBe(false);
+  });
+
+  it('rejects hold-forward + single crouch release as second tap (6-3-6)', () => {
+    const entries = hist([6, 3, 6]);
+    expect(detectDash(entries, 3, 6, 8, 8)).toBe(false);
+  });
+
+  it('rejects hold-forward + up-diagonal wobble (6-9-6)', () => {
+    const entries = hist([6, 9, 6]);
+    expect(detectDash(entries, 3, 6, 8, 8)).toBe(false);
+  });
+
+  it('still accepts dash after releasing forward into crouch then retapping (6-2-6)', () => {
+    const entries = hist([6, 2, 6]);
+    expect(detectDash(entries, 3, 6, 8, 8)).toBe(true);
+  });
+
+  it('rejects forward dash when opposite diagonal appears between taps', () => {
+    const entries = hist([6, 1, 6]);
+    expect(detectDash(entries, 3, 6, 8, 8)).toBe(false);
+  });
 });

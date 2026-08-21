@@ -1,0 +1,195 @@
+{
+  "id": "ryu_5mp",
+  "characterId": "ryu",
+  "moveId": "ryu_5mp",
+  "displayName": "Standing Medium Punch",
+  "frames": {
+    "startup": 6,
+    "active": 4,
+    "recovery": 11,
+    "total": 21
+  },
+  "advantage": {
+    "onHit": 7,
+    "onBlock": -1
+  },
+  "damage": 600,
+  "hitCount": 1,
+  "hitstun": 22,
+  "blockstun": 18,
+  "cancel": {
+    "specialCancel": true,
+    "superOnly": false,
+    "targetCombo": [],
+    "raw": "C",
+    "windows": [
+      {
+        "fromFrame": 5,
+        "toFrame": 19,
+        "into": "special|super|di|dr"
+      }
+    ]
+  },
+  "boxes": {
+    "hurt": [
+      {
+        "x": 0,
+        "y": 1.693975903614458,
+        "w": 0.8,
+        "h": 0.31204819277108437,
+        "from": 0,
+        "to": 19,
+        "part": "head",
+        "layer": "base",
+        "rectId": 7
+      },
+      {
+        "x": 0,
+        "y": 1.0698795180722893,
+        "w": 0.8,
+        "h": 0.936144578313253,
+        "from": 0,
+        "to": 19,
+        "part": "body",
+        "layer": "base",
+        "rectId": 8
+      },
+      {
+        "x": 0,
+        "y": 0.30090361445783137,
+        "w": 0.8,
+        "h": 0.6018072289156627,
+        "from": 0,
+        "to": 19,
+        "part": "leg",
+        "layer": "base",
+        "rectId": 9
+      },
+      {
+        "x": 0.68,
+        "y": 1.3373493975903614,
+        "w": 0.56,
+        "h": 0.6686746987951807,
+        "from": 5,
+        "to": 9,
+        "part": "body",
+        "layer": "extend",
+        "rectId": 102
+      },
+      {
+        "x": 0.7000000000000001,
+        "y": 1.3373493975903614,
+        "w": 0.6,
+        "h": 0.6686746987951807,
+        "from": 9,
+        "to": 19,
+        "part": "body",
+        "layer": "extend",
+        "rectId": 103
+      }
+    ],
+    "hit": [
+      {
+        "x": 0.9,
+        "y": 1.2036144578313255,
+        "w": 0.4,
+        "h": 0.4680722891566265,
+        "from": 5,
+        "to": 9,
+        "rectId": 2
+      }
+    ],
+    "push": [
+      {
+        "x": 0,
+        "y": 1.6605421686746988,
+        "w": 0.6,
+        "h": 0.37891566265060245,
+        "from": 0,
+        "to": 53,
+        "rectId": 1
+      }
+    ]
+  },
+  "clipId": "ryu_5mp",
+  "facingRelative": true,
+  "review": {
+    "status": "mmdk_converted",
+    "notes": "MMDK convert unitScale=0.01; public frames kept; layer/part on hurt; CLAMP_BASE=true | box-editor override"
+  },
+  "sources": [
+    {
+      "name": "4rays/sf6-move-data",
+      "url": "https://github.com/4rays/sf6-move-data",
+      "file": "moves/ryu.toml",
+      "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+      "retrieved": "2026-08-10",
+      "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+    }
+  ],
+  "selfMovement": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "timelineFrames": 54,
+  "hitstopOnBlock": 11,
+  "hitstopOnHit": 11,
+  "blockPushbackTotal": 0.4,
+  "blockPushMoveTime": 18,
+  "hitPushbackTotal": 0.51,
+  "hitPushMoveTime": 22,
+  "hitPushback": [
+    0.06643219383921858,
+    0.06039725770097682,
+    0.054649699474079556,
+    0.04918951915852751,
+    0.04401671675432002,
+    0.03913129226145752,
+    0.03453324567993986,
+    0.030222577009767188,
+    0.026199286250939126,
+    0.02246337340345606,
+    0.019014838467317767,
+    0.015853681442524418,
+    0.012979902329075898,
+    0.010393501126972206,
+    0.008094477836213346,
+    0.006082832456799426,
+    0.0043585649887302805,
+    0.0029216754320060202,
+    0.0017721637866265894,
+    0.000910030052591988,
+    0.00033527422990232926,
+    0.000047896318557505424
+  ],
+  "hitReaction": "stun",
+  "animFrameCount": 53,
+  "glbPath": "attack/esf001v00_attack_01/glb/000_esf001_ATK_5MP_id0000_f53.glb",
+  "mmdk": {
+    "actionName": "ATK_5MP",
+    "fabFrame": 53
+  },
+  "guard": "high",
+  "guardStrength": "M",
+  "guardAnim": "m",
+  "hitAnim": "m",
+  "hitAnimDir": "lt"
+}

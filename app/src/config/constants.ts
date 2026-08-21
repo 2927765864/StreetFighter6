@@ -82,6 +82,8 @@ export type MutableSimConfig = {
   showHitboxes: boolean;
   showHurtboxes: boolean;
   showPushboxes: boolean;
+  /** When false, DebugDraw skips all p2 hit/hurt/push boxes (edit side = P1 only). */
+  showOpponentBoxes: boolean;
   /** Tint hurt boxes by part (head/body/leg) in green family. */
   hurtPartColors: boolean;
   showBuffer: boolean;
@@ -273,6 +275,7 @@ export function createDefaultSimConfig(): MutableSimConfig {
     showHitboxes: true,
     showHurtboxes: true,
     showPushboxes: true,
+    showOpponentBoxes: true,
     hurtPartColors: true,
     showBuffer: false,
     showCancelWindow: true,

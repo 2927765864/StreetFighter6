@@ -1,0 +1,234 @@
+{
+  "id": "ryu_2lp",
+  "characterId": "ryu",
+  "moveId": "ryu_2lp",
+  "displayName": "Crouching Light Punch",
+  "frames": {
+    "startup": 4,
+    "active": 2,
+    "recovery": 9,
+    "total": 15
+  },
+  "advantage": {
+    "onHit": 4,
+    "onBlock": -1
+  },
+  "damage": 300,
+  "hitCount": 1,
+  "hitstun": 15,
+  "blockstun": 14,
+  "cancel": {
+    "specialCancel": true,
+    "superOnly": false,
+    "targetCombo": [],
+    "raw": "C",
+    "windows": [
+      {
+        "fromFrame": 3,
+        "toFrame": 13,
+        "into": "special|super|di|dr|self"
+      }
+    ]
+  },
+  "boxes": {
+    "hurt": [
+      {
+        "x": 0,
+        "y": 1.1478915662650604,
+        "w": 0.9400000000000001,
+        "h": 0.3566265060240964,
+        "from": 0,
+        "to": 13,
+        "part": "head",
+        "layer": "base",
+        "rectId": 10
+      },
+      {
+        "x": 0,
+        "y": 0.7132530120481928,
+        "w": 0.9400000000000001,
+        "h": 0.5126506024096387,
+        "from": 0,
+        "to": 13,
+        "part": "body",
+        "layer": "base",
+        "rectId": 11
+      },
+      {
+        "x": 0,
+        "y": 0.23403614457831326,
+        "w": 0.9400000000000001,
+        "h": 0.44578313253012053,
+        "from": 0,
+        "to": 13,
+        "part": "leg",
+        "layer": "base",
+        "rectId": 12
+      },
+      {
+        "x": 0.6900000000000001,
+        "y": 0.9918674698795181,
+        "w": 0.52,
+        "h": 0.6686746987951807,
+        "from": 1,
+        "to": 3,
+        "part": "head",
+        "layer": "extend",
+        "rectId": 127
+      },
+      {
+        "x": 0.6900000000000001,
+        "y": 0.9918674698795181,
+        "w": 0.52,
+        "h": 0.6686746987951807,
+        "from": 3,
+        "to": 8,
+        "part": "head",
+        "layer": "extend",
+        "rectId": 127
+      },
+      {
+        "x": 0.45,
+        "y": 1.4042168674698796,
+        "w": 1.4000000000000001,
+        "h": 0.37891566265060245,
+        "from": 0,
+        "to": 5,
+        "part": "head",
+        "layer": "extend",
+        "rectId": 35
+      }
+    ],
+    "hit": [
+      {
+        "x": 0.6079153028609176,
+        "y": 1.0287349896375284,
+        "w": 0.6374062116084671,
+        "h": 0.24383972366153994,
+        "from": 3,
+        "to": 5,
+        "rectId": 15
+      }
+    ],
+    "push": [
+      {
+        "x": 0,
+        "y": 1.0698795180722893,
+        "w": 0.8,
+        "h": 0.936144578313253,
+        "from": 0,
+        "to": 58,
+        "rectId": 2
+      }
+    ]
+  },
+  "clipId": "ryu_2lp",
+  "facingRelative": true,
+  "review": {
+    "status": "mmdk_converted",
+    "notes": "MMDK convert unitScale=0.01; public frames kept; layer/part on hurt; CLAMP_BASE=true | box-editor override"
+  },
+  "sources": [
+    {
+      "name": "4rays/sf6-move-data",
+      "url": "https://github.com/4rays/sf6-move-data",
+      "file": "moves/ryu.toml",
+      "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+      "retrieved": "2026-08-10",
+      "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+    }
+  ],
+  "selfMovement": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "timelineFrames": 59,
+  "hitstopOnBlock": 9,
+  "hitstopOnHit": 9,
+  "blockPushbackTotal": 0.3,
+  "blockPushMoveTime": 14,
+  "hitPushbackTotal": 0.26,
+  "hitPushMoveTime": 15,
+  "hitPushback": [
+    0.04861037037037035,
+    0.04213925925925925,
+    0.03613037037037037,
+    0.030583703703703707,
+    0.025499259259259263,
+    0.02087703703703707,
+    0.016717037037037037,
+    0.013019259259259253,
+    0.009783703703703689,
+    0.007010370370370372,
+    0.0046992592592592745,
+    0.0028503703703703677,
+    0.0014637037037037092,
+    0.0005392592592592416,
+    0.00007703703703704212
+  ],
+  "hitReaction": "stun",
+  "animFrameCount": 58,
+  "glbPath": "attack/esf001v00_attack_06/glb/000_esf001_ATK_2LP_id2000_f58.glb",
+  "mmdk": {
+    "actionName": "ATK_2LP",
+    "fabFrame": 58
+  },
+  "guard": "high",
+  "guardStrength": "L"
+}

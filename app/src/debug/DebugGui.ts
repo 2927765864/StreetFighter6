@@ -461,10 +461,10 @@ export function createDebugGui(
       {
         reloadStance: async () => {
           try {
-            const { fetchStanceBoxTable } = await import(
-              '../data/loadStanceBoxes'
+            const { loadStanceTableResolved } = await import(
+              '../data/loadMoveWithOverride'
             );
-            const t = await fetchStanceBoxTable();
+            const { table: t } = await loadStanceTableResolved();
             match.setStanceTable(t);
             console.info('[gui] stance reloaded', t.review);
           } catch (e) {

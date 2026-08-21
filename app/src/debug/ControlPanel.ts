@@ -49,6 +49,9 @@ export type ControlPanelHooks = {
   p2View?: FighterView;
   /** World follow origin (logic X + hips Y). Falls back to logic Y if omitted. */
   getLightFollowOrigin?: (who: 'p1' | 'p2') => FighterFollowOrigin;
+  boxEditActive?: boolean;
+  enterBoxEdit?: () => void;
+  exitBoxEdit?: () => void;
 };
 
 export type LightEditPanelHooks = {
@@ -315,6 +318,7 @@ function buildDom(): HTMLElement {
           ${rowNumber('driveBars', 'Drive 条数', 0, 6, 1)}
           <div class="panel-actions-row">
             <button type="button" id="btn-reset-match">重置对局</button>
+            <button type="button" id="btn-box-edit">框图编辑</button>
           </div>
           <p class="panel-hint">快捷键 R：训练位重置（不经过本面板）。</p>
           `,
@@ -1847,6 +1851,16 @@ export function setupControlPanel(
     setFlash('对局已重置');
   });
 
+  byId<HTMLButtonElement>(host, 'btn-box-edit').addEventListener('click', () => {
+    if (hooks.boxEditActive) {
+      hooks.exitBoxEdit?.();
+      setFlash('已退出框图编辑');
+    } else {
+      hooks.enterBoxEdit?.();
+      setFlash('框图编辑模式');
+    }
+  });
+
   byId<HTMLButtonElement>(host, 'btn-toggle-pause').addEventListener('click', () => {
     hooks.paused = !hooks.paused;
     setFlash(hooks.paused ? '已暂停' : '继续运行');
@@ -2029,8 +2043,10 @@ export function setupControlPanel(
   byId<HTMLButtonElement>(host, 'btn-reload-stance').addEventListener('click', () => {
     void (async () => {
       try {
-        const { fetchStanceBoxTable } = await import('../data/loadStanceBoxes');
-        const t = await fetchStanceBoxTable();
+        const { loadStanceTableResolved } = await import(
+          '../data/loadMoveWithOverride'
+        );
+        const { table: t } = await loadStanceTableResolved();
         match.setStanceTable(t);
         setFlash(`姿态框已重载 (${t.review.status})`);
       } catch (e) {

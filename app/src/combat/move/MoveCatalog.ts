@@ -91,9 +91,17 @@ export async function loadFeedbackCatalog(
   const catalog = new MoveCatalog();
   const loaded: string[] = [];
   const failed: { url: string; error: string }[] = [];
+  // Prefer override layer when present (box-editor plan §4.3).
+  const { fetchMoveRawResolved } = await import('../../data/loadMoveWithOverride');
   for (const url of urls) {
     try {
-      const raw = await fetchJson(url);
+      let raw: unknown;
+      try {
+        const resolved = await fetchMoveRawResolved(url);
+        raw = resolved.raw;
+      } catch {
+        raw = await fetchJson(url);
+      }
       const move = parseMoveDefinition(raw);
       catalog.register(move);
       loaded.push(canonicalizeMoveDefinition(move).moveId);

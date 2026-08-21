@@ -36,6 +36,7 @@ import {
   reloadMoveFromPublic,
   setupControlPanel,
 } from './debug/ControlPanel';
+import { BoxEditorApp } from './boxEditor/BoxEditorApp';
 import type { MoveDefinition } from './combat/move/MoveDefinition';
 import {
   bakeRyuMeshTemplate,
@@ -158,8 +159,10 @@ async function boot(): Promise<void> {
   const match = new MatchSim(move, catalog, applyConfigToMatchOpts(cfg));
   if (ryuMovement) match.setMovementTable(ryuMovement);
   try {
-    const { fetchStanceBoxTable } = await import('./data/loadStanceBoxes');
-    const stance = await fetchStanceBoxTable();
+    const { loadStanceTableResolved } = await import(
+      './data/loadMoveWithOverride'
+    );
+    const { table: stance } = await loadStanceTableResolved();
     match.setStanceTable(stance);
     console.info(
       '[boot] stance boxes',
@@ -561,9 +564,105 @@ async function boot(): Promise<void> {
   const hud = new HudDom();
   const keys = new KeyboardSource();
 
+  let boxEditor: BoxEditorApp | null = null;
+  /** Last preview size while in box-edit (for aspect / setSize). */
+  let boxEditView = { w: 0, h: 0, left: 0, top: 0 };
+
+  const restoreFightCanvasLayout = (): void => {
+    const canvas = renderer.domElement;
+    if (canvas.parentElement !== document.body) {
+      document.body.appendChild(canvas);
+    }
+    canvas.style.position = '';
+    canvas.style.left = '';
+    canvas.style.top = '';
+    canvas.style.right = '';
+    canvas.style.bottom = '';
+    canvas.style.width = '';
+    canvas.style.height = '';
+    canvas.style.zIndex = '';
+    canvas.style.inset = '';
+    const fullW = window.innerWidth;
+    const fullH = window.innerHeight;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(fullW, fullH, false);
+    camera.aspect = fullW / Math.max(fullH, 1);
+    camera.updateProjectionMatrix();
+    fightCamera.aspect = camera.aspect;
+    fightCamera.updateProjectionMatrix();
+    boxEditView = { w: 0, h: 0, left: 0, top: 0 };
+  };
+
+  /** Reparent fight canvas into .be-center so it fills the preview slot. */
+  const layoutFightCanvasForBoxEdit = (): void => {
+    if (!hooks.boxEditActive || !boxEditor) {
+      restoreFightCanvasLayout();
+      return;
+    }
+    const slot = boxEditor.getPreviewSlot();
+    if (!slot) return;
+    const canvas = renderer.domElement;
+    if (canvas.parentElement !== slot) {
+      slot.appendChild(canvas);
+    }
+    const w = Math.max(1, Math.floor(slot.clientWidth));
+    const h = Math.max(1, Math.floor(slot.clientHeight));
+    if (w !== boxEditView.w || h !== boxEditView.h) {
+      boxEditView = { w, h, left: 0, top: 0 };
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      fightCamera.aspect = camera.aspect;
+      fightCamera.updateProjectionMatrix();
+    }
+  };
+
+  const exitBoxEdit = (): void => {
+    if (!boxEditor) return;
+    hooks.boxEditActive = false;
+    cfg.showOpponentBoxes = true;
+    // Canvas must leave overlay before stop() removes #box-editor-root.
+    restoreFightCanvasLayout();
+    boxEditor.stop();
+    boxEditor = null;
+    match.reset();
+    hooks.paused = false;
+  };
+
+  const enterBoxEdit = (): void => {
+    if (boxEditor) return;
+    hooks.boxEditActive = true;
+    hooks.paused = true;
+    cfg.showOpponentBoxes = false;
+    boxEditor = new BoxEditorApp({
+      getMatch: () => match,
+      getCamera: () => camera,
+      getCanvas: () => renderer.domElement,
+      setMatchPaused: (paused) => {
+        hooks.paused = paused;
+      },
+      setShowOpponentBoxes: (show) => {
+        cfg.showOpponentBoxes = show;
+      },
+      onExit: exitBoxEdit,
+    });
+    void boxEditor.start().then(() => {
+      // Wait a frame so grid layout has real .be-center metrics.
+      requestAnimationFrame(() => layoutFightCanvasForBoxEdit());
+    }).catch((e) => {
+      console.error('[box-editor] start failed', e);
+      exitBoxEdit();
+    });
+  };
+
   const hooks = {
     paused: false,
+    boxEditActive: false,
+    enterBoxEdit,
+    exitBoxEdit,
     stepOnce: () => {
+      if (hooks.boxEditActive) return;
       match.pendingInput = keys.sample();
       match.step();
     },
@@ -610,6 +709,7 @@ async function boot(): Promise<void> {
   /** R: return both fighters to start positions / idle state (training reset). */
   window.addEventListener('keydown', (e) => {
     if (e.code !== 'KeyR' || e.repeat) return;
+    if (hooks.boxEditActive) return;
     const t = e.target as HTMLElement | null;
     if (
       t &&
@@ -625,11 +725,15 @@ async function boot(): Promise<void> {
   });
 
   window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    fightCamera.aspect = camera.aspect;
-    fightCamera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    if (hooks.boxEditActive) {
+      layoutFightCanvasForBoxEdit();
+    } else {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      fightCamera.aspect = camera.aspect;
+      fightCamera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
     updatePipChrome();
   });
 
@@ -643,7 +747,10 @@ async function boot(): Promise<void> {
     grid.visible = cfg.showDebugGrid;
     axes.visible = cfg.showAxes;
 
-    if (!hooks.paused) {
+    if (hooks.boxEditActive && boxEditor) {
+      layoutFightCanvasForBoxEdit();
+      boxEditor.tick();
+    } else if (!hooks.paused) {
       const steps = clock.tick(wallDt);
       for (let i = 0; i < steps; i++) {
         match.pendingInput = keys.sample();
@@ -653,6 +760,12 @@ async function boot(): Promise<void> {
 
     const fullW = window.innerWidth;
     const fullH = window.innerHeight;
+    const viewW =
+      hooks.boxEditActive && boxEditView.w > 0 ? boxEditView.w : fullW;
+    const viewH =
+      hooks.boxEditActive && boxEditView.h > 0 ? boxEditView.h : fullH;
+    const viewAspect = viewW / Math.max(viewH, 1);
+
     const fightPose = cameraRig.update(
       {
         p1x: match.p1.x,
@@ -662,7 +775,7 @@ async function boot(): Promise<void> {
         cameraZ: cfg.cameraZ,
         cameraLookY: cfg.cameraLookY,
         cameraFov: cfg.cameraFov,
-        aspect: camera.aspect,
+        aspect: viewAspect,
         zoomEnabled: cfg.cameraZoomEnabled,
         zoomSepK: cfg.cameraZoomSepK,
         zMax: cfg.cameraZMax,
@@ -677,7 +790,7 @@ async function boot(): Promise<void> {
 
     let pose = fightPose;
 
-    if (cfg.lightOrbitMode) {
+    if (cfg.lightOrbitMode && !hooks.boxEditActive) {
       orbit.enabled = !lightDragActive;
       orbit.update();
       pose = {
@@ -694,7 +807,7 @@ async function boot(): Promise<void> {
         fov: cfg.cameraFov,
         near: cfg.cameraNear,
         far: cfg.cameraFar,
-        aspect: fullW / fullH,
+        aspect: viewAspect,
       });
     }
 
@@ -712,7 +825,7 @@ async function boot(): Promise<void> {
     }
     updateLightHelpers(lights);
 
-    debugDraw.update(match, cfg);
+    debugDraw.update(match, cfg, boxEditor?.getHighlightWorldBox() ?? null);
     hud.update(match, clock, cfg);
 
     if (!loggedFrame) {
@@ -733,11 +846,11 @@ async function boot(): Promise<void> {
     const gizmoHelper = lightEdit.transform.getHelper();
     const fullRender = async () => {
       renderer.setScissorTest(false);
-      renderer.setViewport(0, 0, fullW, fullH);
+      renderer.setViewport(0, 0, viewW, viewH);
       renderer.autoClear = true;
       await renderer.render(scene, camera);
 
-      if (!cfg.lightOrbitMode) return;
+      if (!cfg.lightOrbitMode || hooks.boxEditActive) return;
 
       // PIP: normal fight camera, no light gizmos/helpers.
       const { x, yTop, w, h } = clampPip();

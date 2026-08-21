@@ -1,0 +1,258 @@
+{
+  "id": "ryu_5lk",
+  "characterId": "ryu",
+  "moveId": "ryu_5lk",
+  "displayName": "Standing Light Kick",
+  "frames": {
+    "startup": 5,
+    "active": 3,
+    "recovery": 11,
+    "total": 19
+  },
+  "advantage": {
+    "onHit": 2,
+    "onBlock": -4
+  },
+  "damage": 300,
+  "hitCount": 1,
+  "hitstun": 16,
+  "blockstun": 14,
+  "cancel": {
+    "specialCancel": true,
+    "superOnly": false,
+    "targetCombo": [],
+    "raw": "C",
+    "windows": [
+      {
+        "fromFrame": 4,
+        "toFrame": 17,
+        "into": "special|super|di|dr"
+      }
+    ]
+  },
+  "boxes": {
+    "hurt": [
+      {
+        "x": 0,
+        "y": 1.693975903614458,
+        "w": 0.8,
+        "h": 0.31204819277108437,
+        "from": 0,
+        "to": 17,
+        "part": "head",
+        "layer": "base",
+        "rectId": 7
+      },
+      {
+        "x": 0,
+        "y": 1.0698795180722893,
+        "w": 0.8,
+        "h": 0.936144578313253,
+        "from": 0,
+        "to": 17,
+        "part": "body",
+        "layer": "base",
+        "rectId": 8
+      },
+      {
+        "x": 0,
+        "y": 0.30090361445783137,
+        "w": 0.8,
+        "h": 0.6018072289156627,
+        "from": 0,
+        "to": 17,
+        "part": "leg",
+        "layer": "base",
+        "rectId": 9
+      },
+      {
+        "x": 0.73,
+        "y": 0.780120481927711,
+        "w": 0.64,
+        "h": 0.6686746987951807,
+        "from": 2,
+        "to": 4,
+        "part": "leg",
+        "layer": "extend",
+        "rectId": 111
+      },
+      {
+        "x": 0.73,
+        "y": 0.780120481927711,
+        "w": 0.64,
+        "h": 0.6686746987951807,
+        "from": 4,
+        "to": 10,
+        "part": "leg",
+        "layer": "extend",
+        "rectId": 111
+      },
+      {
+        "x": 1.1,
+        "y": 0.49036144578313257,
+        "w": 0.48,
+        "h": 0.5126506024096387,
+        "from": 2,
+        "to": 4,
+        "part": "leg",
+        "layer": "extend",
+        "rectId": 112
+      },
+      {
+        "x": 1.1,
+        "y": 0.49036144578313257,
+        "w": 0.48,
+        "h": 0.5126506024096387,
+        "from": 4,
+        "to": 10,
+        "part": "leg",
+        "layer": "extend",
+        "rectId": 112
+      },
+      {
+        "x": 0.5,
+        "y": 0.9250000000000002,
+        "w": 0.18,
+        "h": 1.8500000000000003,
+        "from": 7,
+        "to": 18,
+        "part": "body",
+        "layer": "extend",
+        "rectId": 113
+      }
+    ],
+    "hit": [
+      {
+        "x": 1.118622644734034,
+        "y": 0.45843064629930375,
+        "w": 0.4672452894680677,
+        "h": 0.2338671447341425,
+        "from": 4,
+        "to": 7,
+        "rectId": 4
+      },
+      {
+        "x": 0.6972122802026182,
+        "y": 0.6762348392685842,
+        "w": 0.47442456040523645,
+        "h": 0.24105781367176593,
+        "from": 4,
+        "to": 7,
+        "rectId": 12
+      }
+    ],
+    "push": [
+      {
+        "x": 0,
+        "y": 1.6605421686746988,
+        "w": 0.6,
+        "h": 0.37891566265060245,
+        "from": 0,
+        "to": 48,
+        "rectId": 1
+      }
+    ]
+  },
+  "clipId": "ryu_5lk",
+  "facingRelative": true,
+  "review": {
+    "status": "mmdk_converted",
+    "notes": "MMDK convert unitScale=0.01; public frames kept; layer/part on hurt; CLAMP_BASE=true | box-editor override"
+  },
+  "sources": [
+    {
+      "name": "4rays/sf6-move-data",
+      "url": "https://github.com/4rays/sf6-move-data",
+      "file": "moves/ryu.toml",
+      "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+      "retrieved": "2026-08-10",
+      "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+    }
+  ],
+  "selfMovement": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "timelineFrames": 49,
+  "hitstopOnBlock": 9,
+  "hitstopOnHit": 9,
+  "blockPushbackTotal": 0.4,
+  "blockPushMoveTime": 14,
+  "hitPushbackTotal": 0.4,
+  "hitPushMoveTime": 16,
+  "hitPushback": [
+    0.07041015625000001,
+    0.06162109375,
+    0.05341796875,
+    0.045800781250000006,
+    0.03876953125,
+    0.03232421875,
+    0.02646484375,
+    0.021191406250000003,
+    0.016503906250000002,
+    0.012402343750000001,
+    0.00888671875,
+    0.0059570312500000005,
+    0.00361328125,
+    0.0018554687500000001,
+    0.0006835937500000001,
+    0.0000976562499999667
+  ],
+  "hitReaction": "stun",
+  "animFrameCount": 48,
+  "glbPath": "attack/esf001v00_attack_03/glb/000_esf001_ATK_5LK_id0000_f48.glb",
+  "mmdk": {
+    "actionName": "ATK_5LK",
+    "fabFrame": 48
+  },
+  "guard": "high",
+  "guardStrength": "L",
+  "hitAnim": "l",
+  "hitAnimDir": "st"
+}

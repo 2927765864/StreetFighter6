@@ -135,10 +135,25 @@ export function tryMatchCommand(
   };
 }
 
+/** True if dir still holds the same horizontal as dash target (4=back / 6=forward). */
+function sharesDashHorizontal(d: NumpadDir, target: 4 | 6): boolean {
+  if (target === 6) return d === 3 || d === 6 || d === 9;
+  return d === 1 || d === 4 || d === 7;
+}
+
+/** True if dir holds the opposite horizontal of dash target. */
+function isOppositeHorizontal(d: NumpadDir, target: 4 | 6): boolean {
+  if (target === 6) return d === 1 || d === 4 || d === 7;
+  return d === 3 || d === 6 || d === 9;
+}
+
 /**
  * Dash double-tap edge: second enter into dir (6 or 4) within window.
  * Plan: dual-edge on 6 / 4; fire on frame of second enter.
- * Opposite horizontal (4 vs 6) between the two taps cancels the charge.
+ *
+ * "Enter" means leaving the target horizontal axis then pressing pure 6/4 again.
+ * Holding 6 and tapping crouch (6→3→6) must NOT count — forward was never released.
+ * Opposite horizontal (incl. diagonals 1/7 or 3/9) between the two taps cancels.
  */
 export function detectDash(
   entries: readonly HistoryEntry[],
@@ -147,12 +162,15 @@ export function detectDash(
   dirHoldMax: number,
   neutralMax: number,
 ): boolean {
-  const opposite: NumpadDir = dir === 6 ? 4 : 6;
   const window = dirHoldMax + neutralMax;
   const enters: number[] = [];
   let prev: NumpadDir | null = null;
   for (const e of entries) {
-    if (prev !== dir && e.relDir === dir) {
+    // Only count a fresh tap if the stick left that horizontal first (not 6↔3/9).
+    if (
+      e.relDir === dir &&
+      (prev === null || !sharesDashHorizontal(prev, dir))
+    ) {
       enters.push(e.logicFrame);
     }
     prev = e.relDir;
@@ -164,7 +182,7 @@ export function detectDash(
   if (now - b > 0) return false;
   for (const e of entries) {
     if (e.logicFrame <= a || e.logicFrame >= b) continue;
-    if (e.relDir === opposite) return false;
+    if (isOppositeHorizontal(e.relDir, dir)) return false;
   }
   return true;
 }
