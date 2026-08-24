@@ -618,6 +618,34 @@ function buildDom(): HTMLElement {
           `,
           'expandAnimTest',
         )}
+        ${sectionShell(
+          'headband',
+          '【表现】头巾物理',
+          `
+          ${rowToggle('headbandPhysicsEnabled', '启用头巾物理')}
+          ${rowToggle('headbandUseCenter', '使用头部 Center（减走过抖）')}
+          ${rowNumber('headbandStiffness', '刚度（回弹/硬度）', 0, 4, 0.05)}
+          ${rowNumber('headbandDragForce', '阻尼 dragForce', 0, 1, 0.01)}
+          ${rowNumber('headbandGravityPower', '重力强度', 0, 2, 0.05)}
+          ${rowNumber('headbandGravityDirX', '重力方向 X', -1, 1, 0.05)}
+          ${rowNumber('headbandGravityDirY', '重力方向 Y', -1, 1, 0.05)}
+          ${rowNumber('headbandGravityDirZ', '重力方向 Z', -1, 1, 0.05)}
+          ${rowNumber('headbandHitRadius', '带节碰撞半径', 0, 0.08, 0.001)}
+          ${rowNumber('headbandGravityAirScale', '滞空重力乘数', 0, 1.5, 0.05)}
+          ${rowNumber('headbandBreathAmp', '呼吸/微风幅度', 0, 0.1, 0.001)}
+          ${rowNumber('headbandBreathHz', '呼吸频率 Hz', 0, 2, 0.05)}
+          ${rowNumber('headbandMaxDeltaSec', '单帧 dt 上限（秒）', 0.016, 0.1, 0.001)}
+          ${rowNumber('headbandColliderHeadRadius', '头碰撞球半径', 0, 0.25, 0.005)}
+          ${rowNumber('headbandColliderNeckRadius', '颈碰撞球半径', 0, 0.2, 0.005)}
+          ${rowNumber('headbandColliderShoulderRadius', '肩碰撞球半径', 0, 0.25, 0.005)}
+          ${rowNumber('headbandColliderHeadYOffset', '头球局部 Y 偏移', -0.1, 0.1, 0.005)}
+          ${rowNumber('headbandColliderShoulderXOffset', '肩球局部 X 偏移（前后）', -0.5, 0.5, 0.01)}
+          ${rowNumber('headbandStiffnessTipScale', '梢端刚度乘子', 0.2, 1.2, 0.05)}
+          ${rowToggle('headbandShowColliders', '显示碰撞球 Helper')}
+          ${rowToggle('headbandShowChainHelpers', '显示链骨 Helper')}
+          `,
+          'expandHeadband',
+        )}
       </details>
 
       <details class="panel-group" data-cat="反馈">
@@ -787,6 +815,27 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'residualToStanceBlendSec', path: 'residualToStanceBlendSec' },
   { id: 'plantSlewPerSec', path: 'plantSlewPerSec' },
   { id: 'showFootDebug', path: 'showFootDebug' },
+  { id: 'headbandPhysicsEnabled', path: 'headbandPhysicsEnabled' },
+  { id: 'headbandUseCenter', path: 'headbandUseCenter' },
+  { id: 'headbandStiffness', path: 'headbandStiffness' },
+  { id: 'headbandDragForce', path: 'headbandDragForce' },
+  { id: 'headbandGravityPower', path: 'headbandGravityPower' },
+  { id: 'headbandGravityDirX', path: 'headbandGravityDirX' },
+  { id: 'headbandGravityDirY', path: 'headbandGravityDirY' },
+  { id: 'headbandGravityDirZ', path: 'headbandGravityDirZ' },
+  { id: 'headbandHitRadius', path: 'headbandHitRadius' },
+  { id: 'headbandGravityAirScale', path: 'headbandGravityAirScale' },
+  { id: 'headbandBreathAmp', path: 'headbandBreathAmp' },
+  { id: 'headbandBreathHz', path: 'headbandBreathHz' },
+  { id: 'headbandMaxDeltaSec', path: 'headbandMaxDeltaSec' },
+  { id: 'headbandColliderHeadRadius', path: 'headbandColliderHeadRadius' },
+  { id: 'headbandColliderNeckRadius', path: 'headbandColliderNeckRadius' },
+  { id: 'headbandColliderShoulderRadius', path: 'headbandColliderShoulderRadius' },
+  { id: 'headbandColliderHeadYOffset', path: 'headbandColliderHeadYOffset' },
+  { id: 'headbandColliderShoulderXOffset', path: 'headbandColliderShoulderXOffset' },
+  { id: 'headbandStiffnessTipScale', path: 'headbandStiffnessTipScale' },
+  { id: 'headbandShowColliders', path: 'headbandShowColliders' },
+  { id: 'headbandShowChainHelpers', path: 'headbandShowChainHelpers' },
 ];
 
 const TOGGLE_IDS = new Set([
@@ -816,6 +865,10 @@ const TOGGLE_IDS = new Set([
   'shadowMapEnabled',
   'lightEnabled',
   'lightCastShadow',
+  'headbandPhysicsEnabled',
+  'headbandUseCenter',
+  'headbandShowColliders',
+  'headbandShowChainHelpers',
 ]);
 
 export function setupControlPanel(
@@ -973,6 +1026,7 @@ export function setupControlPanel(
     ['expandLighting', 'lighting', 'sect-lighting'],
     ['expandAnimDrive', 'animDrive', 'sect-animDrive'],
     ['expandAnimTest', 'animTest', 'sect-animTest'],
+    ['expandHeadband', 'headband', 'sect-headband'],
     ['expandCommandProbe', 'commandProbe', 'sect-commandProbe'],
     ['expandMoveEdit', 'moveEdit', 'sect-moveEdit'],
   ];

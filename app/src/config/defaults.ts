@@ -17,6 +17,7 @@ export function defaultExpandedSections(): ExpandedSections {
     commandProbe: false,
     moveEdit: false,
     animTest: false,
+    headband: true,
     extendedSim: false,
     extendedLoco: false,
     extendedAnim: false,

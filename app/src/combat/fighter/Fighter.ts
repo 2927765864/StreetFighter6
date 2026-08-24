@@ -340,10 +340,15 @@ export class Fighter {
     this.animRole = 'main';
   }
 
+  /**
+   * Special cancel: only after this move connected (hit or block).
+   * Whiff cannot special-cancel (SF-style); self-cancel may still whiff.
+   */
   canSpecialCancel(enableCancel: boolean): boolean {
     if (!enableCancel) return false;
     if (this.phase !== 'attack' || !this.mover.move) return false;
     if (!this.mover.move.cancel.specialCancel) return false;
+    if (!this.mover.hasHitThisMove) return false;
     return this.mover.inCancelWindow('special');
   }
 

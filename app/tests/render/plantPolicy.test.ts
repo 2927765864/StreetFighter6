@@ -119,7 +119,7 @@ describe('plantPolicy attack sole floor clamp', () => {
     ).toBe(false);
   });
 
-  it('skips plain idle without animTail', () => {
+  it('skips plain idle without animTail when headband is off', () => {
     expect(
       shouldFloorClampAttackSole({
         phase: 'idle',
@@ -128,5 +128,28 @@ describe('plantPolicy attack sole floor clamp', () => {
         hasAnimTail: false,
       }),
     ).toBe(false);
+    expect(
+      shouldFloorClampAttackSole({
+        phase: 'idle',
+        jumpPhase: 'none',
+        logicY: 0,
+        hasAnimTail: false,
+        headbandPhysicsEnabled: false,
+      }),
+    ).toBe(false);
+  });
+
+  it('clamps grounded loco while headband physics is on', () => {
+    for (const phase of ['idle', 'walk', 'dash', 'crouch'] as const) {
+      expect(
+        shouldFloorClampAttackSole({
+          phase,
+          jumpPhase: 'none',
+          logicY: 0,
+          hasAnimTail: false,
+          headbandPhysicsEnabled: true,
+        }),
+      ).toBe(true);
+    }
   });
 });

@@ -24,6 +24,7 @@
     "vitest": "^4.1.10"
   },
   "dependencies": {
+    "@pixiv/three-vrm-springbone": "^3.5.5",
     "three": "^0.185.1"
   }
 }

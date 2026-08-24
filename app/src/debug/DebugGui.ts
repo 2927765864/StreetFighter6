@@ -279,6 +279,41 @@ export function createDebugGui(
   art.add(cfg, 'artEnableRoughnessMap').name('粗糙贴图').onChange(applyArt);
   art.add(cfg, 'artRoughness', 0, 1, 0.01).name('基础粗糙度').onChange(applyArt);
 
+  const headband = gui.addFolder('头巾物理');
+  headband.add(cfg, 'headbandPhysicsEnabled').name('启用头巾物理');
+  headband.add(cfg, 'headbandUseCenter').name('头部 Center');
+  headband.add(cfg, 'headbandStiffness', 0, 4, 0.05).name('刚度');
+  headband.add(cfg, 'headbandDragForce', 0, 1, 0.01).name('阻尼');
+  headband.add(cfg, 'headbandGravityPower', 0, 2, 0.05).name('重力强度');
+  headband.add(cfg, 'headbandGravityDirX', -1, 1, 0.05).name('重力X');
+  headband.add(cfg, 'headbandGravityDirY', -1, 1, 0.05).name('重力Y');
+  headband.add(cfg, 'headbandGravityDirZ', -1, 1, 0.05).name('重力Z');
+  headband.add(cfg, 'headbandHitRadius', 0, 0.08, 0.001).name('带节半径');
+  headband.add(cfg, 'headbandGravityAirScale', 0, 1.5, 0.05).name('滞空重力');
+  headband.add(cfg, 'headbandBreathAmp', 0, 0.1, 0.001).name('呼吸幅度');
+  headband.add(cfg, 'headbandBreathHz', 0, 2, 0.05).name('呼吸Hz');
+  headband.add(cfg, 'headbandMaxDeltaSec', 0.016, 0.1, 0.001).name('dt上限');
+  headband
+    .add(cfg, 'headbandColliderHeadRadius', 0, 0.25, 0.005)
+    .name('头碰撞半径');
+  headband
+    .add(cfg, 'headbandColliderNeckRadius', 0, 0.2, 0.005)
+    .name('颈碰撞半径');
+  headband
+    .add(cfg, 'headbandColliderShoulderRadius', 0, 0.25, 0.005)
+    .name('肩碰撞半径');
+  headband
+    .add(cfg, 'headbandColliderHeadYOffset', -0.1, 0.1, 0.005)
+    .name('头球Y偏移');
+  headband
+    .add(cfg, 'headbandColliderShoulderXOffset', -0.5, 0.5, 0.01)
+    .name('肩球局部X(前后)');
+  headband
+    .add(cfg, 'headbandStiffnessTipScale', 0.2, 1.2, 0.05)
+    .name('梢刚度乘子');
+  headband.add(cfg, 'headbandShowColliders').name('显示碰撞Helper');
+  headband.add(cfg, 'headbandShowChainHelpers').name('显示链Helper');
+
   const syncOpts = () => syncMatchOpts(match, cfg);
 
   const input = gui.addFolder('缓冲 / 输入');

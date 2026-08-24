@@ -213,6 +213,29 @@ export type MutableSimConfig = {
   artEnableRoughnessMap: boolean;
   /** Character art: base roughness when no map / blend. */
   artRoughness: number;
+  /** Ryu headband spring bones (VRMC_springBone). */
+  headbandPhysicsEnabled: boolean;
+  headbandUseCenter: boolean;
+  headbandStiffness: number;
+  headbandDragForce: number;
+  headbandGravityPower: number;
+  headbandGravityDirX: number;
+  headbandGravityDirY: number;
+  headbandGravityDirZ: number;
+  headbandHitRadius: number;
+  headbandGravityAirScale: number;
+  headbandBreathAmp: number;
+  headbandBreathHz: number;
+  headbandMaxDeltaSec: number;
+  headbandColliderHeadRadius: number;
+  headbandColliderNeckRadius: number;
+  headbandColliderShoulderRadius: number;
+  headbandColliderHeadYOffset: number;
+  /** Shoulder sphere offset on bone local X (front/back), ±0.5. */
+  headbandColliderShoulderXOffset: number;
+  headbandShowColliders: boolean;
+  headbandShowChainHelpers: boolean;
+  headbandStiffnessTipScale: number;
 };
 
 export function createDefaultSimConfig(): MutableSimConfig {
@@ -368,6 +391,27 @@ export function createDefaultSimConfig(): MutableSimConfig {
     artFlipNormalY: false,
     artEnableRoughnessMap: true,
     artRoughness: 0.72,
+    headbandPhysicsEnabled: true,
+    headbandUseCenter: true,
+    headbandStiffness: 1.35,
+    headbandDragForce: 0.48,
+    headbandGravityPower: 0.35,
+    headbandGravityDirX: 0,
+    headbandGravityDirY: -1,
+    headbandGravityDirZ: 0,
+    headbandHitRadius: 0.012,
+    headbandGravityAirScale: 0.55,
+    headbandBreathAmp: 0.012,
+    headbandBreathHz: 0.35,
+    headbandMaxDeltaSec: 0.05,
+    headbandColliderHeadRadius: 0.09,
+    headbandColliderNeckRadius: 0.06,
+    headbandColliderShoulderRadius: 0.08,
+    headbandColliderHeadYOffset: 0.02,
+    headbandColliderShoulderXOffset: 0,
+    headbandShowColliders: false,
+    headbandShowChainHelpers: false,
+    headbandStiffnessTipScale: 0.85,
   };
 }
 

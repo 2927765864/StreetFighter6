@@ -26,7 +26,8 @@ const lp: MoveDefinition = {
   },
   boxes: {
     hurt: [{ from: 0, to: 13, x: 0, y: 0.85, w: 0.7, h: 1.7 }],
-    hit: [{ from: 3, to: 5, x: 0.1, y: 1, w: 0.2, h: 0.2 }],
+    hit: [{ from: 3, to: 5, x: 1.2, y: 0.85, w: 2.5, h: 1.5 }],
+    push: [{ from: 0, to: 13, x: 0, y: 0.7, w: 0.55, h: 1.4 }],
   },
   clipId: '5lp',
   facingRelative: true,
@@ -60,6 +61,28 @@ const N = {
   pressed: 0,
   released: 0,
 };
+
+const simOpts = {
+  enableCancel: true,
+  enableSpecials: true,
+  forceP2Guard: false,
+  dummyGuardPolicy: 'none' as const,
+  hitstopFramesOnHit: 0,
+  hitstopFramesOnBlock: 0,
+};
+
+function inputMotion236Lp(sim: MatchSim): void {
+  for (const d of [2, 3, 6] as const) {
+    sim.pendingInput = {
+      dir: d,
+      relDir: d,
+      buttons: d === 6 ? BTN_LP : 0,
+      pressed: d === 6 ? BTN_LP : 0,
+      released: 0,
+    };
+    sim.step();
+  }
+}
 
 describe('Hadoken frame data', () => {
   it('LP/MP/HP use Capcom total 47, not startup+1', () => {
@@ -102,14 +125,10 @@ describe('Hadoken frame data', () => {
 });
 
 describe('MatchSim cancel to hadoken', () => {
-  it('cancels 5LP into 236P inside cancel window', () => {
+  it('cancels 5LP into 236P after hit inside cancel window', () => {
     const catalog = MoveCatalog.fromMoves([lp, hado]);
-    const sim = new MatchSim(lp, catalog, {
-      enableCancel: true,
-      enableSpecials: true,
-      hitstopFramesOnHit: 0,
-      hitstopFramesOnBlock: 0,
-    });
+    const sim = new MatchSim(lp, catalog, simOpts);
+    sim.dummy.setMode('stand');
 
     sim.pendingInput = {
       dir: 5,
@@ -121,26 +140,72 @@ describe('MatchSim cancel to hadoken', () => {
     sim.step();
     expect(sim.p1.mover.moveId).toBe('5LP');
 
-    // Advance into cancel window (frame 3+)
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 4; i++) {
       sim.pendingInput = N;
       sim.step();
     }
-    expect(sim.p1.mover.inCancelWindow('special')).toBe(true);
+    expect(sim.p1.mover.hasHitThisMove).toBe(true);
+    expect(sim.p1.canSpecialCancel(true)).toBe(true);
 
-    // 236 + LP
-    for (const d of [2, 3, 6] as const) {
-      sim.pendingInput = {
-        dir: d,
-        relDir: d,
-        buttons: d === 6 ? BTN_LP : 0,
-        pressed: d === 6 ? BTN_LP : 0,
-        released: 0,
-      };
-      sim.step();
-    }
+    inputMotion236Lp(sim);
 
     expect(sim.p1.mover.moveId).toBe('ryu_hadoken_lp');
     expect(sim.p1.phase).toBe('attack');
+  });
+
+  it('cancels 5LP into 236P after block inside cancel window', () => {
+    const catalog = MoveCatalog.fromMoves([lp, hado]);
+    const sim = new MatchSim(lp, catalog, {
+      ...simOpts,
+      dummyGuardPolicy: 'stand_block',
+    });
+    sim.dummy.setMode('stand');
+    sim.dummy.setGuardPolicy('stand_block');
+
+    sim.pendingInput = {
+      dir: 5,
+      relDir: 5,
+      buttons: BTN_LP,
+      pressed: BTN_LP,
+      released: 0,
+    };
+    sim.step();
+    for (let i = 0; i < 4; i++) {
+      sim.pendingInput = N;
+      sim.step();
+    }
+    expect(sim.p1.mover.hasHitThisMove).toBe(true);
+    expect(sim.p1.canSpecialCancel(true)).toBe(true);
+
+    inputMotion236Lp(sim);
+
+    expect(sim.p1.mover.moveId).toBe('ryu_hadoken_lp');
+  });
+
+  it('does not special-cancel 5LP on whiff', () => {
+    const catalog = MoveCatalog.fromMoves([lp, hado]);
+    const sim = new MatchSim(lp, catalog, simOpts);
+    sim.p2.x = 8;
+
+    sim.pendingInput = {
+      dir: 5,
+      relDir: 5,
+      buttons: BTN_LP,
+      pressed: BTN_LP,
+      released: 0,
+    };
+    sim.step();
+    for (let i = 0; i < 4; i++) {
+      sim.pendingInput = N;
+      sim.step();
+    }
+    expect(sim.p1.mover.hasHitThisMove).toBe(false);
+    expect(sim.p1.mover.inCancelWindow('special')).toBe(true);
+    expect(sim.p1.canSpecialCancel(true)).toBe(false);
+
+    inputMotion236Lp(sim);
+
+    expect(sim.p1.mover.moveId).toBe('5LP');
+    expect(sim.p1.mover.moveId).not.toBe('ryu_hadoken_lp');
   });
 });

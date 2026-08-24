@@ -42,6 +42,12 @@ export function shouldResetGroundOffset(opts: {
  * few frames; logic Place already floor-clamps Y, but presentation does not
  * chase soles on attack — without this, feet clip through the stage.
  * Skip while Place Y has the body hopping (fighter.y > 0).
+ *
+ * When headband spring bones run, VRMSpringBoneManager partially refreshes
+ * ancestor world matrices (head/spine path only). Attack already healed soles
+ * via this clamp; idle/walk had no equivalent and could present as foot-ground
+ * clipping. Enable the same lift-only clamp for grounded loco while headband
+ * physics is on (does not pull down — safe for heel-rise in idle/walk).
  */
 export function shouldFloorClampAttackSole(opts: {
   phase: string;
@@ -49,6 +55,7 @@ export function shouldFloorClampAttackSole(opts: {
   logicY: number;
   hasAnimTail: boolean;
   holdAirTail?: boolean;
+  headbandPhysicsEnabled?: boolean;
 }): boolean {
   if (opts.jumpPhase !== 'none') return false;
   if (opts.logicY > 1e-4) return false;
@@ -57,6 +64,15 @@ export function shouldFloorClampAttackSole(opts: {
     opts.hasAnimTail &&
     !opts.holdAirTail &&
     (opts.phase === 'idle' || opts.phase === 'crouch')
+  ) {
+    return true;
+  }
+  if (
+    opts.headbandPhysicsEnabled &&
+    (opts.phase === 'idle' ||
+      opts.phase === 'walk' ||
+      opts.phase === 'dash' ||
+      opts.phase === 'crouch')
   ) {
     return true;
   }

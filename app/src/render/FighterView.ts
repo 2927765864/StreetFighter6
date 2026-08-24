@@ -46,6 +46,8 @@ import {
   blendWallDt,
   type CrossfadeAdvanceMode,
 } from '../combat/anim/PoseBlendMath';
+import { RyuHeadbandPhysics } from './headband/RyuHeadbandPhysics';
+import { clampHeadbandDeltaSec } from './headband/headbandPhysicsMath';
 import {
   isJumpLandBinding,
   shouldFloorClampAttackSole,
@@ -139,8 +141,13 @@ export class FighterView {
   private logicActions = new Map<string, THREE.AnimationAction>();
   private logicLoadInflight = new Map<string, Promise<boolean>>();
   private lastLogicFailLog = '';
+  /** Ryu hairband spring bones; updated after mixer each frame. */
+  private headband: RyuHeadbandPhysics | null = null;
+  /** Scene root — headband debug helpers must parent here (not under fighter). */
+  private readonly scene: THREE.Scene;
 
   constructor(scene: THREE.Scene, tint: number) {
+    this.scene = scene;
     const geo = new THREE.CapsuleGeometry(0.28, 1.0, 4, 8);
     const mat = new THREE.MeshStandardMaterial({
       color: tint,
@@ -184,6 +191,8 @@ export class FighterView {
       (this.placeholder.material as THREE.Material).dispose();
     }
     if (this.modelRoot) {
+      this.headband?.dispose();
+      this.headband = null;
       this.root.remove(this.modelRoot);
       this.modelRoot = null;
     }
@@ -293,10 +302,22 @@ export class FighterView {
 
     this.modelRoot = model;
     this.root.add(model);
-    // One-shot sole align after stance pose (not per-frame; trust idle clip after this).
+    this.lastPlantPolicyPhase = 'idle';
+
+    this.headband?.dispose();
+    this.headband = new RyuHeadbandPhysics();
+    const hb = this.headband.bind(model, { helperParent: this.scene });
+    if (hb.ok) {
+      console.info(
+        `[FighterView] headband physics bound L=${hb.leftJoints} R=${hb.rightJoints}`,
+      );
+    } else {
+      console.warn(`[FighterView] headband physics: ${hb.reason}`);
+    }
+
+    // One-shot sole align after stance pose + headband bind (not per-frame).
     this.plantFeetOnGround();
     this.modelGroundRestY = this.modelRoot.position.y;
-    this.lastPlantPolicyPhase = 'idle';
 
     console.info(
       `[FighterView] install pruned=${pruned} baked=${baked} procedural=${this.useProcedural} ` +
@@ -533,16 +554,20 @@ export class FighterView {
   }
 
   /**
-   * Grounded attack / residual: lift modelRoot only when soles pierce the
-   * floor. Does not pull down (spinning kicks keep a raised contact foot).
+   * Grounded attack / residual / headband-loco: lift modelRoot only when soles
+   * pierce the floor. Does not pull down (spinning kicks / heel rise stay up).
    */
-  private applyGroundedAttackSoleFloorClamp(fighter: Fighter): void {
+  private applyGroundedAttackSoleFloorClamp(
+    fighter: Fighter,
+    cfg: MutableSimConfig,
+  ): void {
     const active = shouldFloorClampAttackSole({
       phase: fighter.phase,
       jumpPhase: fighter.jumpPhase,
       logicY: fighter.y,
       hasAnimTail: fighter.animTail != null,
       holdAirTail: fighter.animTail?.holdAir === true,
+      headbandPhysicsEnabled: cfg.headbandPhysicsEnabled,
     });
     if (!active) {
       if (this.soleFloorClampActive) {
@@ -695,6 +720,39 @@ export class FighterView {
     }
   }
 
+  /** Spring bones after mixer; never gated by hitstop/hitstun. */
+  private updateHeadbandPhysics(
+    fighter: Fighter,
+    cfg: MutableSimConfig,
+    wallDtSec: number,
+  ): void {
+    if (!this.headband?.isBound) return;
+    const deltaSec = clampHeadbandDeltaSec(
+      wallDtSec,
+      cfg.headbandMaxDeltaSec,
+      cfg.timeScaleAnim || 1,
+    );
+    this.headband.update({
+      deltaSec,
+      cfg,
+      jumpPhase: fighter.jumpPhase,
+    });
+  }
+
+  private afterAnimPose(
+    fighter: Fighter,
+    cfg: MutableSimConfig,
+    wallDtSec = 1 / 60,
+  ): void {
+    // UniVRM / spring-bone order: resolve feet/sole from the authored pose
+    // first, then secondary motion. Headband manager only refreshes the
+    // head/spine ancestor path; running it before sole clamp left idle/walk
+    // without the lift-only floor heal that attack already had.
+    this.maybePlantAfterPose(fighter, cfg, wallDtSec);
+    this.updateHeadbandPhysics(fighter, cfg, wallDtSec);
+    this.modelRoot?.updateMatrixWorld(true);
+  }
+
   private maybePlantAfterPose(
     fighter: Fighter,
     cfg: MutableSimConfig,
@@ -767,8 +825,9 @@ export class FighterView {
       this.plantWorldXZ = null;
     }
     // After support-foot XZ: lift-only floor clamp for grounded specials
-    // whose recovery clips briefly push toes below y=0 (Tatsumaki END).
-    this.applyGroundedAttackSoleFloorClamp(fighter);
+    // whose recovery clips briefly push toes below y=0 (Tatsumaki END),
+    // and for idle/walk while headband physics is enabled.
+    this.applyGroundedAttackSoleFloorClamp(fighter, cfg);
   }
 
   /**
@@ -1325,6 +1384,8 @@ export class FighterView {
     if (this.previewMode) {
       if (this.mixer) this.mixer.update(animDt);
       if (cfg.plantMode === 'legacy') this.plantFeetOnGround();
+      this.updateHeadbandPhysics(fighter, cfg, wallDtSec);
+      this.modelRoot?.updateMatrixWorld(true);
       return;
     }
 
@@ -1346,7 +1407,7 @@ export class FighterView {
         this.playBest(fighter.clipId, role, fadePolicy);
         this.procedural.update(animDt, false);
       }
-      this.maybePlantAfterPose(fighter, cfg, wallDtSec);
+      this.afterAnimPose(fighter, cfg, wallDtSec);
       return;
     }
 
@@ -1396,7 +1457,7 @@ export class FighterView {
         this.scrubActionTo(action, t);
         this.applyRootPoseLock(cfg, true);
       }
-      this.maybePlantAfterPose(fighter, cfg, wallDtSec);
+      this.afterAnimPose(fighter, cfg, wallDtSec);
       return;
     }
     this.attackHipsLockLocal = null;
@@ -1433,7 +1494,7 @@ export class FighterView {
           this.scrubActionTo(action, t);
         }
       }
-      this.maybePlantAfterPose(fighter, cfg, wallDtSec);
+      this.afterAnimPose(fighter, cfg, wallDtSec);
       return;
     }
 
@@ -1457,7 +1518,7 @@ export class FighterView {
           this.scrubActionTo(action, t);
         }
       }
-      this.maybePlantAfterPose(fighter, cfg, wallDtSec);
+      this.afterAnimPose(fighter, cfg, wallDtSec);
       return;
     }
 
@@ -1475,7 +1536,7 @@ export class FighterView {
           scrubTo(action, fighter.locoFrame, mapTotal);
         }
       }
-      this.maybePlantAfterPose(fighter, cfg, wallDtSec);
+      this.afterAnimPose(fighter, cfg, wallDtSec);
       return;
     }
 
@@ -1519,7 +1580,7 @@ export class FighterView {
           }
         }
       }
-      this.maybePlantAfterPose(fighter, cfg, wallDtSec);
+      this.afterAnimPose(fighter, cfg, wallDtSec);
       return;
     }
 
@@ -1538,7 +1599,7 @@ export class FighterView {
         );
         this.scrubActionTo(action, t);
       }
-      this.maybePlantAfterPose(fighter, cfg, wallDtSec);
+      this.afterAnimPose(fighter, cfg, wallDtSec);
       return;
     }
 
@@ -1588,7 +1649,7 @@ export class FighterView {
         );
         this.scrubActionTo(action, t);
       }
-      this.maybePlantAfterPose(fighter, cfg, wallDtSec);
+      this.afterAnimPose(fighter, cfg, wallDtSec);
       return;
     }
     if (fighter.phase === 'blockstun') {
@@ -1613,7 +1674,7 @@ export class FighterView {
           this.mixer.update(animDt);
         }
       }
-      this.maybePlantAfterPose(fighter, cfg, wallDtSec);
+      this.afterAnimPose(fighter, cfg, wallDtSec);
       return;
     }
 
@@ -1630,7 +1691,7 @@ export class FighterView {
           scrubTo(action, fighter.turnFrame, total);
         }
       }
-      this.maybePlantAfterPose(fighter, cfg, wallDtSec);
+      this.afterAnimPose(fighter, cfg, wallDtSec);
       return;
     }
 
@@ -1666,7 +1727,7 @@ export class FighterView {
         }
       }
     }
-    this.maybePlantAfterPose(fighter, cfg, wallDtSec);
+    this.afterAnimPose(fighter, cfg, wallDtSec);
   }
 
   get isLoaded(): boolean {
