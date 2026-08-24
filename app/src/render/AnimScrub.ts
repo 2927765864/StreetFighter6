@@ -4,7 +4,19 @@
  * @see docs/plans/ai-execution-plan-anim-loco-feet-displace-v0.md Step 3
  */
 
+import type {
+  AnimRemapSegment,
+  AnimSequenceSegment,
+} from '../combat/move/MoveDefinition';
+
+export type { AnimRemapSegment, AnimSequenceSegment };
 export type ScrubMode = 'uniform' | 'truncate';
+
+export type ResolvedAnimSequenceFrame = {
+  role: string;
+  motionFrame: number;
+  segment: AnimSequenceSegment;
+};
 
 /**
  * @param logicFrame 0-based local frame within segment
@@ -45,6 +57,99 @@ export function visualFrameToClipTime(
   if (dur <= 1e-8) return 0;
   const f = Math.max(0, Math.floor(visualFrame));
   return Math.min(f / 60, Math.max(0, dur - 1e-4));
+}
+
+/**
+ * Map an action-timeline frame through animRemap segments to a motion frame.
+ * Empty / invalid tables fall back to the logic frame itself.
+ */
+export function remapLogicToMotionFrame(
+  logicFrame: number,
+  segments: readonly AnimRemapSegment[] | null | undefined,
+): number {
+  const f = Math.max(0, logicFrame);
+  if (!segments || segments.length === 0) return f;
+
+  const segs = segments.filter(
+    (s) =>
+      Number.isFinite(s.logicFrom) &&
+      Number.isFinite(s.logicTo) &&
+      Number.isFinite(s.motionFrom) &&
+      Number.isFinite(s.motionTo) &&
+      s.logicTo > s.logicFrom,
+  );
+  if (segs.length === 0) return f;
+
+  for (const s of segs) {
+    if (f >= s.logicFrom && f < s.logicTo) {
+      const u = (f - s.logicFrom) / (s.logicTo - s.logicFrom);
+      return s.motionFrom + u * (s.motionTo - s.motionFrom);
+    }
+  }
+
+  const last = segs[segs.length - 1]!;
+  if (f >= last.logicTo) return last.motionTo;
+  // Before first segment
+  return segs[0]!.motionFrom;
+}
+
+/**
+ * Action frame → clip seconds via animRemap (60Hz motion samples).
+ * No table → same as visualFrameToClipTime.
+ */
+export function remapLogicToClipTime(
+  logicFrame: number,
+  segments: readonly AnimRemapSegment[] | null | undefined,
+  clipDurationSec: number,
+): number {
+  if (!segments || segments.length === 0) {
+    return visualFrameToClipTime(logicFrame, clipDurationSec);
+  }
+  const motion = remapLogicToMotionFrame(logicFrame, segments);
+  return visualFrameToClipTime(motion, clipDurationSec);
+}
+
+/**
+ * Resolve multi-clip sequence at a logic frame (Tatsumaki start/loop/end).
+ */
+export function resolveAnimSequenceFrame(
+  logicFrame: number,
+  sequence: readonly AnimSequenceSegment[] | null | undefined,
+): ResolvedAnimSequenceFrame | null {
+  if (!sequence || sequence.length === 0) return null;
+  const f = Math.max(0, logicFrame);
+  const segs = sequence.filter(
+    (s) =>
+      typeof s.role === 'string' &&
+      s.role.length > 0 &&
+      Number.isFinite(s.logicFrom) &&
+      Number.isFinite(s.logicTo) &&
+      Number.isFinite(s.motionFrom) &&
+      Number.isFinite(s.motionTo) &&
+      s.logicTo > s.logicFrom,
+  );
+  if (segs.length === 0) return null;
+
+  let seg = segs[0]!;
+  for (const s of segs) {
+    if (f >= s.logicFrom && f < s.logicTo) {
+      seg = s;
+      break;
+    }
+    if (f >= s.logicTo) seg = s;
+  }
+  if (f < segs[0]!.logicFrom) seg = segs[0]!;
+  if (f >= segs[segs.length - 1]!.logicTo) seg = segs[segs.length - 1]!;
+
+  const span = seg.logicTo - seg.logicFrom;
+  const u =
+    f <= seg.logicFrom
+      ? 0
+      : f >= seg.logicTo
+        ? 1
+        : (f - seg.logicFrom) / span;
+  const motionFrame = seg.motionFrom + u * (seg.motionTo - seg.motionFrom);
+  return { role: seg.role, motionFrame, segment: seg };
 }
 
 /** Prefer map/filename count; else derive from clip duration @60Hz. */

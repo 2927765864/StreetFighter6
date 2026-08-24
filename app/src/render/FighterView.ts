@@ -18,6 +18,8 @@ import { AnimClipLibrary } from './AnimClipLibrary';
 import { ProceduralRyuAnim } from './ProceduralRyuAnim';
 import {
   logicFrameToClipTime,
+  remapLogicToClipTime,
+  resolveAnimSequenceFrame,
   visualFrameToClipTime,
   type ScrubMode,
 } from './AnimScrub';
@@ -46,6 +48,7 @@ import {
 } from '../combat/anim/PoseBlendMath';
 import {
   isJumpLandBinding,
+  shouldFloorClampAttackSole,
   shouldResetGroundOffset,
   shouldSnapSoleOnLand,
 } from './plantPolicy';
@@ -103,6 +106,8 @@ export class FighterView {
   private pendingLandPlant = false;
   /** modelRoot.y after install sole align; land reset returns here. */
   private modelGroundRestY = 0;
+  /** True while lift-only attack/tail sole floor-clamp is active. */
+  private soleFloorClampActive = false;
   private placeholder: THREE.Mesh;
   private procedural = new ProceduralRyuAnim();
   private useProcedural = false;
@@ -527,6 +532,41 @@ export class FighterView {
     this.modelRoot.position.y += deltaWorld / sy;
   }
 
+  /**
+   * Grounded attack / residual: lift modelRoot only when soles pierce the
+   * floor. Does not pull down (spinning kicks keep a raised contact foot).
+   */
+  private applyGroundedAttackSoleFloorClamp(fighter: Fighter): void {
+    const active = shouldFloorClampAttackSole({
+      phase: fighter.phase,
+      jumpPhase: fighter.jumpPhase,
+      logicY: fighter.y,
+      hasAnimTail: fighter.animTail != null,
+      holdAirTail: fighter.animTail?.holdAir === true,
+    });
+    if (!active) {
+      if (this.soleFloorClampActive) {
+        this.resetModelGroundOffset();
+        this.soleFloorClampActive = false;
+      }
+      return;
+    }
+    if (!this.modelRoot) return;
+    this.resetModelGroundOffset();
+    const soleY = this.measureContactSoleY();
+    if (soleY == null || !Number.isFinite(soleY)) return;
+    if (soleY >= STAGE_GROUND_Y) {
+      this.soleFloorClampActive = true;
+      return;
+    }
+    const soleBias = 0.012;
+    const deltaWorld = STAGE_GROUND_Y - soleY + soleBias;
+    if (deltaWorld > 0.35) return;
+    const sy = this.root.scale.y || 1;
+    this.modelRoot.position.y += deltaWorld / sy;
+    this.soleFloorClampActive = true;
+  }
+
   private isAirborneLogicPhase(phase: string): boolean {
     return phase === 'prejump' || phase === 'airborne';
   }
@@ -726,6 +766,9 @@ export class FighterView {
     } else {
       this.plantWorldXZ = null;
     }
+    // After support-foot XZ: lift-only floor clamp for grounded specials
+    // whose recovery clips briefly push toes below y=0 (Tatsumaki END).
+    this.applyGroundedAttackSoleFloorClamp(fighter);
   }
 
   /**
@@ -1331,13 +1374,25 @@ export class FighterView {
     };
 
     // Attack locked segment: no crossfade (不侵占逻辑动画 §3.11); 60Hz prefix
+    // (or Capcom-style animRemap / multi-clip animSequence).
     if (fighter.phase === 'attack' && fighter.mover.move) {
       this.clearPoseBlend(true);
-      this.playBest(fighter.clipId, role, HARD_CUT);
-      const action = this.resolveAction(fighter.clipId, role);
+      const vf = fighter.mover.moveFrame;
+      const seq = resolveAnimSequenceFrame(
+        vf,
+        fighter.mover.move.animSequence,
+      );
+      const attackRole = seq?.role || role;
+      if (seq) fighter.animRole = seq.role;
+      this.playBest(fighter.clipId, attackRole, HARD_CUT);
+      const action = this.resolveAction(fighter.clipId, attackRole);
       if (action && this.mixer) {
-        const vf = fighter.mover.moveFrame;
-        const t = visualFrameToClipTime(vf, action.getClip().duration);
+        const rem = fighter.mover.move.animRemap;
+        const t = seq
+          ? visualFrameToClipTime(seq.motionFrame, action.getClip().duration)
+          : rem?.length
+            ? remapLogicToClipTime(vf, rem, action.getClip().duration)
+            : visualFrameToClipTime(vf, action.getClip().duration);
         this.scrubActionTo(action, t);
         this.applyRootPoseLock(cfg, true);
       }
@@ -1358,13 +1413,19 @@ export class FighterView {
       const tailRole = fighter.animTail.animRole || 'main';
       const leaveFade =
         fighter.phase === 'airborne' ? fadePolicy : HARD_CUT;
-      this.playBest(tailClip, tailRole, leaveFade);
-      const action = this.resolveAction(tailClip, tailRole);
+      const vf = fighter.animTail.visualFrame;
+      const seq = resolveAnimSequenceFrame(vf, fighter.animTail.animSequence);
+      const scrubRole = seq?.role || tailRole;
+      if (seq) fighter.animRole = seq.role;
+      this.playBest(tailClip, scrubRole, leaveFade);
+      const action = this.resolveAction(tailClip, scrubRole);
       if (action && this.mixer) {
-        const t = visualFrameToClipTime(
-          fighter.animTail.visualFrame,
-          action.getClip().duration,
-        );
+        const rem = fighter.animTail.animRemap;
+        const t = seq
+          ? visualFrameToClipTime(seq.motionFrame, action.getClip().duration)
+          : rem?.length
+            ? remapLogicToClipTime(vf, rem, action.getClip().duration)
+            : visualFrameToClipTime(vf, action.getClip().duration);
         if (this.poseBlend && this.poseBlend.to === action) {
           const w = this.stepPoseBlend(wallDtSec);
           this.scrubActionTo(action, t, w, true);

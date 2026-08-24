@@ -3,151 +3,115 @@
   "characterId": "ryu",
   "moveId": "ryu_hashogeki_lp",
   "displayName": "Hashogeki (Light)",
-  "displayNameJa": "波掌撃（弱)",
-  "input": {
-    "raw": "214lp",
-    "buttons": null,
-    "motion": null
-  },
-  "type": "special",
-  "guard": "high",
-  "hitCount": 1,
   "frames": {
     "startup": 12,
     "active": 6,
-    "activeRaw": [
-      12,
-      17
-    ],
     "recovery": 18,
-    "total": 35
+    "total": 36
   },
   "advantage": {
     "onHit": 2,
     "onBlock": -3
   },
   "damage": 700,
+  "hitCount": 1,
+  "hitstun": 26,
+  "blockstun": 25,
   "cancel": {
     "specialCancel": false,
     "superOnly": true,
-    "raw": "SA3",
     "targetCombo": [],
+    "raw": "SA3",
     "windows": []
   },
-  "driveGauge": {
-    "onHit": 2000,
-    "onBlock": -4000,
-    "onPunishCounter": -5000
-  },
-  "superArtGauge": 800,
-  "scaling": null,
-  "notes": [
-    "Concentrate ki in the palm and unleash it directly forward. Useful as a follow-up after blocks and combos",
-    "Forces a juggle state when the attack lands as a counter or Punish Counter"
-  ],
   "boxes": {
     "hurt": [
       {
-        "from": 0,
-        "to": 34,
         "x": 0,
         "y": 1.693975903614458,
         "w": 0.8,
         "h": 0.31204819277108437,
-        "rectId": 7,
-        "part": "head",
-        "layer": "base",
-        "rectBucket": "08"
-      },
-      {
         "from": 0,
         "to": 34,
+        "part": "head",
+        "layer": "base",
+        "rectId": 7
+      },
+      {
         "x": 0,
         "y": 1.0698795180722893,
         "w": 0.8,
         "h": 0.936144578313253,
-        "rectId": 8,
-        "part": "body",
-        "layer": "base",
-        "rectBucket": "08"
-      },
-      {
         "from": 0,
         "to": 34,
+        "part": "body",
+        "layer": "base",
+        "rectId": 8
+      },
+      {
         "x": 0,
         "y": 0.30090361445783137,
         "w": 0.8,
         "h": 0.6018072289156627,
-        "rectId": 9,
+        "from": 0,
+        "to": 34,
         "part": "leg",
         "layer": "base",
-        "rectBucket": "08"
+        "rectId": 9
       },
       {
-        "from": 11,
-        "to": 30,
         "x": 0.48,
         "y": 1.0253012048192773,
         "w": 0.46,
         "h": 0.6018072289156627,
-        "rectId": 218,
+        "from": 11,
+        "to": 30,
         "part": "body",
         "layer": "extend",
-        "rectBucket": "08"
+        "rectId": 218
       },
       {
-        "from": 12,
-        "to": 30,
         "x": 0.59,
         "y": 0.36777108433734945,
         "w": 0.38,
         "h": 0.7132530120481928,
-        "rectId": 219,
+        "from": 12,
+        "to": 30,
         "part": "leg",
         "layer": "extend",
-        "rectBucket": "08"
+        "rectId": 219
       },
       {
-        "from": 30,
-        "to": 35,
         "x": 0.5,
         "y": 0.7021084337349398,
         "w": 0.2,
         "h": 1.3819277108433736,
-        "rectId": 222,
+        "from": 30,
+        "to": 35,
         "part": "body",
         "layer": "extend",
-        "rectBucket": "08"
+        "rectId": 222
       }
     ],
-    "hit": [
-      {
-        "from": 0,
-        "to": 6,
-        "x": 0.52,
-        "y": 1.0587349397590362,
-        "w": 0.9400000000000001,
-        "h": 0.4680722891566265,
-        "rectId": 84,
-        "rectBucket": "03"
-      }
-    ],
+    "hit": [],
     "push": [
       {
-        "from": 0,
-        "to": 110,
         "x": 0,
         "y": 1.6605421686746988,
         "w": 0.6,
         "h": 0.37891566265060245,
-        "rectId": 1,
-        "rectBucket": "08"
+        "from": 0,
+        "to": 110,
+        "rectId": 1
       }
     ]
   },
-  "clipId": "hashogeki_lp",
-  "glbPath": "specialskill/esf001v00_specialskill_03/glb/000_esf001_SPA_HADOSHO_id0200_f128.glb",
+  "clipId": "ryu_hashogeki",
   "facingRelative": true,
+  "review": {
+    "status": "mmdk_converted",
+    "notes": "MMDK convert unitScale=0.01; public frames kept; layer/part on hurt; CLAMP_BASE=true | box-editor override | animRemap+Place/Steer from MMDK"
+  },
   "sources": [
     {
       "name": "4rays/sf6-move-data",
@@ -158,12 +122,6 @@
       "license_note": "Repo code MIT; game data Capcom IP — private research use only"
     }
   ],
-  "review": {
-    "status": "mmdk_converted",
-    "notes": "MMDK convert unitScale=0.01; public frames kept; layer/part on hurt; CLAMP_BASE=true"
-  },
-  "slug": "hashogeki-light",
-  "abbreviation": null,
   "selfMovement": [
     0.0,
     0.0,
@@ -277,23 +235,10 @@
     0.0
   ],
   "timelineFrames": 111,
-  "hitstun": 26,
-  "blockstun": 25,
-  "hitstopOnHit": 15,
   "hitstopOnBlock": 15,
+  "hitstopOnHit": 15,
   "blockPushbackTotal": 0.5,
-  "mmdk": {
-    "actionName": "SPA_HADOSHO_L+SPA_HADOSHO_L PROJ",
-    "fabFrame": 110,
-    "hitDtIndex": 171,
-    "unitScale": 0.01,
-    "clampBaseHurtToTotal": true,
-    "blockCurveTgtID": 2,
-    "blockMoveType": 24,
-    "hitmarkStrength": 1
-  },
   "blockPushMoveTime": 25,
-  "guardStrength": "M",
   "hitPushbackTotal": 0.5,
   "hitPushMoveTime": 26,
   "hitPushback": [
@@ -324,6 +269,16 @@
     0.00019913518434233612,
     2.844788347744487e-05
   ],
+  "hitReaction": "stun",
+  "animFrameCount": 110,
+  "glbPath": "specialskill/esf001v00_specialskill_03/glb/000_esf001_SPA_HADOSHO_id0200_f128.glb",
+  "mmdk": {
+    "actionName": "SPA_HADOSHO_L",
+    "fabFrame": 110,
+    "actionId": 1036
+  },
+  "guard": "high",
+  "guardStrength": "M",
   "animRemap": [
     {
       "logicFrom": 0,

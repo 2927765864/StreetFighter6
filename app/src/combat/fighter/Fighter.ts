@@ -3,7 +3,11 @@ import {
   assembleWorldBoxes,
   type ActionTimeline,
 } from '../boxes/BoxAssembly';
-import type { MoveDefinition } from '../move/MoveDefinition';
+import type {
+  AnimRemapSegment,
+  AnimSequenceSegment,
+  MoveDefinition,
+} from '../move/MoveDefinition';
 import { inferTimelineFrames } from '../move/MoveDefinition';
 import { MovePlayer } from '../move/MovePlayer';
 import type {
@@ -164,6 +168,10 @@ export class Fighter {
     animRole: string;
     /** Air-attack tail: keep flying; do not flip phase to idle. */
     holdAir?: boolean;
+    /** Optional action→motion remap copied from the finished move. */
+    animRemap?: AnimRemapSegment[];
+    /** Optional multi-clip sequence copied from the finished move. */
+    animSequence?: AnimSequenceSegment[];
   } | null = null;
   /**
    * Attack Place + action-layer boxes after canAct (not dash).
@@ -451,6 +459,8 @@ export class Fighter {
     const dy = (move.selfMovementY?.[this.mover.moveFrame] ?? 0) * scale;
     this.x += this.facing * dx;
     this.y += dy;
+    // Grounded specials (Tatsumaki etc.): Capcom floor-constrains Y; never sink.
+    if (this.jumpPhase === 'none' && this.y < 0) this.y = 0;
     this.lastSelfDx = dx;
     return dx;
   }
@@ -466,6 +476,7 @@ export class Fighter {
     const dy = (r.move.selfMovementY?.[r.frame] ?? 0) * scale;
     this.x += this.facing * dx;
     this.y += dy;
+    if (this.jumpPhase === 'none' && this.y < 0) this.y = 0;
     this.lastSelfDx = dx;
     return dx;
   }
@@ -559,6 +570,8 @@ export class Fighter {
     animFrameCount: number | null | undefined,
     stance: MoveStance,
     animRole: string = 'main',
+    animRemap?: AnimRemapSegment[],
+    animSequence?: AnimSequenceSegment[],
   ): void {
     const total = Math.max(1, Math.floor(logicTotal));
     const animN = Math.max(
@@ -574,16 +587,23 @@ export class Fighter {
       this.applyStancePresentation();
       return;
     }
+    const seq = animSequence?.length ? animSequence : undefined;
+    const roleAtTotal =
+      seq?.find((s) => total >= s.logicFrom && total < s.logicTo)?.role ??
+      seq?.[seq.length - 1]?.role ??
+      animRole;
     this.animTail = {
       clipId,
       visualFrame: total,
       animFrameCount: animN,
       logicTotal: total,
       stance,
-      animRole,
+      animRole: roleAtTotal,
+      animRemap: animRemap?.length ? animRemap : undefined,
+      animSequence: seq,
     };
     this.clipId = clipId;
-    this.animRole = animRole;
+    this.animRole = roleAtTotal;
     this.stanceState = clearStanceTo(crouch);
     this.phase = crouch ? 'crouch' : 'idle';
   }
@@ -602,6 +622,11 @@ export class Fighter {
       const m = /_f(\d+)(?:\.|$)/i.exec(move.glbPath);
       if (m) animN = Math.max(total, parseInt(m[1]!, 10));
     }
+    const seq = move.animSequence?.length ? move.animSequence : undefined;
+    const role =
+      seq?.find((s) => total >= s.logicFrom && total < s.logicTo)?.role ??
+      seq?.[seq.length - 1]?.role ??
+      (move.animRole?.trim() || 'main');
     this.animTail = {
       clipId: move.clipId,
       // First residual sample = first frame after locked segment
@@ -609,11 +634,13 @@ export class Fighter {
       animFrameCount: animN,
       logicTotal: total,
       stance: inferMoveStance(move),
-      animRole: 'main',
+      animRole: role,
       holdAir: true,
+      animRemap: move.animRemap?.length ? move.animRemap : undefined,
+      animSequence: seq,
     };
     this.clipId = move.clipId;
-    this.animRole = 'main';
+    this.animRole = role;
   }
 
   private beginAnimTail(move: MoveDefinition): void {
@@ -622,6 +649,9 @@ export class Fighter {
       move.frames.total,
       move.animFrameCount,
       inferMoveStance(move),
+      move.animRole?.trim() || 'main',
+      move.animRemap,
+      move.animSequence,
     );
   }
 
@@ -1072,7 +1102,10 @@ export class Fighter {
     this.phase = 'attack';
     this.mover.start(move);
     this.clipId = move.clipId;
-    this.animRole = 'main';
+    this.animRole =
+      move.animSequence?.[0]?.role?.trim() ||
+      move.animRole?.trim() ||
+      'main';
     if (!onJumpArc) {
       this.stateTimer = 0;
     }

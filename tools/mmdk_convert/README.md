@@ -42,6 +42,7 @@ node tools/mmdk_convert/convert_ryu_normals.mjs --only 5lp
 | `review.status` | `mmdk_converted` 当 action 成功 |
 
 Place：`PosList` 累积差分 → `selfMovement`（`placeCumToDx`）。  
+Steer：`ValueType 0/1` = 水平/竖直速度；该轴保持到下一次同轴改写，再乘 `UNIT_SCALE` 写入 `selfMovement` / `selfMovementY`（旋风腿长位移、驴踢冲量等）。  
 波动等：本体动作无 strike 时合并 `… PROJ` 的 AttackCollision。
 
 ## 输出

@@ -1,5 +1,21 @@
 import type { Box } from '../boxes/Box2D';
 
+/** Half-open action→motion windows (Capcom MotionKey style). */
+export type AnimRemapSegment = {
+  logicFrom: number;
+  logicTo: number;
+  motionFrom: number;
+  motionTo: number;
+};
+
+/**
+ * Multi-clip attack timeline (e.g. Tatsumaki start→loop×N→end).
+ * Each segment selects a LogicGlbMap role and remaps into that clip.
+ */
+export type AnimSequenceSegment = AnimRemapSegment & {
+  role: string;
+};
+
 export type TimedBox = Box & {
   from: number;
   to: number; // inclusive
@@ -74,6 +90,11 @@ export type MoveDefinition = {
     push?: TimedBox[];
   };
   clipId: string;
+  /**
+   * LogicGlbMap clip role (default `main`). E.g. hashogeki light/heavy use
+   * `variant_l` while medium keeps `main`.
+   */
+  animRole?: string;
   facingRelative: boolean;
   review: { status: string; notes: string };
   sources?: { name: string; url: string; retrieved: string }[];
@@ -114,6 +135,17 @@ export type MoveDefinition = {
   animFrameCount?: number;
   /** Optional anims-relative path (for tooling / frameCount parse). */
   glbPath?: string;
+  /**
+   * Optional Capcom-style action→motion remap (half-open windows).
+   * When set, attack/residual scrub samples the shared clip via these segments
+   * instead of identity logicFrame→motionFrame.
+   */
+  animRemap?: AnimRemapSegment[];
+  /**
+   * Optional multi-clip sequence. When set, takes precedence over `animRemap`
+   * and drives `animRole` per logic frame (start/loop/end, etc.).
+   */
+  animSequence?: AnimSequenceSegment[];
   /**
    * Posture family for residual compatibility (consensus §3.7.1).
    * If omitted, inferred from moveId (2* crouch, j./8* air, else stand).
@@ -414,6 +446,61 @@ export function parseMoveDefinition(raw: unknown): MoveDefinition {
     };
   }
 
+  let animRole: string | undefined;
+  if (o.animRole != null && String(o.animRole).trim()) {
+    animRole = String(o.animRole).trim();
+  }
+
+  let animRemap: AnimRemapSegment[] | undefined;
+  if (Array.isArray(o.animRemap)) {
+    const parsed: AnimRemapSegment[] = [];
+    for (const raw of o.animRemap as unknown[]) {
+      if (!raw || typeof raw !== 'object') continue;
+      const s = raw as Record<string, unknown>;
+      const logicFrom = asNum(s.logicFrom, NaN);
+      const logicTo = asNum(s.logicTo, NaN);
+      const motionFrom = asNum(s.motionFrom, NaN);
+      const motionTo = asNum(s.motionTo, NaN);
+      if (
+        !Number.isFinite(logicFrom) ||
+        !Number.isFinite(logicTo) ||
+        !Number.isFinite(motionFrom) ||
+        !Number.isFinite(motionTo) ||
+        logicTo <= logicFrom
+      ) {
+        continue;
+      }
+      parsed.push({ logicFrom, logicTo, motionFrom, motionTo });
+    }
+    if (parsed.length) animRemap = parsed;
+  }
+
+  let animSequence: AnimSequenceSegment[] | undefined;
+  if (Array.isArray(o.animSequence)) {
+    const parsed: AnimSequenceSegment[] = [];
+    for (const raw of o.animSequence as unknown[]) {
+      if (!raw || typeof raw !== 'object') continue;
+      const s = raw as Record<string, unknown>;
+      const role = String(s.role ?? '').trim();
+      const logicFrom = asNum(s.logicFrom, NaN);
+      const logicTo = asNum(s.logicTo, NaN);
+      const motionFrom = asNum(s.motionFrom, NaN);
+      const motionTo = asNum(s.motionTo, NaN);
+      if (
+        !role ||
+        !Number.isFinite(logicFrom) ||
+        !Number.isFinite(logicTo) ||
+        !Number.isFinite(motionFrom) ||
+        !Number.isFinite(motionTo) ||
+        logicTo <= logicFrom
+      ) {
+        continue;
+      }
+      parsed.push({ role, logicFrom, logicTo, motionFrom, motionTo });
+    }
+    if (parsed.length) animSequence = parsed;
+  }
+
   return {
     id: String(o.id),
     characterId: String(o.characterId ?? 'ryu'),
@@ -444,6 +531,7 @@ export function parseMoveDefinition(raw: unknown): MoveDefinition {
       push,
     },
     clipId: String(o.clipId ?? o.moveId ?? o.id ?? 'idle'),
+    animRole,
     facingRelative: o.facingRelative !== false,
     review: (o.review as MoveDefinition['review']) ?? {
       status: 'placeholder',
@@ -466,6 +554,8 @@ export function parseMoveDefinition(raw: unknown): MoveDefinition {
     plant,
     animFrameCount,
     glbPath,
+    animRemap,
+    animSequence,
     stance,
     mmdk,
     guard,

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   isJumpLandBinding,
+  shouldFloorClampAttackSole,
   shouldResetGroundOffset,
   shouldSnapSoleOnLand,
 } from '../../src/render/plantPolicy';
@@ -67,5 +68,65 @@ describe('plantPolicy land snap', () => {
     expect(shouldResetGroundOffset({ fromAir: false, enterLanding: false })).toBe(
       false,
     );
+  });
+});
+
+describe('plantPolicy attack sole floor clamp', () => {
+  it('clamps grounded attack and grounded animTail', () => {
+    expect(
+      shouldFloorClampAttackSole({
+        phase: 'attack',
+        jumpPhase: 'none',
+        logicY: 0,
+        hasAnimTail: false,
+      }),
+    ).toBe(true);
+    expect(
+      shouldFloorClampAttackSole({
+        phase: 'idle',
+        jumpPhase: 'none',
+        logicY: 0,
+        hasAnimTail: true,
+      }),
+    ).toBe(true);
+  });
+
+  it('skips hop Place Y, air jump, and air-attack tail', () => {
+    expect(
+      shouldFloorClampAttackSole({
+        phase: 'attack',
+        jumpPhase: 'none',
+        logicY: 0.12,
+        hasAnimTail: false,
+      }),
+    ).toBe(false);
+    expect(
+      shouldFloorClampAttackSole({
+        phase: 'attack',
+        jumpPhase: 'air',
+        logicY: 0,
+        hasAnimTail: false,
+      }),
+    ).toBe(false);
+    expect(
+      shouldFloorClampAttackSole({
+        phase: 'airborne',
+        jumpPhase: 'air',
+        logicY: 1,
+        hasAnimTail: true,
+        holdAirTail: true,
+      }),
+    ).toBe(false);
+  });
+
+  it('skips plain idle without animTail', () => {
+    expect(
+      shouldFloorClampAttackSole({
+        phase: 'idle',
+        jumpPhase: 'none',
+        logicY: 0,
+        hasAnimTail: false,
+      }),
+    ).toBe(false);
   });
 });

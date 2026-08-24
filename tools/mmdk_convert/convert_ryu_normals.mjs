@@ -424,6 +424,7 @@ function extractFromAction(action, rectTable, hitDt, scale) {
   const hurt = [];
   const push = [];
   let selfMovement = [];
+  let selfMovementY = [];
   let hitDtIndex = null;
 
   for (const key of iterKeyEntries(action.AttackCollisionKey)) {
@@ -590,7 +591,77 @@ function extractFromAction(action, rectTable, hitDt, scale) {
     selfMovement = placeCumToDx(cum);
   }
 
-  const fabFrame = num(action.fab?.Frame, selfMovement.length || 0);
+  // SteerKey: ValueType 0 = X velocity, 1 = Y velocity. Each axis keeps its
+  // last FixValue until the next key on that axis (Tatsumaki long travel).
+  // Same UNIT_SCALE as Place. Zero FixValue clears that axis.
+  {
+    const events = [];
+    let steerMax = Math.max(selfMovement.length, selfMovementY.length);
+    for (const key of iterKeyEntries(action.SteerKey)) {
+      const start = num(key._StartFrame ?? key.StartFrame, 0);
+      events.push({
+        start,
+        fv: num(key.FixValue, 0),
+        vt: num(key.ValueType, 0),
+      });
+      const end = num(key._EndFrame ?? key.EndFrame, start);
+      if (end > steerMax) steerMax = end;
+      if (start + 1 > steerMax) steerMax = start + 1;
+    }
+    events.sort((a, b) => a.start - b.start);
+    if (steerMax > selfMovement.length) {
+      selfMovement = selfMovement.concat(
+        new Array(steerMax - selfMovement.length).fill(0),
+      );
+    }
+    if (steerMax > selfMovementY.length) {
+      selfMovementY = selfMovementY.concat(
+        new Array(steerMax - selfMovementY.length).fill(0),
+      );
+    }
+    if (events.length) {
+      let xvel = 0;
+      let yvel = 0;
+      let y = 0;
+      const margin = num(action.fab?.ActionFrame?.MarginFrame, -1);
+      for (let f = 0; f < steerMax; f++) {
+        for (const ev of events) {
+          if (ev.start === f) {
+            if (ev.vt === 0) xvel = ev.fv;
+            else yvel = ev.fv;
+          }
+        }
+        // Grounded recovery: stop leftover Y velocity from digging under the floor.
+        if (margin >= 0 && f >= margin) {
+          selfMovement[f] = (selfMovement[f] || 0) + xvel * scale;
+          if (y !== 0) {
+            selfMovementY[f] = (selfMovementY[f] || 0) - y;
+            y = 0;
+          } else {
+            selfMovementY[f] = selfMovementY[f] || 0;
+          }
+          yvel = 0;
+          continue;
+        }
+        const xStep = xvel * scale;
+        const yStep = yvel * scale;
+        selfMovement[f] = (selfMovement[f] || 0) + xStep;
+        if (y + yStep < 0) {
+          selfMovementY[f] = (selfMovementY[f] || 0) - y;
+          y = 0;
+          yvel = 0;
+        } else {
+          selfMovementY[f] = (selfMovementY[f] || 0) + yStep;
+          y += yStep;
+        }
+      }
+    }
+  }
+
+  const fabFrame = num(
+    action.fab?.Frame,
+    Math.max(selfMovement.length, selfMovementY.length) || 0,
+  );
 
   let hitMeta = {};
   if (hitDt && hitDtIndex != null) {
@@ -641,7 +712,17 @@ function extractFromAction(action, rectTable, hitDt, scale) {
     for (let i = 0; i < push.length; i++) push[i] = applyYFitBox(push[i], yFit);
   }
 
-  return { hit, hurt, push, selfMovement, fabFrame, hitMeta, hitDtIndex, yFit };
+  return {
+    hit,
+    hurt,
+    push,
+    selfMovement,
+    selfMovementY,
+    fabFrame,
+    hitMeta,
+    hitDtIndex,
+    yFit,
+  };
 }
 
 function findAction(movesDict, names) {
@@ -711,11 +792,15 @@ function mergePublicAndMmdk(publicMove, part, meta) {
   } else if (!Array.isArray(out.selfMovement)) {
     out.selfMovement = new Array(total).fill(0);
   }
+  if (part.selfMovementY?.length && part.selfMovementY.some((v) => Math.abs(v) > 1e-12)) {
+    out.selfMovementY = part.selfMovementY;
+  }
   const hitForTimeline = out.boxes.hit ?? part.hit;
   out.timelineFrames = Math.max(
     out.frames?.total ?? 0,
     part.fabFrame || 0,
     out.selfMovement?.length ?? 0,
+    out.selfMovementY?.length ?? 0,
     ...hurt.map((b) => b.to + 1),
     ...hitForTimeline.map((b) => b.to + 1),
     ...part.push.map((b) => b.to + 1),

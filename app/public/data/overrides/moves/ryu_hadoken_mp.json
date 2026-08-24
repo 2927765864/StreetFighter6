@@ -1,339 +1,326 @@
 {
-  "id": "ryu_hadoken_hp",
+  "id": "ryu_hadoken_mp",
   "characterId": "ryu",
-  "moveId": "ryu_hadoken_hp",
-  "displayName": "Hadoken (Heavy)",
-  "displayNameJa": "波動拳 (強)",
-  "input": {
-    "raw": "236hp",
-    "buttons": null,
-    "motion": null
-  },
-  "type": "special",
-  "guard": "high",
-  "hitCount": 1,
+  "moveId": "ryu_hadoken_mp",
+  "displayName": "Hadoken (Medium)",
   "frames": {
-    "startup": 12,
+    "startup": 14,
     "active": 1,
-    "activeRaw": null,
-    "recovery": 34,
+    "recovery": 32,
     "total": 47
   },
   "advantage": {
-    "onHit": -3,
-    "onBlock": -9
+    "onHit": -1,
+    "onBlock": -7
   },
   "damage": 600,
+  "hitCount": 1,
+  "hitstun": 25,
+  "blockstun": 23,
   "cancel": {
     "specialCancel": false,
     "superOnly": true,
-    "raw": "SA3",
     "targetCombo": [],
+    "raw": "SA3",
     "windows": []
   },
-  "driveGauge": {
-    "onHit": 1000,
-    "onBlock": -2500,
-    "onPunishCounter": -3000
-  },
-  "superArtGauge": 600,
-  "scaling": null,
-  "notes": [
-    "Fire a ki blast directly forward. Useful for attacking opponents at range"
-  ],
   "boxes": {
     "hurt": [
       {
-        "from": 0,
-        "to": 5,
-        "x": 0,
-        "y": 1.693975903614458,
-        "w": 0.8,
-        "h": 0.31204819277108437,
-        "rectId": 7,
-        "part": "head",
-        "layer": "base",
-        "rectBucket": "08"
-      },
-      {
-        "from": 0,
-        "to": 5,
-        "x": 0,
-        "y": 1.0698795180722893,
-        "w": 0.8,
-        "h": 0.936144578313253,
-        "rectId": 8,
-        "part": "body",
-        "layer": "base",
-        "rectBucket": "08"
-      },
-      {
-        "from": 0,
-        "to": 5,
-        "x": 0,
+        "x": -0.02,
         "y": 0.30090361445783137,
         "w": 0.8,
         "h": 0.6018072289156627,
-        "rectId": 9,
-        "part": "leg",
-        "layer": "base",
-        "rectBucket": "08"
-      },
-      {
-        "from": 5,
-        "to": 6,
-        "x": -0.04,
-        "y": 1.693975903614458,
-        "w": 0.8,
-        "h": 0.31204819277108437,
-        "rectId": 7,
-        "part": "head",
-        "layer": "base",
-        "rectBucket": "08"
-      },
-      {
-        "from": 5,
-        "to": 6,
-        "x": -0.04,
-        "y": 1.0698795180722893,
-        "w": 0.8,
-        "h": 0.936144578313253,
-        "rectId": 8,
-        "part": "body",
-        "layer": "base",
-        "rectBucket": "08"
-      },
-      {
-        "from": 5,
-        "to": 6,
-        "x": -0.04,
-        "y": 0.30090361445783137,
-        "w": 0.8,
-        "h": 0.6018072289156627,
-        "rectId": 9,
-        "part": "leg",
-        "layer": "base",
-        "rectBucket": "08"
-      },
-      {
-        "from": 6,
-        "to": 7,
-        "x": -0.08,
-        "y": 1.693975903614458,
-        "w": 0.8,
-        "h": 0.31204819277108437,
-        "rectId": 7,
-        "part": "head",
-        "layer": "base",
-        "rectBucket": "08"
-      },
-      {
-        "from": 6,
-        "to": 7,
-        "x": -0.08,
-        "y": 1.0698795180722893,
-        "w": 0.8,
-        "h": 0.936144578313253,
-        "rectId": 8,
-        "part": "body",
-        "layer": "base",
-        "rectBucket": "08"
-      },
-      {
-        "from": 6,
-        "to": 7,
-        "x": -0.08,
-        "y": 0.30090361445783137,
-        "w": 0.8,
-        "h": 0.6018072289156627,
-        "rectId": 9,
-        "part": "leg",
-        "layer": "base",
-        "rectBucket": "08"
-      },
-      {
-        "from": 7,
-        "to": 8,
-        "x": -0.12,
-        "y": 1.693975903614458,
-        "w": 0.8,
-        "h": 0.31204819277108437,
-        "rectId": 7,
-        "part": "head",
-        "layer": "base",
-        "rectBucket": "08"
-      },
-      {
-        "from": 7,
-        "to": 8,
-        "x": -0.12,
-        "y": 1.0698795180722893,
-        "w": 0.8,
-        "h": 0.936144578313253,
-        "rectId": 8,
-        "part": "body",
-        "layer": "base",
-        "rectBucket": "08"
-      },
-      {
-        "from": 7,
-        "to": 8,
-        "x": -0.12,
-        "y": 0.30090361445783137,
-        "w": 0.8,
-        "h": 0.6018072289156627,
-        "rectId": 9,
-        "part": "leg",
-        "layer": "base",
-        "rectBucket": "08"
-      },
-      {
-        "from": 8,
-        "to": 13,
-        "x": -0.15,
-        "y": 1.693975903614458,
-        "w": 0.8,
-        "h": 0.31204819277108437,
-        "rectId": 7,
-        "part": "head",
-        "layer": "base",
-        "rectBucket": "08"
-      },
-      {
-        "from": 8,
-        "to": 13,
-        "x": -0.15,
-        "y": 1.0698795180722893,
-        "w": 0.8,
-        "h": 0.936144578313253,
-        "rectId": 8,
-        "part": "body",
-        "layer": "base",
-        "rectBucket": "08"
-      },
-      {
-        "from": 8,
-        "to": 13,
-        "x": -0.15,
-        "y": 0.30090361445783137,
-        "w": 0.8,
-        "h": 0.6018072289156627,
-        "rectId": 9,
-        "part": "leg",
-        "layer": "base",
-        "rectBucket": "08"
-      },
-      {
-        "from": 13,
-        "to": 46,
-        "x": 0,
-        "y": 1.693975903614458,
-        "w": 0.8,
-        "h": 0.31204819277108437,
-        "rectId": 7,
-        "part": "head",
-        "layer": "base",
-        "rectBucket": "08"
-      },
-      {
-        "from": 13,
-        "to": 46,
-        "x": 0,
-        "y": 1.0698795180722893,
-        "w": 0.8,
-        "h": 0.936144578313253,
-        "rectId": 8,
-        "part": "body",
-        "layer": "base",
-        "rectBucket": "08"
-      },
-      {
-        "from": 13,
-        "to": 46,
-        "x": 0,
-        "y": 0.30090361445783137,
-        "w": 0.8,
-        "h": 0.6018072289156627,
-        "rectId": 9,
-        "part": "leg",
-        "layer": "base",
-        "rectBucket": "08"
-      },
-      {
-        "from": 13,
-        "to": 40,
-        "x": 0.54,
-        "y": 1.2259036144578315,
-        "w": 0.28,
-        "h": 0.5572289156626506,
-        "rectId": 195,
-        "part": "body",
-        "layer": "extend",
-        "rectBucket": "08"
-      },
-      {
-        "from": 5,
-        "to": 13,
-        "x": 0,
-        "y": 0.30090361445783137,
-        "w": 0.8,
-        "h": 0.6018072289156627,
-        "rectId": 3,
+        "from": 9,
+        "to": 10,
         "part": "leg",
         "layer": "extend",
-        "rectBucket": "08"
+        "rectId": 3
       },
       {
+        "x": 0,
+        "y": 0.30090361445783137,
+        "w": 0.8,
+        "h": 0.6018072289156627,
+        "from": 10,
+        "to": 13,
+        "part": "leg",
+        "layer": "extend",
+        "rectId": 3
+      },
+      {
+        "x": 0,
+        "y": 0.30090361445783137,
+        "w": 0.8,
+        "h": 0.6018072289156627,
         "from": 13,
-        "to": 47,
+        "to": 15,
+        "part": "leg",
+        "layer": "extend",
+        "rectId": 3
+      },
+      {
         "x": 0.2,
         "y": 0.30090361445783137,
         "w": 0.8,
         "h": 0.6018072289156627,
-        "rectId": 3,
+        "from": 15,
+        "to": 47,
         "part": "leg",
         "layer": "extend",
-        "rectBucket": "08"
-      }
-    ],
-    "hit": [
-      {
-        "from": 0,
-        "to": 3,
-        "x": 0.8300000000000001,
-        "y": 1.0030120481927711,
-        "w": 0.31,
-        "h": 0.33433734939759036,
-        "rectId": 14,
-        "rectBucket": "03"
+        "rectId": 3
       },
       {
-        "from": 3,
-        "to": 70,
-        "x": 0.61,
-        "y": 1.3484939759036145,
-        "w": 0.52,
-        "h": 0.33433734939759036,
-        "rectId": 15,
-        "rectBucket": "03"
+        "x": 0,
+        "y": 1.693975903614458,
+        "w": 0.8,
+        "h": 0.31204819277108437,
+        "from": 0,
+        "to": 7,
+        "part": "head",
+        "layer": "base",
+        "rectId": 7
+      },
+      {
+        "x": 0,
+        "y": 1.0698795180722893,
+        "w": 0.8,
+        "h": 0.936144578313253,
+        "from": 0,
+        "to": 7,
+        "part": "body",
+        "layer": "base",
+        "rectId": 8
+      },
+      {
+        "x": 0,
+        "y": 0.30090361445783137,
+        "w": 0.8,
+        "h": 0.6018072289156627,
+        "from": 0,
+        "to": 7,
+        "part": "leg",
+        "layer": "base",
+        "rectId": 9
+      },
+      {
+        "x": -0.04,
+        "y": 1.693975903614458,
+        "w": 0.8,
+        "h": 0.31204819277108437,
+        "from": 7,
+        "to": 8,
+        "part": "head",
+        "layer": "base",
+        "rectId": 7
+      },
+      {
+        "x": -0.04,
+        "y": 1.0698795180722893,
+        "w": 0.8,
+        "h": 0.936144578313253,
+        "from": 7,
+        "to": 8,
+        "part": "body",
+        "layer": "base",
+        "rectId": 8
+      },
+      {
+        "x": -0.04,
+        "y": 0.30090361445783137,
+        "w": 0.8,
+        "h": 0.6018072289156627,
+        "from": 7,
+        "to": 8,
+        "part": "leg",
+        "layer": "base",
+        "rectId": 9
+      },
+      {
+        "x": -0.08,
+        "y": 1.693975903614458,
+        "w": 0.8,
+        "h": 0.31204819277108437,
+        "from": 8,
+        "to": 9,
+        "part": "head",
+        "layer": "base",
+        "rectId": 7
+      },
+      {
+        "x": -0.08,
+        "y": 1.0698795180722893,
+        "w": 0.8,
+        "h": 0.936144578313253,
+        "from": 8,
+        "to": 9,
+        "part": "body",
+        "layer": "base",
+        "rectId": 8
+      },
+      {
+        "x": -0.08,
+        "y": 0.30090361445783137,
+        "w": 0.8,
+        "h": 0.6018072289156627,
+        "from": 8,
+        "to": 9,
+        "part": "leg",
+        "layer": "base",
+        "rectId": 9
+      },
+      {
+        "x": -0.12,
+        "y": 1.693975903614458,
+        "w": 0.8,
+        "h": 0.31204819277108437,
+        "from": 9,
+        "to": 10,
+        "part": "head",
+        "layer": "base",
+        "rectId": 7
+      },
+      {
+        "x": -0.12,
+        "y": 1.0698795180722893,
+        "w": 0.8,
+        "h": 0.936144578313253,
+        "from": 9,
+        "to": 10,
+        "part": "body",
+        "layer": "base",
+        "rectId": 8
+      },
+      {
+        "x": -0.12,
+        "y": 0.30090361445783137,
+        "w": 0.8,
+        "h": 0.6018072289156627,
+        "from": 9,
+        "to": 10,
+        "part": "leg",
+        "layer": "base",
+        "rectId": 9
+      },
+      {
+        "x": -0.15,
+        "y": 1.693975903614458,
+        "w": 0.8,
+        "h": 0.31204819277108437,
+        "from": 10,
+        "to": 15,
+        "part": "head",
+        "layer": "base",
+        "rectId": 7
+      },
+      {
+        "x": -0.15,
+        "y": 1.0698795180722893,
+        "w": 0.8,
+        "h": 0.936144578313253,
+        "from": 10,
+        "to": 15,
+        "part": "body",
+        "layer": "base",
+        "rectId": 8
+      },
+      {
+        "x": -0.15,
+        "y": 0.30090361445783137,
+        "w": 0.8,
+        "h": 0.6018072289156627,
+        "from": 10,
+        "to": 15,
+        "part": "leg",
+        "layer": "base",
+        "rectId": 9
+      },
+      {
+        "x": 0,
+        "y": 1.693975903614458,
+        "w": 0.8,
+        "h": 0.31204819277108437,
+        "from": 15,
+        "to": 46,
+        "part": "head",
+        "layer": "base",
+        "rectId": 7
+      },
+      {
+        "x": 0,
+        "y": 1.0698795180722893,
+        "w": 0.8,
+        "h": 0.936144578313253,
+        "from": 15,
+        "to": 46,
+        "part": "body",
+        "layer": "base",
+        "rectId": 8
+      },
+      {
+        "x": 0,
+        "y": 0.30090361445783137,
+        "w": 0.8,
+        "h": 0.6018072289156627,
+        "from": 15,
+        "to": 46,
+        "part": "leg",
+        "layer": "base",
+        "rectId": 9
+      },
+      {
+        "x": 0.54,
+        "y": 1.2259036144578315,
+        "w": 0.28,
+        "h": 0.5572289156626506,
+        "from": 15,
+        "to": 42,
+        "part": "body",
+        "layer": "extend",
+        "rectId": 195
+      },
+      {
+        "x": 0,
+        "y": 0.30090361445783137,
+        "w": 0.8,
+        "h": 0.6018072289156627,
+        "from": 7,
+        "to": 8,
+        "part": "leg",
+        "layer": "extend",
+        "rectId": 3
+      },
+      {
+        "x": 0,
+        "y": 0.30090361445783137,
+        "w": 0.8,
+        "h": 0.6018072289156627,
+        "from": 8,
+        "to": 9,
+        "part": "leg",
+        "layer": "extend",
+        "rectId": 3
       }
     ],
+    "hit": [],
     "push": [
       {
-        "from": 0,
-        "to": 108,
         "x": 0,
         "y": 1.6605421686746988,
         "w": 0.6,
         "h": 0.37891566265060245,
-        "rectId": 1,
-        "rectBucket": "08"
+        "from": 0,
+        "to": 110,
+        "rectId": 1
       }
     ]
   },
-  "clipId": "hadoken_hp",
-  "glbPath": "specialskill/esf001v00_specialskill_00/glb/000_esf001_SPA_HADO_id0000_f110.glb",
+  "clipId": "ryu_hadoken",
   "facingRelative": true,
+  "review": {
+    "status": "mmdk_converted",
+    "notes": "MMDK convert unitScale=0.01; public frames kept; layer/part on hurt; CLAMP_BASE=true | box-editor override | animRemap+Place/Steer from MMDK"
+  },
   "sources": [
     {
       "name": "4rays/sf6-move-data",
@@ -344,25 +331,21 @@
       "license_note": "Repo code MIT; game data Capcom IP — private research use only"
     }
   ],
-  "review": {
-    "status": "mmdk_converted",
-    "notes": "MMDK convert unitScale=0.01; public frames kept; layer/part on hurt; CLAMP_BASE=true"
-  },
-  "slug": "ryu-hadoken-heavy",
-  "abbreviation": null,
   "selfMovement": [
     0.0,
     0.0,
     0.0,
     0.0,
     0.0,
-    0.043231353759765626,
-    0.066253662109375,
-    0.0674639892578125,
-    0.0680499267578125,
-    0.06885467529296875,
-    0.06985687255859375,
-    0.07964035034179688,
+    0.0,
+    0.04755447387695313,
+    0.05674896240234375,
+    0.05699737548828125,
+    0.057376556396484375,
+    0.05790740966796875,
+    0.05856536865234375,
+    0.05935150146484375,
+    0.06884918212890626,
     0.0061053466796875,
     0.0,
     0.0,
@@ -460,24 +443,11 @@
     0.0,
     0.0
   ],
-  "timelineFrames": 109,
-  "hitstun": 25,
-  "blockstun": 23,
-  "hitstopOnHit": 8,
+  "timelineFrames": 111,
   "hitstopOnBlock": 8,
+  "hitstopOnHit": 8,
   "blockPushbackTotal": 0.5,
-  "mmdk": {
-    "actionName": "SPA_HADO(2)+SPA_HADO(2) PROJ",
-    "fabFrame": 108,
-    "hitDtIndex": 163,
-    "unitScale": 0.01,
-    "clampBaseHurtToTotal": true,
-    "blockCurveTgtID": 4,
-    "blockMoveType": 24,
-    "hitmarkStrength": 0
-  },
   "blockPushMoveTime": 23,
-  "guardStrength": "L",
   "hitPushbackTotal": 0.5,
   "hitPushMoveTime": 25,
   "hitPushback": [
@@ -507,16 +477,26 @@
     0.00022400000000000198,
     3.199999999997649e-05
   ],
+  "hitReaction": "stun",
+  "animFrameCount": 110,
+  "glbPath": "specialskill/esf001v00_specialskill_00/glb/000_esf001_SPA_HADO_id0000_f110.glb",
+  "mmdk": {
+    "actionName": "SPA_HADO(1)",
+    "fabFrame": 110,
+    "actionId": 902
+  },
+  "guard": "high",
+  "guardStrength": "L",
   "animRemap": [
     {
       "logicFrom": 0,
-      "logicTo": 11,
+      "logicTo": 13,
       "motionFrom": 0,
       "motionTo": 13
     },
     {
-      "logicFrom": 11,
-      "logicTo": 108,
+      "logicFrom": 13,
+      "logicTo": 110,
       "motionFrom": 13,
       "motionTo": 110
     }

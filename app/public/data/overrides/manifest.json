@@ -69,6 +69,54 @@
     },
     "ryu_5mp": {
       "updatedAt": "2026-08-21T08:36:54.387Z"
+    },
+    "ryu_hadoken_lp": {
+      "updatedAt": "2026-08-24T03:15:58.033Z"
+    },
+    "ryu_hadoken_mp": {
+      "updatedAt": "2026-08-24T03:15:58.033Z"
+    },
+    "ryu_hadoken_hp": {
+      "updatedAt": "2026-08-24T03:15:58.033Z"
+    },
+    "ryu_shoryuken_lp": {
+      "updatedAt": "2026-08-21T08:41:13.951Z"
+    },
+    "ryu_shoryuken_mp": {
+      "updatedAt": "2026-08-21T08:41:23.618Z"
+    },
+    "ryu_shoryuken_hp": {
+      "updatedAt": "2026-08-21T08:41:34.082Z"
+    },
+    "ryu_blade_lk": {
+      "updatedAt": "2026-08-24T03:09:34.679Z"
+    },
+    "ryu_blade_mk": {
+      "updatedAt": "2026-08-24T03:09:34.679Z"
+    },
+    "ryu_blade_hk": {
+      "updatedAt": "2026-08-24T03:09:34.679Z"
+    },
+    "ryu_hashogeki_lp": {
+      "updatedAt": "2026-08-24T03:15:58.033Z"
+    },
+    "ryu_hashogeki_mp": {
+      "updatedAt": "2026-08-24T03:15:58.033Z"
+    },
+    "ryu_hashogeki_hp": {
+      "updatedAt": "2026-08-24T03:19:48.808Z"
+    },
+    "ryu_throw_fwd": {
+      "updatedAt": "2026-08-21T08:42:21.556Z"
+    },
+    "ryu_tatsu_lk": {
+      "updatedAt": "2026-08-24T03:35:38.961Z"
+    },
+    "ryu_tatsu_mk": {
+      "updatedAt": "2026-08-24T03:35:38.961Z"
+    },
+    "ryu_tatsu_hk": {
+      "updatedAt": "2026-08-24T03:35:38.961Z"
     }
   },
   "stance": true

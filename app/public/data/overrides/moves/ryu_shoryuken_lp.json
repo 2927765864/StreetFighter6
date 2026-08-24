@@ -1,0 +1,215 @@
+{
+  "id": "ryu_shoryuken_lp",
+  "characterId": "ryu",
+  "moveId": "ryu_shoryuken_lp",
+  "displayName": "Shoryuken (Light)",
+  "frames": {
+    "startup": 5,
+    "active": 10,
+    "recovery": 21,
+    "total": 36
+  },
+  "advantage": {
+    "onHit": 0,
+    "onBlock": -23
+  },
+  "damage": 800,
+  "hitCount": 1,
+  "hitstun": 29,
+  "blockstun": 24,
+  "cancel": {
+    "specialCancel": false,
+    "superOnly": true,
+    "targetCombo": [],
+    "raw": "SA3",
+    "windows": []
+  },
+  "boxes": {
+    "hurt": [
+      {
+        "x": 0,
+        "y": 1.3707831325301205,
+        "w": 0.8,
+        "h": 0.4680722891566265,
+        "from": 0,
+        "to": 7,
+        "part": "head",
+        "layer": "base",
+        "rectId": 197
+      },
+      {
+        "x": 0,
+        "y": 0.8692771084337351,
+        "w": 0.8,
+        "h": 0.5349397590361447,
+        "from": 0,
+        "to": 7,
+        "part": "body",
+        "layer": "base",
+        "rectId": 198
+      },
+      {
+        "x": 0,
+        "y": 0.30090361445783137,
+        "w": 0.8,
+        "h": 0.6018072289156627,
+        "from": 0,
+        "to": 7,
+        "part": "leg",
+        "layer": "base",
+        "rectId": 199
+      },
+      {
+        "x": 0,
+        "y": 1.3930722891566267,
+        "w": 0.8,
+        "h": 1.3373493975903614,
+        "from": 7,
+        "to": 14,
+        "part": "body",
+        "layer": "extend",
+        "rectId": 200
+      },
+      {
+        "x": 0,
+        "y": 1.3930722891566267,
+        "w": 0.8,
+        "h": 1.3373493975903614,
+        "from": 14,
+        "to": 35,
+        "part": "body",
+        "layer": "extend",
+        "rectId": 200
+      }
+    ],
+    "hit": [],
+    "push": [
+      {
+        "x": 0,
+        "y": 0.858132530120482,
+        "w": 0.7000000000000001,
+        "h": 1.716265060240964,
+        "from": 0,
+        "to": 7,
+        "rectId": 53
+      },
+      {
+        "x": 0,
+        "y": 1.716265060240964,
+        "w": 0.7000000000000001,
+        "h": 1.0698795180722893,
+        "from": 7,
+        "to": 28,
+        "rectId": 54
+      },
+      {
+        "x": 0,
+        "y": 0.30090361445783137,
+        "w": 0.8,
+        "h": 0.6018072289156627,
+        "from": 28,
+        "to": 35,
+        "rectId": 3
+      }
+    ]
+  },
+  "clipId": "ryu_shoryuken",
+  "facingRelative": true,
+  "review": {
+    "status": "mmdk_converted",
+    "notes": "MMDK convert unitScale=0.01; public frames kept; layer/part on hurt; CLAMP_BASE=true | box-editor override"
+  },
+  "sources": [
+    {
+      "name": "4rays/sf6-move-data",
+      "url": "https://github.com/4rays/sf6-move-data",
+      "file": "moves/ryu.toml",
+      "via": "https://cdn.jsdelivr.net/gh/4rays/sf6-move-data@main/moves/ryu.toml",
+      "retrieved": "2026-08-10",
+      "license_note": "Repo code MIT; game data Capcom IP — private research use only"
+    }
+  ],
+  "selfMovement": [
+    0,
+    0.000029754638671875,
+    0.000506439208984375,
+    0.002115020751953125,
+    0.03342193603515625,
+    0.05751434326171875,
+    0.06272018432617188,
+    0.07776077270507811,
+    0.06833786010742188,
+    0.00015365600585937056,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "timelineFrames": 36,
+  "hitstopOnBlock": 13,
+  "hitstopOnHit": 13,
+  "blockPushbackTotal": 0.3,
+  "blockPushMoveTime": 24,
+  "hitPushbackTotal": 1.5,
+  "hitPushMoveTime": 29,
+  "hitPushback": [
+    0.14988314404034592,
+    0.13955061708147137,
+    0.12958710894255587,
+    0.11999261962360108,
+    0.11076714912460517,
+    0.10191069744556963,
+    0.09342326458649414,
+    0.08530485054737769,
+    0.07755545532822178,
+    0.07017507892902558,
+    0.06316372134978876,
+    0.05652138259051198,
+    0.05024806265119541,
+    0.044343761531838055,
+    0.03880847923244091,
+    0.0336422157530033,
+    0.02884497109352574,
+    0.024416745254008054,
+    0.020357538234449912,
+    0.016667350034851813,
+    0.013346180655213424,
+    0.010394030095534745,
+    0.007810898355816276,
+    0.005596785436057183,
+    0.003751691336258134,
+    0.002275616056418961,
+    0.0011685595965393314,
+    0.0004305219566197449,
+    0.00006150313665997942
+  ],
+  "hitReaction": "stun",
+  "animFrameCount": 49,
+  "glbPath": "specialskill/esf001v00_specialskill_01/glb/000_esf001_SPA_SYORYU_START_id0200_f49.glb",
+  "mmdk": {
+    "actionName": "SPA_SYORYU_START",
+    "fabFrame": 35
+  },
+  "guard": "high"
+}
