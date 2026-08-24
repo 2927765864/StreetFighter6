@@ -48,6 +48,8 @@ import {
 } from '../combat/anim/PoseBlendMath';
 import { RyuHeadbandPhysics } from './headband/RyuHeadbandPhysics';
 import { clampHeadbandDeltaSec } from './headband/headbandPhysicsMath';
+import { RyuBeltPhysics } from './belt/RyuBeltPhysics';
+import { clampBeltDeltaSec } from './belt/beltPhysicsMath';
 import {
   isJumpLandBinding,
   shouldFloorClampAttackSole,
@@ -143,7 +145,9 @@ export class FighterView {
   private lastLogicFailLog = '';
   /** Ryu hairband spring bones; updated after mixer each frame. */
   private headband: RyuHeadbandPhysics | null = null;
-  /** Scene root — headband debug helpers must parent here (not under fighter). */
+  /** Ryu obi (belt) spring tails; updated after mixer each frame. */
+  private belt: RyuBeltPhysics | null = null;
+  /** Scene root — spring debug helpers must parent here (not under fighter). */
   private readonly scene: THREE.Scene;
 
   constructor(scene: THREE.Scene, tint: number) {
@@ -193,6 +197,8 @@ export class FighterView {
     if (this.modelRoot) {
       this.headband?.dispose();
       this.headband = null;
+      this.belt?.dispose();
+      this.belt = null;
       this.root.remove(this.modelRoot);
       this.modelRoot = null;
     }
@@ -315,7 +321,18 @@ export class FighterView {
       console.warn(`[FighterView] headband physics: ${hb.reason}`);
     }
 
-    // One-shot sole align after stance pose + headband bind (not per-frame).
+    this.belt?.dispose();
+    this.belt = new RyuBeltPhysics();
+    const bt = this.belt.bind(model, { helperParent: this.scene });
+    if (bt.ok) {
+      console.info(
+        `[FighterView] belt physics bound L=${bt.leftJoints} R=${bt.rightJoints}`,
+      );
+    } else {
+      console.warn(`[FighterView] belt physics: ${bt.reason}`);
+    }
+
+    // One-shot sole align after stance pose + spring binds (not per-frame).
     this.plantFeetOnGround();
     this.modelGroundRestY = this.modelRoot.position.y;
 
@@ -739,6 +756,25 @@ export class FighterView {
     });
   }
 
+  /** Obi belt tails after mixer; never gated by hitstop/hitstun. */
+  private updateBeltPhysics(
+    fighter: Fighter,
+    cfg: MutableSimConfig,
+    wallDtSec: number,
+  ): void {
+    if (!this.belt?.isBound) return;
+    const deltaSec = clampBeltDeltaSec(
+      wallDtSec,
+      cfg.beltMaxDeltaSec,
+      cfg.timeScaleAnim || 1,
+    );
+    this.belt.update({
+      deltaSec,
+      cfg,
+      jumpPhase: fighter.jumpPhase,
+    });
+  }
+
   private afterAnimPose(
     fighter: Fighter,
     cfg: MutableSimConfig,
@@ -750,6 +786,7 @@ export class FighterView {
     // without the lift-only floor heal that attack already had.
     this.maybePlantAfterPose(fighter, cfg, wallDtSec);
     this.updateHeadbandPhysics(fighter, cfg, wallDtSec);
+    this.updateBeltPhysics(fighter, cfg, wallDtSec);
     this.modelRoot?.updateMatrixWorld(true);
   }
 
@@ -1385,6 +1422,7 @@ export class FighterView {
       if (this.mixer) this.mixer.update(animDt);
       if (cfg.plantMode === 'legacy') this.plantFeetOnGround();
       this.updateHeadbandPhysics(fighter, cfg, wallDtSec);
+      this.updateBeltPhysics(fighter, cfg, wallDtSec);
       this.modelRoot?.updateMatrixWorld(true);
       return;
     }

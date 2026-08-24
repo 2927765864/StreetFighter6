@@ -314,6 +314,31 @@ export function createDebugGui(
   headband.add(cfg, 'headbandShowColliders').name('显示碰撞Helper');
   headband.add(cfg, 'headbandShowChainHelpers').name('显示链Helper');
 
+  const belt = gui.addFolder('腰带物理');
+  belt.add(cfg, 'beltPhysicsEnabled').name('启用腰带物理');
+  belt.add(cfg, 'beltUseCenter').name('髋部 Center');
+  belt.add(cfg, 'beltStiffness', 0, 4, 0.05).name('刚度');
+  belt.add(cfg, 'beltDragForce', 0, 1, 0.01).name('阻尼');
+  belt.add(cfg, 'beltGravityPower', 0, 2, 0.05).name('重力强度');
+  belt.add(cfg, 'beltGravityDirX', -1, 1, 0.05).name('重力X');
+  belt.add(cfg, 'beltGravityDirY', -1, 1, 0.05).name('重力Y');
+  belt.add(cfg, 'beltGravityDirZ', -1, 1, 0.05).name('重力Z');
+  belt.add(cfg, 'beltHitRadius', 0, 0.08, 0.001).name('带节半径');
+  belt.add(cfg, 'beltGravityAirScale', 0, 1.5, 0.05).name('滞空重力');
+  belt.add(cfg, 'beltMaxDeltaSec', 0.016, 0.1, 0.001).name('dt上限');
+  belt.add(cfg, 'beltColliderHipRadius', 0, 0.3, 0.005).name('髋碰撞半径');
+  belt.add(cfg, 'beltColliderThighRadius', 0, 0.3, 0.005).name('大腿碰撞半径');
+  belt.add(cfg, 'beltColliderHipYOffset', -0.2, 0.2, 0.005).name('髋球Y偏移');
+  belt
+    .add(cfg, 'beltColliderThighYOffset', -0.2, 0.3, 0.005)
+    .name('大腿球Y偏移');
+  belt
+    .add(cfg, 'beltColliderThighZOffset', -0.2, 0.2, 0.005)
+    .name('大腿球Z偏移');
+  belt.add(cfg, 'beltStiffnessTipScale', 0.2, 1.2, 0.05).name('梢刚度乘子');
+  belt.add(cfg, 'beltShowColliders').name('显示碰撞Helper');
+  belt.add(cfg, 'beltShowChainHelpers').name('显示链Helper');
+
   const syncOpts = () => syncMatchOpts(match, cfg);
 
   const input = gui.addFolder('缓冲 / 输入');

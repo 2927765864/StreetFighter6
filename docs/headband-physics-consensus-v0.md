@@ -129,3 +129,4 @@
 | `docs/character-art-consensus-v0.md` | 头巾材质/外观 |
 | `docs/research/headband-physics-research-2026-08-24.md` | 技术调研（非共识） |
 | `docs/plans/ai-execution-plan-headband-physics-v0.md` | AI 可执行制作方案（非共识） |
+| `docs/belt-physics-consensus-v0.md` | 腰带带尾物理（复用本路径、独立参数） |

@@ -1,6 +1,8 @@
 /**
- * Ryu headband spring bones (VRMC_springBone / @pixiv/three-vrm-springbone).
- * Runs after AnimationMixer so Hairband animation tracks are overridden each frame.
+ * Ryu obi (belt) spring bones (VRMC_springBone / @pixiv/three-vrm-springbone).
+ * Mirrors RyuHeadbandPhysics: runs after AnimationMixer so Obi tail tracks are overridden.
+ * Waist wrap (C_ObiRoot) stays animated; only hanging tails are spring joints.
+ * No idle breath wind (belt-physics-consensus).
  */
 import * as THREE from 'three';
 import {
@@ -16,21 +18,21 @@ import type { MutableSimConfig } from '../../config/constants';
 import type { JumpPhase } from '../../combat/types';
 import { applySpringBoneHelperOverlay } from '../springBoneHelperOverlay';
 import {
-  clampHeadbandDeltaSec,
-  headbandGravityScaleForJumpPhase,
-  headbandStiffnessAtJoint,
-} from './headbandPhysicsMath';
+  beltGravityScaleForJumpPhase,
+  beltStiffnessAtJoint,
+  clampBeltDeltaSec,
+} from './beltPhysicsMath';
 import {
-  RYU_HEADBAND_HEAD,
-  RYU_HEADBAND_L_SHOULDER,
-  RYU_HEADBAND_LEFT_CHAIN,
-  RYU_HEADBAND_NECK,
-  RYU_HEADBAND_R_SHOULDER,
-  RYU_HEADBAND_RIGHT_CHAIN,
-  type RyuHeadbandChainNames,
-} from './ryuHeadbandBoneNames';
+  RYU_BELT_HIP,
+  RYU_BELT_L_THIGH,
+  RYU_BELT_LEFT_CHAIN,
+  RYU_BELT_OBI_ROOT,
+  RYU_BELT_R_THIGH,
+  RYU_BELT_RIGHT_CHAIN,
+  type RyuBeltChainNames,
+} from './ryuBeltBoneNames';
 
-export type HeadbandBindResult =
+export type BeltBindResult =
   | { ok: true; leftJoints: number; rightJoints: number }
   | { ok: false; reason: string };
 
@@ -41,7 +43,7 @@ type AttachedSphere = {
   helper: VRMSpringBoneColliderHelper | null;
 };
 
-export class RyuHeadbandPhysics {
+export class RyuBeltPhysics {
   private manager: VRMSpringBoneManager | null = null;
   private joints: VRMSpringBoneJoint[] = [];
   private colliderGroup: VRMSpringBoneColliderGroup | null = null;
@@ -49,15 +51,9 @@ export class RyuHeadbandPhysics {
   private jointHelpers: VRMSpringBoneJointHelper[] = [];
   private centerBone: THREE.Object3D | null = null;
   private modelRoot: THREE.Object3D | null = null;
-  /**
-   * Parent for debug helpers. Must be scene-root (identity world) — helpers
-   * copy target matrixWorld into local matrix; parenting under the rotated
-   * fighter double-applies facing (π/2) and breaks camera alignment.
-   * See @pixiv/three-vrm-springbone examples (helpers added to scene).
-   */
+  /** Scene-root helpers parent — same constraint as headband (avoid double facing). */
   private helperParent: THREE.Object3D | null = null;
   private helperRoot: THREE.Group | null = null;
-  private breathElapsed = 0;
   private lastUseCenter: boolean | null = null;
   private bound = false;
   private missingReason: string | null = null;
@@ -73,46 +69,54 @@ export class RyuHeadbandPhysics {
   bind(
     modelRoot: THREE.Object3D,
     opts?: { helperParent?: THREE.Object3D },
-  ): HeadbandBindResult {
+  ): BeltBindResult {
     this.dispose();
     this.modelRoot = modelRoot;
     this.helperParent = opts?.helperParent ?? null;
     modelRoot.updateMatrixWorld(true);
 
-    const head = modelRoot.getObjectByName(RYU_HEADBAND_HEAD);
-    if (!head) {
-      this.missingReason = `BLOCKED: missing bone ${RYU_HEADBAND_HEAD}`;
+    const hip = modelRoot.getObjectByName(RYU_BELT_HIP);
+    if (!hip) {
+      this.missingReason = `BLOCKED: missing bone ${RYU_BELT_HIP}`;
+      return { ok: false, reason: this.missingReason };
+    }
+    const obiRoot = modelRoot.getObjectByName(RYU_BELT_OBI_ROOT);
+    if (!obiRoot) {
+      this.missingReason = `BLOCKED: missing Obi/belt bones (${RYU_BELT_OBI_ROOT})`;
       return { ok: false, reason: this.missingReason };
     }
 
-    const leftBones = resolveChain(modelRoot, RYU_HEADBAND_LEFT_CHAIN);
+    const leftBones = resolveChain(modelRoot, RYU_BELT_LEFT_CHAIN);
     if ('missing' in leftBones) {
-      this.missingReason = `BLOCKED: missing Hairband bones (${leftBones.missing})`;
+      this.missingReason = `BLOCKED: missing Obi/belt bones (${leftBones.missing})`;
       return { ok: false, reason: this.missingReason };
     }
-    const rightBones = resolveChain(modelRoot, RYU_HEADBAND_RIGHT_CHAIN);
+    const rightBones = resolveChain(modelRoot, RYU_BELT_RIGHT_CHAIN);
     if ('missing' in rightBones) {
-      this.missingReason = `BLOCKED: missing Hairband bones (${rightBones.missing})`;
+      this.missingReason = `BLOCKED: missing Obi/belt bones (${rightBones.missing})`;
       return { ok: false, reason: this.missingReason };
     }
 
-    this.centerBone = head;
+    const lThigh = modelRoot.getObjectByName(RYU_BELT_L_THIGH);
+    const rThigh = modelRoot.getObjectByName(RYU_BELT_R_THIGH);
+    if (!lThigh || !rThigh) {
+      this.missingReason = `BLOCKED: missing Obi/belt bones (${!lThigh ? RYU_BELT_L_THIGH : RYU_BELT_R_THIGH})`;
+      return { ok: false, reason: this.missingReason };
+    }
+
+    this.centerBone = hip;
     this.helperRoot = new THREE.Group();
-    this.helperRoot.name = 'RyuHeadbandHelpers';
+    this.helperRoot.name = 'RyuBeltHelpers';
     (this.helperParent ?? modelRoot).add(this.helperRoot);
 
     const attached = this.buildColliders(modelRoot);
     this.attached = attached.list;
-    this.colliderGroup = { name: 'ryuHeadbandBody', colliders: attached.colliders };
+    this.colliderGroup = { name: 'ryuBeltBody', colliders: attached.colliders };
 
     const manager = new VRMSpringBoneManager();
     const joints: VRMSpringBoneJoint[] = [];
-    joints.push(
-      ...buildChainJoints(leftBones.bones, this.colliderGroup, head),
-    );
-    joints.push(
-      ...buildChainJoints(rightBones.bones, this.colliderGroup, head),
-    );
+    joints.push(...buildChainJoints(leftBones.bones, this.colliderGroup, hip));
+    joints.push(...buildChainJoints(rightBones.bones, this.colliderGroup, hip));
     for (const j of joints) manager.addJoint(j);
 
     this.manager = manager;
@@ -130,18 +134,13 @@ export class RyuHeadbandPhysics {
     };
   }
 
-  /**
-   * Hot-apply cfg that requires rebuild (center / collider radii) or soft
-   * settings copy into joints.
-   */
   rebuildFromConfig(cfg: MutableSimConfig): void {
     if (!this.bound || !this.modelRoot) return;
     const needRebind =
-      this.lastUseCenter !== null &&
-      this.lastUseCenter !== cfg.headbandUseCenter;
+      this.lastUseCenter !== null && this.lastUseCenter !== cfg.beltUseCenter;
     if (needRebind) {
       const root = this.modelRoot;
-      this.bind(root);
+      this.bind(root, { helperParent: this.helperParent ?? undefined });
     }
     this.applyColliderRadii(cfg);
     this.applyJointSettings(cfg, 'none');
@@ -155,23 +154,18 @@ export class RyuHeadbandPhysics {
     jumpPhase: JumpPhase;
   }): void {
     const { cfg, jumpPhase } = args;
-    if (!cfg.headbandPhysicsEnabled || !this.manager || !this.bound) return;
+    if (!cfg.beltPhysicsEnabled || !this.manager || !this.bound) return;
 
     if (this.lastUseCenter === null) {
-      this.lastUseCenter = cfg.headbandUseCenter;
-      this.applyCenter(cfg.headbandUseCenter);
-    } else if (this.lastUseCenter !== cfg.headbandUseCenter) {
-      this.applyCenter(cfg.headbandUseCenter);
-      this.lastUseCenter = cfg.headbandUseCenter;
+      this.lastUseCenter = cfg.beltUseCenter;
+      this.applyCenter(cfg.beltUseCenter);
+    } else if (this.lastUseCenter !== cfg.beltUseCenter) {
+      this.applyCenter(cfg.beltUseCenter);
+      this.lastUseCenter = cfg.beltUseCenter;
       this.manager.setInitState();
     }
 
-    const delta = clampHeadbandDeltaSec(
-      args.deltaSec,
-      cfg.headbandMaxDeltaSec,
-      1,
-    );
-    this.breathElapsed += delta;
+    const delta = clampBeltDeltaSec(args.deltaSec, cfg.beltMaxDeltaSec, 1);
 
     this.applyColliderRadii(cfg);
     this.applyJointSettings(cfg, jumpPhase);
@@ -183,7 +177,6 @@ export class RyuHeadbandPhysics {
 
   reset(): void {
     this.manager?.reset();
-    this.breathElapsed = 0;
   }
 
   dispose(): void {
@@ -222,10 +215,9 @@ export class RyuHeadbandPhysics {
   } {
     const specs: Array<{ boneName: string; radius: number; yOffset: number }> =
       [
-        { boneName: RYU_HEADBAND_HEAD, radius: 0.09, yOffset: 0.02 },
-        { boneName: RYU_HEADBAND_NECK, radius: 0.06, yOffset: 0 },
-        { boneName: RYU_HEADBAND_L_SHOULDER, radius: 0.08, yOffset: 0 },
-        { boneName: RYU_HEADBAND_R_SHOULDER, radius: 0.08, yOffset: 0 },
+        { boneName: RYU_BELT_HIP, radius: 0.1, yOffset: 0 },
+        { boneName: RYU_BELT_L_THIGH, radius: 0.085, yOffset: 0.05 },
+        { boneName: RYU_BELT_R_THIGH, radius: 0.085, yOffset: 0.05 },
       ];
     const colliders: VRMSpringBoneCollider[] = [];
     const list: AttachedSphere[] = [];
@@ -237,7 +229,7 @@ export class RyuHeadbandPhysics {
         offset: new THREE.Vector3(0, spec.yOffset, 0),
       });
       const collider = new VRMSpringBoneCollider(shape);
-      collider.name = `headbandCollider_${spec.boneName}`;
+      collider.name = `beltCollider_${spec.boneName}`;
       bone.add(collider);
       colliders.push(collider);
       list.push({
@@ -256,24 +248,17 @@ export class RyuHeadbandPhysics {
   }
 
   private applyColliderRadii(cfg: MutableSimConfig): void {
-    const shoulderX = cfg.headbandColliderShoulderXOffset;
+    const thighZ = cfg.beltColliderThighZOffset;
     for (const a of this.attached) {
-      if (a.boneName === RYU_HEADBAND_HEAD) {
-        a.shape.radius = cfg.headbandColliderHeadRadius;
-        a.shape.offset.set(0, cfg.headbandColliderHeadYOffset, 0);
-      } else if (a.boneName === RYU_HEADBAND_NECK) {
-        a.shape.radius = cfg.headbandColliderNeckRadius;
-        a.shape.offset.set(0, 0, 0);
-      } else if (a.boneName === RYU_HEADBAND_L_SHOULDER) {
-        a.shape.radius = cfg.headbandColliderShoulderRadius;
-        a.shape.offset.set(shoulderX, 0, 0);
-      } else if (a.boneName === RYU_HEADBAND_R_SHOULDER) {
-        a.shape.radius = cfg.headbandColliderShoulderRadius;
-        // Mirrored bind: opposite local X keeps both spheres shifting "forward"
-        // together when the user tunes a single front/back slider.
-        a.shape.offset.set(-shoulderX, 0, 0);
-      } else {
-        a.shape.radius = cfg.headbandColliderShoulderRadius;
+      if (a.boneName === RYU_BELT_HIP) {
+        a.shape.radius = cfg.beltColliderHipRadius;
+        a.shape.offset.set(0, cfg.beltColliderHipYOffset, 0);
+      } else if (
+        a.boneName === RYU_BELT_L_THIGH ||
+        a.boneName === RYU_BELT_R_THIGH
+      ) {
+        a.shape.radius = cfg.beltColliderThighRadius;
+        a.shape.offset.set(0, cfg.beltColliderThighYOffset, thighZ);
       }
     }
   }
@@ -282,45 +267,32 @@ export class RyuHeadbandPhysics {
     cfg: MutableSimConfig,
     jumpPhase: JumpPhase,
   ): void {
-    const airScale = headbandGravityScaleForJumpPhase(
+    const airScale = beltGravityScaleForJumpPhase(
       jumpPhase,
-      cfg.headbandGravityAirScale,
+      cfg.beltGravityAirScale,
     );
-    const baseG = new THREE.Vector3(
-      cfg.headbandGravityDirX,
-      cfg.headbandGravityDirY,
-      cfg.headbandGravityDirZ,
+    const gravityDir = new THREE.Vector3(
+      cfg.beltGravityDirX,
+      cfg.beltGravityDirY,
+      cfg.beltGravityDirZ,
     );
-    if (baseG.lengthSq() < 1e-8) baseG.set(0, -1, 0);
-    else baseG.normalize();
+    if (gravityDir.lengthSq() < 1e-8) gravityDir.set(0, -1, 0);
+    else gravityDir.normalize();
 
-    const breath = breathWindWorld(
-      this.centerBone,
-      this.breathElapsed,
-      cfg.headbandBreathAmp,
-      cfg.headbandBreathHz,
-    );
-    const external = baseG
-      .clone()
-      .multiplyScalar(cfg.headbandGravityPower * airScale)
-      .add(breath);
-    const gravityPower = external.length();
-    const gravityDir =
-      gravityPower > 1e-8 ? external.normalize() : baseG.clone();
+    const gravityPower = cfg.beltGravityPower * airScale;
 
-    // Joints are left chain then right chain; each has (n-1) spring heads.
-    const leftCount = RYU_HEADBAND_LEFT_CHAIN.length - 1;
+    const leftCount = RYU_BELT_LEFT_CHAIN.length - 1;
     for (let i = 0; i < this.joints.length; i++) {
       const joint = this.joints[i]!;
       const localIndex = i < leftCount ? i : i - leftCount;
-      const chainLen = leftCount;
-      joint.settings.hitRadius = cfg.headbandHitRadius;
-      joint.settings.dragForce = cfg.headbandDragForce;
-      joint.settings.stiffness = headbandStiffnessAtJoint(
-        cfg.headbandStiffness,
+      const chainLen = i < leftCount ? leftCount : RYU_BELT_RIGHT_CHAIN.length - 1;
+      joint.settings.hitRadius = cfg.beltHitRadius;
+      joint.settings.dragForce = cfg.beltDragForce;
+      joint.settings.stiffness = beltStiffnessAtJoint(
+        cfg.beltStiffness,
         localIndex,
         chainLen,
-        cfg.headbandStiffnessTipScale,
+        cfg.beltStiffnessTipScale,
       );
       joint.settings.gravityPower = gravityPower;
       joint.settings.gravityDir.copy(gravityDir);
@@ -333,7 +305,7 @@ export class RyuHeadbandPhysics {
   private syncHelpers(cfg: MutableSimConfig): void {
     if (!this.helperRoot) return;
 
-    if (cfg.headbandShowColliders) {
+    if (cfg.beltShowColliders) {
       for (const a of this.attached) {
         if (!a.helper) {
           a.helper = new VRMSpringBoneColliderHelper(a.collider);
@@ -348,7 +320,7 @@ export class RyuHeadbandPhysics {
       }
     }
 
-    if (cfg.headbandShowChainHelpers) {
+    if (cfg.beltShowChainHelpers) {
       if (this.jointHelpers.length === 0) {
         for (const j of this.joints) {
           const h = new VRMSpringBoneJointHelper(j);
@@ -367,7 +339,7 @@ export class RyuHeadbandPhysics {
   /** After spring step: sync helper matrices then re-apply overlay / bounds. */
   private refreshHelperOverlay(cfg: MutableSimConfig): void {
     if (!this.helperRoot) return;
-    if (!cfg.headbandShowColliders && !cfg.headbandShowChainHelpers) return;
+    if (!cfg.beltShowColliders && !cfg.beltShowChainHelpers) return;
     for (const a of this.attached) {
       if (a.helper?.visible) a.helper.updateMatrixWorld(true);
     }
@@ -380,7 +352,7 @@ export class RyuHeadbandPhysics {
 
 function resolveChain(
   root: THREE.Object3D,
-  names: RyuHeadbandChainNames,
+  names: RyuBeltChainNames,
 ): { bones: THREE.Object3D[] } | { missing: string } {
   const bones: THREE.Object3D[] = [];
   for (const name of names) {
@@ -400,33 +372,20 @@ function buildChainJoints(
   for (let i = 0; i < bones.length - 1; i++) {
     const bone = bones[i]!;
     const child = bones[i + 1]!;
-    const joint = new VRMSpringBoneJoint(bone, child, {
-      hitRadius: 0.012,
-      stiffness: 1.35,
-      gravityPower: 0.35,
-      gravityDir: new THREE.Vector3(0, -1, 0),
-      dragForce: 0.48,
-    }, [colliderGroup]);
+    const joint = new VRMSpringBoneJoint(
+      bone,
+      child,
+      {
+        hitRadius: 0.014,
+        stiffness: 1.85,
+        gravityPower: 0.28,
+        gravityDir: new THREE.Vector3(0, -1, 0),
+        dragForce: 0.62,
+      },
+      [colliderGroup],
+    );
     joint.center = center;
     joints.push(joint);
   }
   return joints;
-}
-
-function breathWindWorld(
-  head: THREE.Object3D | null,
-  elapsed: number,
-  amp: number,
-  hz: number,
-): THREE.Vector3 {
-  if (!head || amp <= 0 || hz <= 0) return new THREE.Vector3();
-  const phase = elapsed * hz * Math.PI * 2;
-  const local = new THREE.Vector3(
-    Math.sin(phase) * amp,
-    0,
-    -Math.cos(phase * 0.5) * amp * 0.35,
-  );
-  head.updateWorldMatrix(true, false);
-  local.transformDirection(head.matrixWorld);
-  return local;
 }

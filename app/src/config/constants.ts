@@ -236,6 +236,26 @@ export type MutableSimConfig = {
   headbandShowColliders: boolean;
   headbandShowChainHelpers: boolean;
   headbandStiffnessTipScale: number;
+  /** Ryu obi (belt) spring tails (VRMC_springBone); independent of headband. */
+  beltPhysicsEnabled: boolean;
+  beltUseCenter: boolean;
+  beltStiffness: number;
+  beltDragForce: number;
+  beltGravityPower: number;
+  beltGravityDirX: number;
+  beltGravityDirY: number;
+  beltGravityDirZ: number;
+  beltHitRadius: number;
+  beltGravityAirScale: number;
+  beltMaxDeltaSec: number;
+  beltColliderHipRadius: number;
+  beltColliderThighRadius: number;
+  beltColliderHipYOffset: number;
+  beltColliderThighYOffset: number;
+  beltColliderThighZOffset: number;
+  beltShowColliders: boolean;
+  beltShowChainHelpers: boolean;
+  beltStiffnessTipScale: number;
 };
 
 export function createDefaultSimConfig(): MutableSimConfig {
@@ -412,6 +432,25 @@ export function createDefaultSimConfig(): MutableSimConfig {
     headbandShowColliders: false,
     headbandShowChainHelpers: false,
     headbandStiffnessTipScale: 0.85,
+    beltPhysicsEnabled: true,
+    beltUseCenter: true,
+    beltStiffness: 1.85,
+    beltDragForce: 0.62,
+    beltGravityPower: 0.28,
+    beltGravityDirX: 0,
+    beltGravityDirY: -1,
+    beltGravityDirZ: 0,
+    beltHitRadius: 0.014,
+    beltGravityAirScale: 0.5,
+    beltMaxDeltaSec: 0.05,
+    beltColliderHipRadius: 0.1,
+    beltColliderThighRadius: 0.085,
+    beltColliderHipYOffset: 0,
+    beltColliderThighYOffset: 0.05,
+    beltColliderThighZOffset: 0,
+    beltShowColliders: false,
+    beltShowChainHelpers: false,
+    beltStiffnessTipScale: 0.95,
   };
 }
 

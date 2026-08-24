@@ -646,6 +646,32 @@ function buildDom(): HTMLElement {
           `,
           'expandHeadband',
         )}
+        ${sectionShell(
+          'belt',
+          '【表现】腰带物理',
+          `
+          ${rowToggle('beltPhysicsEnabled', '启用腰带物理')}
+          ${rowToggle('beltUseCenter', '使用髋部 Center（减走过抖）')}
+          ${rowNumber('beltStiffness', '刚度（回弹/硬度）', 0, 4, 0.05)}
+          ${rowNumber('beltDragForce', '阻尼 dragForce', 0, 1, 0.01)}
+          ${rowNumber('beltGravityPower', '重力强度', 0, 2, 0.05)}
+          ${rowNumber('beltGravityDirX', '重力方向 X', -1, 1, 0.05)}
+          ${rowNumber('beltGravityDirY', '重力方向 Y', -1, 1, 0.05)}
+          ${rowNumber('beltGravityDirZ', '重力方向 Z', -1, 1, 0.05)}
+          ${rowNumber('beltHitRadius', '带节碰撞半径', 0, 0.08, 0.001)}
+          ${rowNumber('beltGravityAirScale', '滞空重力乘数', 0, 1.5, 0.05)}
+          ${rowNumber('beltMaxDeltaSec', '单帧 dt 上限（秒）', 0.016, 0.1, 0.001)}
+          ${rowNumber('beltColliderHipRadius', '髋碰撞球半径', 0, 0.3, 0.005)}
+          ${rowNumber('beltColliderThighRadius', '大腿碰撞球半径', 0, 0.3, 0.005)}
+          ${rowNumber('beltColliderHipYOffset', '髋球局部 Y 偏移', -0.2, 0.2, 0.005)}
+          ${rowNumber('beltColliderThighYOffset', '大腿球局部 Y 偏移', -0.2, 0.3, 0.005)}
+          ${rowNumber('beltColliderThighZOffset', '大腿球局部 Z 偏移', -0.2, 0.2, 0.005)}
+          ${rowNumber('beltStiffnessTipScale', '梢端刚度乘子', 0.2, 1.2, 0.05)}
+          ${rowToggle('beltShowColliders', '显示碰撞球 Helper')}
+          ${rowToggle('beltShowChainHelpers', '显示链骨 Helper')}
+          `,
+          'expandBelt',
+        )}
       </details>
 
       <details class="panel-group" data-cat="反馈">
@@ -836,6 +862,25 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'headbandStiffnessTipScale', path: 'headbandStiffnessTipScale' },
   { id: 'headbandShowColliders', path: 'headbandShowColliders' },
   { id: 'headbandShowChainHelpers', path: 'headbandShowChainHelpers' },
+  { id: 'beltPhysicsEnabled', path: 'beltPhysicsEnabled' },
+  { id: 'beltUseCenter', path: 'beltUseCenter' },
+  { id: 'beltStiffness', path: 'beltStiffness' },
+  { id: 'beltDragForce', path: 'beltDragForce' },
+  { id: 'beltGravityPower', path: 'beltGravityPower' },
+  { id: 'beltGravityDirX', path: 'beltGravityDirX' },
+  { id: 'beltGravityDirY', path: 'beltGravityDirY' },
+  { id: 'beltGravityDirZ', path: 'beltGravityDirZ' },
+  { id: 'beltHitRadius', path: 'beltHitRadius' },
+  { id: 'beltGravityAirScale', path: 'beltGravityAirScale' },
+  { id: 'beltMaxDeltaSec', path: 'beltMaxDeltaSec' },
+  { id: 'beltColliderHipRadius', path: 'beltColliderHipRadius' },
+  { id: 'beltColliderThighRadius', path: 'beltColliderThighRadius' },
+  { id: 'beltColliderHipYOffset', path: 'beltColliderHipYOffset' },
+  { id: 'beltColliderThighYOffset', path: 'beltColliderThighYOffset' },
+  { id: 'beltColliderThighZOffset', path: 'beltColliderThighZOffset' },
+  { id: 'beltStiffnessTipScale', path: 'beltStiffnessTipScale' },
+  { id: 'beltShowColliders', path: 'beltShowColliders' },
+  { id: 'beltShowChainHelpers', path: 'beltShowChainHelpers' },
 ];
 
 const TOGGLE_IDS = new Set([
@@ -869,6 +914,10 @@ const TOGGLE_IDS = new Set([
   'headbandUseCenter',
   'headbandShowColliders',
   'headbandShowChainHelpers',
+  'beltPhysicsEnabled',
+  'beltUseCenter',
+  'beltShowColliders',
+  'beltShowChainHelpers',
 ]);
 
 export function setupControlPanel(
@@ -1027,6 +1076,7 @@ export function setupControlPanel(
     ['expandAnimDrive', 'animDrive', 'sect-animDrive'],
     ['expandAnimTest', 'animTest', 'sect-animTest'],
     ['expandHeadband', 'headband', 'sect-headband'],
+    ['expandBelt', 'belt', 'sect-belt'],
     ['expandCommandProbe', 'commandProbe', 'sect-commandProbe'],
     ['expandMoveEdit', 'moveEdit', 'sect-moveEdit'],
   ];

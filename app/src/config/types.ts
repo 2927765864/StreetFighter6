@@ -19,6 +19,7 @@ export type ExpandedSections = {
   moveEdit: boolean;
   animTest: boolean;
   headband: boolean;
+  belt: boolean;
   extendedSim: boolean;
   extendedLoco: boolean;
   extendedAnim: boolean;
