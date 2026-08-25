@@ -17,6 +17,7 @@ import {
 import { AnimClipLibrary } from './AnimClipLibrary';
 import { ProceduralRyuAnim } from './ProceduralRyuAnim';
 import {
+  freeRunAnimDtSec,
   logicFrameToClipTime,
   remapLogicToClipTime,
   resolveAnimSequenceFrame,
@@ -43,7 +44,7 @@ import {
 import {
   advanceFromTime,
   blendToWeight,
-  blendWallDt,
+  stepDualAdvanceClocks,
   type CrossfadeAdvanceMode,
 } from '../combat/anim/PoseBlendMath';
 import { RyuHeadbandPhysics } from './headband/RyuHeadbandPhysics';
@@ -58,6 +59,13 @@ import {
   shouldResetGroundOffset,
   shouldSnapSoleOnLand,
 } from './plantPolicy';
+import {
+  FIGHTER_DISPLAY_Z,
+  FIGHTER_RENDER_ORDER_BACK,
+  FIGHTER_RENDER_ORDER_FRONT,
+  LAYER_FIGHTER_BACK,
+  LAYER_FIGHTER_FRONT,
+} from './fighterDisplayOrder';
 
 /** In-flight dual-advance (or debug freeze) + blend-to-new (§3.11). */
 type PoseBlend = {
@@ -69,9 +77,9 @@ type PoseBlend = {
   elapsed: number;
   /** Clip time of `from` at switch (seconds). */
   fromStartTimeSec: number;
-  /** Wall-clock seconds advanced on `from` during blend (dual mode). */
+  /** Authored 60Hz seconds advanced on `from` during blend (dual mode). */
   fromAdvancedSec: number;
-  /** Wall-clock seconds advanced on free-run `to` during blend. */
+  /** Authored 60Hz seconds (logicSteps/60) advanced on free-run `to`. */
   toAdvancedSec: number;
   /** If true, `to` free-runs (idle/crouch main) during/after blend. */
   toFreeRun: boolean;
@@ -114,6 +122,11 @@ export class FighterView {
   private modelGroundRestY = 0;
   /** True while lift-only attack/tail sole floor-clamp is active. */
   private soleFloorClampActive = false;
+  /**
+   * Display layer: front fighter is rendered in a second pass after clearDepth
+   * so every part occludes the back fighter without breaking self-occlusion.
+   */
+  private displayFront = true;
   private placeholder: THREE.Mesh;
   private procedural = new ProceduralRyuAnim();
   private useProcedural = false;
@@ -666,6 +679,33 @@ export class FighterView {
   }
 
   /**
+   * Assign three.js Layers for the layered fight render in main.ts:
+   * pass1 = scene + back, clearDepth, pass2 = front only.
+   * Layers are per-object (not inherited), so every descendant is updated.
+   */
+  private applyDisplayOrder(displayFront: boolean): void {
+    this.displayFront = displayFront;
+    const layer = displayFront ? LAYER_FIGHTER_FRONT : LAYER_FIGHTER_BACK;
+    const order = displayFront
+      ? FIGHTER_RENDER_ORDER_FRONT
+      : FIGHTER_RENDER_ORDER_BACK;
+    this.root.traverse((o) => {
+      o.layers.set(layer);
+      o.renderOrder = order;
+    });
+  }
+
+  /** Whether this view is currently the display-front fighter. */
+  isDisplayFront(): boolean {
+    return this.displayFront;
+  }
+
+  /** Layer bit used by the current display-front/back assignment. */
+  displayLayer(): number {
+    return this.displayFront ? LAYER_FIGHTER_FRONT : LAYER_FIGHTER_BACK;
+  }
+
+  /**
    * World Y for follow lights: hips/pelvis height so jump (root.y) and crouch
    * (animation) both move the light. Falls back to root.y when no hips bone.
    */
@@ -1019,20 +1059,19 @@ export class FighterView {
 
   /**
    * Advance pose-blend weights + old-layer time (§3.11 dual-advance default).
+   * Weight window stays wall-clock seconds; clip content (old dual-advance +
+   * free-run `to`) advances at authored 60Hz via logicSteps/60 so experimental
+   * logicFps does not speed transitions back up to display rate.
    * Returns weight on `to` in [0,1]. When finished, clears blend and returns 1.
    */
-  private stepPoseBlend(wallDtSec: number): number {
+  private stepPoseBlend(wallDtSec: number, freeRunDtSec = wallDtSec): number {
     const b = this.poseBlend;
     if (!b || !this.mixer) return 1;
 
-    const dt = blendWallDt(wallDtSec);
-    b.elapsed += dt;
-    if (b.mode === 'dual') {
-      b.fromAdvancedSec += dt;
-    }
-    if (b.toFreeRun) {
-      b.toAdvancedSec += dt;
-    }
+    const next = stepDualAdvanceClocks(wallDtSec, freeRunDtSec, b);
+    b.elapsed = next.elapsed;
+    b.fromAdvancedSec = next.fromAdvancedSec;
+    b.toAdvancedSec = next.toAdvancedSec;
     const w = blendToWeight(b.elapsed, b.duration);
 
     const fromT = advanceFromTime(
@@ -1444,33 +1483,43 @@ export class FighterView {
 
   /**
    * Sync pose from logic fighter.
-   * @param wallDtSec wall-clock delta from rAF (seconds). Used for free-running
-   *   loops (idle/walk). Must NOT use fixed 1/60 per rAF — on 120Hz displays
-   *   that doubles playback speed. Attack clips still scrub by logic frames.
+   * @param wallDtSec wall-clock delta from rAF (seconds). Pose-blend *weight*
+   *   window and cloth/spring physics stay on wall clock.
+   * @param logicSteps logic ticks executed this rAF. Free-run loops and
+   *   dual-advance *clip* time advance `logicSteps/60` sec — same authored
+   *   60Hz sample rate as {@link visualFrameToClipTime}. Scrubbed states use
+   *   logic frames.
+   * @param opts.displayFront when set, drives 2.5D layer (renderOrder +
+   *   depthTest); omit to keep legacy default (p1 front).
    */
   syncFromLogic(
     fighter: Fighter,
     cfg: MutableSimConfig,
     wallDtSec = 1 / 60,
+    logicSteps = 1,
+    opts?: { displayFront?: boolean },
   ): void {
     const s = cfg.worldScale * cfg.modelScale;
     this.root.scale.set(s, s, fighter.visualFacing * s);
+    const displayFront = opts?.displayFront ?? fighter.id === 'p1';
     this.root.position.set(
       fighter.x * cfg.worldScale,
       cfg.modelYOffset + fighter.y * cfg.worldScale,
-      fighter.id === 'p1' ? 0.05 : -0.05,
+      FIGHTER_DISPLAY_Z,
     );
+    this.applyDisplayOrder(displayFront);
     this.root.rotation.y = Math.PI / 2;
 
-    const animDt =
+    const previewDt =
       Math.min(Math.max(wallDtSec, 0), 0.1) * (cfg.timeScaleAnim || 1);
+    const freeRunDt = freeRunAnimDtSec(logicSteps, cfg.timeScaleAnim || 1);
     const scrubMode = (cfg.scrubMode ?? 'uniform') as ScrubMode;
     const role = fighter.animRole || 'main';
     this.crossfadeAdvanceMode =
       cfg.crossfadeAdvanceMode === 'freeze' ? 'freeze' : 'dual';
 
     if (this.previewMode) {
-      if (this.mixer) this.mixer.update(animDt);
+      if (this.mixer) this.mixer.update(previewDt);
       if (cfg.plantMode === 'legacy') this.plantFeetOnGround();
       this.updateHeadbandPhysics(fighter, cfg, wallDtSec);
       this.updateBeltPhysics(fighter, cfg, wallDtSec);
@@ -1495,7 +1544,7 @@ export class FighterView {
         this.procedural.update(0, true);
       } else {
         this.playBest(fighter.clipId, role, fadePolicy);
-        this.procedural.update(animDt, false);
+        this.procedural.update(freeRunDt, false);
       }
       this.afterAnimPose(fighter, cfg, wallDtSec);
       return;
@@ -1511,7 +1560,7 @@ export class FighterView {
       if (!cfg.scrubFromLogic) {
         action.paused = false;
         action.setEffectiveWeight(weight);
-        if (updateMixer) this.mixer?.update(animDt);
+        if (updateMixer) this.mixer?.update(freeRunDt);
         return;
       }
       const clip = action.getClip();
@@ -1578,7 +1627,7 @@ export class FighterView {
             ? remapLogicToClipTime(vf, rem, action.getClip().duration)
             : visualFrameToClipTime(vf, action.getClip().duration);
         if (this.poseBlend && this.poseBlend.to === action) {
-          const w = this.stepPoseBlend(wallDtSec);
+          const w = this.stepPoseBlend(wallDtSec, freeRunDt);
           this.scrubActionTo(action, t, w, true);
         } else {
           this.scrubActionTo(action, t);
@@ -1602,7 +1651,7 @@ export class FighterView {
           action.getClip().duration,
         );
         if (this.poseBlend && this.poseBlend.to === action) {
-          const w = this.stepPoseBlend(wallDtSec);
+          const w = this.stepPoseBlend(wallDtSec, freeRunDt);
           this.scrubActionTo(action, t, w, true);
         } else {
           this.scrubActionTo(action, t);
@@ -1620,7 +1669,7 @@ export class FighterView {
         const mapTotal =
           this.logicMap?.frameCountForRole(fighter.clipId, role) ?? 60;
         if (this.poseBlend && this.poseBlend.to === action) {
-          const w = this.stepPoseBlend(wallDtSec);
+          const w = this.stepPoseBlend(wallDtSec, freeRunDt);
           scrubTo(action, fighter.locoFrame, mapTotal, w, true);
         } else {
           scrubTo(action, fighter.locoFrame, mapTotal);
@@ -1653,7 +1702,7 @@ export class FighterView {
             action.getClip().duration,
           );
           if (this.poseBlend && this.poseBlend.to === action) {
-            const w = this.stepPoseBlend(wallDtSec);
+            const w = this.stepPoseBlend(wallDtSec, freeRunDt);
             this.scrubActionTo(action, t, w, true);
           } else {
             this.scrubActionTo(action, t);
@@ -1663,7 +1712,7 @@ export class FighterView {
             this.logicMap?.frameCountForRole(fighter.clipId, role) ??
             (fighter.phase === 'prejump' ? cfg.prejumpFrames : cfg.airFrames);
           if (this.poseBlend && this.poseBlend.to === action) {
-            const w = this.stepPoseBlend(wallDtSec);
+            const w = this.stepPoseBlend(wallDtSec, freeRunDt);
             scrubTo(action, fighter.jumpFrame, mapTotal, w, true);
           } else {
             scrubTo(action, fighter.jumpFrame, mapTotal);
@@ -1755,13 +1804,23 @@ export class FighterView {
       const action = this.resolveAction(fighter.clipId, role);
       if (action && this.mixer) {
         if (this.poseBlend && this.poseBlend.to === action) {
-          const w = this.stepPoseBlend(wallDtSec);
-          action.setEffectiveWeight(w);
-          this.mixer.update(animDt);
+          const w = this.stepPoseBlend(wallDtSec, freeRunDt);
+          if (this.poseBlend) {
+            // Both tracks paused during blend — scrub free-run `to` by logic dt
+            // (same as idle). mixer.update alone would leave to.time stuck at 0.
+            const clip = action.getClip();
+            const end = Math.max(0, clip.duration - 1e-4);
+            const toT = Math.min(this.poseBlend.toAdvancedSec, end);
+            this.scrubActionTo(action, toT, w, true);
+          } else {
+            action.paused = false;
+            action.setEffectiveWeight(1);
+            this.mixer.update(freeRunDt);
+          }
         } else {
           action.paused = false;
           action.setEffectiveWeight(1);
-          this.mixer.update(animDt);
+          this.mixer.update(freeRunDt);
         }
       }
       this.afterAnimPose(fighter, cfg, wallDtSec);
@@ -1775,7 +1834,7 @@ export class FighterView {
       if (action && this.mixer) {
         const total = Math.max(1, fighter.turnTotal);
         if (this.poseBlend && this.poseBlend.to === action) {
-          const w = this.stepPoseBlend(wallDtSec);
+          const w = this.stepPoseBlend(wallDtSec, freeRunDt);
           scrubTo(action, fighter.turnFrame, total, w, true);
         } else {
           scrubTo(action, fighter.turnFrame, total);
@@ -1798,9 +1857,9 @@ export class FighterView {
       );
       if (action) {
         if (this.poseBlend && this.poseBlend.to === action) {
-          const w = this.stepPoseBlend(wallDtSec);
+          const w = this.stepPoseBlend(wallDtSec, freeRunDt);
           if (this.poseBlend) {
-            // Dual-advance: new free-run track advances from 0 by wall clock
+            // Dual-advance: new free-run track advances from 0 by logic steps
             const clip = action.getClip();
             const end = Math.max(0, clip.duration - 1e-4);
             const toT = Math.min(this.poseBlend.toAdvancedSec, end);
@@ -1808,12 +1867,12 @@ export class FighterView {
           } else {
             action.paused = false;
             action.setEffectiveWeight(1);
-            this.mixer.update(animDt);
+            this.mixer.update(freeRunDt);
           }
         } else {
           action.paused = false;
           action.setEffectiveWeight(1);
-          this.mixer.update(animDt);
+          this.mixer.update(freeRunDt);
         }
       }
     }

@@ -273,6 +273,8 @@ export class MatchSim {
     lastExecuteOk: false,
     logCommandsToConsole: false,
     reviewStatus: '',
+    /** Latest successful attack starter for display layer (p1 default). */
+    frontFighterId: 'p1' as 'p1' | 'p2',
   };
 
   pendingInput: InputSample = {
@@ -948,6 +950,8 @@ export class MatchSim {
     this.debugProbe.p2KdPhase = this.p2.kdPhase;
     this.debugProbe.dummyWakeupStyle = this.dummy.wakeupStyle;
     this.debugProbe.p2Crouching = this.dummy.isCrouching() || this.p2.isHurtCrouching();
+    this.debugProbe.frontFighterId =
+      this.p1.lastAttackAcceptSeq >= this.p2.lastAttackAcceptSeq ? 'p1' : 'p2';
     this.debugProbe.catalogCount = this.catalog.size;
   }
 

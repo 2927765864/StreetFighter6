@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
+  freeRunAnimDtSec,
   logicFrameToClipTime,
   remapLogicToClipTime,
   remapLogicToMotionFrame,
@@ -32,6 +33,29 @@ describe('visualFrameToClipTime §3.7.1', () => {
     expect(visualFrameToClipTime(17, d)).toBeCloseTo(17 / 60, 5);
     expect(visualFrameToClipTime(18, d)).toBeCloseTo(18 / 60, 5);
     expect(visualFrameToClipTime(47, d)).toBeCloseTo(47 / 60, 5);
+  });
+});
+
+describe('freeRunAnimDtSec', () => {
+  it('advances one authored 60Hz sample per logic step', () => {
+    expect(freeRunAnimDtSec(1)).toBeCloseTo(1 / 60, 5);
+    expect(freeRunAnimDtSec(2)).toBeCloseTo(2 / 60, 5);
+  });
+
+  it('freezes when no logic steps (pause / waiting for accumulator)', () => {
+    expect(freeRunAnimDtSec(0)).toBe(0);
+  });
+
+  it('halves wall-clock idle speed when logicFps experiment is 30', () => {
+    // ~60 display Hz, logic 30 → average 0.5 steps/rAF → half free-run rate
+    expect(freeRunAnimDtSec(0.5)).toBeCloseTo(0.5 / 60, 5);
+    // one logic step every other display frame at 30Hz logic:
+    expect(freeRunAnimDtSec(1) + freeRunAnimDtSec(0)).toBeCloseTo(1 / 60, 5);
+  });
+
+  it('respects timeScaleAnim and caps like blendWallDt', () => {
+    expect(freeRunAnimDtSec(1, 2)).toBeCloseTo(2 / 60, 5);
+    expect(freeRunAnimDtSec(120)).toBeCloseTo(0.1, 5);
   });
 });
 

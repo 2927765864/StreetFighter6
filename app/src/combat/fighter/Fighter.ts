@@ -51,6 +51,9 @@ function sameMoveId(move: MoveDefinition, intoMoveId: string): boolean {
   return ids.some((id) => normalizeMoveKey(id) === want);
 }
 
+/** Monotonic stamp for display-front: last successful attack start wins. */
+let nextAttackAcceptSeq = 1;
+
 /**
  * Post-total action timeline for Place / Hurt / Push (consensus §3.12).
  * Alias of action timeline residual (plan §2.3 / §6 migration note).
@@ -185,6 +188,11 @@ export class Fighter {
   stanceTable: StanceBoxTable | null = null;
   /** Debug: force-clear action layer boxes without killing animTail. */
   debugClearActionBoxes = false;
+  /**
+   * Monotonic stamp set when an attack actually starts (`startMove`).
+   * View uses this to put the latest attacker in front. 0 = never attacked.
+   */
+  lastAttackAcceptSeq = 0;
   /** Queued per-frame |dx| for block pushback (applied along pushDir). */
   blockPushQueue: number[] = [];
   /** World X sign for remaining block push (defender moved this way). */
@@ -1118,6 +1126,7 @@ export class Fighter {
     this.clearTurn();
     if (!onJumpArc) this.applyVisualFacing();
     this.lastSelfDx = 0;
+    this.lastAttackAcceptSeq = nextAttackAcceptSeq++;
   }
 
   /**

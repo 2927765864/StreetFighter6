@@ -60,6 +60,20 @@ export function visualFrameToClipTime(
 }
 
 /**
+ * Free-run loops (idle / crouch / guard loop): one authored 60Hz sample per logic step.
+ * Matches {@link visualFrameToClipTime} so lowering experimental `logicFps` slows
+ * free-run the same way as scrubbed clips. Cap matches blendWallDt.
+ */
+export function freeRunAnimDtSec(
+  logicSteps: number,
+  timeScaleAnim = 1,
+): number {
+  const steps = Math.max(0, logicSteps);
+  const dt = Math.min(steps / 60, 0.1);
+  return dt * (timeScaleAnim || 1);
+}
+
+/**
  * Map an action-timeline frame through animRemap segments to a motion frame.
  * Empty / invalid tables fall back to the logic frame itself.
  */

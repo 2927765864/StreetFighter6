@@ -9,6 +9,13 @@ import { MatchSim } from './combat/match/MatchSim';
 import { KeyboardSource } from './combat/input/KeyboardSource';
 import { loadJson } from './data/loadJson';
 import { FighterView } from './render/FighterView';
+import {
+  enableFighterDisplayLayersOnLight,
+  LAYER_FIGHTER_BACK,
+  LAYER_FIGHTER_FRONT,
+  LAYER_SCENE,
+  pickDisplayFrontId,
+} from './render/fighterDisplayOrder';
 import { StageView } from './render/StageView';
 import {
   applyFightCamera,
@@ -271,6 +278,12 @@ async function boot(): Promise<void> {
   };
 
   const lights = createLightRig(THREE, scene);
+  const syncFighterDisplayLightLayers = (): void => {
+    for (const rt of lights.runtimes.values()) {
+      enableFighterDisplayLayersOnLight(rt.light);
+    }
+  };
+  syncFighterDisplayLightLayers();
   /** Logic-Y fallback until FighterViews exist; swapped to hips Y after load. */
   const followOriginRef: {
     get: (who: 'p1' | 'p2') => FighterFollowOrigin;
@@ -290,6 +303,7 @@ async function boot(): Promise<void> {
     p2: followOriginRef.get('p2'),
   });
   syncLightsFromConfig(THREE, scene, lights, cfg, fighterFollowOrigins());
+  syncFighterDisplayLightLayers();
   applyEnvironment(THREE, scene, cfg);
 
   const orbit = new OrbitControls(camera, renderer.domElement);
@@ -336,6 +350,7 @@ async function boot(): Promise<void> {
     renderer.shadowMap.enabled = cfg.shadowMapEnabled;
     // 1) create/update Three lights  2) then bind material.lightsNode lists
     syncLightsFromConfig(THREE, scene, lights, cfg, fighterFollowOrigins());
+    syncFighterDisplayLightLayers();
     applyEnvironment(THREE, scene, cfg);
     refreshSelectiveLights();
     // Second bind next frame: WebGPU + DynamicLighting sometimes miss brand-new lights
@@ -555,8 +570,15 @@ async function boot(): Promise<void> {
   refreshSelectiveLights();
 
   // Sync once so root transforms applied, then log world boxes
-  p1View.syncFromLogic(match.p1, cfg);
-  p2View.syncFromLogic(match.p2, cfg);
+  {
+    const p1Front =
+      pickDisplayFrontId(
+        match.p1.lastAttackAcceptSeq,
+        match.p2.lastAttackAcceptSeq,
+      ) === 'p1';
+    p1View.syncFromLogic(match.p1, cfg, 1 / 60, 1, { displayFront: p1Front });
+    p2View.syncFromLogic(match.p2, cfg, 1 / 60, 1, { displayFront: !p1Front });
+  }
   logBox('p1', p1View);
   logBox('p2', p2View);
   logBox('stage', stage.root);
@@ -770,12 +792,13 @@ async function boot(): Promise<void> {
     grid.visible = cfg.showDebugGrid;
     axes.visible = cfg.showAxes;
 
+    let logicSteps = 0;
     if (hooks.boxEditActive && boxEditor) {
       layoutFightCanvasForBoxEdit();
       boxEditor.tick();
     } else if (!hooks.paused) {
-      const steps = clock.tick(wallDt);
-      for (let i = 0; i < steps; i++) {
+      logicSteps = clock.tick(wallDt);
+      for (let i = 0; i < logicSteps; i++) {
         match.pendingInput = keys.sample();
         match.step();
       }
@@ -834,10 +857,21 @@ async function boot(): Promise<void> {
       });
     }
 
-    // Pass wallDt so free-running anims (idle) stay 1× real-time on 120Hz displays.
-    // Do NOT use fixed 1/60 per rAF — that doubles speed at 120fps.
-    p1View.syncFromLogic(match.p1, cfg, wallDt);
-    p2View.syncFromLogic(match.p2, cfg, wallDt);
+    // Free-run + dual-advance clip time use logicSteps/60 (authored 60Hz).
+    // Wall dt still drives blend *weight* windows and cloth physics.
+    {
+      const p1Front =
+        pickDisplayFrontId(
+          match.p1.lastAttackAcceptSeq,
+          match.p2.lastAttackAcceptSeq,
+        ) === 'p1';
+      p1View.syncFromLogic(match.p1, cfg, wallDt, logicSteps, {
+        displayFront: p1Front,
+      });
+      p2View.syncFromLogic(match.p2, cfg, wallDt, logicSteps, {
+        displayFront: !p1Front,
+      });
+    }
 
     pantsHealthReporter.tick(collectPantsHealth(), cfg);
 
@@ -869,11 +903,53 @@ async function boot(): Promise<void> {
     updatePipChrome();
 
     const gizmoHelper = lightEdit.transform.getHelper();
+
+    /**
+     * True 2.5D fighter priority: every part of the front fighter draws over
+     * the back fighter, while each fighter keeps normal self-occlusion.
+     * 1) scene + back fighter
+     * 2) clearDepth, then front fighter only
+     *
+     * Important (WebGPU / three Background): a Color `scene.background` sets
+     * forceClear on every render, which would wipe pass 1 even when
+     * autoClear=false. Pass 2 must temporarily clear background + disable
+     * autoClearColor so the color buffer is loaded, not cleared.
+     */
+    const renderFightDisplayLayers = async (
+      cam: THREE.Camera,
+      autoClearFirst: boolean,
+    ): Promise<void> => {
+      cam.layers.set(LAYER_SCENE);
+      cam.layers.enable(LAYER_FIGHTER_BACK);
+      renderer.autoClear = autoClearFirst;
+      await renderer.render(scene, cam);
+
+      const prevBackground = scene.background;
+      const prevAutoClear = renderer.autoClear;
+      const prevAutoClearColor = renderer.autoClearColor;
+      const prevAutoClearDepth = renderer.autoClearDepth;
+      scene.background = null;
+      renderer.autoClear = false;
+      renderer.autoClearColor = false;
+      renderer.autoClearDepth = false;
+      renderer.clearDepth();
+      cam.layers.set(LAYER_FIGHTER_FRONT);
+      await renderer.render(scene, cam);
+      scene.background = prevBackground;
+      renderer.autoClear = prevAutoClear;
+      renderer.autoClearColor = prevAutoClearColor;
+      renderer.autoClearDepth = prevAutoClearDepth;
+
+      cam.layers.set(LAYER_SCENE);
+      cam.layers.enable(LAYER_FIGHTER_BACK);
+      cam.layers.enable(LAYER_FIGHTER_FRONT);
+      renderer.autoClear = true;
+    };
+
     const fullRender = async () => {
       renderer.setScissorTest(false);
       renderer.setViewport(0, 0, viewW, viewH);
-      renderer.autoClear = true;
-      await renderer.render(scene, camera);
+      await renderFightDisplayLayers(camera, true);
 
       if (!cfg.lightOrbitMode || hooks.boxEditActive) return;
 
@@ -892,14 +968,13 @@ async function boot(): Promise<void> {
       });
 
       // WebGPU viewport/scissor origin = upper-left (not CSS bottom).
-      renderer.autoClear = false;
+      // Color already filled by main view; PIP clears via first layered pass.
       renderer.setScissorTest(true);
       renderer.setViewport(x, yTop, w, h);
       renderer.setScissor(x, yTop, w, h);
-      await renderer.render(scene, fightCamera);
+      await renderFightDisplayLayers(fightCamera, true);
       renderer.setScissorTest(false);
       renderer.setViewport(0, 0, fullW, fullH);
-      renderer.autoClear = true;
 
       lights.helperGroup.visible = helpersWas;
       gizmoHelper.visible = gizmoWas;
