@@ -136,3 +136,4 @@
 | `docs/research/headband-physics-research-2026-08-24.md` | 头巾技术调研（可借鉴，非本文件共识） |
 | `docs/plans/ai-execution-plan-headband-physics-v0.md` | 头巾执行方案（可借鉴，非本文件共识） |
 | `docs/plans/ai-execution-plan-belt-physics-v0.md` | 本共识的 AI 可执行制作方案（非共识） |
+| `docs/pants-physics-consensus-v0.md` | 裤子物理（**未完成 · 已抛弃**；曾独立设计，不复用头巾/腰带路径） |

@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ryuAnimAssetsPlugin } from './vite-plugins/ryuAnimAssets';
 import { boxOverrideApiPlugin } from './vite-plugins/boxOverrideApi';
+import { pantsReportApiPlugin } from './vite-plugins/pantsReportApi';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -11,7 +12,11 @@ export default defineConfig({
   root: '.',
   publicDir: 'public',
   assetsInclude: ['**/*.glb', '**/*.gltf'],
-  plugins: [ryuAnimAssetsPlugin(__dirname), boxOverrideApiPlugin(__dirname)],
+  plugins: [
+    ryuAnimAssetsPlugin(__dirname),
+    boxOverrideApiPlugin(__dirname),
+    pantsReportApiPlugin(__dirname),
+  ],
   server: {
     fs: {
       allow: [

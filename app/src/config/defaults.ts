@@ -19,6 +19,7 @@ export function defaultExpandedSections(): ExpandedSections {
     animTest: false,
     headband: true,
     belt: true,
+    pants: true,
     extendedSim: false,
     extendedLoco: false,
     extendedAnim: false,

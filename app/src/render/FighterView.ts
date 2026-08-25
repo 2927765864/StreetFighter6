@@ -50,6 +50,8 @@ import { RyuHeadbandPhysics } from './headband/RyuHeadbandPhysics';
 import { clampHeadbandDeltaSec } from './headband/headbandPhysicsMath';
 import { RyuBeltPhysics } from './belt/RyuBeltPhysics';
 import { clampBeltDeltaSec } from './belt/beltPhysicsMath';
+import { RyuPantsPhysics } from './pants/RyuPantsPhysics';
+import { clampPantsDeltaSec } from './pants/pantsPhysicsMath';
 import {
   isJumpLandBinding,
   shouldFloorClampAttackSole,
@@ -147,6 +149,8 @@ export class FighterView {
   private headband: RyuHeadbandPhysics | null = null;
   /** Ryu obi (belt) spring tails; updated after mixer each frame. */
   private belt: RyuBeltPhysics | null = null;
+  /** Ryu dougi pants bone-cloth; updated after mixer each frame. */
+  private pants: RyuPantsPhysics | null = null;
   /** Scene root — spring debug helpers must parent here (not under fighter). */
   private readonly scene: THREE.Scene;
 
@@ -199,6 +203,8 @@ export class FighterView {
       this.headband = null;
       this.belt?.dispose();
       this.belt = null;
+      this.pants?.dispose();
+      this.pants = null;
       this.root.remove(this.modelRoot);
       this.modelRoot = null;
     }
@@ -330,6 +336,17 @@ export class FighterView {
       );
     } else {
       console.warn(`[FighterView] belt physics: ${bt.reason}`);
+    }
+
+    this.pants?.dispose();
+    this.pants = new RyuPantsPhysics();
+    const pt = this.pants.bind(model, { helperParent: this.scene });
+    if (pt.ok) {
+      console.info(
+        `[FighterView] pants physics bound chains=${pt.chainCount} particles=${pt.particleCount} constraints=${pt.constraintCount}`,
+      );
+    } else {
+      console.warn(`[FighterView] pants physics: ${pt.reason}`);
     }
 
     // One-shot sole align after stance pose + spring binds (not per-frame).
@@ -775,6 +792,39 @@ export class FighterView {
     });
   }
 
+  /** Dougi pants bone-cloth after mixer; never gated by hitstop/hitstun. */
+  private updatePantsPhysics(
+    fighter: Fighter,
+    cfg: MutableSimConfig,
+    wallDtSec: number,
+  ): void {
+    if (!this.pants) return;
+    this.pants.setFighterId(fighter.id === 'p2' ? 'p2' : 'p1');
+    if (!this.pants.isBound) {
+      // Still emit disabled health when unbound so HUD/report stay honest.
+      this.pants.update({
+        deltaSec: 0,
+        cfg: { ...cfg, pantsPhysicsEnabled: false },
+        jumpPhase: fighter.jumpPhase,
+      });
+      return;
+    }
+    const deltaSec = clampPantsDeltaSec(
+      wallDtSec,
+      cfg.pantsMaxDeltaSec,
+      cfg.timeScaleAnim || 1,
+    );
+    this.pants.update({
+      deltaSec,
+      cfg,
+      jumpPhase: fighter.jumpPhase,
+    });
+  }
+
+  getPantsHealthSnapshot() {
+    return this.pants?.getLastHealthSnapshot() ?? null;
+  }
+
   private afterAnimPose(
     fighter: Fighter,
     cfg: MutableSimConfig,
@@ -787,6 +837,7 @@ export class FighterView {
     this.maybePlantAfterPose(fighter, cfg, wallDtSec);
     this.updateHeadbandPhysics(fighter, cfg, wallDtSec);
     this.updateBeltPhysics(fighter, cfg, wallDtSec);
+    this.updatePantsPhysics(fighter, cfg, wallDtSec);
     this.modelRoot?.updateMatrixWorld(true);
   }
 
@@ -1423,6 +1474,7 @@ export class FighterView {
       if (cfg.plantMode === 'legacy') this.plantFeetOnGround();
       this.updateHeadbandPhysics(fighter, cfg, wallDtSec);
       this.updateBeltPhysics(fighter, cfg, wallDtSec);
+      this.updatePantsPhysics(fighter, cfg, wallDtSec);
       this.modelRoot?.updateMatrixWorld(true);
       return;
     }

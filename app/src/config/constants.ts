@@ -256,6 +256,74 @@ export type MutableSimConfig = {
   beltShowColliders: boolean;
   beltShowChainHelpers: boolean;
   beltStiffnessTipScale: number;
+  /** Ryu dougi pants bone-cloth (SPCR-style); independent of headband/belt. */
+  pantsPhysicsEnabled: boolean;
+  pantsSubSteps: number;
+  pantsConstraintIterations: number;
+  pantsResistance: number;
+  pantsHardness: number;
+  pantsHardnessTipScale: number;
+  pantsGravityPower: number;
+  pantsGravityDirX: number;
+  pantsGravityDirY: number;
+  pantsGravityDirZ: number;
+  pantsGravityAirScale: number;
+  pantsWindScale: number;
+  pantsBreathAmp: number;
+  pantsBreathHz: number;
+  pantsBreathDirX: number;
+  pantsBreathDirY: number;
+  pantsBreathDirZ: number;
+  pantsStructuralShrinkVertical: number;
+  pantsStructuralStretchVertical: number;
+  pantsStructuralShrinkHorizontal: number;
+  pantsStructuralStretchHorizontal: number;
+  pantsShearShrink: number;
+  pantsShearStretch: number;
+  pantsBendingShrinkVertical: number;
+  pantsBendingStretchVertical: number;
+  pantsBendingShrinkHorizontal: number;
+  pantsBendingStretchHorizontal: number;
+  pantsEnableHorizontal: boolean;
+  pantsEnableShear: boolean;
+  pantsEnableBending: boolean;
+  pantsPointRadius: number;
+  pantsMaxDeltaSec: number;
+  /**
+   * modelRoot translation (world units) above this → warp snap particles to anim.
+   * Under limit: no root inherit (thigh anchors + hardness follow skeletal motion).
+   */
+  pantsRootSlideLimit: number;
+  /** modelRoot rotation (degrees) above this → warp snap. */
+  pantsRootRotateLimitDeg: number;
+  /** Hard fuse: free particle max distance from anim target (blocks fullscreen stretch). */
+  pantsMaxSeparation: number;
+  pantsColliderThighRadius: number;
+  pantsColliderThighTailScale: number;
+  /** 0–1 along thigh bone; skips the hip-socket spherical cap. */
+  pantsColliderThighHeadInset: number;
+  pantsColliderCalfRadius: number;
+  pantsColliderCalfTailScale: number;
+  pantsColliderHipRadius: number;
+  pantsColliderBeltRadius: number;
+  pantsColliderHipYOffset: number;
+  pantsColliderBeltYOffset: number;
+  pantsUsePushIn: boolean;
+  pantsShowColliders: boolean;
+  pantsShowConstraints: boolean;
+  /** Pants dual-channel health report (HUD + docs/reports/pants). */
+  pantsHealthReportEnabled: boolean;
+  pantsHealthHudEnabled: boolean;
+  pantsHealthSnapshotIntervalSec: number;
+  pantsHealthWarnRatio: number;
+  pantsHealthHudMinIntervalMs: number;
+  pantsHealthAutoShowConstraintsOnAbnormal: boolean;
+  pantsHealthIncidentKeep: number;
+  /** Max in-memory entries during one start→stop session. */
+  pantsHealthSessionMaxEntries: number;
+  /** Keep at most this many session files under docs/reports/pants/sessions/. */
+  pantsHealthSessionKeep: number;
+  pantsFeelNote: string;
 };
 
 export function createDefaultSimConfig(): MutableSimConfig {
@@ -451,6 +519,66 @@ export function createDefaultSimConfig(): MutableSimConfig {
     beltShowColliders: false,
     beltShowChainHelpers: false,
     beltStiffnessTipScale: 0.95,
+    pantsPhysicsEnabled: true,
+    pantsSubSteps: 2,
+    pantsConstraintIterations: 4,
+    pantsResistance: 0.82,
+    /** Softer default so weighted drive bones can show droop/sway. */
+    pantsHardness: 0.12,
+    pantsHardnessTipScale: 0.55,
+    /** 1 ≈ earth gravity (×9.8 m/s² inside solver). */
+    pantsGravityPower: 1.0,
+    pantsGravityDirX: 0,
+    pantsGravityDirY: -1,
+    pantsGravityDirZ: 0,
+    pantsGravityAirScale: 0.65,
+    pantsWindScale: 1.0,
+    /** Peak idle wind accel (m/s²); was too small when treated as raw ×dt². */
+    pantsBreathAmp: 0.8,
+    pantsBreathHz: 0.35,
+    pantsBreathDirX: 0.15,
+    pantsBreathDirY: 0,
+    pantsBreathDirZ: 0.05,
+    pantsStructuralShrinkVertical: 1.0,
+    pantsStructuralStretchVertical: 1.0,
+    pantsStructuralShrinkHorizontal: 1.0,
+    pantsStructuralStretchHorizontal: 1.0,
+    pantsShearShrink: 1.0,
+    pantsShearStretch: 1.0,
+    pantsBendingShrinkVertical: 0.85,
+    pantsBendingStretchVertical: 0.85,
+    pantsBendingShrinkHorizontal: 0.85,
+    pantsBendingStretchHorizontal: 0.85,
+    pantsEnableHorizontal: true,
+    pantsEnableShear: true,
+    pantsEnableBending: true,
+    pantsPointRadius: 0.012,
+    pantsMaxDeltaSec: 0.05,
+    pantsRootSlideLimit: 0.35,
+    pantsRootRotateLimitDeg: 35,
+    pantsMaxSeparation: 0.55,
+    pantsColliderThighRadius: 0.07,
+    pantsColliderThighTailScale: 0.85,
+    pantsColliderThighHeadInset: 0.22,
+    pantsColliderCalfRadius: 0.055,
+    pantsColliderCalfTailScale: 0.75,
+    pantsColliderHipRadius: 0.03,
+    pantsColliderBeltRadius: 0.045,
+    pantsColliderHipYOffset: 0.06,
+    pantsColliderBeltYOffset: 0.04,
+    pantsUsePushIn: false,
+    pantsShowColliders: false,
+    pantsShowConstraints: false,
+    pantsHealthReportEnabled: true,
+    pantsHealthHudEnabled: true,
+    pantsHealthSnapshotIntervalSec: 2.5,
+    pantsHealthWarnRatio: 0.55,
+    pantsHealthHudMinIntervalMs: 150,
+    pantsHealthAutoShowConstraintsOnAbnormal: true,
+    pantsHealthIncidentKeep: 20,
+    pantsHealthSessionMaxEntries: 1500,
+    pantsHealthSessionKeep: 20,
+    pantsFeelNote: '',
   };
 }
 

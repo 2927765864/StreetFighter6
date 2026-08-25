@@ -36,6 +36,7 @@ import {
   reloadMoveFromPublic,
   setupControlPanel,
 } from './debug/ControlPanel';
+import { PantsHealthReporter } from './debug/PantsHealthReporter';
 import { BoxEditorApp } from './boxEditor/BoxEditorApp';
 import type { MoveDefinition } from './combat/move/MoveDefinition';
 import {
@@ -656,6 +657,17 @@ async function boot(): Promise<void> {
     });
   };
 
+  const pantsHealthReporter = new PantsHealthReporter();
+  const collectPantsHealth = () => {
+    const snaps: NonNullable<
+      ReturnType<FighterView['getPantsHealthSnapshot']>
+    >[] = [];
+    const a = p1View.getPantsHealthSnapshot();
+    const b = p2View.getPantsHealthSnapshot();
+    if (a) snaps.push(a);
+    if (b) snaps.push(b);
+    return snaps;
+  };
   const hooks = {
     paused: false,
     boxEditActive: false,
@@ -672,6 +684,17 @@ async function boot(): Promise<void> {
     p1View,
     p2View,
     getLightFollowOrigin: (who: 'p1' | 'p2') => followOriginRef.get(who),
+    recordPantsFeel: () =>
+      pantsHealthReporter.recordFeel(
+        collectPantsHealth(),
+        String(CONFIG.pantsFeelNote ?? ''),
+      ),
+    startPantsRecord: () => {
+      pantsHealthReporter.startRecording(collectPantsHealth());
+    },
+    stopPantsRecord: () =>
+      pantsHealthReporter.stopRecording(collectPantsHealth(), CONFIG),
+    isPantsRecording: () => pantsHealthReporter.isRecording,
   };
   const panelApi = setupControlPanel(match, clock, hooks, {
     onChange: (key) => {
@@ -815,6 +838,8 @@ async function boot(): Promise<void> {
     // Do NOT use fixed 1/60 per rAF — that doubles speed at 120fps.
     p1View.syncFromLogic(match.p1, cfg, wallDt);
     p2View.syncFromLogic(match.p2, cfg, wallDt);
+
+    pantsHealthReporter.tick(collectPantsHealth(), cfg);
 
     // Follow after fighter sync so hips Y (jump + crouch) is current.
     if (!lightDragActive) {

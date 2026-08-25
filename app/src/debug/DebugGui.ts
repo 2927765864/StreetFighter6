@@ -339,6 +339,66 @@ export function createDebugGui(
   belt.add(cfg, 'beltShowColliders').name('显示碰撞Helper');
   belt.add(cfg, 'beltShowChainHelpers').name('显示链Helper');
 
+  const pants = gui.addFolder('裤子物理');
+  pants.add(cfg, 'pantsPhysicsEnabled').name('启用裤子物理');
+  pants.add(cfg, 'pantsSubSteps', 1, 4, 1).name('子步数');
+  pants.add(cfg, 'pantsConstraintIterations', 1, 12, 1).name('约束迭代');
+  pants.add(cfg, 'pantsResistance', 0, 1, 0.01).name('惯性保留');
+  pants.add(cfg, 'pantsHardness', 0, 1, 0.01).name('拉回硬度');
+  pants.add(cfg, 'pantsHardnessTipScale', 0.1, 1.2, 0.05).name('梢硬度乘子');
+  pants.add(cfg, 'pantsGravityPower', 0, 3, 0.05).name('重力(1≈地球)');
+  pants.add(cfg, 'pantsGravityDirX', -1, 1, 0.05).name('重力X');
+  pants.add(cfg, 'pantsGravityDirY', -1, 1, 0.05).name('重力Y');
+  pants.add(cfg, 'pantsGravityDirZ', -1, 1, 0.05).name('重力Z');
+  pants.add(cfg, 'pantsGravityAirScale', 0, 1.5, 0.05).name('滞空重力');
+  pants.add(cfg, 'pantsWindScale', 0, 2, 0.05).name('风总乘子');
+  pants.add(cfg, 'pantsBreathAmp', 0, 3, 0.05).name('呼吸幅度');
+  pants.add(cfg, 'pantsBreathHz', 0, 2, 0.05).name('呼吸Hz');
+  pants.add(cfg, 'pantsBreathDirX', -1, 1, 0.05).name('呼吸风X');
+  pants.add(cfg, 'pantsBreathDirY', -1, 1, 0.05).name('呼吸风Y');
+  pants.add(cfg, 'pantsBreathDirZ', -1, 1, 0.05).name('呼吸风Z');
+  pants.add(cfg, 'pantsEnableHorizontal').name('横连约束');
+  pants.add(cfg, 'pantsEnableShear').name('剪切约束');
+  pants.add(cfg, 'pantsEnableBending').name('弯曲约束');
+  pants
+    .add(cfg, 'pantsStructuralShrinkHorizontal', 0, 2, 0.05)
+    .name('横缩');
+  pants
+    .add(cfg, 'pantsStructuralStretchHorizontal', 0, 2, 0.05)
+    .name('横伸');
+  pants.add(cfg, 'pantsPointRadius', 0, 0.05, 0.001).name('粒子半径');
+  pants.add(cfg, 'pantsMaxDeltaSec', 0.016, 0.1, 0.001).name('dt上限');
+  pants.add(cfg, 'pantsRootSlideLimit', 0.05, 2, 0.05).name('Root位移熔断');
+  pants.add(cfg, 'pantsRootRotateLimitDeg', 5, 180, 1).name('Root旋转熔断°');
+  pants.add(cfg, 'pantsMaxSeparation', 0.1, 1.5, 0.05).name('最大离动画距');
+  pants.add(cfg, 'pantsHealthReportEnabled').name('停止记录时写盘');
+  pants.add(cfg, 'pantsHealthHudEnabled').name('健康小面板');
+  pants
+    .add(cfg, 'pantsHealthSnapshotIntervalSec', 0.5, 30, 0.5)
+    .name('记录稀疏间隔秒');
+  pants.add(cfg, 'pantsHealthWarnRatio', 0.1, 1, 0.05).name('警告比例');
+  pants
+    .add(cfg, 'pantsHealthSessionMaxEntries', 100, 5000, 50)
+    .name('会话最大条数');
+  pants.add(cfg, 'pantsHealthSessionKeep', 1, 50, 1).name('会话文件保留');
+  pants
+    .add(cfg, 'pantsHealthAutoShowConstraintsOnAbnormal')
+    .name('异常自动显示线');
+  pants
+    .add(cfg, 'pantsColliderThighRadius', 0, 0.25, 0.005)
+    .name('大腿胶囊');
+  pants
+    .add(cfg, 'pantsColliderThighHeadInset', 0, 0.6, 0.01)
+    .name('大腿起点下移');
+  pants
+    .add(cfg, 'pantsColliderCalfRadius', 0, 0.2, 0.005)
+    .name('小腿胶囊');
+  pants.add(cfg, 'pantsColliderHipRadius', 0, 0.3, 0.005).name('髋球');
+  pants.add(cfg, 'pantsColliderBeltRadius', 0, 0.3, 0.005).name('腰带球');
+  pants.add(cfg, 'pantsUsePushIn').name('PushIn(易成球)');
+  pants.add(cfg, 'pantsShowColliders').name('显示碰撞Helper');
+  pants.add(cfg, 'pantsShowConstraints').name('显示约束线');
+
   const syncOpts = () => syncMatchOpts(match, cfg);
 
   const input = gui.addFolder('缓冲 / 输入');

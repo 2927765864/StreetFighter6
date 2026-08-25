@@ -1,0 +1,52 @@
+{
+  "snaps": [
+    {
+      "schemaVersion": 1,
+      "fighterId": "p1",
+      "takenAtIso": "2026-08-25T05:12:02.891Z",
+      "status": "ok",
+      "maxSeparation": 0.119919246226753,
+      "meanSeparation": 0.05844065034271173,
+      "freeParticleCount": 18,
+      "fixedParticleCount": 18,
+      "maxConstraintError": 0.009833792912726791,
+      "warpCountSession": 1,
+      "clampCountSession": 1166,
+      "lastEvent": "separation-clamp",
+      "warnThreshold": 0.30250000000000005,
+      "abnormalThreshold": 0.55,
+      "params": {
+        "pantsHardness": 0.12,
+        "pantsGravityPower": 0.85,
+        "pantsResistance": 0.82,
+        "pantsMaxSeparation": 0.55,
+        "pantsRootSlideLimit": 0.35,
+        "pantsRootRotateLimitDeg": 35
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "fighterId": "p2",
+      "takenAtIso": "2026-08-25T05:12:02.894Z",
+      "status": "ok",
+      "maxSeparation": 0.11797795709275144,
+      "meanSeparation": 0.05765575558218699,
+      "freeParticleCount": 18,
+      "fixedParticleCount": 18,
+      "maxConstraintError": 0.007363586951012635,
+      "warpCountSession": 1,
+      "clampCountSession": 26,
+      "lastEvent": "separation-clamp",
+      "warnThreshold": 0.30250000000000005,
+      "abnormalThreshold": 0.55,
+      "params": {
+        "pantsHardness": 0.12,
+        "pantsGravityPower": 0.85,
+        "pantsResistance": 0.82,
+        "pantsMaxSeparation": 0.55,
+        "pantsRootSlideLimit": 0.35,
+        "pantsRootRotateLimitDeg": 35
+      }
+    }
+  ]
+}

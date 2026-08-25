@@ -1,0 +1,600 @@
+{
+  "startedAtIso": "2026-08-25T05:19:10.575Z",
+  "durationSec": 9.519,
+  "entries": [
+    {
+      "tRelSec": 0,
+      "kind": "start",
+      "message": "开始记录",
+      "detail": "p1:ok sep=0.135 warp=16 clamp=6856 evt=separation-clamp | p2:ok sep=0.117 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 0.006799999997019768,
+      "kind": "event",
+      "message": "最大偏离创新高 0.136",
+      "detail": "p1:ok sep=0.136 warp=16 clamp=6856 evt=separation-clamp | p2:ok sep=0.117 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 0.02129999999701977,
+      "kind": "event",
+      "message": "最大偏离创新高 0.136",
+      "detail": "p1:ok sep=0.136 warp=16 clamp=6856 evt=separation-clamp | p2:ok sep=0.117 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 0.05070000000298023,
+      "kind": "event",
+      "message": "最大偏离创新高 0.136",
+      "detail": "p1:ok sep=0.136 warp=16 clamp=6856 evt=separation-clamp | p2:ok sep=0.118 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 0.06590000000596047,
+      "kind": "event",
+      "message": "最大偏离创新高 0.136",
+      "detail": "p1:ok sep=0.136 warp=16 clamp=6856 evt=separation-clamp | p2:ok sep=0.119 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 0.095,
+      "kind": "event",
+      "message": "最大偏离创新高 0.138",
+      "detail": "p1:ok sep=0.138 warp=16 clamp=6856 evt=separation-clamp | p2:ok sep=0.118 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 0.8805,
+      "kind": "event",
+      "message": "最大偏离创新高 0.140",
+      "detail": "p1:ok sep=0.140 warp=16 clamp=6856 evt=separation-clamp | p2:ok sep=0.121 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 0.8957000000029802,
+      "kind": "event",
+      "message": "最大偏离创新高 0.191",
+      "detail": "p1:ok sep=0.191 warp=16 clamp=6856 evt=separation-clamp | p2:ok sep=0.122 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 0.9105,
+      "kind": "event",
+      "message": "最大偏离创新高 0.200",
+      "detail": "p1:ok sep=0.200 warp=16 clamp=6856 evt=separation-clamp | p2:ok sep=0.122 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 0.9721000000089407,
+      "kind": "event",
+      "message": "最大偏离创新高 0.265",
+      "detail": "p1:ok sep=0.265 warp=16 clamp=6856 evt=separation-clamp | p2:ok sep=0.121 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 0.9871000000089407,
+      "kind": "event",
+      "message": "状态 ok → warn",
+      "detail": "p1:warn sep=0.339 warp=16 clamp=6856 evt=separation-clamp | p2:ok sep=0.120 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 0.9871000000089407,
+      "kind": "event",
+      "message": "最大偏离创新高 0.339",
+      "detail": "p1:warn sep=0.339 warp=16 clamp=6856 evt=separation-clamp | p2:ok sep=0.120 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 1.0016000000089407,
+      "kind": "event",
+      "message": "最大偏离创新高 0.378",
+      "detail": "p1:warn sep=0.378 warp=16 clamp=6856 evt=separation-clamp | p2:ok sep=0.120 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 1.12,
+      "kind": "event",
+      "message": "状态 warn → abnormal",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6857 evt=separation-clamp | p2:ok sep=0.117 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 1.12,
+      "kind": "event",
+      "message": "p1 夹紧 +1",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6857 evt=separation-clamp | p2:ok sep=0.117 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 1.12,
+      "kind": "event",
+      "message": "最大偏离创新高 0.550",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6857 evt=separation-clamp | p2:ok sep=0.117 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 1.1345,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6859 evt=separation-clamp | p2:ok sep=0.117 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 1.1492000000029803,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6861 evt=separation-clamp | p2:ok sep=0.117 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 1.164,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6863 evt=separation-clamp | p2:ok sep=0.117 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 1.1794000000059606,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6865 evt=separation-clamp | p2:ok sep=0.117 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 1.1946000000089407,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6867 evt=separation-clamp | p2:ok sep=0.117 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 1.2085,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6869 evt=separation-clamp | p2:ok sep=0.117 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 1.2236000000089406,
+      "kind": "event",
+      "message": "状态 abnormal → ok",
+      "detail": "p1:ok sep=0.293 warp=16 clamp=6869 evt=separation-clamp | p2:ok sep=0.118 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 1.9245,
+      "kind": "event",
+      "message": "状态 ok → warn",
+      "detail": "p1:warn sep=0.314 warp=16 clamp=6869 evt=separation-clamp | p2:ok sep=0.116 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 2.0287999999970197,
+      "kind": "event",
+      "message": "状态 warn → ok",
+      "detail": "p1:ok sep=0.282 warp=16 clamp=6869 evt=separation-clamp | p2:ok sep=0.118 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 2.5004000000059605,
+      "kind": "snapshot",
+      "message": "稀疏快照 sep=0.117 status=ok",
+      "detail": "p1:ok sep=0.117 warp=16 clamp=6869 evt=separation-clamp | p2:ok sep=0.117 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 2.6377999999970196,
+      "kind": "event",
+      "message": "状态 ok → warn",
+      "detail": "p1:warn sep=0.311 warp=16 clamp=6869 evt=separation-clamp | p2:ok sep=0.119 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 2.7267000000029804,
+      "kind": "event",
+      "message": "状态 warn → ok",
+      "detail": "p1:ok sep=0.300 warp=16 clamp=6869 evt=separation-clamp | p2:ok sep=0.120 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 3.41,
+      "kind": "event",
+      "message": "状态 ok → warn",
+      "detail": "p1:warn sep=0.339 warp=16 clamp=6869 evt=separation-clamp | p2:ok sep=0.119 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 3.529,
+      "kind": "event",
+      "message": "状态 warn → ok",
+      "detail": "p1:ok sep=0.297 warp=16 clamp=6869 evt=separation-clamp | p2:ok sep=0.123 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 3.8775,
+      "kind": "event",
+      "message": "状态 ok → warn",
+      "detail": "p1:warn sep=0.308 warp=16 clamp=6869 evt=separation-clamp | p2:ok sep=0.117 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 3.9967000000029804,
+      "kind": "event",
+      "message": "状态 warn → ok",
+      "detail": "p1:ok sep=0.299 warp=16 clamp=6869 evt=separation-clamp | p2:ok sep=0.118 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 4.479,
+      "kind": "event",
+      "message": "状态 ok → warn",
+      "detail": "p1:warn sep=0.354 warp=16 clamp=6869 evt=separation-clamp | p2:ok sep=0.116 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 4.493900000005961,
+      "kind": "event",
+      "message": "状态 warn → ok",
+      "detail": "p1:ok sep=0.299 warp=16 clamp=6869 evt=separation-clamp | p2:ok sep=0.115 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 5.014,
+      "kind": "snapshot",
+      "message": "稀疏快照 sep=0.163 status=ok",
+      "detail": "p1:ok sep=0.163 warp=16 clamp=6869 evt=separation-clamp | p2:ok sep=0.119 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 6.192,
+      "kind": "event",
+      "message": "状态 ok → warn",
+      "detail": "p1:warn sep=0.312 warp=16 clamp=6869 evt=separation-clamp | p2:ok sep=0.124 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 6.33170000000298,
+      "kind": "event",
+      "message": "状态 warn → ok",
+      "detail": "p1:ok sep=0.284 warp=16 clamp=6869 evt=separation-clamp | p2:ok sep=0.121 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 6.78179999999702,
+      "kind": "event",
+      "message": "状态 ok → warn",
+      "detail": "p1:warn sep=0.331 warp=16 clamp=6869 evt=separation-clamp | p2:ok sep=0.121 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 6.7976000000089405,
+      "kind": "event",
+      "message": "状态 warn → ok",
+      "detail": "p1:ok sep=0.284 warp=16 clamp=6869 evt=separation-clamp | p2:ok sep=0.122 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 7.2184000000059605,
+      "kind": "event",
+      "message": "状态 ok → warn",
+      "detail": "p1:warn sep=0.374 warp=16 clamp=6869 evt=separation-clamp | p2:ok sep=0.116 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 7.29270000000298,
+      "kind": "event",
+      "message": "状态 warn → ok",
+      "detail": "p1:ok sep=0.288 warp=16 clamp=6869 evt=separation-clamp | p2:ok sep=0.117 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 7.51820000000298,
+      "kind": "snapshot",
+      "message": "稀疏快照 sep=0.142 status=ok",
+      "detail": "p1:ok sep=0.142 warp=16 clamp=6869 evt=separation-clamp | p2:ok sep=0.122 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 8.01890000000596,
+      "kind": "event",
+      "message": "状态 ok → warn",
+      "detail": "p1:warn sep=0.314 warp=16 clamp=6869 evt=separation-clamp | p2:ok sep=0.121 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 8.04829999999702,
+      "kind": "event",
+      "message": "状态 warn → ok",
+      "detail": "p1:ok sep=0.277 warp=16 clamp=6869 evt=separation-clamp | p2:ok sep=0.121 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 8.33920000000298,
+      "kind": "event",
+      "message": "状态 ok → warn",
+      "detail": "p1:warn sep=0.335 warp=16 clamp=6869 evt=separation-clamp | p2:ok sep=0.120 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 8.41460000000894,
+      "kind": "event",
+      "message": "状态 warn → ok",
+      "detail": "p1:ok sep=0.292 warp=16 clamp=6869 evt=separation-clamp | p2:ok sep=0.124 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 8.43029999999702,
+      "kind": "event",
+      "message": "状态 ok → warn",
+      "detail": "p1:warn sep=0.322 warp=16 clamp=6869 evt=separation-clamp | p2:ok sep=0.149 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 8.44510000000894,
+      "kind": "event",
+      "message": "状态 warn → ok",
+      "detail": "p1:ok sep=0.274 warp=16 clamp=6869 evt=separation-clamp | p2:ok sep=0.139 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 8.7675,
+      "kind": "event",
+      "message": "状态 ok → abnormal",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6870 evt=separation-clamp | p2:ok sep=0.117 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 8.7675,
+      "kind": "event",
+      "message": "p1 夹紧 +1",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6870 evt=separation-clamp | p2:ok sep=0.117 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 8.784400000005961,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6872 evt=separation-clamp | p2:ok sep=0.118 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 8.79940000000596,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6874 evt=separation-clamp | p2:ok sep=0.119 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 8.81540000000596,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6876 evt=separation-clamp | p2:ok sep=0.119 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 8.83040000000596,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6878 evt=separation-clamp | p2:ok sep=0.120 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 8.84579999999702,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6880 evt=separation-clamp | p2:ok sep=0.120 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 8.861200000002981,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6882 evt=separation-clamp | p2:ok sep=0.121 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 8.87729999999702,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6884 evt=separation-clamp | p2:ok sep=0.121 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 8.89310000000894,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6886 evt=separation-clamp | p2:ok sep=0.120 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 8.90929999999702,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6888 evt=separation-clamp | p2:ok sep=0.120 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 8.92510000000894,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6890 evt=separation-clamp | p2:ok sep=0.120 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 8.941100000008941,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6892 evt=separation-clamp | p2:ok sep=0.120 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 8.9575,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6894 evt=separation-clamp | p2:ok sep=0.119 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 8.97390000000596,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6896 evt=separation-clamp | p2:ok sep=0.120 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 8.99010000000894,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6898 evt=separation-clamp | p2:ok sep=0.120 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 9.00620000000298,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6900 evt=separation-clamp | p2:ok sep=0.120 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 9.02129999999702,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6902 evt=separation-clamp | p2:ok sep=0.120 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 9.03790000000596,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6904 evt=separation-clamp | p2:ok sep=0.120 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 9.05360000000894,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6906 evt=separation-clamp | p2:ok sep=0.120 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 9.0695,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6908 evt=separation-clamp | p2:ok sep=0.120 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 9.08429999999702,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6910 evt=separation-clamp | p2:ok sep=0.119 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 9.10029999999702,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6912 evt=separation-clamp | p2:ok sep=0.119 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 9.11479999999702,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6914 evt=separation-clamp | p2:ok sep=0.119 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 9.13070000000298,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6916 evt=separation-clamp | p2:ok sep=0.119 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 9.14590000000596,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6918 evt=separation-clamp | p2:ok sep=0.119 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 9.16170000000298,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6920 evt=separation-clamp | p2:ok sep=0.119 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 9.17729999999702,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6922 evt=separation-clamp | p2:ok sep=0.119 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 9.1935,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6924 evt=separation-clamp | p2:ok sep=0.118 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 9.2085,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6926 evt=separation-clamp | p2:ok sep=0.118 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 9.223100000008941,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6928 evt=separation-clamp | p2:ok sep=0.118 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 9.238,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6930 evt=separation-clamp | p2:ok sep=0.118 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 9.25320000000298,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6932 evt=separation-clamp | p2:ok sep=0.118 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 9.269,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6934 evt=separation-clamp | p2:ok sep=0.118 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 9.28479999999702,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6936 evt=separation-clamp | p2:ok sep=0.118 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 9.29929999999702,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6938 evt=separation-clamp | p2:ok sep=0.118 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 9.31460000000894,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6940 evt=separation-clamp | p2:ok sep=0.118 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 9.32890000000596,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6942 evt=separation-clamp | p2:ok sep=0.119 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 9.34429999999702,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6944 evt=separation-clamp | p2:ok sep=0.120 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 9.35910000000894,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6946 evt=separation-clamp | p2:ok sep=0.120 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 9.37490000000596,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6948 evt=separation-clamp | p2:ok sep=0.120 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 9.3895,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6950 evt=separation-clamp | p2:ok sep=0.120 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 9.404799999997019,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6952 evt=separation-clamp | p2:ok sep=0.120 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 9.41979999999702,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6954 evt=separation-clamp | p2:ok sep=0.120 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 9.43490000000596,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6956 evt=separation-clamp | p2:ok sep=0.121 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 9.45090000000596,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6958 evt=separation-clamp | p2:ok sep=0.121 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 9.46620000000298,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6960 evt=separation-clamp | p2:ok sep=0.121 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 9.48090000000596,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6962 evt=separation-clamp | p2:ok sep=0.121 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 9.49590000000596,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6964 evt=separation-clamp | p2:ok sep=0.121 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 9.5105,
+      "kind": "event",
+      "message": "p1 夹紧 +2",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6966 evt=separation-clamp | p2:ok sep=0.121 warp=13 clamp=1293 evt=separation-clamp"
+    },
+    {
+      "tRelSec": 9.519,
+      "kind": "stop",
+      "message": "停止记录",
+      "detail": "p1:abnormal sep=0.550 warp=16 clamp=6966 evt=separation-clamp | p2:ok sep=0.121 warp=13 clamp=1293 evt=separation-clamp"
+    }
+  ]
+}

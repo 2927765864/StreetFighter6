@@ -52,6 +52,11 @@ export type ControlPanelHooks = {
   boxEditActive?: boolean;
   enterBoxEdit?: () => void;
   exitBoxEdit?: () => void;
+  /** Append a pants feel log entry (note from pantsFeelNote). */
+  recordPantsFeel?: () => void | Promise<void>;
+  startPantsRecord?: () => void;
+  stopPantsRecord?: () => void | Promise<void>;
+  isPantsRecording?: () => boolean;
 };
 
 export type LightEditPanelHooks = {
@@ -672,6 +677,77 @@ function buildDom(): HTMLElement {
           `,
           'expandBelt',
         )}
+        ${sectionShell(
+          'pants',
+          '【表现】裤子物理',
+          `
+          ${rowToggle('pantsPhysicsEnabled', '启用裤子物理')}
+          ${rowNumber('pantsSubSteps', '子步数', 1, 4, 1)}
+          ${rowNumber('pantsConstraintIterations', '约束迭代', 1, 12, 1)}
+          ${rowNumber('pantsResistance', '惯性保留', 0, 1, 0.01)}
+          ${rowNumber('pantsHardness', '拉回动画硬度', 0, 1, 0.01)}
+          ${rowNumber('pantsHardnessTipScale', '梢硬度乘子', 0.1, 1.2, 0.05)}
+          ${rowNumber('pantsGravityPower', '重力强度（1≈地球）', 0, 3, 0.05)}
+          ${rowNumber('pantsGravityDirX', '重力方向 X', -1, 1, 0.05)}
+          ${rowNumber('pantsGravityDirY', '重力方向 Y', -1, 1, 0.05)}
+          ${rowNumber('pantsGravityDirZ', '重力方向 Z', -1, 1, 0.05)}
+          ${rowNumber('pantsGravityAirScale', '滞空重力乘数', 0, 1.5, 0.05)}
+          ${rowNumber('pantsWindScale', '风/呼吸总乘子', 0, 2, 0.05)}
+          ${rowNumber('pantsBreathAmp', '呼吸幅度', 0, 3, 0.05)}
+          ${rowNumber('pantsBreathHz', '呼吸频率 Hz', 0, 2, 0.05)}
+          ${rowNumber('pantsBreathDirX', '呼吸风向 X', -1, 1, 0.05)}
+          ${rowNumber('pantsBreathDirY', '呼吸风向 Y', -1, 1, 0.05)}
+          ${rowNumber('pantsBreathDirZ', '呼吸风向 Z', -1, 1, 0.05)}
+          ${rowToggle('pantsEnableHorizontal', '启用横连约束')}
+          ${rowToggle('pantsEnableShear', '启用剪切约束')}
+          ${rowToggle('pantsEnableBending', '启用弯曲约束')}
+          ${rowNumber('pantsStructuralShrinkVertical', '纵缩约束', 0, 2, 0.05)}
+          ${rowNumber('pantsStructuralStretchVertical', '纵伸约束', 0, 2, 0.05)}
+          ${rowNumber('pantsStructuralShrinkHorizontal', '横缩约束', 0, 2, 0.05)}
+          ${rowNumber('pantsStructuralStretchHorizontal', '横伸约束', 0, 2, 0.05)}
+          ${rowNumber('pantsShearShrink', '剪切缩', 0, 2, 0.05)}
+          ${rowNumber('pantsShearStretch', '剪切伸', 0, 2, 0.05)}
+          ${rowNumber('pantsBendingShrinkVertical', '纵弯缩', 0, 2, 0.05)}
+          ${rowNumber('pantsBendingStretchVertical', '纵弯伸', 0, 2, 0.05)}
+          ${rowNumber('pantsBendingShrinkHorizontal', '横弯缩', 0, 2, 0.05)}
+          ${rowNumber('pantsBendingStretchHorizontal', '横弯伸', 0, 2, 0.05)}
+          ${rowNumber('pantsPointRadius', '粒子碰撞半径', 0, 0.05, 0.001)}
+          ${rowNumber('pantsMaxDeltaSec', '单帧 dt 上限（秒）', 0.016, 0.1, 0.001)}
+          ${rowNumber('pantsRootSlideLimit', 'Root位移熔断（超则贴动画）', 0.05, 2, 0.05)}
+          ${rowNumber('pantsRootRotateLimitDeg', 'Root旋转熔断（度）', 5, 180, 1)}
+          ${rowNumber('pantsMaxSeparation', '粒子离动画最大距离', 0.1, 1.5, 0.05)}
+          ${rowNumber('pantsColliderThighRadius', '大腿胶囊半径', 0, 0.25, 0.005)}
+          ${rowNumber('pantsColliderThighTailScale', '大腿末端半径比', 0.3, 1.5, 0.05)}
+          ${rowNumber('pantsColliderThighHeadInset', '大腿胶囊起点下移', 0, 0.6, 0.01)}
+          ${rowNumber('pantsColliderCalfRadius', '小腿胶囊半径', 0, 0.2, 0.005)}
+          ${rowNumber('pantsColliderCalfTailScale', '小腿末端半径比', 0.3, 1.5, 0.05)}
+          ${rowNumber('pantsColliderHipRadius', '髋球半径', 0, 0.3, 0.005)}
+          ${rowNumber('pantsColliderBeltRadius', '腰带区球半径', 0, 0.3, 0.005)}
+          ${rowNumber('pantsColliderHipYOffset', '髋球 Y 偏移', -0.2, 0.2, 0.005)}
+          ${rowNumber('pantsColliderBeltYOffset', '腰带球 Y 偏移', -0.2, 0.2, 0.005)}
+          ${rowToggle('pantsUsePushIn', 'PushIn（易吸成球，默认关）')}
+          ${rowToggle('pantsShowColliders', '显示碰撞 Helper')}
+          ${rowToggle('pantsShowConstraints', '显示约束线')}
+          ${rowToggle('pantsHealthReportEnabled', '停止记录时写入磁盘')}
+          ${rowToggle('pantsHealthHudEnabled', '显示裤子健康小面板')}
+          ${rowNumber('pantsHealthSnapshotIntervalSec', '记录中稀疏快照间隔（秒）', 0.5, 30, 0.5)}
+          ${rowNumber('pantsHealthWarnRatio', '警告=最大离距×此比', 0.1, 1, 0.05)}
+          ${rowNumber('pantsHealthHudMinIntervalMs', '面板刷新最小间隔 ms', 50, 1000, 10)}
+          ${rowToggle('pantsHealthAutoShowConstraintsOnAbnormal', '异常时自动显示约束线')}
+          ${rowNumber('pantsHealthSessionMaxEntries', '单次会话最大条数', 100, 5000, 50)}
+          ${rowNumber('pantsHealthSessionKeep', '会话文件保留个数', 1, 50, 1)}
+          <div class="panel-row">
+            <div class="panel-row-header"><span>手感备注（写入会话/手感日志）</span></div>
+            <input id="inp-pantsFeelNote" type="text" placeholder="可选：这次测蹲跳" style="width:100%" />
+          </div>
+          <div class="panel-row" style="display:flex;gap:8px;flex-wrap:wrap">
+            <button type="button" id="btn-pants-record-start" class="btn-primary">开始记录</button>
+            <button type="button" id="btn-pants-record-stop">停止记录</button>
+            <button type="button" id="btn-pants-feel">记下当前手感</button>
+          </div>
+          `,
+          'expandPants',
+        )}
       </details>
 
       <details class="panel-group" data-cat="反馈">
@@ -881,6 +957,67 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'beltStiffnessTipScale', path: 'beltStiffnessTipScale' },
   { id: 'beltShowColliders', path: 'beltShowColliders' },
   { id: 'beltShowChainHelpers', path: 'beltShowChainHelpers' },
+  { id: 'pantsPhysicsEnabled', path: 'pantsPhysicsEnabled' },
+  { id: 'pantsSubSteps', path: 'pantsSubSteps' },
+  { id: 'pantsConstraintIterations', path: 'pantsConstraintIterations' },
+  { id: 'pantsResistance', path: 'pantsResistance' },
+  { id: 'pantsHardness', path: 'pantsHardness' },
+  { id: 'pantsHardnessTipScale', path: 'pantsHardnessTipScale' },
+  { id: 'pantsGravityPower', path: 'pantsGravityPower' },
+  { id: 'pantsGravityDirX', path: 'pantsGravityDirX' },
+  { id: 'pantsGravityDirY', path: 'pantsGravityDirY' },
+  { id: 'pantsGravityDirZ', path: 'pantsGravityDirZ' },
+  { id: 'pantsGravityAirScale', path: 'pantsGravityAirScale' },
+  { id: 'pantsWindScale', path: 'pantsWindScale' },
+  { id: 'pantsBreathAmp', path: 'pantsBreathAmp' },
+  { id: 'pantsBreathHz', path: 'pantsBreathHz' },
+  { id: 'pantsBreathDirX', path: 'pantsBreathDirX' },
+  { id: 'pantsBreathDirY', path: 'pantsBreathDirY' },
+  { id: 'pantsBreathDirZ', path: 'pantsBreathDirZ' },
+  { id: 'pantsEnableHorizontal', path: 'pantsEnableHorizontal' },
+  { id: 'pantsEnableShear', path: 'pantsEnableShear' },
+  { id: 'pantsEnableBending', path: 'pantsEnableBending' },
+  { id: 'pantsStructuralShrinkVertical', path: 'pantsStructuralShrinkVertical' },
+  { id: 'pantsStructuralStretchVertical', path: 'pantsStructuralStretchVertical' },
+  { id: 'pantsStructuralShrinkHorizontal', path: 'pantsStructuralShrinkHorizontal' },
+  { id: 'pantsStructuralStretchHorizontal', path: 'pantsStructuralStretchHorizontal' },
+  { id: 'pantsShearShrink', path: 'pantsShearShrink' },
+  { id: 'pantsShearStretch', path: 'pantsShearStretch' },
+  { id: 'pantsBendingShrinkVertical', path: 'pantsBendingShrinkVertical' },
+  { id: 'pantsBendingStretchVertical', path: 'pantsBendingStretchVertical' },
+  { id: 'pantsBendingShrinkHorizontal', path: 'pantsBendingShrinkHorizontal' },
+  { id: 'pantsBendingStretchHorizontal', path: 'pantsBendingStretchHorizontal' },
+  { id: 'pantsPointRadius', path: 'pantsPointRadius' },
+  { id: 'pantsMaxDeltaSec', path: 'pantsMaxDeltaSec' },
+  { id: 'pantsRootSlideLimit', path: 'pantsRootSlideLimit' },
+  { id: 'pantsRootRotateLimitDeg', path: 'pantsRootRotateLimitDeg' },
+  { id: 'pantsMaxSeparation', path: 'pantsMaxSeparation' },
+  { id: 'pantsColliderThighRadius', path: 'pantsColliderThighRadius' },
+  { id: 'pantsColliderThighTailScale', path: 'pantsColliderThighTailScale' },
+  { id: 'pantsColliderThighHeadInset', path: 'pantsColliderThighHeadInset' },
+  { id: 'pantsColliderCalfRadius', path: 'pantsColliderCalfRadius' },
+  { id: 'pantsColliderCalfTailScale', path: 'pantsColliderCalfTailScale' },
+  { id: 'pantsColliderHipRadius', path: 'pantsColliderHipRadius' },
+  { id: 'pantsColliderBeltRadius', path: 'pantsColliderBeltRadius' },
+  { id: 'pantsColliderHipYOffset', path: 'pantsColliderHipYOffset' },
+  { id: 'pantsColliderBeltYOffset', path: 'pantsColliderBeltYOffset' },
+  { id: 'pantsUsePushIn', path: 'pantsUsePushIn' },
+  { id: 'pantsShowColliders', path: 'pantsShowColliders' },
+  { id: 'pantsShowConstraints', path: 'pantsShowConstraints' },
+  { id: 'pantsHealthReportEnabled', path: 'pantsHealthReportEnabled' },
+  { id: 'pantsHealthHudEnabled', path: 'pantsHealthHudEnabled' },
+  {
+    id: 'pantsHealthSnapshotIntervalSec',
+    path: 'pantsHealthSnapshotIntervalSec',
+  },
+  { id: 'pantsHealthWarnRatio', path: 'pantsHealthWarnRatio' },
+  { id: 'pantsHealthHudMinIntervalMs', path: 'pantsHealthHudMinIntervalMs' },
+  {
+    id: 'pantsHealthAutoShowConstraintsOnAbnormal',
+    path: 'pantsHealthAutoShowConstraintsOnAbnormal',
+  },
+  { id: 'pantsHealthSessionMaxEntries', path: 'pantsHealthSessionMaxEntries' },
+  { id: 'pantsHealthSessionKeep', path: 'pantsHealthSessionKeep' },
 ];
 
 const TOGGLE_IDS = new Set([
@@ -918,6 +1055,16 @@ const TOGGLE_IDS = new Set([
   'beltUseCenter',
   'beltShowColliders',
   'beltShowChainHelpers',
+  'pantsPhysicsEnabled',
+  'pantsEnableHorizontal',
+  'pantsEnableShear',
+  'pantsEnableBending',
+  'pantsUsePushIn',
+  'pantsShowColliders',
+  'pantsShowConstraints',
+  'pantsHealthReportEnabled',
+  'pantsHealthHudEnabled',
+  'pantsHealthAutoShowConstraintsOnAbnormal',
 ]);
 
 export function setupControlPanel(
@@ -1077,6 +1224,7 @@ export function setupControlPanel(
     ['expandAnimTest', 'animTest', 'sect-animTest'],
     ['expandHeadband', 'headband', 'sect-headband'],
     ['expandBelt', 'belt', 'sect-belt'],
+    ['expandPants', 'pants', 'sect-pants'],
     ['expandCommandProbe', 'commandProbe', 'sect-commandProbe'],
     ['expandMoveEdit', 'moveEdit', 'sect-moveEdit'],
   ];
@@ -2182,6 +2330,43 @@ export function setupControlPanel(
   setupAnimTest(host, hooks);
 
   // Archive buttons
+  {
+    const feelInp = byId<HTMLInputElement>(host, 'inp-pantsFeelNote');
+    const btnStart = byId<HTMLButtonElement>(host, 'btn-pants-record-start');
+    const btnStop = byId<HTMLButtonElement>(host, 'btn-pants-record-stop');
+    const syncFeel = () => {
+      feelInp.value = String(getPath(CONFIG, 'pantsFeelNote') ?? '');
+      const rec = !!hooks.isPantsRecording?.();
+      btnStart.disabled = rec;
+      btnStop.disabled = !rec;
+    };
+    syncers.push(syncFeel);
+    syncFeel();
+    feelInp.addEventListener('change', () => {
+      setPath(CONFIG, 'pantsFeelNote', feelInp.value);
+      notify('pantsFeelNote', feelInp.value, CONFIG);
+    });
+    btnStart.addEventListener('click', () => {
+      setPath(CONFIG, 'pantsFeelNote', feelInp.value);
+      hooks.startPantsRecord?.();
+      syncFeel();
+      setFlash('已开始记录裤子监测（内存中，点停止后才写文件）');
+    });
+    btnStop.addEventListener('click', () => {
+      setPath(CONFIG, 'pantsFeelNote', feelInp.value);
+      void Promise.resolve(hooks.stopPantsRecord?.()).then(() => {
+        syncFeel();
+        setFlash('已停止记录 → docs/reports/pants/sessions/');
+      });
+    });
+    byId<HTMLButtonElement>(host, 'btn-pants-feel').addEventListener('click', () => {
+      setPath(CONFIG, 'pantsFeelNote', feelInp.value);
+      void Promise.resolve(hooks.recordPantsFeel?.()).then(() => {
+        setFlash('已记下裤子手感（见 docs/reports/pants/pants-feel-log.md）');
+      });
+    });
+  }
+
   byId<HTMLButtonElement>(host, 'btn-save-local').addEventListener('click', () => {
     saveCurrentConfig();
     setFlash('已存为本地默认（刷新后保留）');

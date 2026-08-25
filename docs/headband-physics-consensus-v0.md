@@ -130,3 +130,4 @@
 | `docs/research/headband-physics-research-2026-08-24.md` | 技术调研（非共识） |
 | `docs/plans/ai-execution-plan-headband-physics-v0.md` | AI 可执行制作方案（非共识） |
 | `docs/belt-physics-consensus-v0.md` | 腰带带尾物理（复用本路径、独立参数） |
+| `docs/pants-physics-consensus-v0.md` | 裤子物理（**未完成 · 已抛弃**；曾独立设计，不复用本路径） |
