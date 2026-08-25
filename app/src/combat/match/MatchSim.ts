@@ -22,7 +22,16 @@ import type {
   Intent,
 } from '../types';
 import { DummyController } from './DummyController';
-import { stepWalk } from '../loco/WalkController';
+import {
+  beginWalkEnd,
+  beginWalkStart,
+  stepWalk,
+} from '../loco/WalkController';
+import {
+  stepWalkInputFreeze,
+  walkDirFromRel,
+  type WalkDirEdge,
+} from '../loco/WalkInputFreeze';
 import type { RyuMovementTable } from '../../data/loadRyuMovement';
 import { parseRyuMovement } from '../../data/loadRyuMovement';
 import { buildFrontHeavyDashDx } from '../loco/DashProfile';
@@ -83,6 +92,10 @@ export type MatchSimOptions = {
   walkSpeed: number;
   walkBackSpeed: number;
   walkFirstFrameScale: number;
+  /** Tail fraction of end when releasing during walk start. */
+  walkEarlyReleaseEndKeepRatio: number;
+  /** §3.9.1.b: presentation freeze frames on walk dir press edge. */
+  walkInputFreezeFrames: number;
   jumpApex: number;
   jumpFwdDist: number;
   jumpBackDist: number;
@@ -150,6 +163,8 @@ const DEFAULT_OPTS: MatchSimOptions = {
   walkSpeed: 0.047,
   walkBackSpeed: 0.032,
   walkFirstFrameScale: 0.25,
+  walkEarlyReleaseEndKeepRatio: 0.35,
+  walkInputFreezeFrames: 4,
   jumpApex: 2.115,
   jumpFwdDist: 1.9,
   jumpBackDist: 1.52,
@@ -590,9 +605,100 @@ export class MatchSim {
       forwardSpeed: this.opts.walkSpeed,
       backSpeed: this.opts.walkBackSpeed,
       firstFrameSpeedScale: this.opts.walkFirstFrameScale,
+      earlyReleaseEndKeepRatio: this.opts.walkEarlyReleaseEndKeepRatio,
     });
     this.p1.x += this.p1.facing * dxFacing;
     this.p1.applyWalkState(state);
+  }
+
+  /**
+   * §3.9.1.b: arm/reset freeze on 4/6 press edge; cancel on dash/attack/jump/hit.
+   * On justEnded: rewind walk phase so freeze delayed the clip (did not eat it).
+   */
+  private stepWalkInputFreezeGate(
+    relDir: number,
+    intent: { kind: string },
+    forceCancel = false,
+  ): void {
+    const phase = this.p1.phase;
+    const cancel =
+      forceCancel ||
+      phase === 'dash' ||
+      phase === 'attack' ||
+      phase === 'prejump' ||
+      phase === 'airborne' ||
+      phase === 'landing' ||
+      phase === 'hitstun' ||
+      phase === 'blockstun' ||
+      phase === 'knockdown' ||
+      intent.kind === 'dash_fwd' ||
+      intent.kind === 'dash_back' ||
+      intent.kind === 'jump' ||
+      intent.kind === 'normal' ||
+      intent.kind === 'special' ||
+      intent.kind === 'throw';
+
+    const walkDir = walkDirFromRel(relDir);
+    const next = stepWalkInputFreeze(this.p1.walkInputFreeze, {
+      walkDir,
+      freezeFrames: this.opts.walkInputFreezeFrames,
+      cancel,
+    });
+
+    if (next.captureSnap) {
+      this.p1.walkFreezeSawLoop = false;
+    }
+    if (walkDir) {
+      this.p1.walkFreezeLastDir = walkDir;
+    } else if (this.p1.walkState.walkDir) {
+      this.p1.walkFreezeLastDir = this.p1.walkState.walkDir;
+    }
+    if (
+      (next.active || next.justEnded) &&
+      this.p1.locoPhase === 'loop'
+    ) {
+      this.p1.walkFreezeSawLoop = true;
+    }
+
+    this.p1.applyWalkInputFreeze(next);
+
+    if (next.justEnded) {
+      this.rewindWalkAfterInputFreeze(walkDir, next.forceStartFrom0);
+    }
+    if (cancel) {
+      this.p1.walkFreezeSawLoop = false;
+      this.p1.walkFreezeLastDir = null;
+    }
+  }
+
+  /** §3.9.1.b: after freeze delay, restart start@0 or end entry (full delayed clip). */
+  private rewindWalkAfterInputFreeze(
+    walkDir: WalkDirEdge,
+    stillHolding: boolean,
+  ): void {
+    const clips = this.movementTable?.walk.clipLogicFrames ?? {
+      walk_fwd: { start: 19, loop: 114, end: 47 },
+      walk_back: { start: 15, loop: 118, end: 47 },
+    };
+    if (stillHolding && walkDir) {
+      this.p1.applyWalkState(beginWalkStart(walkDir));
+      return;
+    }
+    // Released: no start — reopen end from entry (early-release if never looped).
+    const dir =
+      this.p1.walkFreezeLastDir ??
+      this.p1.walkState.walkDir ??
+      walkDir;
+    if (!dir) {
+      return;
+    }
+    const early = !this.p1.walkFreezeSawLoop;
+    this.p1.applyWalkState(
+      beginWalkEnd(dir, clips, {
+        earlyRelease: early,
+        keepRatio: this.opts.walkEarlyReleaseEndKeepRatio,
+      }),
+    );
   }
 
   private commitLogicalFacing(): void {
@@ -697,6 +803,8 @@ export class MatchSim {
     // Hitstop: still accept input above; skip combat frame advance / displace
     if (this.hitstopTimer > 0) {
       this.hitstopTimer -= 1;
+      // Clear presentation freeze — no walk anim gate across hitstop
+      this.stepWalkInputFreezeGate(input.relDir, intent, true);
       this.syncDebugProbe();
       return;
     }
@@ -708,6 +816,9 @@ export class MatchSim {
       const holding = intent.kind === 'walk';
       this.stepWalkLocomotion(holding);
     }
+
+    // §3.9.1.b walk input presentation freeze (after loco / dash phase known)
+    this.stepWalkInputFreezeGate(input.relDir, intent, false);
 
     // 4b. Attack Place (locked) + residual Place + block push
     if (this.opts.applySelfMovement) {

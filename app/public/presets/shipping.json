@@ -601,6 +601,8 @@
     "walkSpeed": 0.047,
     "walkBackSpeed": 0.032,
     "walkFirstFrameScale": 0.25,
+    "walkEarlyReleaseEndKeepRatio": 0.35,
+    "walkInputFreezeFrames": 4,
     "jumpApex": 2.115,
     "jumpFwdDist": 1.9,
     "jumpBackDist": 1.52,

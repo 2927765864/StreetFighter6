@@ -23,6 +23,10 @@ import {
   type WalkState,
 } from '../loco/WalkController';
 import {
+  initialWalkInputFreezeState,
+  type WalkInputFreezeState,
+} from '../loco/WalkInputFreeze';
+import {
   beginToStand,
   clearStanceTo,
   DEFAULT_STANCE_FRAMES,
@@ -105,6 +109,12 @@ export class Fighter {
   /** Logic id for jump clips: jump_n | jump_f | jump_b */
   jumpClipId: 'jump_n' | 'jump_f' | 'jump_b' = 'jump_n';
   walkState: WalkState = initialWalkState();
+  /** §3.9.1.b presentation freeze gate (logic walk still advances). */
+  walkInputFreeze: WalkInputFreezeState = initialWalkInputFreezeState();
+  /** During current freeze window, loco ever reached loop (affects unfreeze end). */
+  walkFreezeSawLoop = false;
+  /** Last fwd/back during freeze (for tap-unfreeze end if state already cleared). */
+  walkFreezeLastDir: 'fwd' | 'back' | null = null;
   /**
    * Remaining airborne frames when an air attack interrupts freefall.
    * Jump clock no longer pauses (§3.13); kept as debug/legacy mirror of stateTimer.
@@ -1762,5 +1772,15 @@ export class Fighter {
       this.clipId = ws.clipId;
       this.animRole = ws.animRole;
     }
+  }
+
+  applyWalkInputFreeze(s: WalkInputFreezeState): void {
+    this.walkInputFreeze = s;
+  }
+
+  clearWalkInputFreeze(): void {
+    this.walkInputFreeze = initialWalkInputFreezeState();
+    this.walkFreezeSawLoop = false;
+    this.walkFreezeLastDir = null;
   }
 }

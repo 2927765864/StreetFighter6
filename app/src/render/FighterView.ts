@@ -47,6 +47,10 @@ import {
   stepDualAdvanceClocks,
   type CrossfadeAdvanceMode,
 } from '../combat/anim/PoseBlendMath';
+import {
+  blendStopFlagsForFreezeSnap,
+  walkFreezeSnapLayer,
+} from '../combat/loco/walkFreezeSnap';
 import { RyuHeadbandPhysics } from './headband/RyuHeadbandPhysics';
 import { clampHeadbandDeltaSec } from './headband/headbandPhysicsMath';
 import { RyuBeltPhysics } from './belt/RyuBeltPhysics';
@@ -134,6 +138,17 @@ export class FighterView {
   private poseBlend: PoseBlend | null = null;
   /** Latest §3.11 old-layer mode from sim cfg (set each syncFromLogic). */
   private crossfadeAdvanceMode: CrossfadeAdvanceMode = 'dual';
+  /**
+   * One-shot override for the next switchToLogicAction blend (§3.9.1.b unfreeze:
+   * freeze old snap frame while blending into walk start/end).
+   */
+  private nextPoseBlendMode: CrossfadeAdvanceMode | null = null;
+  /** §3.9.1.b: pinned pose while walk input freeze is active. */
+  private walkFreezeSnap: {
+    action: THREE.AnimationAction;
+    binding: string;
+    time: number;
+  } | null = null;
   /**
    * When true, ignore logic clipId and only advance the preview mixer
    * (used by the animation test panel).
@@ -982,11 +997,34 @@ export class FighterView {
     const t = THREE.MathUtils.clamp(timeSec, 0, Math.max(0, clip.duration - 1e-4));
     // CRITICAL: do NOT use mixer.setTime() while paused — effectiveTimeScale=0 so
     // action.time never advances (attack stuck on frame 0).
+    // Also play() before pause: a prior stop()/stopAllAction leaves the action
+    // inactive; weight+time alone will not drive bones (T-pose).
     action.enabled = true;
+    action.play();
     action.paused = true;
     action.time = t;
     action.setEffectiveWeight(weight);
     if (updateMixer) this.mixer.update(0);
+  }
+
+  /**
+   * Pin one logic action as the sole posed track (walk input freeze).
+   * Always play() after any stop so the mixer still evaluates the clip.
+   */
+  private pinLogicActionPose(
+    action: THREE.AnimationAction,
+    binding: string,
+    timeSec: number,
+    solo = true,
+  ): void {
+    if (!this.mixer) return;
+    if (solo) {
+      for (const a of this.logicActions.values()) {
+        if (a !== action) a.setEffectiveWeight(0);
+      }
+    }
+    this.currentBinding = binding;
+    this.scrubActionTo(action, timeSec, 1, true);
   }
 
   private clearPoseBlend(stopFrom = true): void {
@@ -996,6 +1034,69 @@ export class FighterView {
       this.poseBlend.from.setEffectiveWeight(0);
     }
     this.poseBlend = null;
+  }
+
+  /**
+   * End an in-flight pose blend without stopping `keep` (the freeze snapshot).
+   * Stopping the snap track was the rapid F/B → T-pose bug (§3.9.1.b).
+   */
+  private clearPoseBlendKeeping(keep: THREE.AnimationAction): void {
+    if (!this.poseBlend) return;
+    const { from, to } = this.poseBlend;
+    const layer = keep === from ? 'from' : keep === to ? 'to' : null;
+    const flags = layer
+      ? blendStopFlagsForFreezeSnap(layer)
+      : { stopFrom: true, stopTo: true };
+    if (flags.stopFrom) {
+      from.stop();
+      from.setEffectiveWeight(0);
+    }
+    if (flags.stopTo) {
+      to.stop();
+      to.setEffectiveWeight(0);
+    }
+    this.poseBlend = null;
+  }
+
+  /** §3.9.1.b: snapshot the currently displayed action time for input freeze. */
+  private captureWalkInputFreezeSnap(): void {
+    let action: THREE.AnimationAction | null = null;
+    let binding = this.currentBinding;
+    let time = 0;
+    if (this.poseBlend) {
+      const w = blendToWeight(
+        this.poseBlend.elapsed,
+        this.poseBlend.duration,
+      );
+      const layer = walkFreezeSnapLayer(w);
+      if (layer === 'to') {
+        action = this.poseBlend.to;
+        binding = this.poseBlend.toKey;
+        time = this.poseBlend.to.time;
+      } else {
+        action = this.poseBlend.from;
+        binding = this.poseBlend.fromKey;
+        time = advanceFromTime(
+          this.poseBlend.fromStartTimeSec,
+          this.poseBlend.fromAdvancedSec,
+          this.poseBlend.from.getClip().duration,
+          this.poseBlend.mode,
+        );
+      }
+      this.clearPoseBlendKeeping(action);
+    } else if (binding && this.logicActions.has(binding)) {
+      action = this.logicActions.get(binding)!;
+      time = action.time;
+    }
+    if (!action || !binding) return;
+    this.walkFreezeSnap = { action, binding, time };
+    // Immediately pin so a stopped-from-blend track is play()'d this frame.
+    this.pinLogicActionPose(action, binding, time, true);
+  }
+
+  /** After leaving freeze, force playBest to rebind (avoid same-key early return). */
+  private invalidateBindingAfterWalkFreeze(): void {
+    this.currentBinding = '';
   }
 
   /**
@@ -1172,6 +1273,10 @@ export class FighterView {
       : resolveCrossfadeSec(prevKey, bind, durations);
     const soft = !leavingKd && prev != null && blendSec > 1e-4;
 
+    const blendMode =
+      this.nextPoseBlendMode ?? this.crossfadeAdvanceMode;
+    this.nextPoseBlendMode = null;
+
     if (soft && prev) {
       this.beginPoseBlend(
         prev,
@@ -1180,7 +1285,7 @@ export class FighterView {
         bind,
         freeRun,
         blendSec,
-        this.crossfadeAdvanceMode,
+        blendMode,
       );
       if (isJumpLandBinding(bind)) {
         this.resetModelGroundOffset();
@@ -1667,6 +1772,37 @@ export class FighterView {
       }
       this.afterAnimPose(fighter, cfg, wallDtSec);
       return;
+    }
+
+    // §3.9.1.b walk input presentation freeze (delay gate; logic rewind on unfreeze)
+    {
+      const frz = fighter.walkInputFreeze;
+      if (frz.captureSnap) {
+        this.captureWalkInputFreezeSnap();
+        // New freeze edge interrupts any in-flight unfreeze blend
+        this.nextPoseBlendMode = null;
+      }
+      if (frz.active && this.walkFreezeSnap) {
+        if (this.poseBlend) {
+          this.clearPoseBlendKeeping(this.walkFreezeSnap.action);
+        }
+        const snap = this.walkFreezeSnap;
+        this.pinLogicActionPose(snap.action, snap.binding, snap.time, true);
+        this.afterAnimPose(fighter, cfg, wallDtSec);
+        return;
+      }
+      if (frz.justEnded && this.walkFreezeSnap) {
+        // Keep snap as crossfade `from`: pin binding + freeze-old mode for next playBest.
+        const snap = this.walkFreezeSnap;
+        this.walkFreezeSnap = null;
+        this.pinLogicActionPose(snap.action, snap.binding, snap.time, true);
+        this.nextPoseBlendMode = 'freeze';
+      } else if (!frz.active && this.walkFreezeSnap) {
+        // Cancelled (dash / attack / hit) — no unfreeze blend
+        this.walkFreezeSnap = null;
+        this.nextPoseBlendMode = null;
+        this.invalidateBindingAfterWalkFreeze();
+      }
     }
 
     // Walk: scrub by locoFrame; §3.11 dual-advance (loco + residual→move)

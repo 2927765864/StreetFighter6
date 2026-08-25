@@ -423,6 +423,8 @@ function buildDom(): HTMLElement {
           ${rowNumber('walkSpeed', '前走速', 0.01, 0.2, 0.001)}
           ${rowNumber('walkBackSpeed', '后走速', 0.01, 0.2, 0.001)}
           ${rowNumber('walkFirstFrameScale', '走首帧比例', 0.05, 1, 0.05)}
+          ${rowNumber('walkEarlyReleaseEndKeepRatio', '点按收步保留', 0.05, 1, 0.05)}
+          ${rowNumber('walkInputFreezeFrames', '走输入冻帧', 0, 20, 1)}
           ${rowNumber('dashFrames', '前冲帧数', 1, 40, 1)}
           ${rowNumber('dashBackFrames', '后冲帧数', 1, 40, 1)}
           ${rowNumber('dashFrontHeavyPower', 'dash 前重指数', 0.5, 4, 0.05)}
@@ -845,6 +847,8 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'walkSpeed', path: 'walkSpeed' },
   { id: 'walkBackSpeed', path: 'walkBackSpeed' },
   { id: 'walkFirstFrameScale', path: 'walkFirstFrameScale' },
+  { id: 'walkEarlyReleaseEndKeepRatio', path: 'walkEarlyReleaseEndKeepRatio' },
+  { id: 'walkInputFreezeFrames', path: 'walkInputFreezeFrames' },
   { id: 'dashFrames', path: 'dashFrames' },
   { id: 'dashBackFrames', path: 'dashBackFrames' },
   { id: 'dashFrontHeavyPower', path: 'dashFrontHeavyPower' },

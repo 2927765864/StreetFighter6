@@ -625,6 +625,14 @@ export function createDebugGui(
     .name('走首帧比例')
     .onChange(syncOpts);
   moveStateFolder
+    .add(cfg, 'walkEarlyReleaseEndKeepRatio', 0.05, 1, 0.05)
+    .name('点按收步保留')
+    .onChange(syncOpts);
+  moveStateFolder
+    .add(cfg, 'walkInputFreezeFrames', 0, 20, 1)
+    .name('走输入冻帧')
+    .onChange(syncOpts);
+  moveStateFolder
     .add(cfg, 'dashFrames', 1, 40, 1)
     .name('前冲帧数')
     .onChange(syncOpts);

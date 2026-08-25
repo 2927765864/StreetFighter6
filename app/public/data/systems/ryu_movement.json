@@ -21,6 +21,9 @@
     "forwardSpeed": 0.047,
     "backSpeed": 0.032,
     "firstFrameSpeedScale": 0.25,
+    "earlyReleaseEndKeepRatio": 0.35,
+    "inputFreezeFrames": 4,
+    "notes": "earlyReleaseEndKeepRatio: when releasing during walk start (never reached loop), play only this tail fraction of the end clip (logic frames shortened). 1 = full end. Loop release always full end. inputFreezeFrames: on 4/6 press edge, freeze presentation pose for N logic frames (0=off); timer resets on re-edge; dash confirm cancels.",
     "clipLogicFrames": {
       "walk_fwd": { "start": 19, "loop": 114, "end": 47 },
       "walk_back": { "start": 15, "loop": 118, "end": 47 }

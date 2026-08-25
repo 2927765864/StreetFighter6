@@ -33,7 +33,30 @@ export type WalkStepInput = {
   forwardSpeed: number;
   backSpeed: number;
   firstFrameSpeedScale: number;
+  /**
+   * When releasing during `start` (never reached loop), keep this fraction of
+   * the authored `end` segment (tail). 1 = full end; e.g. 0.35 ≈ last 35%.
+   * Loop release always plays full end. Clamped to (0, 1] at use site.
+   */
+  earlyReleaseEndKeepRatio?: number;
 };
+
+/** Default: keep last 35% of end when releasing in walk start. */
+export const DEFAULT_EARLY_RELEASE_END_KEEP_RATIO = 0.35;
+
+/**
+ * First locoFrame index for end segment after an early (start-phase) release.
+ * Loop release always returns 0. Remaining logic frames = endLen - startFrame.
+ */
+export function earlyReleaseEndStartFrame(
+  endLen: number,
+  keepRatio: number,
+): number {
+  const len = Math.max(1, Math.floor(endLen));
+  const keep = Math.min(1, Math.max(Number.EPSILON, keepRatio));
+  const remain = Math.max(1, Math.ceil(len * keep));
+  return Math.max(0, len - remain);
+}
 
 export type WalkStepResult = {
   state: WalkState;
@@ -73,6 +96,39 @@ function startWalk(dir: WalkDir): WalkState {
   };
 }
 
+/** Public: restart walk start at frame 0 (e.g. after input-freeze delay). */
+export function beginWalkStart(dir: WalkDir): WalkState {
+  return startWalk(dir);
+}
+
+/**
+ * Public: open walk end, optionally at early-release tail entry.
+ * Used when input-freeze ends after a tap (delay then full end segment).
+ */
+export function beginWalkEnd(
+  dir: WalkDir,
+  clips: WalkStepInput['clips'],
+  opts?: {
+    earlyRelease?: boolean;
+    keepRatio?: number;
+    exitCycle01?: number;
+  },
+): WalkState {
+  const endLen = framesFor(dir, 'end', clips);
+  const early = opts?.earlyRelease === true;
+  const keep =
+    opts?.keepRatio ?? DEFAULT_EARLY_RELEASE_END_KEEP_RATIO;
+  const locoFrame = early ? earlyReleaseEndStartFrame(endLen, keep) : 0;
+  return {
+    locoPhase: 'end',
+    locoFrame,
+    walkDir: dir,
+    clipId: dir === 'fwd' ? 'walk_fwd' : 'walk_back',
+    animRole: 'end',
+    exitCycle01: opts?.exitCycle01 ?? 0,
+  };
+}
+
 function cycle01(frame: number, segLen: number): number {
   const len = Math.max(1, segLen);
   return Math.max(0, Math.min(1, frame / len));
@@ -107,14 +163,21 @@ export function stepWalk(prev: WalkState, input: WalkStepInput): WalkStepResult 
     s = startWalk(want);
     enteredStart = true;
   } else if (!want && (s.locoPhase === 'start' || s.locoPhase === 'loop')) {
+    const fromStart = s.locoPhase === 'start';
     const segLen = framesFor(
       s.walkDir ?? 'fwd',
       s.locoPhase,
       input.clips,
     );
+    const endLen = framesFor(s.walkDir ?? 'fwd', 'end', input.clips);
+    const keep =
+      input.earlyReleaseEndKeepRatio ?? DEFAULT_EARLY_RELEASE_END_KEEP_RATIO;
+    const endFrame0 = fromStart
+      ? earlyReleaseEndStartFrame(endLen, keep)
+      : 0;
     s = {
       locoPhase: 'end',
-      locoFrame: 0,
+      locoFrame: endFrame0,
       walkDir: s.walkDir,
       clipId: s.clipId === 'walk_back' ? 'walk_back' : 'walk_fwd',
       animRole: 'end',
@@ -141,10 +204,9 @@ export function stepWalk(prev: WalkState, input: WalkStepInput): WalkStepResult 
   // end: P0 horizontal speed 0
 
   const segLen = framesFor(dir, s.locoPhase, input.clips);
-  // Fresh start/end entry: present frame 0 this tick (avoid skipping into 1 immediately).
-  if (enteredEnd || enteredStart) {
-    s.locoFrame = 0;
-  } else {
+  // Fresh start/end entry: present the entry frame this tick (do not advance).
+  // Early-release end may enter mid-segment (locoFrame > 0); preserve that.
+  if (!(enteredEnd || enteredStart)) {
     s.locoFrame += 1;
   }
 

@@ -158,6 +158,13 @@ export type MutableSimConfig = {
   walkSpeed: number;
   walkBackSpeed: number;
   walkFirstFrameScale: number;
+  /**
+   * When releasing walk during start (never loop), keep this tail fraction of
+   * the end clip (logic + scrub). 1 = full end. From ryu_movement.json.
+   */
+  walkEarlyReleaseEndKeepRatio: number;
+  /** §3.9.1.b walk dir press-edge presentation freeze (logic frames; 0=off). */
+  walkInputFreezeFrames: number;
   jumpApex: number;
   jumpFwdDist: number;
   jumpBackDist: number;
@@ -454,6 +461,8 @@ export function createDefaultSimConfig(): MutableSimConfig {
     walkSpeed: 0.047,
     walkBackSpeed: 0.032,
     walkFirstFrameScale: 0.25,
+    walkEarlyReleaseEndKeepRatio: 0.35,
+    walkInputFreezeFrames: 4,
     jumpApex: 2.115,
     jumpFwdDist: 1.9,
     jumpBackDist: 1.52,
@@ -628,6 +637,8 @@ export function applyConfigToMatchOpts(cfg: MutableSimConfig) {
     walkSpeed: cfg.walkSpeed,
     walkBackSpeed: cfg.walkBackSpeed,
     walkFirstFrameScale: cfg.walkFirstFrameScale,
+    walkEarlyReleaseEndKeepRatio: cfg.walkEarlyReleaseEndKeepRatio,
+    walkInputFreezeFrames: cfg.walkInputFreezeFrames,
     jumpApex: cfg.jumpApex,
     jumpFwdDist: cfg.jumpFwdDist,
     jumpBackDist: cfg.jumpBackDist,

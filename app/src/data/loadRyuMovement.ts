@@ -20,6 +20,17 @@ export type RyuMovementTable = {
     forwardSpeed: number;
     backSpeed: number;
     firstFrameSpeedScale: number;
+    /**
+     * Tail fraction of walk end when releasing during start (never loop).
+     * Default 0.35 if omitted.
+     */
+    earlyReleaseEndKeepRatio?: number;
+    /**
+     * Presentation freeze on 4/6 press edge (§3.9.1.b). Default 4 if omitted.
+     * 0 = off.
+     */
+    inputFreezeFrames?: number;
+    notes?: string;
     clipLogicFrames: {
       walk_fwd: WalkClipFrames;
       walk_back: WalkClipFrames;
@@ -69,6 +80,31 @@ export function parseRyuMovement(raw: unknown): RyuMovementTable {
   finite(o.walk?.forwardSpeed, 'walk.forwardSpeed');
   finite(o.walk?.backSpeed, 'walk.backSpeed');
   finite(o.walk?.firstFrameSpeedScale, 'walk.firstFrameSpeedScale');
+  if (
+    o.walk?.earlyReleaseEndKeepRatio !== undefined &&
+    o.walk?.earlyReleaseEndKeepRatio !== null
+  ) {
+    const r = finite(
+      o.walk.earlyReleaseEndKeepRatio,
+      'walk.earlyReleaseEndKeepRatio',
+    );
+    if (r <= 0 || r > 1) {
+      throw new Error(
+        'ryu_movement: walk.earlyReleaseEndKeepRatio must be in (0, 1]',
+      );
+    }
+  }
+  if (
+    o.walk?.inputFreezeFrames !== undefined &&
+    o.walk?.inputFreezeFrames !== null
+  ) {
+    const f = finite(o.walk.inputFreezeFrames, 'walk.inputFreezeFrames');
+    if (f < 0 || f > 60) {
+      throw new Error(
+        'ryu_movement: walk.inputFreezeFrames must be in [0, 60]',
+      );
+    }
+  }
   finite(o.walk?.clipLogicFrames?.walk_fwd?.start, 'walk_fwd.start');
   finite(o.walk?.clipLogicFrames?.walk_fwd?.loop, 'walk_fwd.loop');
   finite(o.walk?.clipLogicFrames?.walk_fwd?.end, 'walk_fwd.end');
@@ -145,10 +181,20 @@ export async function fetchRyuMovement(
 /** Apply table into MutableSimConfig-compatible partial. */
 export function movementToSimDefaults(t: RyuMovementTable) {
   const { dashDxFwd, dashDxBack } = dashDxFromTable(t);
+  const keep = t.walk.earlyReleaseEndKeepRatio;
+  const freeze = t.walk.inputFreezeFrames;
   return {
     walkSpeed: t.walk.forwardSpeed,
     walkBackSpeed: t.walk.backSpeed,
     walkFirstFrameScale: t.walk.firstFrameSpeedScale,
+    walkEarlyReleaseEndKeepRatio:
+      typeof keep === 'number' && Number.isFinite(keep) && keep > 0 && keep <= 1
+        ? keep
+        : 0.35,
+    walkInputFreezeFrames:
+      typeof freeze === 'number' && Number.isFinite(freeze) && freeze >= 0
+        ? Math.floor(freeze)
+        : 4,
     dashFrames: t.dash.forward.frames,
     dashBackFrames: t.dash.back.frames,
     dashAnimFrames: 42,
