@@ -71,7 +71,7 @@ describe('plantPolicy land snap', () => {
   });
 });
 
-describe('plantPolicy attack sole floor clamp', () => {
+describe('plantPolicy grounded sole floor clamp', () => {
   it('clamps grounded attack and grounded animTail', () => {
     expect(
       shouldFloorClampAttackSole({
@@ -87,6 +87,25 @@ describe('plantPolicy attack sole floor clamp', () => {
         jumpPhase: 'none',
         logicY: 0,
         hasAnimTail: true,
+      }),
+    ).toBe(true);
+  });
+
+  it('clamps hitstun and blockstun (react scrub foot dips)', () => {
+    expect(
+      shouldFloorClampAttackSole({
+        phase: 'hitstun',
+        jumpPhase: 'none',
+        logicY: 0,
+        hasAnimTail: false,
+      }),
+    ).toBe(true);
+    expect(
+      shouldFloorClampAttackSole({
+        phase: 'blockstun',
+        jumpPhase: 'none',
+        logicY: 0,
+        hasAnimTail: false,
       }),
     ).toBe(true);
   });
@@ -119,28 +138,39 @@ describe('plantPolicy attack sole floor clamp', () => {
     ).toBe(false);
   });
 
-  it('skips plain idle without animTail when headband is off', () => {
+  it('skips landing (owned by one-shot land snap)', () => {
     expect(
       shouldFloorClampAttackSole({
-        phase: 'idle',
+        phase: 'landing',
         jumpPhase: 'none',
         logicY: 0,
         hasAnimTail: false,
-      }),
-    ).toBe(false);
-    expect(
-      shouldFloorClampAttackSole({
-        phase: 'idle',
-        jumpPhase: 'none',
-        logicY: 0,
-        hasAnimTail: false,
-        headbandPhysicsEnabled: false,
       }),
     ).toBe(false);
   });
 
-  it('clamps grounded loco while headband physics is on', () => {
+  it('clamps knockdown (lift-only; sweep/down/rise toe dips)', () => {
+    expect(
+      shouldFloorClampAttackSole({
+        phase: 'knockdown',
+        jumpPhase: 'none',
+        logicY: 0,
+        hasAnimTail: false,
+      }),
+    ).toBe(true);
+  });
+
+  it('clamps grounded loco regardless of headband flag', () => {
     for (const phase of ['idle', 'walk', 'dash', 'crouch'] as const) {
+      expect(
+        shouldFloorClampAttackSole({
+          phase,
+          jumpPhase: 'none',
+          logicY: 0,
+          hasAnimTail: false,
+          headbandPhysicsEnabled: false,
+        }),
+      ).toBe(true);
       expect(
         shouldFloorClampAttackSole({
           phase,

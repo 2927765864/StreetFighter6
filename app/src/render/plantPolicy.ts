@@ -37,17 +37,46 @@ export function shouldResetGroundOffset(opts: {
 }
 
 /**
- * Lift-only sole floor clamp during grounded attack / attack animTail.
- * Some recovery clips (e.g. Tatsumaki END) dip distal toes below y=0 for a
- * few frames; logic Place already floor-clamps Y, but presentation does not
- * chase soles on attack — without this, feet clip through the stage.
- * Skip while Place Y has the body hopping (fighter.y > 0).
+ * Grounded phases where authored clips may briefly push distal soles below
+ * y=0 (special recovery, DMG/GRD react, KD sweep/down/rise, loco).
  *
- * When headband spring bones run, VRMSpringBoneManager partially refreshes
- * ancestor world matrices (head/spine path only). Attack already healed soles
- * via this clamp; idle/walk had no equivalent and could present as foot-ground
- * clipping. Enable the same lift-only clamp for grounded loco while headband
- * physics is on (does not pull down — safe for heel-rise in idle/walk).
+ * Knockdown is included for **lift-only** clamp: ASHIBARAI / DN_UT / DN_STD
+ * toe bones dip slightly below y=0 (rise mid ~-2cm). Bidirectional plantFeet
+ * remains forbidden on KD (raised soles mid-sweep would bury the torso).
+ *
+ * Excludes landing (one-shot land snap owns Y — a reset-style clamp would
+ * undo a pull-down snap when land soles sit high).
+ */
+const GROUNDED_SOLE_FLOOR_CLAMP_PHASES = new Set([
+  'idle',
+  'walk',
+  'crouch',
+  'dash',
+  'attack',
+  'hitstun',
+  'blockstun',
+  'knockdown',
+]);
+
+/**
+ * Lift-only sole floor clamp for grounded presentation.
+ *
+ * Logic Place already floor-clamps Y, but presentation does not chase soles
+ * every frame under plantMode=consensus (§3.9). Without a lift-only heal:
+ *   - special recovery (e.g. Tatsumaki END) dips toes below the stage;
+ *   - hitstun/blockstun scrub can pierce after a hard cut;
+ *   - leaving an active clamp (attack) into hitstun used to reset modelRoot Y
+ *     and undo the same-frame hard-cut plant → instant foot-ground clip;
+ *   - 2HK knockdown: enter-KD cleared offset and skipped clamp for the whole
+ *     sweep→bound→down→rise chain, so feet stayed buried until idle;
+ *   - headband/belt/pants spring bones can leave idle/walk soles slightly low.
+ *
+ * Lift-only: never pulls down, so heel-rise / spinning-kick / mid-sweep raised
+ * contact feet stay up. Skip while Place Y has the body hopping (fighter.y > 0),
+ * in air, or landing (one-shot snap).
+ *
+ * `headbandPhysicsEnabled` is kept for call-site compat; clamp no longer
+ * depends on it — grounded react/loco/KD need the same heal either way.
  */
 export function shouldFloorClampAttackSole(opts: {
   phase: string;
@@ -59,20 +88,12 @@ export function shouldFloorClampAttackSole(opts: {
 }): boolean {
   if (opts.jumpPhase !== 'none') return false;
   if (opts.logicY > 1e-4) return false;
-  if (opts.phase === 'attack') return true;
+  if (GROUNDED_SOLE_FLOOR_CLAMP_PHASES.has(opts.phase)) return true;
+  // Residual tail on a phase we do not list (defensive); never air-held tails.
   if (
     opts.hasAnimTail &&
     !opts.holdAirTail &&
     (opts.phase === 'idle' || opts.phase === 'crouch')
-  ) {
-    return true;
-  }
-  if (
-    opts.headbandPhysicsEnabled &&
-    (opts.phase === 'idle' ||
-      opts.phase === 'walk' ||
-      opts.phase === 'dash' ||
-      opts.phase === 'crouch')
   ) {
     return true;
   }

@@ -601,8 +601,9 @@ export class FighterView {
   }
 
   /**
-   * Grounded attack / residual / headband-loco: lift modelRoot only when soles
-   * pierce the floor. Does not pull down (spinning kicks / heel rise stay up).
+   * Grounded presentation: lift modelRoot only when soles pierce the floor.
+   * Covers attack, hitstun/blockstun, and loco (see plantPolicy). Does not
+   * pull down (spinning kicks / heel rise stay up).
    */
   private applyGroundedAttackSoleFloorClamp(
     fighter: Fighter,
@@ -627,12 +628,14 @@ export class FighterView {
     this.resetModelGroundOffset();
     const soleY = this.measureContactSoleY();
     if (soleY == null || !Number.isFinite(soleY)) return;
-    if (soleY >= STAGE_GROUND_Y) {
+    // Toe joints sit above the sandal mesh; same bias as plantFeetOnGround.
+    // Compare after bias so toes at +0.005 still lift when the shoe would pierce.
+    const soleBias = 0.012;
+    const deltaWorld = STAGE_GROUND_Y - soleY + soleBias;
+    if (deltaWorld <= 1e-4) {
       this.soleFloorClampActive = true;
       return;
     }
-    const soleBias = 0.012;
-    const deltaWorld = STAGE_GROUND_Y - soleY + soleBias;
     if (deltaWorld > 0.35) return;
     const sy = this.root.scale.y || 1;
     this.modelRoot.position.y += deltaWorld / sy;
@@ -903,12 +906,16 @@ export class FighterView {
     const phase = fighter.phase;
     const prev = this.lastPlantPolicyPhase;
     if (phase === 'knockdown') {
-      if (prev !== 'knockdown') this.resetModelGroundOffset();
-      this.lastPlantPolicyPhase = phase;
+      // KD clips dip distal toes below y=0 (sweep/down/rise). Bidirectional
+      // plantFeet would bury the torso when soles are raised mid-sweep — use
+      // lift-only clamp only. Do not early-return before the clamp.
       this.plantWorldXZ = null;
+      this.lastPlantPolicyPhase = phase;
+      this.applyGroundedAttackSoleFloorClamp(fighter, cfg);
       return;
     }
     if (prev === 'knockdown') {
+      // Back on feet: full one-shot sole align, then normal grounded clamp.
       this.resetModelGroundOffset();
       this.plantFeetOnGround();
     }
@@ -952,9 +959,10 @@ export class FighterView {
     } else {
       this.plantWorldXZ = null;
     }
-    // After support-foot XZ: lift-only floor clamp for grounded specials
-    // whose recovery clips briefly push toes below y=0 (Tatsumaki END),
-    // and for idle/walk while headband physics is enabled.
+    // After support-foot XZ: lift-only floor clamp for grounded phases whose
+    // clips briefly push toes below y=0 (special recovery, hitstun/blockstun,
+    // knockdown rise/down, loco). Must include react + KD — otherwise hard-cut
+    // plant is undone or the whole sweep→rise chain stays buried.
     this.applyGroundedAttackSoleFloorClamp(fighter, cfg);
   }
 
