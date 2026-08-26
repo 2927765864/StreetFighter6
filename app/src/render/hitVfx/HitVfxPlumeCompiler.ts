@@ -4,6 +4,7 @@
  * No ground collision modules (consensus).
  */
 import type { Mulberry32 } from './mulberry32';
+import { HelixPotentialCurlForce } from './HelixPotentialCurlForce';
 import { system, type EmitterBuilder, type SystemDef } from './plumeApi';
 import {
   hexToRgb01,
@@ -15,7 +16,7 @@ import {
   type SparkDebrisParams,
   type SparkLightEmbed,
   type SparkParams,
-  type DustParams,
+  type SmokeRingParams,
   type SweatParams,
 } from './hitVfxTypes';
 
@@ -148,9 +149,31 @@ function applyDebris(
     .renderSprite({ blending: 'additive', depthWrite: false });
 }
 
-function applyDust(
+function ringThicknessFrac(ringRadius: number, tubeRadius: number): number {
+  return Math.min(0.95, Math.max(0.05, tubeRadius / Math.max(ringRadius, 0.02)));
+}
+
+/**
+ * Attach HelixPotentialCurlForce after EmitterBuilder.build().
+ * Plume's SystemBuilder always calls returned builder.build().
+ */
+function withHelixForce(
+  builder: EmitterBuilder,
+  force: HelixPotentialCurlForce,
+): EmitterBuilder {
+  const origBuild = builder.build.bind(builder);
+  (builder as EmitterBuilder & { build: () => ReturnType<EmitterBuilder['build']> }).build =
+    () => {
+      const def = origBuild();
+      def.update.push(force as never);
+      return def;
+    };
+  return builder;
+}
+
+function applySmokeRingDye(
   e: EmitterBuilder,
-  p: DustParams,
+  p: SmokeRingParams,
   scale: HitVfxStrengthScale,
   rng: Mulberry32,
   seedLocked: boolean,
@@ -159,9 +182,11 @@ function applyDust(
   lightBoost: number,
   receive: boolean,
 ) {
-  const count = scaleCount(p.count, scale.countMul);
+  const dyeCount = scaleCount(p.dyeCount, scale.countMul);
   const life = scalePair(p.lifetimeSec, scale.lifetimeMul);
   const size = scalePair(p.size, scale.sizeMul);
+  const ringRadius = p.ringRadius * scale.sizeMul;
+  const tubeRadius = p.tubeRadius * scale.sizeMul;
   const boost = receive ? 1 + lightBoost * 0.35 : 1;
   const rgb = hexToRgb01(p.color).map((c) => Math.min(1, c * boost)) as [
     number,
@@ -169,16 +194,33 @@ function applyDust(
     number,
   ];
   const opacity = Math.min(1, p.opacity * boost);
-  return e
-    .capacity(Math.max(count * 2, 8))
+  const force = new HelixPotentialCurlForce({
+    ringRadius,
+    tubeRadius,
+    vortexStrength: p.vortexStrength,
+    curlAmplitude: p.curlAmplitude,
+    curlFrequency: p.curlFrequency,
+    curlSpeed: p.curlSpeed,
+    helixHelicity: p.helixHelicity,
+    helixCoherence: p.helixCoherence,
+    helixDecay: p.helixDecay,
+    potentialGrid: p.potentialGrid,
+    seed: seed ^ 0x2222,
+    axialSpeed: p.axialSpeed,
+  });
+  const chain = e
+    .capacity(Math.max(dyeCount * 2, 16))
     .duration(Math.max(life[1], 0.05) + delay + 0.05)
     .seed(seed ^ 0x2222)
-    .spawnBurst({ time: delay, count })
+    .sortByDepth(p.sortByDepth)
+    .spawnBurst({ time: delay, count: dyeCount })
     .lifetime(pairWithRng(life, rng, seedLocked))
-    .position({ shape: { kind: 'sphere', radius: 0.04, thickness: 1 } })
-    .velocity({
-      shape: { kind: 'cone', angle: p.coneAngleRad },
-      speed: pairWithRng(p.speed, rng, seedLocked),
+    .position({
+      shape: {
+        kind: 'ring',
+        radius: ringRadius,
+        thickness: ringThicknessFrac(ringRadius, tubeRadius),
+      },
     })
     .size(pairWithRng(size, rng, seedLocked))
     .color(rgb, { alpha: opacity })
@@ -186,17 +228,101 @@ function applyDust(
     .lifetimeTick()
     .drag(p.drag)
     .gravity([0, p.gravityY, 0])
+    .pointAttractor({
+      position: [0, 0, 0],
+      strength: -Math.abs(p.expandStrength),
+      radius: ringRadius * 3,
+      falloff: 'linear',
+    })
     .sizeOverLife([
       [0, 0.7],
-      [0.4, 1.2],
-      [1, 1.6],
+      [0.35, 1.15],
+      [1, 1.4],
     ])
     .alphaOverLife([
-      [0, 0.2],
-      [0.15, 1],
+      [0, 0.15],
+      [0.12, 1],
       [1, 0],
     ])
     .renderSprite({ blending: 'alpha', depthWrite: false, opacity });
+  return withHelixForce(chain, force);
+}
+
+function applySmokeRingFilaments(
+  e: EmitterBuilder,
+  p: SmokeRingParams,
+  scale: HitVfxStrengthScale,
+  rng: Mulberry32,
+  seedLocked: boolean,
+  seed: number,
+  delay: number,
+) {
+  const count = scaleCount(p.filamentCount, scale.countMul);
+  if (count <= 0) {
+    return e
+      .capacity(1)
+      .duration(0.05)
+      .spawnBurst({ time: delay, count: 0 })
+      .lifetime(0.05)
+      .position({ shape: { kind: 'point' } })
+      .integrate()
+      .lifetimeTick()
+      .renderSprite({ blending: 'alpha', depthWrite: false });
+  }
+  const life = scalePair(p.filamentLifetimeSec, scale.lifetimeMul);
+  const ringRadius = p.ringRadius * scale.sizeMul * 1.12;
+  const tubeRadius = p.tubeRadius * scale.sizeMul;
+  const force = new HelixPotentialCurlForce({
+    ringRadius,
+    tubeRadius,
+    vortexStrength: p.vortexStrength * 0.85,
+    curlAmplitude: p.curlAmplitude * 1.35,
+    curlFrequency: p.curlFrequency,
+    curlSpeed: p.curlSpeed,
+    helixHelicity: p.helixHelicity,
+    helixCoherence: p.helixCoherence,
+    helixDecay: p.helixDecay,
+    potentialGrid: p.potentialGrid,
+    seed: seed ^ 0x4444,
+    axialSpeed: p.axialSpeed * 0.8,
+    forceScale: 1.15,
+  });
+  const w = p.filamentWidth * scale.sizeMul;
+  const chain = e
+    .capacity(Math.max(count * 2, 8))
+    .duration(Math.max(life[1], 0.05) + delay + 0.05)
+    .seed(seed ^ 0x4444)
+    .sortByDepth(p.sortByDepth)
+    .spawnBurst({ time: delay, count })
+    .lifetime(pairWithRng(life, rng, seedLocked))
+    .position({
+      shape: {
+        kind: 'ring',
+        radius: ringRadius,
+        thickness: ringThicknessFrac(ringRadius, tubeRadius),
+      },
+    })
+    .size(w)
+    .color(hexToRgb01(p.color), { alpha: Math.min(1, p.opacity * 0.85) })
+    .integrate()
+    .lifetimeTick()
+    .drag(p.drag * 0.9)
+    .gravity([0, p.gravityY, 0])
+    .sizeOverLife([
+      [0, 1],
+      [1, 0],
+    ])
+    .alphaOverLife([
+      [0, 0.2],
+      [0.2, 1],
+      [1, 0],
+    ])
+    .renderRibbon({
+      blending: 'alpha',
+      depthTest: true,
+      faceCamera: true,
+    });
+  return withHelixForce(chain, force);
 }
 
 function applySweat(
@@ -266,6 +392,40 @@ export function compileRecipeToSystemDef(opts: CompileOpts): SystemDef {
     if (el.type === 'sparkLight') continue;
     const delay = el.startDelaySec;
     const name = `${el.id}_${el.type}`;
+    if (el.type === 'smokeRing') {
+      const boost = el.receiveSparkLight ? vfxLightBoost : 0;
+      maxDur = Math.max(
+        maxDur,
+        Math.max(el.params.lifetimeSec[1], el.params.filamentLifetimeSec[1]) *
+          scale.lifetimeMul +
+          delay,
+      );
+      builder.emitter(`${name}_dye`, (e) =>
+        applySmokeRingDye(
+          e,
+          el.params,
+          scale,
+          rng,
+          seedLocked,
+          seed,
+          delay,
+          boost,
+          el.receiveSparkLight,
+        ),
+      );
+      builder.emitter(`${name}_fil`, (e) =>
+        applySmokeRingFilaments(
+          e,
+          el.params,
+          scale,
+          rng,
+          seedLocked,
+          seed,
+          delay,
+        ),
+      );
+      continue;
+    }
     builder.emitter(name, (e) => {
       if (el.type === 'spark') {
         const b = applySpark(e, el.params, scale, rng, seedLocked, seed, delay);
@@ -287,27 +447,11 @@ export function compileRecipeToSystemDef(opts: CompileOpts): SystemDef {
         maxDur = Math.max(maxDur, el.params.lifetimeSec[1] * scale.lifetimeMul + delay);
         return b;
       }
-      if (el.type === 'dust') {
-        const boost = el.receiveSparkLight ? vfxLightBoost : 0;
-        const b = applyDust(
-          e,
-          el.params,
-          scale,
-          rng,
-          seedLocked,
-          seed,
-          delay,
-          boost,
-          el.receiveSparkLight,
-        );
-        maxDur = Math.max(maxDur, el.params.lifetimeSec[1] * scale.lifetimeMul + delay);
-        return b;
-      }
-      // sweat
+      // sweat (dust migrates away in normalize)
       const boost = el.receiveSparkLight ? vfxLightBoost : 0;
       const b = applySweat(
         e,
-        el.params,
+        el.params as SweatParams,
         scale,
         rng,
         seedLocked,
@@ -316,7 +460,10 @@ export function compileRecipeToSystemDef(opts: CompileOpts): SystemDef {
         boost,
         el.receiveSparkLight,
       );
-      maxDur = Math.max(maxDur, el.params.lifetimeSec[1] * scale.lifetimeMul + delay);
+      maxDur = Math.max(
+        maxDur,
+        (el.params as SweatParams).lifetimeSec[1] * scale.lifetimeMul + delay,
+      );
       return b;
     });
   }
@@ -376,6 +523,12 @@ export function estimateInstanceLifetimeSec(
         max,
         el.params.light.lifetimeSec + el.startDelaySec,
       );
+    }
+    if (el.type === 'smokeRing') {
+      const a = el.params.lifetimeSec[1] * scale.lifetimeMul;
+      const b = el.params.filamentLifetimeSec[1] * scale.lifetimeMul;
+      max = Math.max(max, Math.max(a, b) + el.startDelaySec);
+      continue;
     }
     const life =
       'lifetimeSec' in el.params && Array.isArray(el.params.lifetimeSec)

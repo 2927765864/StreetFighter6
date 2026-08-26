@@ -209,7 +209,19 @@ export class HitVfxRuntime {
 
     this.manager.register(prefabId, () => def);
     this.registeredPrefabIds.add(prefabId);
-    const sys = this.manager.spawn(prefabId, { position: worldPos });
+    // Plume ring births in XZ (local +Y axis). Align +Y with punch axis.
+    const punchAxis =
+      args.axis != null
+        ? new THREE.Vector3(args.axis[0], args.axis[1], args.axis[2]).normalize()
+        : new THREE.Vector3(-args.facing, 0, 0).normalize();
+    const quat = new THREE.Quaternion().setFromUnitVectors(
+      new THREE.Vector3(0, 1, 0),
+      punchAxis.lengthSq() > 1e-8 ? punchAxis : new THREE.Vector3(0, 1, 0),
+    );
+    const sys = this.manager.spawn(prefabId, {
+      position: worldPos,
+      quaternion: quat,
+    });
     const life = estimateInstanceLifetimeSec(recipe, args.strength);
     this.active.push({
       prefabId,

@@ -6,7 +6,8 @@ export type HitVfxElementType =
   | 'sparkLight'
   | 'sparkDebris'
   | 'dust'
-  | 'sweat';
+  | 'sweat'
+  | 'smokeRing';
 export type HitVfxHeight = 'h' | 'm' | 'l';
 export type HitVfxStrength = 'L' | 'M' | 'H';
 
@@ -63,6 +64,7 @@ export type SparkDebrisParams = {
   blend: 'additive';
 };
 
+/** @deprecated Loaded recipes migrate to smokeRing. */
 export type DustParams = {
   count: number;
   lifetimeSec: [number, number];
@@ -74,6 +76,36 @@ export type DustParams = {
   drag: number;
   coneAngleRad: number;
   blend: 'alpha';
+};
+
+/** Vortex-ring smoke (helix-noise potential + Plume ring birth). */
+export type SmokeRingParams = {
+  dyeCount: number;
+  filamentCount: number;
+  lifetimeSec: [number, number];
+  filamentLifetimeSec: [number, number];
+  ringRadius: number;
+  tubeRadius: number;
+  /** Mapped to helix createRing().circulation */
+  vortexStrength: number;
+  expandStrength: number;
+  axialSpeed: number;
+  /** Mapped to helix create().amplitude (noise mix). */
+  curlAmplitude: number;
+  curlFrequency: number;
+  curlSpeed: number;
+  drag: number;
+  gravityY: number;
+  size: [number, number];
+  filamentWidth: number;
+  color: number;
+  opacity: number;
+  blend: 'alpha';
+  sortByDepth: boolean;
+  helixHelicity: number;
+  helixCoherence: number;
+  helixDecay: number;
+  potentialGrid: 16 | 32 | 48;
 };
 
 export type SweatParams = {
@@ -94,7 +126,8 @@ export type HitVfxElement =
   | (HitVfxElementBase & { type: 'sparkLight'; params: SparkLightParams })
   | (HitVfxElementBase & { type: 'sparkDebris'; params: SparkDebrisParams })
   | (HitVfxElementBase & { type: 'dust'; params: DustParams })
-  | (HitVfxElementBase & { type: 'sweat'; params: SweatParams });
+  | (HitVfxElementBase & { type: 'sweat'; params: SweatParams })
+  | (HitVfxElementBase & { type: 'smokeRing'; params: SmokeRingParams });
 
 export type HitVfxStrengthScale = {
   countMul: number;
@@ -135,8 +168,8 @@ export type HitVfxElementPreset = {
 
 export const CREATABLE_ELEMENT_TYPES: Exclude<
   HitVfxElementType,
-  'sparkLight'
->[] = ['spark', 'sparkDebris', 'dust', 'sweat'];
+  'sparkLight' | 'dust'
+>[] = ['spark', 'sparkDebris', 'smokeRing', 'sweat'];
 
 export type HitVfxHeightOffset = Record<
   HitVfxHeight,
@@ -153,6 +186,8 @@ export type HitVfxTriggerArgs = {
   x: number;
   /** World facing of defender (+1 / -1). */
   facing: number;
+  /** Optional world punch axis (unit). Default (-facing, 0, 0). */
+  axis?: [number, number, number];
 };
 
 const ELEMENT_TYPES: HitVfxElementType[] = [
@@ -161,7 +196,40 @@ const ELEMENT_TYPES: HitVfxElementType[] = [
   'sparkDebris',
   'dust',
   'sweat',
+  'smokeRing',
 ];
+
+export function defaultSmokeRingParams(
+  overrides?: Partial<SmokeRingParams>,
+): SmokeRingParams {
+  return {
+    dyeCount: 48,
+    filamentCount: 12,
+    lifetimeSec: [0.2, 0.32],
+    filamentLifetimeSec: [0.28, 0.42],
+    ringRadius: 0.16,
+    tubeRadius: 0.045,
+    vortexStrength: 8,
+    expandStrength: 1.2,
+    axialSpeed: 0.35,
+    curlAmplitude: 1.4,
+    curlFrequency: 1.8,
+    curlSpeed: 0.4,
+    drag: 3.5,
+    gravityY: 0,
+    size: [0.1, 0.22],
+    filamentWidth: 0.04,
+    color: 0xc8c0b0,
+    opacity: 0.5,
+    blend: 'alpha',
+    sortByDepth: false,
+    helixHelicity: 0.7,
+    helixCoherence: 0.45,
+    helixDecay: 0.08,
+    potentialGrid: 32,
+    ...overrides,
+  };
+}
 
 function asFinite(n: unknown, fallback: number): number {
   return typeof n === 'number' && Number.isFinite(n) ? n : fallback;
@@ -324,6 +392,59 @@ function normalizeDustParams(raw: unknown): DustParams {
   };
 }
 
+export function dustParamsToSmokeRing(dust: DustParams): SmokeRingParams {
+  return defaultSmokeRingParams({
+    dyeCount: dust.count,
+    filamentCount: Math.max(6, Math.round(dust.count * 0.25)),
+    lifetimeSec: dust.lifetimeSec,
+    size: dust.size,
+    color: dust.color,
+    opacity: dust.opacity,
+    drag: Math.max(dust.drag, 2.5),
+    gravityY: 0,
+  });
+}
+
+function normalizeSmokeRingParams(raw: unknown): SmokeRingParams {
+  const o = (raw && typeof raw === 'object' ? raw : {}) as Record<
+    string,
+    unknown
+  >;
+  const d = defaultSmokeRingParams();
+  const gridRaw = asFinite(o.potentialGrid, d.potentialGrid);
+  const potentialGrid: 16 | 32 | 48 =
+    gridRaw <= 16 ? 16 : gridRaw <= 32 ? 32 : 48;
+  return {
+    dyeCount: Math.max(0, Math.round(asFinite(o.dyeCount, d.dyeCount))),
+    filamentCount: Math.max(
+      0,
+      Math.round(asFinite(o.filamentCount, d.filamentCount)),
+    ),
+    lifetimeSec: asPair(o.lifetimeSec, d.lifetimeSec),
+    filamentLifetimeSec: asPair(o.filamentLifetimeSec, d.filamentLifetimeSec),
+    ringRadius: asFinite(o.ringRadius, d.ringRadius),
+    tubeRadius: asFinite(o.tubeRadius, d.tubeRadius),
+    vortexStrength: asFinite(o.vortexStrength, d.vortexStrength),
+    expandStrength: asFinite(o.expandStrength, d.expandStrength),
+    axialSpeed: asFinite(o.axialSpeed, d.axialSpeed),
+    curlAmplitude: asFinite(o.curlAmplitude, d.curlAmplitude),
+    curlFrequency: asFinite(o.curlFrequency, d.curlFrequency),
+    curlSpeed: asFinite(o.curlSpeed, d.curlSpeed),
+    drag: asFinite(o.drag, d.drag),
+    gravityY: asFinite(o.gravityY, d.gravityY),
+    size: asPair(o.size, d.size),
+    filamentWidth: asFinite(o.filamentWidth, d.filamentWidth),
+    color: asHex(o.color, d.color),
+    opacity: asFinite(o.opacity, d.opacity),
+    blend: 'alpha',
+    sortByDepth: asBool(o.sortByDepth, d.sortByDepth),
+    helixHelicity: asFinite(o.helixHelicity, d.helixHelicity),
+    helixCoherence: asFinite(o.helixCoherence, d.helixCoherence),
+    helixDecay: asFinite(o.helixDecay, d.helixDecay),
+    potentialGrid,
+  };
+}
+
 function normalizeSweatParams(raw: unknown): SweatParams {
   const o = (raw && typeof raw === 'object' ? raw : {}) as Record<
     string,
@@ -370,7 +491,16 @@ export function normalizeHitVfxElement(
     return { ...base, type, params: normalizeDebrisParams(o.params) };
   }
   if (type === 'dust') {
-    return { ...base, type, params: normalizeDustParams(o.params) };
+    // Migrate legacy cone dust → smokeRing (plan §2.2).
+    return {
+      ...base,
+      type: 'smokeRing',
+      name: base.name === 'dust' ? '涡环烟' : base.name,
+      params: dustParamsToSmokeRing(normalizeDustParams(o.params)),
+    };
+  }
+  if (type === 'smokeRing') {
+    return { ...base, type, params: normalizeSmokeRingParams(o.params) };
   }
   return { ...base, type: 'sweat', params: normalizeSweatParams(o.params) };
 }

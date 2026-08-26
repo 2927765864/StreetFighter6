@@ -9,9 +9,11 @@ import {
   exportShippingJson,
   saveHitVfxEditorDraft,
 } from '../config/persist';
+import { attachDragScrubAll } from '../debug/dragScrub';
 import {
   CREATABLE_ELEMENT_TYPES,
   type DustParams,
+  type SmokeRingParams,
   type HitVfxElement,
   type HitVfxElementPreset,
   type HitVfxElementType,
@@ -67,7 +69,8 @@ const ELEMENT_TYPE_LABEL: Record<
 > = {
   spark: '火花',
   sparkDebris: '小粒子',
-  dust: '扬尘',
+  dust: '扬尘(旧)',
+  smokeRing: '涡环烟',
   sweat: '汗水',
 };
 
@@ -149,7 +152,7 @@ export function setupHitVfxEditorPanel(
           <select id="hvfx-new-el-type" title="新建元素类型">
             <option value="spark">火花</option>
             <option value="sparkDebris">小粒子</option>
-            <option value="dust">扬尘</option>
+            <option value="smokeRing">涡环烟</option>
             <option value="sweat">汗水</option>
           </select>
           <button type="button" id="hvfx-new-el">新建元素</button>
@@ -784,7 +787,7 @@ export function setupHitVfxEditorPanel(
       },
     );
     inspBody.querySelectorAll<HTMLInputElement>('[data-str]').forEach((inp) => {
-      inp.addEventListener('change', () => {
+      const apply = () => {
         const [band, key] = inp.dataset.str!.split('.') as [
           HitVfxStrength,
           keyof typeof recipe.strengthScale.L,
@@ -792,10 +795,12 @@ export function setupHitVfxEditorPanel(
         recipe.strengthScale[band][key] = Math.max(0, Number(inp.value) || 0);
         notify('hitVfxRecipes');
         hooks.invalidate();
-      });
+      };
+      inp.addEventListener('input', apply);
+      inp.addEventListener('change', apply);
     });
     inspBody.querySelectorAll<HTMLInputElement>('[data-ho]').forEach((inp) => {
-      inp.addEventListener('change', () => {
+      const apply = () => {
         const [band, axis] = inp.dataset.ho!.split('.') as [
           'h' | 'm' | 'l',
           'y' | 'z',
@@ -804,8 +809,11 @@ export function setupHitVfxEditorPanel(
         if (!Number.isFinite(n)) return;
         CONFIG.hitVfxHeightOffsets[band][axis] = n;
         notify('hitVfxHeightOffsets');
-      });
+      };
+      inp.addEventListener('input', apply);
+      inp.addEventListener('change', apply);
     });
+    attachDragScrubAll(inspBody);
   };
 
   const renderGroupInspector = (recipe: HitVfxRecipe, group: HitVfxGroup) => {
@@ -853,6 +861,8 @@ export function setupHitVfxEditorPanel(
       typeParams = sparkParamsHtml(element.params);
     } else if (element.type === 'sparkDebris') {
       typeParams = sparkDebrisParamsHtml(element.params);
+    } else if (element.type === 'smokeRing') {
+      typeParams = smokeRingParamsHtml(element.params);
     } else if (element.type === 'dust') {
       typeParams = dustParamsHtml(element.params);
     } else if (element.type === 'sweat') {
@@ -904,16 +914,15 @@ export function setupHitVfxEditorPanel(
         bumpRecipes(true);
       },
     );
-    (inspBody.querySelector('#insp-el-delay') as HTMLInputElement).addEventListener(
-      'change',
-      (e) => {
-        element.startDelaySec = Math.max(
-          0,
-          Number((e.target as HTMLInputElement).value) || 0,
-        );
-        paramBump();
-      },
-    );
+    const delayInp = inspBody.querySelector(
+      '#insp-el-delay',
+    ) as HTMLInputElement;
+    const applyDelay = () => {
+      element.startDelaySec = Math.max(0, Number(delayInp.value) || 0);
+      paramBump();
+    };
+    delayInp.addEventListener('input', applyDelay);
+    delayInp.addEventListener('change', applyDelay);
     (inspBody.querySelector('#insp-el-recv') as HTMLInputElement).addEventListener(
       'change',
       (e) => {
@@ -923,6 +932,7 @@ export function setupHitVfxEditorPanel(
     );
 
     bindParamFields(inspBody, element, paramBump);
+    attachDragScrubAll(inspBody);
   };
 
   const bindParamFields = (
@@ -937,6 +947,7 @@ export function setupHitVfxEditorPanel(
           setParamPath(element.params as Record<string, unknown>, path, inp);
           bump();
         };
+        inp.addEventListener('input', apply);
         inp.addEventListener('change', apply);
       },
     );
@@ -1127,6 +1138,7 @@ export function setupHitVfxEditorPanel(
     CONFIG.hitVfxSparkLightPoolSize = Math.max(1, Math.round(n));
     hooks.invalidate();
   });
+  attachDragScrubAll(toolbar);
 
   (app.querySelector('#hvfx-kind') as HTMLSelectElement).addEventListener(
     'change',
@@ -1322,7 +1334,7 @@ export function setupHitVfxEditorPanel(
       const typeSel = app.querySelector(
         '#hvfx-new-el-type',
       ) as HTMLSelectElement;
-      const type = typeSel.value as Exclude<HitVfxElementType, 'sparkLight'>;
+      const type = typeSel.value as (typeof CREATABLE_ELEMENT_TYPES)[number];
       if (!CREATABLE_ELEMENT_TYPES.includes(type)) return;
       const el = createElement(recipe, type, targetGroupId());
       if (!el) {
@@ -1614,7 +1626,7 @@ function sparkDebrisParamsHtml(p: SparkDebrisParams): string {
 function dustParamsHtml(p: DustParams): string {
   return `
     <div class="hvfx-insp-section">
-      <h3>扬尘参数</h3>
+      <h3>扬尘参数（旧，加载后会迁成涡环烟）</h3>
       ${numRow('数量', 'count', p.count, '1')}
       ${pairRow('寿命(秒)', 'lifetimeSec', p.lifetimeSec)}
       ${pairRow('速度', 'speed', p.speed)}
@@ -1624,6 +1636,38 @@ function dustParamsHtml(p: DustParams): string {
       ${numRow('重力Y', 'gravityY', p.gravityY)}
       ${numRow('阻力', 'drag', p.drag)}
       ${numRow('锥角(弧度)', 'coneAngleRad', p.coneAngleRad)}
+      <div class="hvfx-row"><label>混合</label><div class="hvfx-readonly">alpha（只读）</div></div>
+    </div>
+  `;
+}
+
+function smokeRingParamsHtml(p: SmokeRingParams): string {
+  return `
+    <div class="hvfx-insp-section">
+      <h3>涡环烟参数</h3>
+      ${numRow('染料数量', 'dyeCount', p.dyeCount, '1')}
+      ${numRow('细丝数量', 'filamentCount', p.filamentCount, '1')}
+      ${pairRow('寿命(秒)', 'lifetimeSec', p.lifetimeSec)}
+      ${pairRow('细丝寿命', 'filamentLifetimeSec', p.filamentLifetimeSec)}
+      ${numRow('环半径', 'ringRadius', p.ringRadius)}
+      ${numRow('管半径', 'tubeRadius', p.tubeRadius)}
+      ${numRow('切向涡强(环量)', 'vortexStrength', p.vortexStrength)}
+      ${numRow('径向扩张', 'expandStrength', p.expandStrength)}
+      ${numRow('轴向速度', 'axialSpeed', p.axialSpeed)}
+      ${numRow('curl振幅', 'curlAmplitude', p.curlAmplitude)}
+      ${numRow('curl频率', 'curlFrequency', p.curlFrequency)}
+      ${numRow('curl时间速度', 'curlSpeed', p.curlSpeed)}
+      ${numRow('阻力', 'drag', p.drag)}
+      ${numRow('重力Y', 'gravityY', p.gravityY)}
+      ${pairRow('尺寸', 'size', p.size)}
+      ${numRow('细丝宽度', 'filamentWidth', p.filamentWidth)}
+      ${colorRow('颜色', 'color', p.color)}
+      ${numRow('不透明度', 'opacity', p.opacity)}
+      ${numRow('helix helicity', 'helixHelicity', p.helixHelicity)}
+      ${numRow('helix coherence', 'helixCoherence', p.helixCoherence)}
+      ${numRow('helix decay', 'helixDecay', p.helixDecay)}
+      ${numRow('势网格', 'potentialGrid', p.potentialGrid, '1')}
+      ${checkRow('深度排序', 'sortByDepth', p.sortByDepth)}
       <div class="hvfx-row"><label>混合</label><div class="hvfx-readonly">alpha（只读）</div></div>
     </div>
   `;

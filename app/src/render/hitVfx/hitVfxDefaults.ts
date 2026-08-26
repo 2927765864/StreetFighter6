@@ -78,19 +78,33 @@ export function createUngardedDefaultRecipe(): HitVfxRecipe {
       },
     },
     {
-      ...mainGroupBase('dust', '扬尘', 'dust', true),
-      type: 'dust',
+      ...mainGroupBase('smokeRing', '涡环烟', 'smokeRing', true),
+      type: 'smokeRing',
       params: {
-        count: 10,
-        lifetimeSec: [0.2, 0.45],
-        speed: [0.3, 1.2],
-        size: [0.18, 0.4],
+        dyeCount: 48,
+        filamentCount: 12,
+        lifetimeSec: [0.2, 0.32],
+        filamentLifetimeSec: [0.28, 0.42],
+        ringRadius: 0.16,
+        tubeRadius: 0.045,
+        vortexStrength: 8,
+        expandStrength: 1.2,
+        axialSpeed: 0.35,
+        curlAmplitude: 1.4,
+        curlFrequency: 1.8,
+        curlSpeed: 0.4,
+        drag: 3.5,
+        gravityY: 0,
+        size: [0.1, 0.22],
+        filamentWidth: 0.04,
         color: 0xc8c0b0,
-        opacity: 0.45,
-        gravityY: 0.4,
-        drag: 0.5,
-        coneAngleRad: 1.0,
+        opacity: 0.5,
         blend: 'alpha',
+        sortByDepth: false,
+        helixHelicity: 0.7,
+        helixCoherence: 0.45,
+        helixDecay: 0.08,
+        potentialGrid: 32,
       },
     },
     {
@@ -138,8 +152,15 @@ export function createBlockDefaultRecipe(): HitVfxRecipe {
         },
       };
     }
-    if (el.type === 'dust') {
-      return { ...el, params: { ...el.params, count: 6 } };
+    if (el.type === 'smokeRing') {
+      return {
+        ...el,
+        params: {
+          ...el.params,
+          dyeCount: Math.max(8, Math.round(el.params.dyeCount * 0.6)),
+          filamentCount: Math.max(4, Math.round(el.params.filamentCount * 0.6)),
+        },
+      };
     }
     return { ...el };
   });
