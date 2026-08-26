@@ -365,6 +365,8 @@ export type MutableSimConfig = {
   hitVfxPreviewHeight: 'h' | 'm' | 'l';
   hitVfxPreviewStrength: 'L' | 'M' | 'H';
   hitVfxPreviewKind: 'onHit' | 'onBlock';
+  /** When true, editor「重放」keeps re-triggering after each play finishes. */
+  hitVfxPreviewLoop: boolean;
 };
 
 export function createDefaultSimConfig(): MutableSimConfig {
@@ -645,6 +647,7 @@ export function createDefaultSimConfig(): MutableSimConfig {
     hitVfxPreviewHeight: 'm',
     hitVfxPreviewStrength: 'M',
     hitVfxPreviewKind: 'onHit',
+    hitVfxPreviewLoop: false,
   };
 }
 

@@ -1,6 +1,10 @@
 import * as THREE from 'three/webgpu';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { sanitizeObjectMaterials } from './materialUtils';
+import {
+  isStageLineOverlayName,
+  prepareStageLineOverlay,
+} from './stageLineOverlay';
 
 export type StageLayout = {
   targetWidth: number;
@@ -28,11 +32,14 @@ export class StageView {
     const model = gltf.scene;
 
     sanitizeObjectMaterials(model);
+    prepareStageLineOverlay(model);
     model.traverse((o) => {
       const mesh = o as THREE.Mesh;
       if (!mesh.isMesh) return;
       mesh.receiveShadow = true;
-      mesh.castShadow = true;
+      if (!isStageLineOverlayName(mesh.name)) {
+        mesh.castShadow = true;
+      }
     });
     model.updateMatrixWorld(true);
 

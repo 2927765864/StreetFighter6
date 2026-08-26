@@ -38,6 +38,7 @@ const HIT_VFX_EDITOR_DRAFT_KEYS = [
   'hitVfxPreviewHeight',
   'hitVfxPreviewStrength',
   'hitVfxPreviewKind',
+  'hitVfxPreviewLoop',
 ] as const;
 
 const SHIPPING_URL = '/presets/shipping.json';

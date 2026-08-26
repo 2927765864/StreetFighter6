@@ -279,6 +279,11 @@ export class HitVfxRuntime {
     return this.lightPool;
   }
 
+  /** Number of still-living preview / match instances. */
+  getActiveCount(): number {
+    return this.active.length;
+  }
+
   dispose(): void {
     this.invalidatePrefabs();
     this.manager?.dispose();

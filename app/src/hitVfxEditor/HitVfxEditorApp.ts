@@ -157,27 +157,51 @@ export async function bootHitVfxEditor(): Promise<void> {
     refreshLighting();
   };
 
+  /** True while auto-replaying after「循环重放」+「重放」. */
+  let loopPlaying = false;
+  /** Avoid retrigger before the first spawn is counted as active. */
+  let sawActiveWhileLooping = false;
+
+  const firePreview = (): void => {
+    syncRuntime();
+    const prevHit = CONFIG.hitVfxActiveRecipeOnHitId;
+    const prevBlock = CONFIG.hitVfxActiveRecipeOnBlockId;
+    if (CONFIG.hitVfxPreviewKind === 'onHit') {
+      CONFIG.hitVfxActiveRecipeOnHitId = CONFIG.hitVfxSelectedRecipeId;
+    } else {
+      CONFIG.hitVfxActiveRecipeOnBlockId = CONFIG.hitVfxSelectedRecipeId;
+    }
+    hitVfxRuntime.applyConfig(runtimeSlice());
+    hitVfxDirector.previewTrigger({
+      kind: CONFIG.hitVfxPreviewKind,
+      strength: CONFIG.hitVfxPreviewStrength,
+      height: CONFIG.hitVfxPreviewHeight,
+      x: 0,
+      facing: 1,
+    });
+    CONFIG.hitVfxActiveRecipeOnHitId = prevHit;
+    CONFIG.hitVfxActiveRecipeOnBlockId = prevBlock;
+    hitVfxRuntime.applyConfig(runtimeSlice());
+  };
+
+  const stopLoop = (): void => {
+    loopPlaying = false;
+    sawActiveWhileLooping = false;
+  };
+
   setupHitVfxEditorPanel({
     replay: () => {
-      syncRuntime();
-      const prevHit = CONFIG.hitVfxActiveRecipeOnHitId;
-      const prevBlock = CONFIG.hitVfxActiveRecipeOnBlockId;
-      if (CONFIG.hitVfxPreviewKind === 'onHit') {
-        CONFIG.hitVfxActiveRecipeOnHitId = CONFIG.hitVfxSelectedRecipeId;
-      } else {
-        CONFIG.hitVfxActiveRecipeOnBlockId = CONFIG.hitVfxSelectedRecipeId;
+      if (loopPlaying) {
+        stopLoop();
+        return '已停止循环重放';
       }
-      hitVfxRuntime.applyConfig(runtimeSlice());
-      hitVfxDirector.previewTrigger({
-        kind: CONFIG.hitVfxPreviewKind,
-        strength: CONFIG.hitVfxPreviewStrength,
-        height: CONFIG.hitVfxPreviewHeight,
-        x: 0,
-        facing: 1,
-      });
-      CONFIG.hitVfxActiveRecipeOnHitId = prevHit;
-      CONFIG.hitVfxActiveRecipeOnBlockId = prevBlock;
-      hitVfxRuntime.applyConfig(runtimeSlice());
+      firePreview();
+      if (CONFIG.hitVfxPreviewLoop) {
+        loopPlaying = true;
+        sawActiveWhileLooping = hitVfxRuntime.getActiveCount() > 0;
+        return '已开始循环重放';
+      }
+      return '已重放';
     },
     stepFrame: () => {
       CONFIG.hitVfxPaused = true;
@@ -194,6 +218,9 @@ export async function bootHitVfxEditor(): Promise<void> {
         key === '*'
       ) {
         hitVfxRuntime.invalidatePrefabs();
+      }
+      if (key === 'hitVfxPreviewLoop' && !CONFIG.hitVfxPreviewLoop) {
+        stopLoop();
       }
       syncRuntime();
     },
@@ -216,6 +243,19 @@ export async function bootHitVfxEditor(): Promise<void> {
     const steps = CONFIG.hitVfxStepFrames;
     if (steps > 0) CONFIG.hitVfxStepFrames = 0;
     hitVfxRuntime.tick(wallDt, false, () => steps);
+
+    if (loopPlaying && CONFIG.hitVfxPreviewLoop) {
+      const n = hitVfxRuntime.getActiveCount();
+      if (n > 0) {
+        sawActiveWhileLooping = true;
+      } else if (sawActiveWhileLooping) {
+        firePreview();
+        sawActiveWhileLooping = hitVfxRuntime.getActiveCount() > 0;
+      }
+    } else if (loopPlaying && !CONFIG.hitVfxPreviewLoop) {
+      stopLoop();
+    }
+
     void (async () => {
       await renderer.render(scene, camera);
       requestAnimationFrame(frame);

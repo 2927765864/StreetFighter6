@@ -84,6 +84,7 @@ describe('hitVfx editor draft merge', () => {
       hitVfxPreviewKind: 'onBlock',
       hitVfxPreviewHeight: 'h',
       hitVfxPreviewStrength: 'H',
+      hitVfxPreviewLoop: true,
       hitVfxMaxConcurrent: 3,
       hitVfxSparkLightPoolSize: 2,
       hitVfxPaused: true,
@@ -95,6 +96,7 @@ describe('hitVfx editor draft merge', () => {
     expect(CONFIG.hitVfxPreviewKind).toBe('onBlock');
     expect(CONFIG.hitVfxPreviewHeight).toBe('h');
     expect(CONFIG.hitVfxPreviewStrength).toBe('H');
+    expect(CONFIG.hitVfxPreviewLoop).toBe(true);
     expect(CONFIG.hitVfxMaxConcurrent).toBe(3);
     expect(CONFIG.hitVfxSparkLightPoolSize).toBe(2);
     expect(CONFIG.hitVfxPaused).toBe(true);

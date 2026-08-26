@@ -47,7 +47,8 @@ import {
 } from './hitVfxRecipeOps';
 
 export type HitVfxEditorPanelHooks = {
-  replay: () => void;
+  /** Fire one preview (or start/stop loop). Returns flash text. */
+  replay: () => string;
   stepFrame: () => void;
   invalidate: () => void;
   onConfigChanged: (key: string) => void;
@@ -270,6 +271,7 @@ export function setupHitVfxEditorPanel(
     <label class="tb-item">并发上限 <input type="number" id="hvfx-max" min="1" max="16" step="1" /></label>
     <label class="tb-item">点光池 <input type="number" id="hvfx-pool" min="1" max="8" step="1" /></label>
     <span class="tb-sep"></span>
+    <label class="tb-item"><input type="checkbox" id="hvfx-loop" /> 循环重放</label>
     <button type="button" id="hvfx-replay">重放</button>
     <button type="button" id="hvfx-step">步进一帧</button>
     <button type="button" id="hvfx-rebuild">重建运行时</button>
@@ -313,6 +315,8 @@ export function setupHitVfxEditorPanel(
       CONFIG.hitVfxFollowHitstop;
     (app.querySelector('#hvfx-debug') as HTMLInputElement).checked =
       CONFIG.hitVfxDebug;
+    (app.querySelector('#hvfx-loop') as HTMLInputElement).checked =
+      CONFIG.hitVfxPreviewLoop;
     (app.querySelector('#hvfx-timescale') as HTMLInputElement).value = String(
       CONFIG.hitVfxTimeScale,
     );
@@ -351,6 +355,9 @@ export function setupHitVfxEditorPanel(
     ).checked;
     CONFIG.hitVfxDebug = (
       app.querySelector('#hvfx-debug') as HTMLInputElement
+    ).checked;
+    CONFIG.hitVfxPreviewLoop = (
+      app.querySelector('#hvfx-loop') as HTMLInputElement
     ).checked;
     const ts = Number(
       (app.querySelector('#hvfx-timescale') as HTMLInputElement).value,
@@ -1094,6 +1101,7 @@ export function setupHitVfxEditorPanel(
   bindCheck('#hvfx-seed-lock', 'hitVfxSeedLocked');
   bindCheck('#hvfx-follow-hs', 'hitVfxFollowHitstop');
   bindCheck('#hvfx-debug', 'hitVfxDebug');
+  bindCheck('#hvfx-loop', 'hitVfxPreviewLoop');
 
   const bindNum = (id: string, key: string, apply: (n: number) => void) => {
     const el = app.querySelector(id) as HTMLInputElement;
@@ -1167,8 +1175,7 @@ export function setupHitVfxEditorPanel(
   (app.querySelector('#hvfx-replay') as HTMLButtonElement).addEventListener(
     'click',
     () => {
-      hooks.replay();
-      setFlash('已重放');
+      setFlash(hooks.replay());
     },
   );
   (app.querySelector('#hvfx-step') as HTMLButtonElement).addEventListener(
