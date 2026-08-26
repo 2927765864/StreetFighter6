@@ -128,6 +128,22 @@ export type MatchSimOptions = {
   damageScale: number;
   stageMinX: number;
   stageMaxX: number;
+  /**
+   * Strike contact VFX hook (hit or successful block).
+   * Wired from main → HitVfxDirector; optional so tests need not provide it.
+   */
+  onHitVfx?: (ev: {
+    kind: 'onHit' | 'onBlock';
+    defenderX: number;
+    defenderFacing: number;
+    defenderCrouching: boolean;
+    guardLevel: string;
+    hitstopOnHit?: number;
+    hitstopOnBlock?: number;
+    guardStrength?: string | null;
+    hitAnim?: string | null;
+    guardAnim?: string | null;
+  }) => void;
 };
 
 const DEFAULT_OPTS: MatchSimOptions = {
@@ -925,6 +941,16 @@ export class MatchSim {
           }
           this.lastHitResult = 'block';
           this.hitstopTimer = br.hitstop;
+          this.opts.onHitVfx?.({
+            kind: 'onBlock',
+            defenderX: this.p2.x,
+            defenderFacing: this.p2.facing,
+            defenderCrouching: crouching,
+            guardLevel: level,
+            hitstopOnBlock: mv.hitstopOnBlock,
+            guardStrength: mv.guardStrength,
+            guardAnim: guardAnimForHit(mv.guardAnim, pendingGroup),
+          });
         } else {
           const hr = resolveHitOnHit(mv, {
             hitstopFramesOnHit: this.opts.hitstopFramesOnHit,
@@ -980,6 +1006,16 @@ export class MatchSim {
           }
           this.lastHitResult = 'hit';
           this.hitstopTimer = hr.hitstop;
+          this.opts.onHitVfx?.({
+            kind: 'onHit',
+            defenderX: this.p2.x,
+            defenderFacing: this.p2.facing,
+            defenderCrouching: crouching,
+            guardLevel: level,
+            hitstopOnHit: mv.hitstopOnHit,
+            guardStrength: mv.guardStrength,
+            hitAnim: hitAnimForHit(mv.hitAnim, pendingGroup),
+          });
         }
       }
     }

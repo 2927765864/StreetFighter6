@@ -11,7 +11,34 @@ import { CONFIG_VERSION, isPresetEnvelope } from './types';
 export const STORAGE_KEYS = {
   config: 'sf6RuntimeConfig',
   presets: 'sf6RuntimeControlPresets',
+  hitVfxEditor: 'sf6HitVfxEditorDraft',
 } as const;
+
+/** Keys restored by the hit-VFX editor draft (toolbar + recipes). */
+const HIT_VFX_EDITOR_DRAFT_KEYS = [
+  'hitVfxEnabled',
+  'hitVfxRecipes',
+  'hitVfxElementPresets',
+  'hitVfxActiveRecipeOnHitId',
+  'hitVfxActiveRecipeOnBlockId',
+  'hitVfxSelectedRecipeId',
+  'hitVfxSelectedElementId',
+  'hitVfxSelectedGroupId',
+  'hitVfxPreviewDummyVisible',
+  'hitVfxTimeScale',
+  'hitVfxPaused',
+  'hitVfxStepFrames',
+  'hitVfxSeedLocked',
+  'hitVfxSeed',
+  'hitVfxFollowHitstop',
+  'hitVfxHeightOffsets',
+  'hitVfxMaxConcurrent',
+  'hitVfxSparkLightPoolSize',
+  'hitVfxDebug',
+  'hitVfxPreviewHeight',
+  'hitVfxPreviewStrength',
+  'hitVfxPreviewKind',
+] as const;
 
 const SHIPPING_URL = '/presets/shipping.json';
 
@@ -102,8 +129,71 @@ export function saveCurrentConfig(): void {
   localStorage.setItem(STORAGE_KEYS.config, JSON.stringify(payload));
 }
 
+function pickHitVfxEditorDraft(): Record<string, unknown> {
+  const full = cloneConfig(CONFIG) as unknown as Record<string, unknown>;
+  const out: Record<string, unknown> = { __version: CONFIG_VERSION };
+  for (const key of HIT_VFX_EDITOR_DRAFT_KEYS) {
+    out[key] = full[key];
+  }
+  return out;
+}
+
+/** Editor page: persist preview-bar + recipes so refresh restores them. */
+export function saveHitVfxEditorDraft(): void {
+  localStorage.setItem(
+    STORAGE_KEYS.hitVfxEditor,
+    JSON.stringify(pickHitVfxEditorDraft()),
+  );
+  saveCurrentConfig();
+}
+
+/**
+ * Draft payloads are hit-VFX keys only — never run migrateFlatLightsToList on
+ * them. That migrator injects createDefaultLights() when `lights` is absent,
+ * which would overwrite the live training-scene CONFIG.lights after refresh.
+ */
+export function sanitizeHitVfxEditorDraft(
+  parsed: Record<string, unknown>,
+): Record<string, unknown> {
+  const out: Record<string, unknown> = { __version: CONFIG_VERSION };
+  for (const key of HIT_VFX_EDITOR_DRAFT_KEYS) {
+    if (Object.prototype.hasOwnProperty.call(parsed, key)) {
+      out[key] = parsed[key];
+    }
+  }
+  return out;
+}
+
+export function loadHitVfxEditorDraft(): boolean {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.hitVfxEditor);
+    if (!raw) return false;
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    if (!parsed || typeof parsed !== 'object') return false;
+    // Merge only draft keys onto live CONFIG (shipping + local already applied).
+    applyConfig(sanitizeHitVfxEditorDraft(parsed), cloneConfig(CONFIG));
+    console.info('[config] hit-vfx editor draft applied');
+    return true;
+  } catch (e) {
+    console.warn('[config] loadHitVfxEditorDraft failed', e);
+    return false;
+  }
+}
+
+/** Only the hit-VFX editor draft key — never touch main-scene CONFIG.lights. */
+export function clearHitVfxEditorDraft(): void {
+  localStorage.removeItem(STORAGE_KEYS.hitVfxEditor);
+}
+
 export function clearSavedConfig(): void {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.config);
+    if (raw) backupLocal(raw, 'manual-clear');
+  } catch {
+    /* ignore */
+  }
   localStorage.removeItem(STORAGE_KEYS.config);
+  localStorage.removeItem(STORAGE_KEYS.hitVfxEditor);
 }
 
 export type NamedPresets = Record<string, RuntimeConfig>;

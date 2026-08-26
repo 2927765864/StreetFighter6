@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@pixiv/three-vrm-springbone": "^3.5.5",
-    "three": "^0.185.1"
+    "three": "^0.185.1",
+    "three-plume": "^0.1.1"
   }
 }

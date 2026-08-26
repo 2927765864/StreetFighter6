@@ -4,6 +4,7 @@ import type { LightRig, LightRuntime } from '../../src/render/LightRig';
 import {
   bucketLightsByFollow,
   isHairLightingMesh,
+  mergeUniqueLights,
 } from '../../src/render/LightSelective';
 
 function fakeLight(id: string): { id: number } {
@@ -115,5 +116,23 @@ describe('isHairLightingMesh', () => {
     expect(isHairLightingMesh(body)).toBe(false);
     expect(isHairLightingMesh(cloth)).toBe(false);
     expect(isHairLightingMesh(shoe)).toBe(false);
+  });
+});
+
+describe('mergeUniqueLights', () => {
+  it('appends extras and dedups by light.id', () => {
+    const a = { id: 1 } as never;
+    const b = { id: 2 } as never;
+    const dup = { id: 1 } as never;
+    const c = { id: 3 } as never;
+    const merged = mergeUniqueLights([a, b], [dup, c]);
+    expect(merged).toHaveLength(3);
+    expect(merged.map((l) => l.id)).toEqual([1, 2, 3]);
+  });
+
+  it('returns base when extra is empty', () => {
+    const a = { id: 7 } as never;
+    expect(mergeUniqueLights([a], undefined)).toEqual([a]);
+    expect(mergeUniqueLights([a], [])).toEqual([a]);
   });
 });

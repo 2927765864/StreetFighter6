@@ -59,6 +59,12 @@ export type ControlPanelHooks = {
   isPantsRecording?: () => boolean;
 };
 
+export type HitVfxPanelHooks = {
+  replay: () => void;
+  stepFrame: () => void;
+  invalidate: () => void;
+};
+
 export type LightEditPanelHooks = {
   setGizmoMode: (mode: 'position' | 'target') => void;
   reattach: () => void;
@@ -559,6 +565,33 @@ function buildDom(): HTMLElement {
         )}
       </details>
 
+      <details class="panel-group" data-cat="打击特效">
+        <summary>打击特效</summary>
+        ${sectionShell(
+          'hitVfx',
+          '【打击特效】实战开关（编辑请用独立页）',
+          `
+          <p class="panel-hint">配方编辑、假人预览、慢放步进已迁到独立场景页（保留场地与光照，无角色）。</p>
+          <div class="light-toolbar">
+            <a id="link-hitVfxEditor" class="btn-primary" href="/hit-vfx.html" style="display:inline-block;padding:6px 10px;text-decoration:none;color:inherit;border:1px solid rgba(255,255,255,0.2);border-radius:6px;background:rgba(60,100,180,0.4)">打开特效编辑页</a>
+          </div>
+          ${rowToggle('hitVfxEnabled', '训练场启用打击特效')}
+          ${rowToggle('hitVfxFollowHitstop', '顿帧时冻结特效')}
+          ${rowToggle('hitVfxDebug', '显示击中点标记')}
+          ${rowNumber('hitVfxMaxConcurrent', '并发实例上限', 1, 16, 1)}
+          <div class="panel-row">
+            <div class="panel-row-header"><span>实战未格挡配方</span></div>
+            <select id="sel-hitVfxActiveOnHit"></select>
+          </div>
+          <div class="panel-row">
+            <div class="panel-row-header"><span>实战格挡配方</span></div>
+            <select id="sel-hitVfxActiveOnBlock"></select>
+          </div>
+          `,
+          'expandHitVfx',
+        )}
+      </details>
+
       <details class="panel-group" data-cat="动画">
         <summary>动画</summary>
         ${sectionShell(
@@ -1022,6 +1055,10 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   },
   { id: 'pantsHealthSessionMaxEntries', path: 'pantsHealthSessionMaxEntries' },
   { id: 'pantsHealthSessionKeep', path: 'pantsHealthSessionKeep' },
+  { id: 'hitVfxEnabled', path: 'hitVfxEnabled' },
+  { id: 'hitVfxFollowHitstop', path: 'hitVfxFollowHitstop' },
+  { id: 'hitVfxDebug', path: 'hitVfxDebug' },
+  { id: 'hitVfxMaxConcurrent', path: 'hitVfxMaxConcurrent' },
 ];
 
 const TOGGLE_IDS = new Set([
@@ -1069,13 +1106,20 @@ const TOGGLE_IDS = new Set([
   'pantsHealthReportEnabled',
   'pantsHealthHudEnabled',
   'pantsHealthAutoShowConstraintsOnAbnormal',
+  'hitVfxEnabled',
+  'hitVfxFollowHitstop',
+  'hitVfxDebug',
 ]);
 
 export function setupControlPanel(
   match: MatchSim,
   clock: FrameClock,
   hooks: ControlPanelHooks,
-  opts?: { onChange?: OnChange; lightEdit?: LightEditPanelHooks },
+  opts?: {
+    onChange?: OnChange;
+    lightEdit?: LightEditPanelHooks;
+    hitVfx?: HitVfxPanelHooks;
+  },
 ): ControlPanelApi {
   const host = buildDom();
   const panel = byId<HTMLElement>(host, 'control-panel');
@@ -1224,6 +1268,7 @@ export function setupControlPanel(
     ['expandRenderBoxes', 'renderBoxes', 'sect-renderBoxes'],
     ['expandCamera', 'camera', 'sect-camera'],
     ['expandLighting', 'lighting', 'sect-lighting'],
+    ['expandHitVfx', 'hitVfx', 'sect-hitVfx'],
     ['expandAnimDrive', 'animDrive', 'sect-animDrive'],
     ['expandAnimTest', 'animTest', 'sect-animTest'],
     ['expandHeadband', 'headband', 'sect-headband'],
@@ -2370,6 +2415,45 @@ export function setupControlPanel(
       });
     });
   }
+
+  // --- Hit VFX (combat switches only; full editor is /hit-vfx.html) ---
+  const fillHitVfxRecipeSelects = () => {
+    const recipes = CONFIG.hitVfxRecipes;
+    const fill = (sel: HTMLSelectElement, selectedId: string) => {
+      sel.innerHTML = '';
+      for (const r of recipes) {
+        const opt = document.createElement('option');
+        opt.value = r.id;
+        opt.textContent = `${r.name} (${r.kind})`;
+        sel.appendChild(opt);
+      }
+      if (recipes.some((r) => r.id === selectedId)) sel.value = selectedId;
+      else if (recipes[0]) sel.value = recipes[0].id;
+    };
+    fill(byId(host, 'sel-hitVfxActiveOnHit'), CONFIG.hitVfxActiveRecipeOnHitId);
+    fill(byId(host, 'sel-hitVfxActiveOnBlock'), CONFIG.hitVfxActiveRecipeOnBlockId);
+  };
+  syncers.push(fillHitVfxRecipeSelects);
+  fillHitVfxRecipeSelects();
+
+  byId<HTMLSelectElement>(host, 'sel-hitVfxActiveOnHit').addEventListener(
+    'change',
+    (e) => {
+      CONFIG.hitVfxActiveRecipeOnHitId = (e.target as HTMLSelectElement).value;
+      notify('hitVfxActiveRecipeOnHitId', CONFIG.hitVfxActiveRecipeOnHitId, CONFIG);
+    },
+  );
+  byId<HTMLSelectElement>(host, 'sel-hitVfxActiveOnBlock').addEventListener(
+    'change',
+    (e) => {
+      CONFIG.hitVfxActiveRecipeOnBlockId = (e.target as HTMLSelectElement).value;
+      notify(
+        'hitVfxActiveRecipeOnBlockId',
+        CONFIG.hitVfxActiveRecipeOnBlockId,
+        CONFIG,
+      );
+    },
+  );
 
   byId<HTMLButtonElement>(host, 'btn-save-local').addEventListener('click', () => {
     saveCurrentConfig();

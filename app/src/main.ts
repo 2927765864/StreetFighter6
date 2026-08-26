@@ -28,6 +28,7 @@ import {
   syncLightsFromConfig,
   updateLightHelpers,
 } from './render/LightRig';
+import { refreshTrainingLighting } from './render/trainingLighting';
 import { createLightEditControls } from './render/LightEditControls';
 import {
   applyLightFollow,
@@ -63,6 +64,8 @@ import {
 } from './data/logicGlbMap';
 import { AnimClipLibrary } from './render/AnimClipLibrary';
 import { loadFighterMeshFromUrl } from './render/loadFighterMesh';
+import { HitVfxRuntime } from './render/hitVfx/HitVfxRuntime';
+import { HitVfxDirector } from './render/hitVfx/HitVfxDirector';
 
 // Mesh-only skinned Ryu; combat clips from private/assets/ryu/anims via map
 import stageUrl from '@interim/SF6 Training Stage/SF6 Training Stage.glb?url';
@@ -204,9 +207,10 @@ async function boot(): Promise<void> {
     const r = renderer as THREE.WebGPURenderer & {
       lighting?: InstanceType<typeof DynamicLighting>;
     };
+    // Reserve room for training-stage point lights + hit-VFX spark light pool (plan §12.7).
     r.lighting = new DynamicLighting({
       maxDirectionalLights: 12,
-      maxPointLights: 12,
+      maxPointLights: 12 + Math.max(4, cfg.hitVfxSparkLightPoolSize),
       maxSpotLights: 8,
       maxHemisphereLights: 2,
     });
@@ -226,6 +230,53 @@ async function boot(): Promise<void> {
   camera.position.set(0, cfg.cameraY, cfg.cameraZ);
   camera.up.set(0, 1, 0);
   camera.lookAt(0, cfg.cameraLookY, 0);
+
+  const hitVfxRuntime = new HitVfxRuntime({
+    renderer,
+    scene,
+    camera,
+    config: {
+      hitVfxEnabled: cfg.hitVfxEnabled,
+      hitVfxRecipes: cfg.hitVfxRecipes,
+      hitVfxActiveRecipeOnHitId: cfg.hitVfxActiveRecipeOnHitId,
+      hitVfxActiveRecipeOnBlockId: cfg.hitVfxActiveRecipeOnBlockId,
+      hitVfxTimeScale: cfg.hitVfxTimeScale,
+      hitVfxPaused: cfg.hitVfxPaused,
+      hitVfxStepFrames: cfg.hitVfxStepFrames,
+      hitVfxSeedLocked: cfg.hitVfxSeedLocked,
+      hitVfxSeed: cfg.hitVfxSeed,
+      hitVfxFollowHitstop: cfg.hitVfxFollowHitstop,
+      hitVfxHeightOffsets: cfg.hitVfxHeightOffsets,
+      hitVfxMaxConcurrent: cfg.hitVfxMaxConcurrent,
+      hitVfxSparkLightPoolSize: cfg.hitVfxSparkLightPoolSize,
+      hitVfxDebug: cfg.hitVfxDebug,
+      modelYOffset: cfg.modelYOffset,
+    },
+  });
+  const hitVfxDirector = new HitVfxDirector(hitVfxRuntime);
+  match.opts.onHitVfx = (ev) => hitVfxDirector.onMatchContact(ev);
+
+  /** Training-field keeps combat VFX only; editing lives on /hit-vfx.html. */
+  const syncHitVfxFromConfig = (): void => {
+    hitVfxRuntime.applyConfig({
+      hitVfxEnabled: cfg.hitVfxEnabled,
+      hitVfxRecipes: cfg.hitVfxRecipes,
+      hitVfxActiveRecipeOnHitId: cfg.hitVfxActiveRecipeOnHitId,
+      hitVfxActiveRecipeOnBlockId: cfg.hitVfxActiveRecipeOnBlockId,
+      hitVfxTimeScale: cfg.hitVfxTimeScale,
+      hitVfxPaused: cfg.hitVfxPaused,
+      hitVfxStepFrames: cfg.hitVfxStepFrames,
+      hitVfxSeedLocked: cfg.hitVfxSeedLocked,
+      hitVfxSeed: cfg.hitVfxSeed,
+      hitVfxFollowHitstop: cfg.hitVfxFollowHitstop,
+      hitVfxHeightOffsets: cfg.hitVfxHeightOffsets,
+      hitVfxMaxConcurrent: cfg.hitVfxMaxConcurrent,
+      hitVfxSparkLightPoolSize: cfg.hitVfxSparkLightPoolSize,
+      hitVfxDebug: cfg.hitVfxDebug,
+      modelYOffset: cfg.modelYOffset,
+    });
+  };
+  syncHitVfxFromConfig();
 
   /** Fight-camera only; used for PIP when lightOrbitMode (main view is free orbit). */
   const fightCamera = new THREE.PerspectiveCamera(
@@ -344,19 +395,26 @@ async function boot(): Promise<void> {
   lightEdit.attachSelected();
 
   let wasOrbitMode = cfg.lightOrbitMode;
-  /** Set after stage + fighters exist. */
+  /** Set after stage + fighters exist; also used by refreshTrainingLighting roots. */
   let refreshSelectiveLights: () => void = () => {};
   const refreshLighting = () => {
-    renderer.shadowMap.enabled = cfg.shadowMapEnabled;
-    // 1) create/update Three lights  2) then bind material.lightsNode lists
-    syncLightsFromConfig(THREE, scene, lights, cfg, fighterFollowOrigins());
-    syncFighterDisplayLightLayers();
-    applyEnvironment(THREE, scene, cfg);
-    refreshSelectiveLights();
-    // Second bind next frame: WebGPU + DynamicLighting sometimes miss brand-new lights
-    // if lightsNode is rebuilt in the same turn as scene.add(light).
-    requestAnimationFrame(() => {
-      refreshSelectiveLights();
+    // Same helper as hit-VFX editor — both pages read CONFIG.lights in place.
+    refreshTrainingLighting({
+      THREE,
+      renderer,
+      scene,
+      rig: lights,
+      cfg,
+      origins: fighterFollowOrigins(),
+      roots: {
+        stage: stage.root,
+        ground,
+        p1: p1View.root,
+        p2: p2View.root,
+      },
+      afterSyncLights: () => {
+        syncFighterDisplayLightLayers();
+      },
     });
     lightEdit.attachSelected();
     if (cfg.lightOrbitMode && !wasOrbitMode) {
@@ -743,6 +801,16 @@ async function boot(): Promise<void> {
       ) {
         refreshLighting();
       }
+      if (key === '*' || key.startsWith('hitVfx')) {
+        if (
+          key === '*' ||
+          key === 'hitVfxRecipes' ||
+          key === 'hitVfxSparkLightPoolSize'
+        ) {
+          hitVfxRuntime.invalidatePrefabs();
+        }
+        syncHitVfxFromConfig();
+      }
     },
     lightEdit: {
       setGizmoMode: (m) => lightEdit.setMode(m),
@@ -802,6 +870,12 @@ async function boot(): Promise<void> {
         match.pendingInput = keys.sample();
         match.step();
       }
+    }
+
+    {
+      const steps = cfg.hitVfxStepFrames;
+      if (steps > 0) cfg.hitVfxStepFrames = 0;
+      hitVfxRuntime.tick(wallDt, match.hitstopTimer > 0, () => steps);
     }
 
     const fullW = window.innerWidth;

@@ -4,6 +4,13 @@ import {
   normalizeLightDesc,
   type LightDesc,
 } from './lightTypes';
+import {
+  normalizeHeightOffsets,
+  normalizeHitVfxElementPreset,
+  normalizeHitVfxRecipe,
+  type HitVfxElementPreset,
+  type HitVfxRecipe,
+} from '../render/hitVfx/hitVfxTypes';
 import type { RuntimeConfig } from './types';
 import { CONFIG_VERSION } from './types';
 
@@ -66,6 +73,25 @@ export function mergeConfig(
       }
       continue;
     }
+    if (key === 'hitVfxRecipes' && Array.isArray(value)) {
+      const normalized = value
+        .map((x, i) => normalizeHitVfxRecipe(x, i))
+        .filter((x): x is HitVfxRecipe => x != null);
+      if (normalized.length > 0) {
+        out.hitVfxRecipes = normalized;
+      }
+      continue;
+    }
+    if (key === 'hitVfxElementPresets' && Array.isArray(value)) {
+      out.hitVfxElementPresets = value
+        .map((x, i) => normalizeHitVfxElementPreset(x, i))
+        .filter((x): x is HitVfxElementPreset => x != null);
+      continue;
+    }
+    if (key === 'hitVfxHeightOffsets' && isPlainObject(value)) {
+      out.hitVfxHeightOffsets = normalizeHeightOffsets(value);
+      continue;
+    }
     const baseVal = (out as Record<string, unknown>)[key];
     if (typeof baseVal === 'number' && typeof value === 'number' && Number.isFinite(value)) {
       (out as Record<string, unknown>)[key] = value;
@@ -104,6 +130,13 @@ export function applyConfig(
     })),
     merged.lightMaxCount,
   );
+  CONFIG.hitVfxRecipes = merged.hitVfxRecipes
+    .map((r, i) => normalizeHitVfxRecipe(r, i))
+    .filter((r): r is HitVfxRecipe => r != null);
+  CONFIG.hitVfxElementPresets = (merged.hitVfxElementPresets ?? [])
+    .map((p, i) => normalizeHitVfxElementPreset(p, i))
+    .filter((p): p is HitVfxElementPreset => p != null);
+  CONFIG.hitVfxHeightOffsets = normalizeHeightOffsets(merged.hitVfxHeightOffsets);
 }
 
 export function applyShippingDefaults(

@@ -2,6 +2,15 @@
 
 import { buildFrontHeavyDashDx } from '../combat/loco/DashProfile';
 import {
+  createDefaultHitVfxRecipes,
+  defaultHeightOffsets,
+} from '../render/hitVfx/hitVfxDefaults';
+import type {
+  HitVfxElementPreset,
+  HitVfxHeightOffset,
+  HitVfxRecipe,
+} from '../render/hitVfx/hitVfxTypes';
+import {
   createDefaultLights,
   type LightDesc,
 } from './lightTypes';
@@ -331,6 +340,31 @@ export type MutableSimConfig = {
   /** Keep at most this many session files under docs/reports/pants/sessions/. */
   pantsHealthSessionKeep: number;
   pantsFeelNote: string;
+  /** Hit VFX (docs/plans/ai-execution-plan-hit-vfx-v0.md). */
+  hitVfxEnabled: boolean;
+  hitVfxRecipes: HitVfxRecipe[];
+  hitVfxElementPresets: HitVfxElementPreset[];
+  hitVfxActiveRecipeOnHitId: string;
+  hitVfxActiveRecipeOnBlockId: string;
+  hitVfxSelectedRecipeId: string;
+  hitVfxSelectedElementId: string;
+  hitVfxSelectedGroupId: string;
+  hitVfxPreviewActive: boolean;
+  hitVfxPreviewDummyVisible: boolean;
+  hitVfxTimeScale: number;
+  hitVfxPaused: boolean;
+  hitVfxStepFrames: number;
+  hitVfxSeedLocked: boolean;
+  hitVfxSeed: number;
+  hitVfxFollowHitstop: boolean;
+  hitVfxHeightOffsets: HitVfxHeightOffset;
+  hitVfxMaxConcurrent: number;
+  hitVfxSparkLightPoolSize: number;
+  hitVfxDebug: boolean;
+  /** Preview trigger height / strength (panel). */
+  hitVfxPreviewHeight: 'h' | 'm' | 'l';
+  hitVfxPreviewStrength: 'L' | 'M' | 'H';
+  hitVfxPreviewKind: 'onHit' | 'onBlock';
 };
 
 export function createDefaultSimConfig(): MutableSimConfig {
@@ -588,6 +622,29 @@ export function createDefaultSimConfig(): MutableSimConfig {
     pantsHealthSessionMaxEntries: 1500,
     pantsHealthSessionKeep: 20,
     pantsFeelNote: '',
+    hitVfxEnabled: true,
+    hitVfxRecipes: createDefaultHitVfxRecipes(),
+    hitVfxElementPresets: [],
+    hitVfxActiveRecipeOnHitId: 'ungarded_default',
+    hitVfxActiveRecipeOnBlockId: 'block_default',
+    hitVfxSelectedRecipeId: 'ungarded_default',
+    hitVfxSelectedElementId: 'spark',
+    hitVfxSelectedGroupId: 'main',
+    hitVfxPreviewActive: false,
+    hitVfxPreviewDummyVisible: true,
+    hitVfxTimeScale: 1,
+    hitVfxPaused: false,
+    hitVfxStepFrames: 0,
+    hitVfxSeedLocked: true,
+    hitVfxSeed: 1,
+    hitVfxFollowHitstop: false,
+    hitVfxHeightOffsets: defaultHeightOffsets(),
+    hitVfxMaxConcurrent: 6,
+    hitVfxSparkLightPoolSize: 4,
+    hitVfxDebug: false,
+    hitVfxPreviewHeight: 'm',
+    hitVfxPreviewStrength: 'M',
+    hitVfxPreviewKind: 'onHit',
   };
 }
 

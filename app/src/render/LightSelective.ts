@@ -316,6 +316,31 @@ function assignLightsToRoot(
   });
 }
 
+export type SelectiveLightExtras = {
+  /** Appended to stage/ground global illumination list (e.g. VFX spark pool). */
+  stage?: THREE_NS.Light[];
+  /** Appended to P1 body list (follow + global); hair stays global-only. */
+  p1?: THREE_NS.Light[];
+  /** Appended to P2 body list (follow + global); hair stays global-only. */
+  p2?: THREE_NS.Light[];
+};
+
+/** Dedup by Three light `.id` when appending optional extras to a bucket. */
+export function mergeUniqueLights(
+  base: THREE_NS.Light[],
+  extra: THREE_NS.Light[] | undefined,
+): THREE_NS.Light[] {
+  if (!extra || extra.length === 0) return base;
+  const out = [...base];
+  const seen = new Set(base.map((l) => l.id));
+  for (const light of extra) {
+    if (seen.has(light.id)) continue;
+    seen.add(light.id);
+    out.push(light);
+  }
+  return out;
+}
+
 /**
  * Bind selective light lists to stage vs P1 vs P2 materials.
  * Call after light create/sync and after fighter/stage mesh (re)load.
@@ -329,19 +354,24 @@ export function applySelectiveLightNodes(
     p1: THREE_NS.Object3D;
     p2: THREE_NS.Object3D;
   },
+  extra?: SelectiveLightExtras,
 ): void {
   const b = bucketLightsByFollow(lightDescs, rig);
+  const stageLights = mergeUniqueLights(b.global, extra?.stage);
+  const p1Body = mergeUniqueLights([...b.global, ...b.p1], extra?.p1);
+  const p2Body = mergeUniqueLights([...b.global, ...b.p2], extra?.p2);
   const globalNode = lights([...b.global]);
-  const p1BodyNode = lights([...b.global, ...b.p1]);
-  const p2BodyNode = lights([...b.global, ...b.p2]);
+  const stageNode = lights(stageLights);
+  const p1BodyNode = lights(p1Body);
+  const p2BodyNode = lights(p2Body);
   const shadowAo = buildShadowOnlyAoNode(collectShadowOnlyLights(lightDescs, rig));
 
-  // Stage/ground: only global (no character-follow lights)
-  assignLightsToRoot(roots.stage, globalNode, globalNode, {
+  // Stage/ground: only global (+ optional extras); no character-follow lights
+  assignLightsToRoot(roots.stage, stageNode, stageNode, {
     fighter: false,
     shadowAo,
   });
-  assignLightsToRoot(roots.ground, globalNode, globalNode, {
+  assignLightsToRoot(roots.ground, stageNode, stageNode, {
     fighter: false,
     shadowAo,
   });

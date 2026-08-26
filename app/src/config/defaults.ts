@@ -20,6 +20,7 @@ export function defaultExpandedSections(): ExpandedSections {
     headband: true,
     belt: true,
     pants: true,
+    hitVfx: true,
     extendedSim: false,
     extendedLoco: false,
     extendedAnim: false,
