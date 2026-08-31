@@ -123,9 +123,13 @@ export async function bootHitVfxEditor(): Promise<void> {
     originZ: CONFIG.stageOriginZ,
   });
 
+  // Same overlay scene as training — spark lights stay out of the stage graph.
+  const hitVfxScene = new THREE.Scene();
+  hitVfxScene.name = 'HitVfxOverlay';
+
   const hitVfxRuntime = new HitVfxRuntime({
     renderer,
-    scene,
+    scene: hitVfxScene,
     camera,
     config: runtimeSlice(),
     lightRig: lights,
@@ -142,9 +146,7 @@ export async function bootHitVfxEditor(): Promise<void> {
   emptyP2.name = 'HitVfxEditorEmptyP2';
 
   const refreshLighting = (): void => {
-    const sparkLights = hitVfxRuntime.getLightPool()?.lights ?? [];
-    // Directly drives CONFIG.lights via the same helper as main.ts — no
-    // duplicated / flattened follow-light lists for the stage.
+    // Spark pool lives in hitVfxScene — never bind into character lightsNode.
     refreshTrainingLighting({
       THREE,
       renderer,
@@ -157,8 +159,6 @@ export async function bootHitVfxEditor(): Promise<void> {
         p1: dummy.root,
         p2: emptyP2,
       },
-      // Spark pool only — not a copy of main lights.
-      extra: sparkLights.length > 0 ? { p1: sparkLights } : undefined,
     });
     lights.helperGroup.visible = false;
   };
@@ -300,6 +300,20 @@ export async function bootHitVfxEditor(): Promise<void> {
 
     void (async () => {
       await renderer.render(scene, camera);
+      const prevBackground = scene.background;
+      const prevAutoClear = renderer.autoClear;
+      const prevAutoClearColor = renderer.autoClearColor;
+      const prevAutoClearDepth = renderer.autoClearDepth;
+      scene.background = null;
+      renderer.autoClear = false;
+      renderer.autoClearColor = false;
+      renderer.autoClearDepth = false;
+      renderer.clearDepth();
+      await renderer.render(hitVfxScene, camera);
+      scene.background = prevBackground;
+      renderer.autoClear = prevAutoClear;
+      renderer.autoClearColor = prevAutoClearColor;
+      renderer.autoClearDepth = prevAutoClearDepth;
       requestAnimationFrame(frame);
     })();
   };

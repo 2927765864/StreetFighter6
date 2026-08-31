@@ -20,14 +20,21 @@ const TONE_MAP: Record<VolumeSmokeToneMapping, THREE.ToneMapping> = {
 const KEY_LIGHT_POS = new THREE.Vector3(-4, 8, 4);
 
 /**
- * Dual lighting bridge for volume smoke:
- * - original: CircleSmokeVFX Spot/Point key lights + tone mapping
- * - project: derive uKeyLightPos from LightRig; leave host tone mapping alone
+ * Dual lighting bridge for volume smoke in the hit-VFX overlay scene.
+ *
+ * VolumeNodeMaterial's VolumetricLightingModel multiplies custom scattering by
+ * collected analytic Point/Spot lights. With no such lights the smoke is black.
+ * These helpers live only in the overlay scene, so they never illuminate the
+ * fight stage / fighters during the main passes.
+ *
+ * - original: Spot/Point key + optional host tone mapping
+ * - project: proxy PointLight at LightRig-derived `uKeyLightPos`
  */
 export class VolumeSmokeLighting {
   private readonly scene: THREE.Scene;
   private readonly renderer: WebGPURenderer;
   private lightRig: LightRig | null = null;
+  private readonly mutateHostToneMapping: boolean;
 
   private spotKeyLight: THREE.SpotLight;
   private pointKeyLight: THREE.PointLight;
@@ -46,22 +53,29 @@ export class VolumeSmokeLighting {
     scene: THREE.Scene;
     renderer: WebGPURenderer;
     lightRig?: LightRig | null;
+    /**
+     * When true, original mode rewrites renderer toneMapping/exposure.
+     * Default false: shared hosts must not flash the whole frame when smoke spawns.
+     */
+    mutateHostToneMapping?: boolean;
   }) {
     this.scene = args.scene;
     this.renderer = args.renderer;
     this.lightRig = args.lightRig ?? null;
+    this.mutateHostToneMapping = !!args.mutateHostToneMapping;
 
     this.spotKeyLight = new THREE.SpotLight(0xffffff, 800);
     this.spotKeyLight.position.copy(KEY_LIGHT_POS);
     this.spotKeyLight.angle = Math.PI / 5;
     this.spotKeyLight.penumbra = 1;
-    this.spotKeyLight.castShadow = true;
-    this.spotKeyLight.shadow.mapSize.set(1024, 1024);
+    this.spotKeyLight.castShadow = false;
     this.spotKeyLight.target.position.set(0, 0, 0);
     this.spotKeyLight.visible = false;
     this.scene.add(this.spotKeyLight);
     this.scene.add(this.spotKeyLight.target);
 
+    // Finite distance required: VolumetricLightingModel ignores lights with
+    // `distance === undefined` (directionals). `0` means no cutoff in three.js.
     this.pointKeyLight = new THREE.PointLight(0xffffff, 800, 0, 2);
     this.pointKeyLight.position.copy(KEY_LIGHT_POS);
     this.pointKeyLight.castShadow = false;
@@ -116,6 +130,8 @@ export class VolumeSmokeLighting {
   syncKeyLightPos(): THREE.Vector3 {
     if (this.lastMode === 'project') {
       this.resolveProjectKeyPos(this.keyLightWorldPos);
+      // Keep the proxy PointLight in sync so VolumetricLightingModel matches.
+      this.pointKeyLight.position.copy(this.keyLightWorldPos);
     } else {
       this.keyLightWorldPos.copy(this.keyLight.position);
     }
@@ -123,14 +139,16 @@ export class VolumeSmokeLighting {
   }
 
   private applyOriginal(params: VolumeSmokeParams): void {
-    if (!this.appliedOriginalTone) {
-      this.hostToneMapping = this.renderer.toneMapping;
-      this.hostExposure = this.renderer.toneMappingExposure;
-      this.appliedOriginalTone = true;
+    if (this.mutateHostToneMapping) {
+      if (!this.appliedOriginalTone) {
+        this.hostToneMapping = this.renderer.toneMapping;
+        this.hostExposure = this.renderer.toneMappingExposure;
+        this.appliedOriginalTone = true;
+      }
+      this.renderer.toneMapping =
+        TONE_MAP[params.toneMapping] ?? THREE.ACESFilmicToneMapping;
+      this.renderer.toneMappingExposure = params.exposure;
     }
-    this.renderer.toneMapping =
-      TONE_MAP[params.toneMapping] ?? THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = params.exposure;
 
     const global = !!params.globalLight;
     this.spotKeyLight.visible = !global;
@@ -139,7 +157,6 @@ export class VolumeSmokeLighting {
     this.pointKeyLight.intensity = params.keyLightIntensity;
     this.keyLight = global ? this.pointKeyLight : this.spotKeyLight;
 
-    // Subtle fill so debug floor is visible; volumes use custom scattering.
     this.fillLight.intensity = 0.35;
     this.fillLight.visible = true;
     this.debugFloor.visible = !!params.showFloor;
@@ -147,12 +164,16 @@ export class VolumeSmokeLighting {
 
   private applyProject(params: VolumeSmokeParams): void {
     this.teardownOriginal();
-    this.spotKeyLight.visible = false;
-    this.pointKeyLight.visible = false;
-    this.fillLight.visible = false;
-    // Host stage already has ground; optional debug floor still available.
-    this.debugFloor.visible = !!params.showFloor;
+    // Overlay scene has no LightRig lights — keep a proxy PointLight so
+    // VolumeNodeMaterial is not multiplied by an empty light list.
     this.resolveProjectKeyPos(this.keyLightWorldPos);
+    this.spotKeyLight.visible = false;
+    this.pointKeyLight.visible = true;
+    this.pointKeyLight.position.copy(this.keyLightWorldPos);
+    this.pointKeyLight.intensity = Math.max(1, params.keyLightIntensity || 800);
+    this.keyLight = this.pointKeyLight;
+    this.fillLight.visible = false;
+    this.debugFloor.visible = !!params.showFloor;
   }
 
   private teardownOriginal(): void {

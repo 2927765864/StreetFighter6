@@ -23,7 +23,9 @@ import {
   volumeSmokeShouldBeginFade,
 } from '../../../src/render/hitVfx/volumeSmoke/smokeFade';
 import { scaleVolumeSmokeWorldSizes } from '../../../src/render/hitVfx/volumeSmoke/scaleWorldSize';
+import { VolumeSmokeLighting } from '../../../src/render/hitVfx/volumeSmoke/VolumeSmokeLighting';
 import * as THREE from 'three/webgpu';
+import type { WebGPURenderer } from 'three/webgpu';
 
 describe('scaleVolumeSmokeWorldSizes', () => {
   it('scales absolute world-meter fields self-similarly', () => {
@@ -477,5 +479,110 @@ describe('volumeSmoke plume integration', () => {
     };
     // Three enabled volumeSmokes in one trigger need 3 slots even if each asks for 1.
     expect(VolumeSmokeRuntime.maxPoolSizeFromRecipe(recipe)).toBe(3);
+  });
+});
+
+describe('VolumeSmokeLighting overlay lights', () => {
+  function mockRenderer(
+    overrides?: Partial<{ toneMapping: THREE.ToneMapping; toneMappingExposure: number }>,
+  ): WebGPURenderer {
+    return {
+      toneMapping: overrides?.toneMapping ?? THREE.NoToneMapping,
+      toneMappingExposure: overrides?.toneMappingExposure ?? 1,
+    } as WebGPURenderer;
+  }
+
+  it('enables a collectible PointLight for VolumeNodeMaterial (original/global)', () => {
+    const scene = new THREE.Scene();
+    const lighting = new VolumeSmokeLighting({
+      scene,
+      renderer: mockRenderer(),
+    });
+    lighting.apply(
+      defaultVolumeSmokeParams({
+        lightingMode: 'original',
+        globalLight: true,
+        keyLightIntensity: 800,
+        showFloor: true,
+      }),
+    );
+
+    const point = scene.children.find(
+      (c) => c instanceof THREE.PointLight && c.visible,
+    ) as THREE.PointLight;
+    expect(point).toBeTruthy();
+    expect(point.intensity).toBe(800);
+    // Default layer 0 — must share the overlay camera mask.
+    expect(point.layers.isEnabled(0)).toBe(true);
+    expect(typeof point.distance).toBe('number');
+
+    lighting.dispose();
+  });
+
+  it('keeps a proxy PointLight in project mode for VolumeNodeMaterial', () => {
+    const scene = new THREE.Scene();
+    const lighting = new VolumeSmokeLighting({
+      scene,
+      renderer: mockRenderer(),
+    });
+    lighting.apply(
+      defaultVolumeSmokeParams({
+        lightingMode: 'project',
+        keyLightIntensity: 500,
+      }),
+    );
+    const point = scene.children.find(
+      (c) => c instanceof THREE.PointLight && c.visible,
+    ) as THREE.PointLight;
+    expect(point).toBeTruthy();
+    expect(point.intensity).toBe(500);
+    lighting.syncKeyLightPos();
+    expect(point.position.lengthSq()).toBeGreaterThan(0);
+    lighting.dispose();
+  });
+
+  it('does not rewrite host tone mapping by default', () => {
+    const scene = new THREE.Scene();
+    const renderer = mockRenderer({
+      toneMapping: THREE.NoToneMapping,
+      toneMappingExposure: 1.25,
+    });
+    const lighting = new VolumeSmokeLighting({ scene, renderer });
+    lighting.apply(
+      defaultVolumeSmokeParams({
+        lightingMode: 'original',
+        toneMapping: 'ACESFilmic',
+        exposure: 3,
+      }),
+    );
+    expect(renderer.toneMapping).toBe(THREE.NoToneMapping);
+    expect(renderer.toneMappingExposure).toBe(1.25);
+    lighting.dispose();
+  });
+
+  it('can opt into host tone mapping mutation', () => {
+    const scene = new THREE.Scene();
+    const renderer = mockRenderer({
+      toneMapping: THREE.NoToneMapping,
+      toneMappingExposure: 1,
+    });
+    const lighting = new VolumeSmokeLighting({
+      scene,
+      renderer,
+      mutateHostToneMapping: true,
+    });
+    lighting.apply(
+      defaultVolumeSmokeParams({
+        lightingMode: 'original',
+        toneMapping: 'ACESFilmic',
+        exposure: 2,
+      }),
+    );
+    expect(renderer.toneMapping).toBe(THREE.ACESFilmicToneMapping);
+    expect(renderer.toneMappingExposure).toBe(2);
+    lighting.apply(null);
+    expect(renderer.toneMapping).toBe(THREE.NoToneMapping);
+    expect(renderer.toneMappingExposure).toBe(1);
+    lighting.dispose();
   });
 });

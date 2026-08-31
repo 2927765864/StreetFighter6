@@ -13,6 +13,7 @@ export function pickDisplayFrontId(
 /**
  * Both fighters share the same world Z. True occlusion priority is done in
  * the render loop (scene+back pass, clearDepth, front-only pass) via layers.
+ * Hit VFX use a separate overlay scene rendered after both fighter passes.
  */
 export const FIGHTER_DISPLAY_Z = 0;
 
@@ -24,6 +25,7 @@ export const FIGHTER_DISPLAY_Z_BACK = FIGHTER_DISPLAY_Z;
 /**
  * three.js Layers (not inherited — every mesh under a fighter is set).
  * Camera pass 1: SCENE | BACK. Pass 2 (after clearDepth): FRONT only.
+ * Hit VFX: separate overlay scene after pass 2 (see main.ts).
  */
 export const LAYER_SCENE = 0;
 export const LAYER_FIGHTER_BACK = 1;

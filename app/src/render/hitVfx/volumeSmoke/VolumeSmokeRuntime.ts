@@ -492,6 +492,9 @@ export class VolumeSmokeRuntime {
         focused ?? this.activeTracks[this.activeTracks.length - 1]!;
       this.activeParams = lightingTrack.params;
       this.lighting.apply(this.activeParams);
+    } else {
+      this.activeParams = null;
+      this.lighting.apply(null);
     }
 
     if (this.pool && this.ready) {
@@ -506,6 +509,8 @@ export class VolumeSmokeRuntime {
   clear(): void {
     this.pending = [];
     this.activeTracks = [];
+    this.activeParams = null;
+    this.lighting.apply(null);
     this.pool?.resetAll();
   }
 

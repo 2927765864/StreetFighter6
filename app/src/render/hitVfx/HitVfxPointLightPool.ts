@@ -1,6 +1,9 @@
 /**
  * Pre-allocated PointLight pool — avoid per-hit scene.add/remove
  * (WebGPU DynamicLighting / Discourse #74708; plan §12.1).
+ *
+ * Host should parent these under the hit-VFX overlay scene so they never
+ * illuminate stage / fighters in the main fight pass.
  */
 import * as THREE from 'three/webgpu';
 

@@ -1748,8 +1748,9 @@ function sparkParamsHtml(p: SparkParams): string {
       ${numRow('光距离', 'light.distance', p.light.distance)}
       ${numRow('光衰减', 'light.decay', p.light.decay)}
       ${numRow('光寿命', 'light.lifetimeSec', p.light.lifetimeSec)}
-      ${checkRow('照角色', 'light.castOnCharacter', p.light.castOnCharacter)}
+      ${checkRow('启用点光', 'light.castOnCharacter', p.light.castOnCharacter)}
       ${checkRow('照同组特效', 'light.castOnVfxElements', p.light.castOnVfxElements)}
+      <p class="hvfx-hint">点光仅在命中特效层生效，不会照亮角色与场景；「照同组特效」会提高粒子亮度倍率。</p>
     </div>
   `;
 }
@@ -2084,7 +2085,7 @@ function volumeSmokeParamsHtml(p: VolumeSmokeParams): string {
         ${numRow('主光强度', 'keyLightIntensity', p.keyLightIntensity, '1')}
         ${checkRow('全局光', 'globalLight', p.globalLight)}
         ${checkRow('显示地面', 'showFloor', p.showFloor)}
-        <p class="hvfx-hint">以上五项仅「原项目光照」生效；本项目光照使用 LightRig。</p>
+        <p class="hvfx-hint">以上五项仅「原项目光照」生效；本项目光照使用 LightRig。原项目主光只照体素烟自身（及可选 debug 地面），不会照亮角色与场景；共享场景下默认不改写全局色调映射/曝光。</p>
       </div>
       `,
     )}

@@ -234,9 +234,14 @@ async function boot(): Promise<void> {
   camera.up.set(0, 1, 0);
   camera.lookAt(0, cfg.cameraLookY, 0);
 
+  // Overlay scene: hit VFX never share the fighter layer passes, so they always
+  // composite above both characters after a depth clear.
+  const hitVfxScene = new THREE.Scene();
+  hitVfxScene.name = 'HitVfxOverlay';
+
   const hitVfxRuntime = new HitVfxRuntime({
     renderer,
-    scene,
+    scene: hitVfxScene,
     camera,
     config: {
       hitVfxEnabled: cfg.hitVfxEnabled,
@@ -985,14 +990,14 @@ async function boot(): Promise<void> {
     const gizmoHelper = lightEdit.transform.getHelper();
 
     /**
-     * True 2.5D fighter priority: every part of the front fighter draws over
-     * the back fighter, while each fighter keeps normal self-occlusion.
-     * 1) scene + back fighter
+     * True 2.5D fighter priority + hit VFX above both fighters:
+     * 1) main scene + back fighter
      * 2) clearDepth, then front fighter only
+     * 3) clearDepth, then hitVfxScene overlay (plume / volume smoke / spark lights)
      *
      * Important (WebGPU / three Background): a Color `scene.background` sets
      * forceClear on every render, which would wipe pass 1 even when
-     * autoClear=false. Pass 2 must temporarily clear background + disable
+     * autoClear=false. Later passes must temporarily clear background + disable
      * autoClearColor so the color buffer is loaded, not cleared.
      */
     const renderFightDisplayLayers = async (
@@ -1012,9 +1017,17 @@ async function boot(): Promise<void> {
       renderer.autoClear = false;
       renderer.autoClearColor = false;
       renderer.autoClearDepth = false;
+
       renderer.clearDepth();
       cam.layers.set(LAYER_FIGHTER_FRONT);
       await renderer.render(scene, cam);
+
+      // Overlay uses its own scene (default layer 0). Restore SCENE on the
+      // camera so VFX meshes are visible; fighters are not in hitVfxScene.
+      renderer.clearDepth();
+      cam.layers.set(LAYER_SCENE);
+      await renderer.render(hitVfxScene, cam);
+
       scene.background = prevBackground;
       renderer.autoClear = prevAutoClear;
       renderer.autoClearColor = prevAutoClearColor;
