@@ -39,7 +39,8 @@ export function seedShapeGizmoKind(params: VolumeSmokeParams): string {
   const ringTube = Math.max((params.ringWidth ?? 0.22) * r, 0.015);
   const colH = Math.max((params.columnHeight ?? 1.4) * r * 2, 0.08);
   const rot = params.seedRotation ?? { x: 0, y: 0, z: 0 };
-  return `${shape}:${r.toFixed(3)}:${thick.toFixed(3)}:${ringPeak.toFixed(3)}:${ringTube.toFixed(3)}:${colH.toFixed(3)}:${rot.x}:${rot.y}:${rot.z}`;
+  const off = params.seedOffset ?? { x: 0, y: 0, z: 0 };
+  return `${shape}:${r.toFixed(3)}:${thick.toFixed(3)}:${ringPeak.toFixed(3)}:${ringTube.toFixed(3)}:${colH.toFixed(3)}:${rot.x}:${rot.y}:${rot.z}:${off.x}:${off.y}:${off.z}`;
 }
 
 /**

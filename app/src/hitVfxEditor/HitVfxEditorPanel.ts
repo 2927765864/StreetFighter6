@@ -1955,6 +1955,8 @@ function volumeSmokeParamsHtml(p: VolumeSmokeParams): string {
         ${vec3Row('烟团旋转 (° XYZ)', 'seedRotation', p.seedRotation, '1')}
         <p class="hvfx-hint">先对齐受击方向，再按 XYZ 欧拉角倾斜（球对称，旋转无效）</p>
       </div>
+      ${vec3Row('烟团偏移 (UVW)', 'seedOffset', p.seedOffset, '0.01')}
+      <p class="hvfx-hint">相对盒心偏移种子位置（UVW；0.5≈半盒）；过大可能被裁切</p>
       ${checkRow('显示初始形状', 'showSeedShape', p.showSeedShape)}
       ${numRow('随机种子', 'spawnSeed', p.spawnSeed, '1')}
       <p class="hvfx-hint">同一种子 + 相同参数/命中 → 烟雾过程完全一样</p>

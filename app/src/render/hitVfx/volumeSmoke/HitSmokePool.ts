@@ -87,6 +87,8 @@ export class HitSmokePool {
       volume.params.columnHeight = splatParams.columnHeight;
     if (splatParams.seedRotation != null)
       volume.params.seedRotation = splatParams.seedRotation;
+    if (splatParams.seedOffset != null)
+      volume.params.seedOffset = splatParams.seedOffset;
     if (splatParams.impulseRadial != null)
       volume.params.impulseRadial = splatParams.impulseRadial;
     if (splatParams.impulseSwirl != null)

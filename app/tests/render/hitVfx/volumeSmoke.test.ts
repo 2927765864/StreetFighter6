@@ -90,6 +90,7 @@ describe('volumeSmoke params', () => {
     expect(p.fadeOutSec).toBe(0.3);
     expect(p.fadeCurve).toBe('easeOut');
     expect(p.expandedSections.hitSplat).toBe(true);
+    expect(p.seedOffset).toEqual({ x: 0, y: 0, z: 0 });
   });
 
   it('normalize restores missing fields and clamps poolSize', () => {
@@ -102,6 +103,7 @@ describe('volumeSmoke params', () => {
       endCondition: 'density',
       fadeCurve: 'smoothstep',
       fadeOutSec: -1,
+      seedOffset: { x: 0.12, y: -0.05, z: 0.2 },
     });
     expect(n.poolSize).toBe(8);
     expect(n.lightingMode).toBe('project');
@@ -112,6 +114,12 @@ describe('volumeSmoke params', () => {
     expect(n.endCondition).toBe('density');
     expect(n.fadeCurve).toBe('smoothstep');
     expect(n.fadeOutSec).toBe(0);
+    expect(n.seedOffset).toEqual({ x: 0.12, y: -0.05, z: 0.2 });
+    expect(normalizeVolumeSmokeParams({}).seedOffset).toEqual({
+      x: 0,
+      y: 0,
+      z: 0,
+    });
   });
 
   it('fade mul curves reach 0 at t=1 and 1 at t=0', () => {
@@ -230,6 +238,11 @@ describe('volumeSmoke params', () => {
     expect(seedShapeGizmoKind(defaultVolumeSmokeParams({ seedShape: 'ring' }))).toContain(
       'ring:',
     );
+    const kindA = seedShapeGizmoKind(defaultVolumeSmokeParams());
+    const kindB = seedShapeGizmoKind(
+      defaultVolumeSmokeParams({ seedOffset: { x: 0.1, y: 0, z: 0 } }),
+    );
+    expect(kindA).not.toBe(kindB);
     sphere.dispose();
     disk.dispose();
     ring.dispose();

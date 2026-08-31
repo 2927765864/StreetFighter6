@@ -47,6 +47,8 @@ export type VolumeSmokeParams = {
   ringWidth: number;
   columnHeight: number;
   seedRotation: { x: number; y: number; z: number };
+  /** Seed center offset in volume UVW (0 = box center; ±0.5 ≈ half-box). */
+  seedOffset: { x: number; y: number; z: number };
   showSeedShape: boolean;
   spawnSeed: number;
   randomizeSeed: boolean;
@@ -329,6 +331,7 @@ export function defaultVolumeSmokeParams(
     ringWidth: 0.22,
     columnHeight: 1.4,
     seedRotation: { x: 0, y: 0, z: 0 },
+    seedOffset: { x: 0, y: 0, z: 0 },
     showSeedShape: true,
     spawnSeed: 0,
     randomizeSeed: false,
@@ -752,6 +755,7 @@ export function normalizeVolumeSmokeParams(raw: unknown): VolumeSmokeParams {
     ringWidth: asFinite(o.ringWidth, d.ringWidth),
     columnHeight: asFinite(o.columnHeight, d.columnHeight),
     seedRotation: asVec3(o.seedRotation, d.seedRotation),
+    seedOffset: asVec3(o.seedOffset, d.seedOffset),
     showSeedShape: asBool(o.showSeedShape, d.showSeedShape),
     spawnSeed: Math.round(asFinite(o.spawnSeed, d.spawnSeed)) >>> 0,
     randomizeSeed: asBool(o.randomizeSeed, d.randomizeSeed),

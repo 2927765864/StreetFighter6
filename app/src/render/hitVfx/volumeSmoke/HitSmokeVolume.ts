@@ -89,6 +89,8 @@ export class HitSmokeVolume {
 			columnHeight: 1.4,
 			/** Extra seed tilt in degrees (XYZ), applied after aligning +Y to hit dir. */
 			seedRotation: { x: 0, y: 0, z: 0 },
+			/** Seed center offset in volume UVW (0 = box center). */
+			seedOffset: { x: 0, y: 0, z: 0 },
 			hitImpulse: 14.0,
 			hitDensity: 4.0,
 			hitTemperature: 3.0,
@@ -865,6 +867,14 @@ export class HitSmokeVolume {
 		const baseCenter = centerUVW
 			? centerUVW.clone()
 			: new THREE.Vector3( 0.5, 0.5, 0.5 );
+		const seedOff = this.params.seedOffset;
+		if ( seedOff ) {
+
+			baseCenter.x += seedOff.x || 0;
+			baseCenter.y += seedOff.y || 0;
+			baseCenter.z += seedOff.z || 0;
+
+		}
 		if ( v?.centerOffsetUVW ) {
 
 			baseCenter.x += v.centerOffsetUVW.x;
@@ -1025,6 +1035,7 @@ export class HitSmokeVolume {
 		if ( p.ringWidth != null ) this.params.ringWidth = p.ringWidth;
 		if ( p.columnHeight != null ) this.params.columnHeight = p.columnHeight;
 		if ( p.seedRotation != null ) this.params.seedRotation = p.seedRotation;
+		if ( p.seedOffset != null ) this.params.seedOffset = p.seedOffset;
 		this.syncHitRadiusUVW();
 		this.syncSeedShape();
 		if ( p.impulseRadial != null ) this.uImpulseRadial.value = p.impulseRadial;

@@ -64,6 +64,7 @@ function simParamsFrom(p: VolumeSmokeParams): Record<string, unknown> {
     ringWidth: p.ringWidth,
     columnHeight: p.columnHeight,
     seedRotation: p.seedRotation,
+    seedOffset: p.seedOffset,
     hitImpulse: p.hitImpulse,
     impulseRadial: p.impulseRadial,
     impulseSwirl: p.impulseSwirl,
@@ -308,6 +309,7 @@ export class VolumeSmokeRuntime {
       ringWidth: p.ringWidth,
       columnHeight: p.columnHeight,
       seedRotation: p.seedRotation,
+      seedOffset: p.seedOffset,
       impulseRadial: p.impulseRadial,
       impulseSwirl: p.impulseSwirl,
       impulseSubsteps: p.impulseSubsteps,
@@ -577,12 +579,18 @@ export class VolumeSmokeRuntime {
       this.gizmos.seedKind = '';
       return;
     }
+    const seedOrigin = origin.clone();
+    const boxSize = p.unrestricted ? p.unrestrictedVolumeSize : p.volumeSize;
+    const off = p.seedOffset ?? { x: 0, y: 0, z: 0 };
+    seedOrigin.x += (off.x || 0) * boxSize;
+    seedOrigin.y += (off.y || 0) * boxSize;
+    seedOrigin.z += (off.z || 0) * boxSize;
     const kind = seedShapeGizmoKind(p);
-    // Always rebuild so shape / radius / rotation edits show immediately.
+    // Always rebuild so shape / radius / rotation / offset edits show immediately.
     this.gizmos.seedKind = rebuildSeedShapeGizmo(
       seedGroup,
       p,
-      origin,
+      seedOrigin,
       previewNormal,
     );
     void kind;
