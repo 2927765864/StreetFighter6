@@ -537,6 +537,51 @@ body {
   gap: 6px;
 }
 
+.hvfx-hint {
+  margin: -2px 0 8px;
+  font-size: 11px;
+  opacity: 0.55;
+  line-height: 1.35;
+}
+
+.hvfx-vs-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.hvfx-vs-section-header h3 {
+  margin: 0;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.hvfx-vs-expand {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+.hvfx-vs-expand input {
+  width: auto;
+}
+
+.hvfx-vec3-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 4px;
+}
+
+.hvfx-disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
 .hvfx-row.pair > div {
   display: flex;
   flex-direction: column;

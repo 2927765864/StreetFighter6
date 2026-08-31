@@ -380,6 +380,7 @@ export function compileRecipeToSystemDef(opts: CompileOpts): SystemDef {
   const scale = recipe.strengthScale[strength];
   const seedLocked = true; // caller already baked rng from locked/unlocked seed
   let maxDur = 0.35;
+  let plumeEmitterCount = 0;
 
   const builder = system(`hitvfx_${recipe.id}_${strength}_${seed}`);
 
@@ -390,9 +391,11 @@ export function compileRecipeToSystemDef(opts: CompileOpts): SystemDef {
     if (!el.enabled) continue;
     if (!groupOk(el.groupId)) continue;
     if (el.type === 'sparkLight') continue;
+    if (el.type === 'volumeSmoke') continue; // handled by VolumeSmokeRuntime
     const delay = el.startDelaySec;
     const name = `${el.id}_${el.type}`;
     if (el.type === 'smokeRing') {
+      plumeEmitterCount += 2;
       const boost = el.receiveSparkLight ? vfxLightBoost : 0;
       maxDur = Math.max(
         maxDur,
@@ -426,6 +429,7 @@ export function compileRecipeToSystemDef(opts: CompileOpts): SystemDef {
       );
       continue;
     }
+    plumeEmitterCount += 1;
     builder.emitter(name, (e) => {
       if (el.type === 'spark') {
         const b = applySpark(e, el.params, scale, rng, seedLocked, seed, delay);
@@ -466,6 +470,15 @@ export function compileRecipeToSystemDef(opts: CompileOpts): SystemDef {
       );
       return b;
     });
+  }
+
+  // three-plume SystemBuilder requires ≥1 emitter; volume-only recipes stay empty.
+  if (plumeEmitterCount === 0) {
+    return {
+      name: `hitvfx_${recipe.id}_${strength}_${seed}`,
+      duration: maxDur + 0.15,
+      emitters: [],
+    } as SystemDef;
   }
 
   return builder.duration(maxDur + 0.15).build();
@@ -528,6 +541,16 @@ export function estimateInstanceLifetimeSec(
       const a = el.params.lifetimeSec[1] * scale.lifetimeMul;
       const b = el.params.filamentLifetimeSec[1] * scale.lifetimeMul;
       max = Math.max(max, Math.max(a, b) + el.startDelaySec);
+      continue;
+    }
+    if (el.type === 'volumeSmoke') {
+      const life = el.params.smokeLifespan * scale.lifetimeMul;
+      const fade = Math.max(0, el.params.fadeOutSec ?? 0.3);
+      const horizon =
+        el.params.endCondition === 'density'
+          ? Math.max(life * 4, 6) + fade
+          : life + fade;
+      max = Math.max(max, horizon + el.startDelaySec);
       continue;
     }
     const life =

@@ -45,6 +45,7 @@ import {
   setupControlPanel,
 } from './debug/ControlPanel';
 import { PantsHealthReporter } from './debug/PantsHealthReporter';
+import { FpsHud } from './debug/FpsHud';
 import { BoxEditorApp } from './boxEditor/BoxEditorApp';
 import type { MoveDefinition } from './combat/move/MoveDefinition';
 import {
@@ -210,8 +211,10 @@ async function boot(): Promise<void> {
     // Reserve room for training-stage point lights + hit-VFX spark light pool (plan §12.7).
     r.lighting = new DynamicLighting({
       maxDirectionalLights: 12,
-      maxPointLights: 12 + Math.max(4, cfg.hitVfxSparkLightPoolSize),
-      maxSpotLights: 8,
+      // +2: volume-smoke original Point key + spark pool headroom
+      maxPointLights: 12 + Math.max(4, cfg.hitVfxSparkLightPoolSize) + 2,
+      // +1: volume-smoke original Spot key
+      maxSpotLights: 8 + 1,
       maxHemisphereLights: 2,
     });
   }
@@ -329,6 +332,7 @@ async function boot(): Promise<void> {
   };
 
   const lights = createLightRig(THREE, scene);
+  hitVfxRuntime.setLightRig(lights);
   const syncFighterDisplayLightLayers = (): void => {
     for (const rt of lights.runtimes.values()) {
       enableFighterDisplayLayersOnLight(rt.light);
@@ -643,6 +647,7 @@ async function boot(): Promise<void> {
 
   const debugDraw = new DebugDraw(scene);
   const hud = new HudDom();
+  const fpsHud = new FpsHud();
   const keys = new KeyboardSource();
 
   let boxEditor: BoxEditorApp | null = null;
@@ -855,6 +860,7 @@ async function boot(): Promise<void> {
   function frame(now: number): void {
     const wallDt = (now - last) / 1000;
     last = now;
+    fpsHud.tick(now);
 
     ground.visible = cfg.showFallbackGround;
     grid.visible = cfg.showDebugGrid;

@@ -1,5 +1,6 @@
 import * as THREE from 'three/webgpu';
 import type { WebGPURenderer } from 'three/webgpu';
+import type { LightRig } from '../LightRig';
 import { createMulberry32, ephemeralSeed } from './mulberry32';
 import {
   compileRecipeToSystemDef,
@@ -14,6 +15,7 @@ import type {
   HitVfxRecipe,
   HitVfxTriggerArgs,
 } from './hitVfxTypes';
+import { VolumeSmokeRuntime } from './volumeSmoke/VolumeSmokeRuntime';
 
 export type HitVfxRuntimeConfigSlice = {
   hitVfxEnabled: boolean;
@@ -31,6 +33,12 @@ export type HitVfxRuntimeConfigSlice = {
   hitVfxSparkLightPoolSize: number;
   hitVfxDebug: boolean;
   modelYOffset: number;
+  /**
+   * Editor-only: when present, volume-smoke seed gizmos stay bound to this
+   * element id (`null` = selection is not a volumeSmoke → hide gizmos).
+   * Omit in match so gizmos stay unbound (last spawn wins).
+   */
+  hitVfxEditorGizmoElementId?: string | null;
 };
 
 type ActiveInstance = {
@@ -54,18 +62,32 @@ export class HitVfxRuntime {
   private hitstopActive = false;
   private debugMarker: THREE.Mesh | null = null;
   private rebuildToken = 0;
+  private volumeSmoke: VolumeSmokeRuntime | null = null;
+  private lightRig: LightRig | null = null;
 
   constructor(args: {
     renderer: WebGPURenderer;
     scene: THREE.Object3D;
     camera: THREE.Camera;
     config: HitVfxRuntimeConfigSlice;
+    lightRig?: LightRig | null;
   }) {
     this.renderer = args.renderer;
     this.scene = args.scene;
     this.camera = args.camera;
     this.cfg = args.config;
+    this.lightRig = args.lightRig ?? null;
+    this.volumeSmoke = new VolumeSmokeRuntime({
+      renderer: args.renderer,
+      scene: args.scene as THREE.Scene,
+      lightRig: this.lightRig,
+    });
     this.applyConfig(args.config);
+  }
+
+  setLightRig(rig: LightRig | null): void {
+    this.lightRig = rig;
+    this.volumeSmoke?.setLightRig(rig);
   }
 
   applyConfig(config: HitVfxRuntimeConfigSlice): void {
@@ -73,6 +95,13 @@ export class HitVfxRuntime {
     this.recipesById.clear();
     for (const r of config.hitVfxRecipes) {
       this.recipesById.set(r.id, r);
+    }
+    if ('hitVfxEditorGizmoElementId' in config) {
+      this.volumeSmoke?.setEditorGizmoElementId(
+        config.hitVfxEditorGizmoElementId ?? null,
+      );
+    } else {
+      this.volumeSmoke?.setEditorGizmoElementId(undefined);
     }
     if (!this.lightPool) {
       this.lightPool = new HitVfxPointLightPool(
@@ -122,14 +151,16 @@ export class HitVfxRuntime {
 
   /** Drop registered prefabs (call after recipe edit). */
   invalidatePrefabs(): void {
-    if (!this.manager) return;
-    this.manager.clear();
-    for (const id of this.registeredPrefabIds) {
-      this.manager.unregister(id);
+    if (this.manager) {
+      this.manager.clear();
+      for (const id of this.registeredPrefabIds) {
+        this.manager.unregister(id);
+      }
+      this.registeredPrefabIds.clear();
     }
-    this.registeredPrefabIds.clear();
     this.active = [];
     this.lightPool?.releaseAll();
+    this.volumeSmoke?.clear();
     this.rebuildToken++;
   }
 
@@ -164,6 +195,45 @@ export class HitVfxRuntime {
       this.retireOldest();
     }
 
+    const punchAxis =
+      args.axis != null
+        ? new THREE.Vector3(args.axis[0], args.axis[1], args.axis[2]).normalize()
+        : new THREE.Vector3(-args.facing, 0, 0).normalize();
+
+    // Volume smoke path (parallel to plume).
+    const groupOk = (groupId: string) =>
+      recipe.groups.find((g) => g.id === groupId)?.enabled !== false;
+    const scale = recipe.strengthScale[args.strength];
+    const volumeEls = recipe.elements.filter(
+      (
+        el,
+      ): el is Extract<(typeof recipe.elements)[number], { type: 'volumeSmoke' }> =>
+        el.type === 'volumeSmoke' && el.enabled && groupOk(el.groupId),
+    );
+    const hasVolumeSmoke = volumeEls.length > 0;
+    if (hasVolumeSmoke) {
+      // Size the shared pool for concurrent elements up front (once).
+      void this.volumeSmoke?.ensureReady(
+        VolumeSmokeRuntime.maxPoolSizeFromRecipe(recipe),
+      );
+    }
+    for (const el of volumeEls) {
+      const spawnSeed = el.params.randomizeSeed
+        ? ephemeralSeed()
+        : this.cfg.hitVfxSeedLocked
+          ? seed
+          : el.params.spawnSeed >>> 0;
+      this.volumeSmoke?.schedule({
+        params: el.params,
+        worldPos: worldPos.clone(),
+        worldNormal: punchAxis.clone(),
+        startDelaySec: el.startDelaySec,
+        lifetimeMul: scale.lifetimeMul,
+        spawnSeed,
+        elementId: el.id,
+      });
+    }
+
     const sparkLight = findSparkLight(recipe);
     let vfxLightBoost = 0;
     let lightHandle: number | null = null;
@@ -195,25 +265,25 @@ export class HitVfxRuntime {
       rng,
       vfxLightBoost,
     });
+    const life = estimateInstanceLifetimeSec(recipe, args.strength);
+
     // Only particle emitters — empty system if all particle elements disabled
     if (def.emitters.length === 0) {
-      const life = estimateInstanceLifetimeSec(recipe, args.strength);
       this.active.push({
         prefabId,
         system: null,
         lightHandle,
         deathAt: this.clockSec + life,
       });
+      if (!hasVolumeSmoke && lightHandle == null) {
+        // nothing else
+      }
       return;
     }
 
     this.manager.register(prefabId, () => def);
     this.registeredPrefabIds.add(prefabId);
     // Plume ring births in XZ (local +Y axis). Align +Y with punch axis.
-    const punchAxis =
-      args.axis != null
-        ? new THREE.Vector3(args.axis[0], args.axis[1], args.axis[2]).normalize()
-        : new THREE.Vector3(-args.facing, 0, 0).normalize();
     const quat = new THREE.Quaternion().setFromUnitVectors(
       new THREE.Vector3(0, 1, 0),
       punchAxis.lengthSq() > 1e-8 ? punchAxis : new THREE.Vector3(0, 1, 0),
@@ -222,7 +292,6 @@ export class HitVfxRuntime {
       position: worldPos,
       quaternion: quat,
     });
-    const life = estimateInstanceLifetimeSec(recipe, args.strength);
     this.active.push({
       prefabId,
       system: sys,
@@ -258,6 +327,7 @@ export class HitVfxRuntime {
 
     this.clockSec += vfxDt;
     this.manager.tick(vfxDt, this.camera);
+    this.volumeSmoke?.tick(vfxDt);
 
     if (this.lightPool) {
       for (let i = 0; i < this.lightPool.size; i++) {
@@ -293,7 +363,58 @@ export class HitVfxRuntime {
 
   /** Number of still-living preview / match instances. */
   getActiveCount(): number {
-    return this.active.length;
+    return this.active.length + (this.volumeSmoke?.getActiveCount() ?? 0);
+  }
+
+  getVolumeSmokeRuntime(): VolumeSmokeRuntime | null {
+    return this.volumeSmoke;
+  }
+
+  /**
+   * Live-push volumeSmoke params in the editor (gizmo + running sim uniforms).
+   * Does not clear / respawn; pair with a debounced preview trigger for splat shape.
+   */
+  applyVolumeSmokeEditorParams(
+    params: import('./hitVfxTypes').VolumeSmokeParams,
+    preview?: {
+      x: number;
+      height: HitVfxHeight;
+      facing: number;
+      axis?: [number, number, number];
+      elementId?: string;
+    },
+  ): void {
+    if (!this.volumeSmoke) return;
+    let origin: THREE.Vector3 | undefined;
+    let normal: THREE.Vector3 | undefined;
+    if (preview) {
+      origin = worldPosFromTrigger(
+        {
+          kind: 'onHit',
+          strength: 'M',
+          height: preview.height,
+          x: preview.x,
+          facing: preview.facing,
+          axis: preview.axis,
+        },
+        this.cfg.hitVfxHeightOffsets,
+        this.cfg.modelYOffset,
+      );
+      normal =
+        preview.axis != null
+          ? new THREE.Vector3(
+              preview.axis[0],
+              preview.axis[1],
+              preview.axis[2],
+            ).normalize()
+          : new THREE.Vector3(-preview.facing, 0, 0).normalize();
+    }
+    this.volumeSmoke.applyEditorParams(
+      params,
+      origin,
+      normal,
+      preview?.elementId,
+    );
   }
 
   dispose(): void {
@@ -302,6 +423,8 @@ export class HitVfxRuntime {
     this.manager = null;
     this.lightPool?.dispose();
     this.lightPool = null;
+    this.volumeSmoke?.dispose();
+    this.volumeSmoke = null;
     if (this.debugMarker) {
       this.scene.remove(this.debugMarker);
       this.debugMarker.geometry.dispose();

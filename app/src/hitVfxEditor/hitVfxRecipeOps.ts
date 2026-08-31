@@ -6,6 +6,7 @@ import {
   CREATABLE_ELEMENT_TYPES,
   defaultSparkLightEmbed,
   defaultStrengthScale,
+  defaultVolumeSmokeParams,
   type HitVfxElement,
   type HitVfxElementPreset,
   type HitVfxGroup,
@@ -180,38 +181,13 @@ export function createDefaultElement(
       },
     };
   }
-  if (type === 'smokeRing') {
+  if (type === 'volumeSmoke') {
     return {
       ...base,
-      name: '涡环烟',
-      type: 'smokeRing',
-      receiveSparkLight: true,
-      params: {
-        dyeCount: 48,
-        filamentCount: 12,
-        lifetimeSec: [0.2, 0.32],
-        filamentLifetimeSec: [0.28, 0.42],
-        ringRadius: 0.16,
-        tubeRadius: 0.045,
-        vortexStrength: 8,
-        expandStrength: 1.2,
-        axialSpeed: 0.35,
-        curlAmplitude: 1.4,
-        curlFrequency: 1.8,
-        curlSpeed: 0.4,
-        drag: 3.5,
-        gravityY: 0,
-        size: [0.1, 0.22],
-        filamentWidth: 0.04,
-        color: 0xc8c0b0,
-        opacity: 0.5,
-        blend: 'alpha',
-        sortByDepth: false,
-        helixHelicity: 0.7,
-        helixCoherence: 0.45,
-        helixDecay: 0.08,
-        potentialGrid: 32,
-      },
+      name: '体素烟',
+      type: 'volumeSmoke',
+      receiveSparkLight: false,
+      params: defaultVolumeSmokeParams(),
     };
   }
   return {
@@ -304,8 +280,13 @@ export function saveElementAsPreset(
   name: string,
   presets: HitVfxElementPreset[],
 ): HitVfxElementPreset | null {
-  if (element.type === 'sparkLight') return null;
-  const creatable = element as Exclude<HitVfxElement, { type: 'sparkLight' }>;
+  if (!CREATABLE_ELEMENT_TYPES.includes(element.type as CreatableHitVfxElementType)) {
+    return null;
+  }
+  const creatable = element as Extract<
+    HitVfxElement,
+    { type: CreatableHitVfxElementType }
+  >;
   const preset: HitVfxElementPreset = {
     id: newId('preset'),
     name: name.trim() || creatable.name,

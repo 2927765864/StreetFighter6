@@ -7,7 +7,113 @@ export type HitVfxElementType =
   | 'sparkDebris'
   | 'dust'
   | 'sweat'
-  | 'smokeRing';
+  | 'smokeRing'
+  | 'volumeSmoke';
+
+export type VolumeSmokeSeedShape = 'sphere' | 'disk' | 'ring' | 'column';
+export type VolumeSmokeLightingMode = 'original' | 'project';
+export type VolumeSmokeToneMapping =
+  | 'None'
+  | 'Linear'
+  | 'Reinhard'
+  | 'Cineon'
+  | 'ACESFilmic'
+  | 'AgX'
+  | 'Neutral';
+export type {
+  VolumeSmokeEndCondition,
+  VolumeSmokeFadeCurve,
+} from './volumeSmoke/smokeFade';
+import type {
+  VolumeSmokeEndCondition,
+  VolumeSmokeFadeCurve,
+} from './volumeSmoke/smokeFade';
+
+/** WebGPU voxel fluid smoke — ported from CircleSmokeVFX panel params. */
+export type VolumeSmokeParams = {
+  simulate: boolean;
+  simSpeed: number;
+  pressureIterations: number;
+  volumeSize: number;
+  unrestricted: boolean;
+  unrestrictedVolumeSize: number;
+  fixedSubstepsHz: number;
+
+  hitRadius: number;
+  spawnHeight: number;
+  seedShape: VolumeSmokeSeedShape;
+  shapeThickness: number;
+  ringRadiusRatio: number;
+  ringWidth: number;
+  columnHeight: number;
+  seedRotation: { x: number; y: number; z: number };
+  showSeedShape: boolean;
+  spawnSeed: number;
+  randomizeSeed: boolean;
+  hitImpulse: number;
+  hitDensity: number;
+  hitTemperature: number;
+  impulseRadial: number;
+  impulseSwirl: number;
+  impulseSubsteps: number;
+  impulseScaleWithBox: boolean;
+  velDisplayWarp: number;
+  poolSize: number;
+  /** Peak dye density threshold when endCondition === 'density'. */
+  densityStop: number;
+  /** Mutually exclusive close trigger: lifespan clock vs peak density. */
+  endCondition: VolumeSmokeEndCondition;
+  /** Seconds to fade opacity to 0 after close trigger, then destroy. */
+  fadeOutSec: number;
+  fadeCurve: VolumeSmokeFadeCurve;
+
+  buoyancy: number;
+  weight: number;
+  turbulence: number;
+  turbulenceDecay: number;
+  turbFrequency: number;
+  turbulenceBias: number;
+  turbulenceDir: { x: number; y: number; z: number };
+  showTurbulenceDir: boolean;
+  velDamping: number;
+  smokeLifespan: number;
+  tempLifespan: number;
+
+  raymarchSteps: number;
+  resolutionScale: number;
+  denoise: boolean;
+  denoiseStrength: number;
+  shadowAbsorption: number;
+  shadowAmbient: number;
+  powderStrength: number;
+  multiScattering: number;
+  phaseAsymmetry: number;
+  /** CSS hex e.g. #b0b0b0 */
+  smokeColor: string;
+  densityGain: number;
+  stepsDecayEnable: boolean;
+  useRenderPipeline: boolean;
+
+  lightingMode: VolumeSmokeLightingMode;
+  toneMapping: VolumeSmokeToneMapping;
+  exposure: number;
+  keyLightIntensity: number;
+  globalLight: boolean;
+  showFloor: boolean;
+
+  expandedSections: {
+    basicRun: boolean;
+    simDomain: boolean;
+    simTime: boolean;
+    hitSplat: boolean;
+    hitPool: boolean;
+    fluidForces: boolean;
+    fluidLife: boolean;
+    renderLook: boolean;
+    renderPost: boolean;
+    sceneLight: boolean;
+  };
+};
 export type HitVfxHeight = 'h' | 'm' | 'l';
 export type HitVfxStrength = 'L' | 'M' | 'H';
 
@@ -127,7 +233,8 @@ export type HitVfxElement =
   | (HitVfxElementBase & { type: 'sparkDebris'; params: SparkDebrisParams })
   | (HitVfxElementBase & { type: 'dust'; params: DustParams })
   | (HitVfxElementBase & { type: 'sweat'; params: SweatParams })
-  | (HitVfxElementBase & { type: 'smokeRing'; params: SmokeRingParams });
+  | (HitVfxElementBase & { type: 'smokeRing'; params: SmokeRingParams })
+  | (HitVfxElementBase & { type: 'volumeSmoke'; params: VolumeSmokeParams });
 
 export type HitVfxStrengthScale = {
   countMul: number;
@@ -168,8 +275,8 @@ export type HitVfxElementPreset = {
 
 export const CREATABLE_ELEMENT_TYPES: Exclude<
   HitVfxElementType,
-  'sparkLight' | 'dust'
->[] = ['spark', 'sparkDebris', 'smokeRing', 'sweat'];
+  'sparkLight' | 'dust' | 'smokeRing'
+>[] = ['spark', 'sparkDebris', 'sweat', 'volumeSmoke'];
 
 export type HitVfxHeightOffset = Record<
   HitVfxHeight,
@@ -197,7 +304,94 @@ const ELEMENT_TYPES: HitVfxElementType[] = [
   'dust',
   'sweat',
   'smokeRing',
+  'volumeSmoke',
 ];
+
+export function defaultVolumeSmokeParams(
+  overrides?: Partial<VolumeSmokeParams>,
+): VolumeSmokeParams {
+  return {
+    simulate: true,
+    simSpeed: 1.0,
+    pressureIterations: 6,
+    volumeSize: 3,
+    unrestricted: false,
+    unrestrictedVolumeSize: 12,
+    fixedSubstepsHz: 120,
+
+    hitRadius: 0.36,
+    spawnHeight: 0,
+    seedShape: 'sphere',
+    shapeThickness: 0.28,
+    ringRadiusRatio: 0.65,
+    ringWidth: 0.22,
+    columnHeight: 1.4,
+    seedRotation: { x: 0, y: 0, z: 0 },
+    showSeedShape: true,
+    spawnSeed: 0,
+    randomizeSeed: false,
+    hitImpulse: 14,
+    hitDensity: 4,
+    hitTemperature: 3,
+    impulseRadial: 0.2,
+    impulseSwirl: 1.2,
+    impulseSubsteps: 8,
+    impulseScaleWithBox: true,
+    velDisplayWarp: 0.04,
+    poolSize: 2,
+    densityStop: 0.02,
+    endCondition: 'lifespan',
+    fadeOutSec: 0.3,
+    fadeCurve: 'easeOut',
+
+    buoyancy: 2.0,
+    weight: 0.15,
+    turbulence: 2.5,
+    turbulenceDecay: 0.1,
+    turbFrequency: 8,
+    turbulenceBias: 0,
+    turbulenceDir: { x: 0, y: 1, z: 0 },
+    showTurbulenceDir: true,
+    velDamping: 0.35,
+    smokeLifespan: 1.2,
+    tempLifespan: 0.8,
+
+    raymarchSteps: 24,
+    resolutionScale: 0.5,
+    denoise: true,
+    denoiseStrength: 0.5,
+    shadowAbsorption: 2,
+    shadowAmbient: 0.5,
+    powderStrength: 0.4,
+    multiScattering: 0.5,
+    phaseAsymmetry: 0,
+    smokeColor: '#b0b0b0',
+    densityGain: 1,
+    stepsDecayEnable: true,
+    useRenderPipeline: false,
+
+    lightingMode: 'original',
+    toneMapping: 'ACESFilmic',
+    exposure: 1.2,
+    keyLightIntensity: 800,
+    globalLight: false,
+    showFloor: false,
+
+    expandedSections: {
+      basicRun: true,
+      simDomain: true,
+      simTime: false,
+      hitSplat: true,
+      hitPool: false,
+      fluidForces: true,
+      fluidLife: true,
+      renderLook: true,
+      renderPost: false,
+      sceneLight: true,
+    },
+    ...overrides,
+  };
+}
 
 export function defaultSmokeRingParams(
   overrides?: Partial<SmokeRingParams>,
@@ -464,6 +658,172 @@ function normalizeSweatParams(raw: unknown): SweatParams {
   };
 }
 
+function asVec3(
+  v: unknown,
+  fallback: { x: number; y: number; z: number },
+): { x: number; y: number; z: number } {
+  if (!v || typeof v !== 'object') return { ...fallback };
+  const o = v as Record<string, unknown>;
+  return {
+    x: asFinite(o.x, fallback.x),
+    y: asFinite(o.y, fallback.y),
+    z: asFinite(o.z, fallback.z),
+  };
+}
+
+function asSmokeColor(v: unknown, fallback: string): string {
+  if (typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v)) return v;
+  if (typeof v === 'number' && Number.isFinite(v)) {
+    return `#${(v >>> 0).toString(16).padStart(6, '0')}`;
+  }
+  return fallback;
+}
+
+const TONE_MAPPINGS: VolumeSmokeToneMapping[] = [
+  'None',
+  'Linear',
+  'Reinhard',
+  'Cineon',
+  'ACESFilmic',
+  'AgX',
+  'Neutral',
+];
+
+const SEED_SHAPES: VolumeSmokeSeedShape[] = [
+  'sphere',
+  'disk',
+  'ring',
+  'column',
+];
+
+const END_CONDITIONS: VolumeSmokeEndCondition[] = ['lifespan', 'density'];
+const FADE_CURVES: VolumeSmokeFadeCurve[] = [
+  'linear',
+  'easeOut',
+  'easeIn',
+  'smoothstep',
+];
+
+export function normalizeVolumeSmokeParams(raw: unknown): VolumeSmokeParams {
+  const o = (raw && typeof raw === 'object' ? raw : {}) as Record<
+    string,
+    unknown
+  >;
+  const d = defaultVolumeSmokeParams();
+  const seedShapeRaw = String(o.seedShape ?? d.seedShape);
+  const seedShape = SEED_SHAPES.includes(seedShapeRaw as VolumeSmokeSeedShape)
+    ? (seedShapeRaw as VolumeSmokeSeedShape)
+    : d.seedShape;
+  const toneRaw = String(o.toneMapping ?? d.toneMapping);
+  const toneMapping = TONE_MAPPINGS.includes(toneRaw as VolumeSmokeToneMapping)
+    ? (toneRaw as VolumeSmokeToneMapping)
+    : d.toneMapping;
+  const lightingMode: VolumeSmokeLightingMode =
+    o.lightingMode === 'project' ? 'project' : 'original';
+  const expandedRaw =
+    o.expandedSections && typeof o.expandedSections === 'object'
+      ? (o.expandedSections as Record<string, unknown>)
+      : {};
+  let pressureIterations = Math.round(
+    asFinite(o.pressureIterations, d.pressureIterations),
+  );
+  pressureIterations = Math.max(2, Math.floor(pressureIterations / 2) * 2);
+  return {
+    simulate: asBool(o.simulate, d.simulate),
+    simSpeed: asFinite(o.simSpeed, d.simSpeed),
+    pressureIterations,
+    volumeSize: asFinite(o.volumeSize, d.volumeSize),
+    unrestricted: asBool(o.unrestricted, d.unrestricted),
+    unrestrictedVolumeSize: asFinite(
+      o.unrestrictedVolumeSize,
+      d.unrestrictedVolumeSize,
+    ),
+    fixedSubstepsHz: Math.round(
+      asFinite(o.fixedSubstepsHz, d.fixedSubstepsHz),
+    ),
+    hitRadius: asFinite(o.hitRadius, d.hitRadius),
+    spawnHeight: asFinite(o.spawnHeight, d.spawnHeight),
+    seedShape,
+    shapeThickness: asFinite(o.shapeThickness, d.shapeThickness),
+    ringRadiusRatio: asFinite(o.ringRadiusRatio, d.ringRadiusRatio),
+    ringWidth: asFinite(o.ringWidth, d.ringWidth),
+    columnHeight: asFinite(o.columnHeight, d.columnHeight),
+    seedRotation: asVec3(o.seedRotation, d.seedRotation),
+    showSeedShape: asBool(o.showSeedShape, d.showSeedShape),
+    spawnSeed: Math.round(asFinite(o.spawnSeed, d.spawnSeed)) >>> 0,
+    randomizeSeed: asBool(o.randomizeSeed, d.randomizeSeed),
+    hitImpulse: asFinite(o.hitImpulse, d.hitImpulse),
+    hitDensity: asFinite(o.hitDensity, d.hitDensity),
+    hitTemperature: asFinite(o.hitTemperature, d.hitTemperature),
+    impulseRadial: asFinite(o.impulseRadial, d.impulseRadial),
+    impulseSwirl: asFinite(o.impulseSwirl, d.impulseSwirl),
+    impulseSubsteps: Math.round(
+      asFinite(o.impulseSubsteps, d.impulseSubsteps),
+    ),
+    impulseScaleWithBox: asBool(o.impulseScaleWithBox, d.impulseScaleWithBox),
+    velDisplayWarp: asFinite(o.velDisplayWarp, d.velDisplayWarp),
+    poolSize: Math.max(
+      1,
+      Math.min(8, Math.round(asFinite(o.poolSize, d.poolSize))),
+    ),
+    densityStop: asFinite(o.densityStop, d.densityStop),
+    endCondition: END_CONDITIONS.includes(
+      o.endCondition as VolumeSmokeEndCondition,
+    )
+      ? (o.endCondition as VolumeSmokeEndCondition)
+      : d.endCondition,
+    fadeOutSec: Math.max(0, asFinite(o.fadeOutSec, d.fadeOutSec)),
+    fadeCurve: FADE_CURVES.includes(o.fadeCurve as VolumeSmokeFadeCurve)
+      ? (o.fadeCurve as VolumeSmokeFadeCurve)
+      : d.fadeCurve,
+    buoyancy: asFinite(o.buoyancy, d.buoyancy),
+    weight: asFinite(o.weight, d.weight),
+    turbulence: asFinite(o.turbulence, d.turbulence),
+    turbulenceDecay: asFinite(o.turbulenceDecay, d.turbulenceDecay),
+    turbFrequency: asFinite(o.turbFrequency, d.turbFrequency),
+    turbulenceBias: asFinite(o.turbulenceBias, d.turbulenceBias),
+    turbulenceDir: asVec3(o.turbulenceDir, d.turbulenceDir),
+    showTurbulenceDir: asBool(o.showTurbulenceDir, d.showTurbulenceDir),
+    velDamping: asFinite(o.velDamping, d.velDamping),
+    smokeLifespan: asFinite(o.smokeLifespan, d.smokeLifespan),
+    tempLifespan: asFinite(o.tempLifespan, d.tempLifespan),
+    raymarchSteps: Math.round(asFinite(o.raymarchSteps, d.raymarchSteps)),
+    resolutionScale: asFinite(o.resolutionScale, d.resolutionScale),
+    denoise: asBool(o.denoise, d.denoise),
+    denoiseStrength: asFinite(o.denoiseStrength, d.denoiseStrength),
+    shadowAbsorption: asFinite(o.shadowAbsorption, d.shadowAbsorption),
+    shadowAmbient: asFinite(o.shadowAmbient, d.shadowAmbient),
+    powderStrength: asFinite(o.powderStrength, d.powderStrength),
+    multiScattering: asFinite(o.multiScattering, d.multiScattering),
+    phaseAsymmetry: asFinite(o.phaseAsymmetry, d.phaseAsymmetry),
+    smokeColor: asSmokeColor(o.smokeColor, d.smokeColor),
+    densityGain: asFinite(o.densityGain, d.densityGain),
+    stepsDecayEnable: asBool(o.stepsDecayEnable, d.stepsDecayEnable),
+    useRenderPipeline: asBool(o.useRenderPipeline, d.useRenderPipeline),
+    lightingMode,
+    toneMapping,
+    exposure: asFinite(o.exposure, d.exposure),
+    keyLightIntensity: asFinite(o.keyLightIntensity, d.keyLightIntensity),
+    globalLight: asBool(o.globalLight, d.globalLight),
+    showFloor: asBool(o.showFloor, d.showFloor),
+    expandedSections: {
+      basicRun: asBool(expandedRaw.basicRun, d.expandedSections.basicRun),
+      simDomain: asBool(expandedRaw.simDomain, d.expandedSections.simDomain),
+      simTime: asBool(expandedRaw.simTime, d.expandedSections.simTime),
+      hitSplat: asBool(expandedRaw.hitSplat, d.expandedSections.hitSplat),
+      hitPool: asBool(expandedRaw.hitPool, d.expandedSections.hitPool),
+      fluidForces: asBool(
+        expandedRaw.fluidForces,
+        d.expandedSections.fluidForces,
+      ),
+      fluidLife: asBool(expandedRaw.fluidLife, d.expandedSections.fluidLife),
+      renderLook: asBool(expandedRaw.renderLook, d.expandedSections.renderLook),
+      renderPost: asBool(expandedRaw.renderPost, d.expandedSections.renderPost),
+      sceneLight: asBool(expandedRaw.sceneLight, d.expandedSections.sceneLight),
+    },
+  };
+}
+
 export function normalizeHitVfxElement(
   raw: unknown,
   index: number,
@@ -501,6 +861,9 @@ export function normalizeHitVfxElement(
   }
   if (type === 'smokeRing') {
     return { ...base, type, params: normalizeSmokeRingParams(o.params) };
+  }
+  if (type === 'volumeSmoke') {
+    return { ...base, type, params: normalizeVolumeSmokeParams(o.params) };
   }
   return { ...base, type: 'sweat', params: normalizeSweatParams(o.params) };
 }

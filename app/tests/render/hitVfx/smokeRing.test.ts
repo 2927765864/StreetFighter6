@@ -14,10 +14,36 @@ import {
   createUngardedDefaultRecipe,
 } from '../../../src/render/hitVfx/hitVfxDefaults';
 import {
+  defaultSmokeRingParams,
+  defaultStrengthScale,
   normalizeHitVfxElement,
   type HitVfxRecipe,
   type SmokeRingParams,
 } from '../../../src/render/hitVfx/hitVfxTypes';
+
+function recipeWithSmokeRing(
+  params?: Partial<SmokeRingParams>,
+): HitVfxRecipe {
+  return {
+    id: 'smoke_ring_fixture',
+    name: 'smokeRing fixture',
+    kind: 'onHit',
+    groups: [{ id: 'main', name: '主组', enabled: true }],
+    elements: [
+      {
+        id: 'smokeRing',
+        name: '涡环烟',
+        type: 'smokeRing',
+        enabled: true,
+        groupId: 'main',
+        startDelaySec: 0,
+        receiveSparkLight: true,
+        params: defaultSmokeRingParams(params),
+      },
+    ],
+    strengthScale: defaultStrengthScale(),
+  };
+}
 
 describe('smokeRing migration', () => {
   it('migrates dust → smokeRing with dyeCount', () => {
@@ -44,7 +70,7 @@ describe('smokeRing migration', () => {
 
 describe('smokeRing compile', () => {
   it('uses ring birth and helix force; no cone / plume vortex / curlNoise', () => {
-    const recipe = createUngardedDefaultRecipe();
+    const recipe = recipeWithSmokeRing();
     const smoke = recipe.elements.find((e) => e.type === 'smokeRing');
     expect(smoke?.type).toBe('smokeRing');
     const rng = createMulberry32(1);
@@ -79,7 +105,7 @@ describe('smokeRing compile', () => {
   });
 
   it('is seed-stable for counts', () => {
-    const recipe = createUngardedDefaultRecipe();
+    const recipe = recipeWithSmokeRing();
     const a = compileRecipeToSystemDef({
       recipe,
       strength: 'M',
@@ -133,14 +159,14 @@ describe('RingVortexField potential vs velocity divergence', () => {
   });
 });
 
-describe('default recipe smokeRing params', () => {
-  it('has required SmokeRingParams fields', () => {
+describe('default recipe excludes smokeRing', () => {
+  it('does not include smokeRing in unguarded default', () => {
     const recipe: HitVfxRecipe = createUngardedDefaultRecipe();
-    const el = recipe.elements.find((e) => e.type === 'smokeRing');
-    expect(el).toBeTruthy();
-    const p = el!.params as SmokeRingParams;
-    expect(p.potentialGrid).toBe(32);
-    expect(p.gravityY).toBe(0);
-    expect(p.sortByDepth).toBe(false);
+    expect(recipe.elements.some((e) => e.type === 'smokeRing')).toBe(false);
+    expect(recipe.elements.map((e) => e.type).sort()).toEqual([
+      'spark',
+      'sparkDebris',
+      'sweat',
+    ]);
   });
 });

@@ -13,7 +13,8 @@ describe('HitVfxPlumeCompiler', () => {
       rng: createMulberry32(1),
       vfxLightBoost: 0.5,
     });
-    expect(def.emitters.length).toBeGreaterThanOrEqual(4);
+    // spark + sparkDebris + sweat (smokeRing removed from defaults)
+    expect(def.emitters.length).toBeGreaterThanOrEqual(3);
     // sparkLight is pool-only, not a plume emitter
     expect(def.emitters.every((e) => !e.name?.includes('sparkLight'))).toBe(
       true,

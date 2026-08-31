@@ -16,6 +16,16 @@ import stageUrl from '@interim/SF6 Training Stage/SF6 Training Stage.glb?url';
 const EDITOR_P1_LOGIC_X = -1.2;
 const EDITOR_P2_LOGIC_X = 1.2;
 
+function editorGizmoElementId(): string | null {
+  const recipe =
+    CONFIG.hitVfxRecipes.find((r) => r.id === CONFIG.hitVfxSelectedRecipeId) ??
+    CONFIG.hitVfxRecipes[0];
+  const el = recipe?.elements.find(
+    (e) => e.id === CONFIG.hitVfxSelectedElementId,
+  );
+  return el?.type === 'volumeSmoke' ? el.id : null;
+}
+
 function runtimeSlice() {
   return {
     hitVfxEnabled: CONFIG.hitVfxEnabled,
@@ -33,6 +43,7 @@ function runtimeSlice() {
     hitVfxSparkLightPoolSize: CONFIG.hitVfxSparkLightPoolSize,
     hitVfxDebug: CONFIG.hitVfxDebug,
     modelYOffset: CONFIG.modelYOffset,
+    hitVfxEditorGizmoElementId: editorGizmoElementId(),
   };
 }
 
@@ -65,8 +76,10 @@ export async function bootHitVfxEditor(): Promise<void> {
     };
     r.lighting = new DynamicLighting({
       maxDirectionalLights: 12,
-      maxPointLights: 12 + Math.max(4, CONFIG.hitVfxSparkLightPoolSize),
-      maxSpotLights: 8,
+      // +2: volume-smoke original Point key + spark pool headroom
+      maxPointLights: 12 + Math.max(4, CONFIG.hitVfxSparkLightPoolSize) + 2,
+      // +1: volume-smoke original Spot key
+      maxSpotLights: 8 + 1,
       maxHemisphereLights: 2,
     });
   }
@@ -115,6 +128,7 @@ export async function bootHitVfxEditor(): Promise<void> {
     scene,
     camera,
     config: runtimeSlice(),
+    lightRig: lights,
   });
   const hitVfxDirector = new HitVfxDirector(hitVfxRuntime);
 
@@ -203,6 +217,12 @@ export async function bootHitVfxEditor(): Promise<void> {
       }
       return '已重放';
     },
+    replayNow: () => {
+      firePreview();
+      if (loopPlaying) {
+        sawActiveWhileLooping = hitVfxRuntime.getActiveCount() > 0;
+      }
+    },
     stepFrame: () => {
       CONFIG.hitVfxPaused = true;
       CONFIG.hitVfxStepFrames += 1;
@@ -217,12 +237,26 @@ export async function bootHitVfxEditor(): Promise<void> {
         key === 'hitVfxSparkLightPoolSize' ||
         key === '*'
       ) {
-        hitVfxRuntime.invalidatePrefabs();
+        // Volume-smoke param edits notify hitVfxRecipes but handle live update
+        // via onVolumeSmokeParamsChanged + debounced replay — skip hard clear here
+        // when only soft-notifying would wipe the viewport between keystrokes.
+        // Structural edits still call hooks.invalidate() explicitly.
+        if (key === 'hitVfxSparkLightPoolSize' || key === '*') {
+          hitVfxRuntime.invalidatePrefabs();
+        }
       }
       if (key === 'hitVfxPreviewLoop' && !CONFIG.hitVfxPreviewLoop) {
         stopLoop();
       }
       syncRuntime();
+    },
+    onVolumeSmokeParamsChanged: (params, elementId) => {
+      hitVfxRuntime.applyVolumeSmokeEditorParams(params, {
+        x: 0,
+        height: CONFIG.hitVfxPreviewHeight,
+        facing: 1,
+        elementId,
+      });
     },
   });
 
