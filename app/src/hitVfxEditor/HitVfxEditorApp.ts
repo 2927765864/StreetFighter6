@@ -223,6 +223,30 @@ export async function bootHitVfxEditor(): Promise<void> {
         sawActiveWhileLooping = hitVfxRuntime.getActiveCount() > 0;
       }
     },
+    replayVolumeSmokeElement: (elementId) => {
+      syncRuntime();
+      const prevHit = CONFIG.hitVfxActiveRecipeOnHitId;
+      const prevBlock = CONFIG.hitVfxActiveRecipeOnBlockId;
+      if (CONFIG.hitVfxPreviewKind === 'onHit') {
+        CONFIG.hitVfxActiveRecipeOnHitId = CONFIG.hitVfxSelectedRecipeId;
+      } else {
+        CONFIG.hitVfxActiveRecipeOnBlockId = CONFIG.hitVfxSelectedRecipeId;
+      }
+      hitVfxRuntime.applyConfig(runtimeSlice());
+      hitVfxRuntime.replayVolumeSmokeElement(elementId, {
+        kind: CONFIG.hitVfxPreviewKind,
+        strength: CONFIG.hitVfxPreviewStrength,
+        height: CONFIG.hitVfxPreviewHeight,
+        x: 0,
+        facing: 1,
+      });
+      CONFIG.hitVfxActiveRecipeOnHitId = prevHit;
+      CONFIG.hitVfxActiveRecipeOnBlockId = prevBlock;
+      hitVfxRuntime.applyConfig(runtimeSlice());
+      if (loopPlaying) {
+        sawActiveWhileLooping = hitVfxRuntime.getActiveCount() > 0;
+      }
+    },
     stepFrame: () => {
       CONFIG.hitVfxPaused = true;
       CONFIG.hitVfxStepFrames += 1;

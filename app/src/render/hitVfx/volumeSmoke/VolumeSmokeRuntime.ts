@@ -10,7 +10,10 @@ import {
   rebuildSeedShapeGizmo,
   seedShapeGizmoKind,
 } from './seedShapeGizmo';
-import { scaleVolumeSmokeWorldSizes } from './scaleWorldSize';
+import {
+  scaleVolumeSmokeWorldSizes,
+  volumeSmokeTrackMatchesEditorFocus,
+} from './scaleWorldSize';
 import { buildSpawnVariation, randomUint32 } from './spawnSeed';
 
 export type VolumeSmokeSpawnRequest = {
@@ -42,6 +45,8 @@ type ActiveTrack = {
 };
 
 function simParamsFrom(p: VolumeSmokeParams): Record<string, unknown> {
+  // Nested vectors are cloned so HitSmokeVolume.Object.assign cannot alias
+  // recipe / sibling track params into the volume instance.
   return {
     simulate: p.simulate,
     simSpeed: p.simSpeed,
@@ -55,7 +60,7 @@ function simParamsFrom(p: VolumeSmokeParams): Record<string, unknown> {
     turbulenceDecay: p.turbulenceDecay,
     turbFrequency: p.turbFrequency,
     turbulenceBias: p.turbulenceBias,
-    turbulenceDir: p.turbulenceDir,
+    turbulenceDir: { ...p.turbulenceDir },
     velDamping: p.velDamping,
     hitRadius: p.hitRadius,
     seedShape: p.seedShape,
@@ -63,8 +68,8 @@ function simParamsFrom(p: VolumeSmokeParams): Record<string, unknown> {
     ringRadiusRatio: p.ringRadiusRatio,
     ringWidth: p.ringWidth,
     columnHeight: p.columnHeight,
-    seedRotation: p.seedRotation,
-    seedOffset: p.seedOffset,
+    seedRotation: { ...p.seedRotation },
+    seedOffset: { ...(p.seedOffset ?? { x: 0, y: 0, z: 0 }) },
     hitImpulse: p.hitImpulse,
     impulseRadial: p.impulseRadial,
     impulseSwirl: p.impulseSwirl,
@@ -253,13 +258,25 @@ export class VolumeSmokeRuntime {
       this.spawnNow(req);
       return;
     }
-    this.pending.push({ ...req, fireAt: this.clockSec + req.startDelaySec });
+    // Keep params as the recipe author ref so randomizeSeed can write back.
+    // Isolation happens when spawnNow builds the per-track scaled clone.
+    this.pending.push({
+      ...req,
+      worldPos: req.worldPos.clone(),
+      worldNormal: req.worldNormal.clone(),
+      fireAt: this.clockSec + req.startDelaySec,
+    });
   }
 
   private spawnNow(req: VolumeSmokeSpawnRequest): void {
     if (!this.pool || !this.ready) {
-      // Queue until pool ready.
-      this.pending.push({ ...req, fireAt: this.clockSec });
+      // Queue until pool ready — keep author params ref for seed write-back.
+      this.pending.push({
+        ...req,
+        worldPos: req.worldPos.clone(),
+        worldNormal: req.worldNormal.clone(),
+        fireAt: this.clockSec,
+      });
       return;
     }
 
@@ -364,6 +381,20 @@ export class VolumeSmokeRuntime {
   }
 
   /**
+   * Drop pending + active instances for one recipe element only.
+   * Sibling volumeSmoke bursts keep simulating.
+   */
+  clearElement(elementId: string): void {
+    this.pending = this.pending.filter((p) => p.elementId !== elementId);
+    for (let i = this.activeTracks.length - 1; i >= 0; i--) {
+      const track = this.activeTracks[i]!;
+      if (track.elementId !== elementId) continue;
+      if (track.volume.active) track.volume.resetImmediate();
+      this.activeTracks.splice(i, 1);
+    }
+  }
+
+  /**
    * Editor live path: push params into the matching element's running volume(s)
    * + refresh seed gizmo — never rewrite sibling volumeSmoke instances.
    * `params` are author (unscaled) values; `sizeMul` applies self-similar world scale.
@@ -381,11 +412,8 @@ export class VolumeSmokeRuntime {
     const gizmoMul =
       sizeMul !== undefined
         ? sizeMul
-        : (this.activeTracks.find(
-            (t) =>
-              elementId == null ||
-              t.elementId == null ||
-              t.elementId === elementId,
+        : (this.activeTracks.find((t) =>
+            volumeSmokeTrackMatchesEditorFocus(elementId, t.elementId),
           )?.sizeMul ?? 1);
     const scaledForGizmo = scaleVolumeSmokeWorldSizes(params, gizmoMul);
     this.activeParams = scaledForGizmo;
@@ -393,11 +421,7 @@ export class VolumeSmokeRuntime {
     if (this.pool && this.ready) {
       const keyPos = this.lighting.syncKeyLightPos();
       for (const track of this.activeTracks) {
-        if (
-          elementId != null &&
-          track.elementId != null &&
-          track.elementId !== elementId
-        ) {
+        if (!volumeSmokeTrackMatchesEditorFocus(elementId, track.elementId)) {
           continue;
         }
         if (!track.volume.active) continue;
@@ -412,6 +436,14 @@ export class VolumeSmokeRuntime {
           0.05,
           scaled.smokeLifespan * track.lifetimeMul,
         );
+        const fadeOutSec = Math.max(0, scaled.fadeOutSec ?? 0.3);
+        const trackHorizon =
+          scaled.endCondition === 'density'
+            ? Math.max(track.effectiveLifespan * 4, 6) + fadeOutSec
+            : track.effectiveLifespan + fadeOutSec;
+        // Keep track budget in sync with live lifespan edits so siblings are
+        // not the only ones that still get stepped after deathAt.
+        track.deathAt = this.clockSec + trackHorizon + 0.05;
         track.volume.maxLife =
           scaled.endCondition === 'density'
             ? Number.POSITIVE_INFINITY

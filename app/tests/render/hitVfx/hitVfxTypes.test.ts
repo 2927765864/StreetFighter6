@@ -21,6 +21,21 @@ describe('hitVfxTypes', () => {
     expect(spark?.type === 'spark' && spark.params.light.enabled).toBe(true);
   });
 
+  it('block and onHit default recipes do not share element params', () => {
+    const [onHit, onBlock] = createDefaultHitVfxRecipes();
+    const debrisHit = onHit!.elements.find((e) => e.type === 'sparkDebris');
+    const debrisBlock = onBlock!.elements.find((e) => e.type === 'sparkDebris');
+    expect(debrisHit).toBeTruthy();
+    expect(debrisBlock).toBeTruthy();
+    expect(debrisHit!.params).not.toBe(debrisBlock!.params);
+    if (debrisHit && debrisBlock && debrisHit.type === 'sparkDebris') {
+      debrisHit.params.count = 99;
+      expect(
+        debrisBlock.type === 'sparkDebris' && debrisBlock.params.count,
+      ).not.toBe(99);
+    }
+  });
+
   it('migrates legacy sparkLight into spark.params.light', () => {
     const raw = {
       id: 'legacy',

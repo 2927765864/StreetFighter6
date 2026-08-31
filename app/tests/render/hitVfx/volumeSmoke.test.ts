@@ -13,7 +13,11 @@ import {
   VolumeSmokeRuntime,
   volumeSmokeOwnsEditorGizmo,
 } from '../../../src/render/hitVfx/volumeSmoke/VolumeSmokeRuntime';
-import { buildSpawnVariation } from '../../../src/render/hitVfx/volumeSmoke/spawnSeed';
+import {
+  buildSpawnVariation,
+  SPAWN_NOISE_OFFSET_AMP,
+  SPAWN_TIME_PHASE_AMP,
+} from '../../../src/render/hitVfx/volumeSmoke/spawnSeed';
 import {
   createSeedShapeGeometry,
   seedShapeGizmoKind,
@@ -22,7 +26,11 @@ import {
   volumeSmokeFadeMul,
   volumeSmokeShouldBeginFade,
 } from '../../../src/render/hitVfx/volumeSmoke/smokeFade';
-import { scaleVolumeSmokeWorldSizes } from '../../../src/render/hitVfx/volumeSmoke/scaleWorldSize';
+import {
+  cloneVolumeSmokeParams,
+  scaleVolumeSmokeWorldSizes,
+  volumeSmokeTrackMatchesEditorFocus,
+} from '../../../src/render/hitVfx/volumeSmoke/scaleWorldSize';
 import { VolumeSmokeLighting } from '../../../src/render/hitVfx/volumeSmoke/VolumeSmokeLighting';
 import * as THREE from 'three/webgpu';
 import type { WebGPURenderer } from 'three/webgpu';
@@ -52,12 +60,43 @@ describe('scaleVolumeSmokeWorldSizes', () => {
     expect(src.hitRadius).toBe(0.36);
   });
 
-  it('treats sizeMul=1 as identity clone', () => {
+  it('treats sizeMul=1 as identity clone with isolated nested objects', () => {
     const src = defaultVolumeSmokeParams({ volumeSize: 4, hitRadius: 0.5 });
     const out = scaleVolumeSmokeWorldSizes(src, 1);
     expect(out.volumeSize).toBe(4);
     expect(out.hitRadius).toBe(0.5);
     expect(out).not.toBe(src);
+    expect(out.seedRotation).not.toBe(src.seedRotation);
+    expect(out.seedOffset).not.toBe(src.seedOffset);
+    expect(out.turbulenceDir).not.toBe(src.turbulenceDir);
+    expect(out.expandedSections).not.toBe(src.expandedSections);
+    out.smokeLifespan = 9;
+    out.seedRotation.x = 42;
+    expect(src.smokeLifespan).toBe(1.2);
+    expect(src.seedRotation.x).toBe(0);
+  });
+
+  it('cloneVolumeSmokeParams isolates sibling mutations', () => {
+    const a = defaultVolumeSmokeParams({ smokeLifespan: 4 });
+    const b = cloneVolumeSmokeParams(a);
+    b.smokeLifespan = 10;
+    b.turbulenceDir.x = 0.5;
+    expect(a.smokeLifespan).toBe(4);
+    expect(a.turbulenceDir.x).toBe(0);
+  });
+
+  it('volumeSmokeTrackMatchesEditorFocus isolates siblings and missing ids', () => {
+    // Unbound (match) → apply to all.
+    expect(volumeSmokeTrackMatchesEditorFocus(undefined, 'a')).toBe(true);
+    expect(volumeSmokeTrackMatchesEditorFocus(undefined, undefined)).toBe(true);
+    // Explicit no-focus → apply to none.
+    expect(volumeSmokeTrackMatchesEditorFocus(null, 'a')).toBe(false);
+    expect(volumeSmokeTrackMatchesEditorFocus('', 'a')).toBe(false);
+    // Focused on a: only a matches; missing track id must NOT match.
+    expect(volumeSmokeTrackMatchesEditorFocus('a', 'a')).toBe(true);
+    expect(volumeSmokeTrackMatchesEditorFocus('a', 'b')).toBe(false);
+    expect(volumeSmokeTrackMatchesEditorFocus('a', undefined)).toBe(false);
+    expect(volumeSmokeTrackMatchesEditorFocus('a', null)).toBe(false);
   });
 
   it('falls back to 1 for non-finite mul and clamps negatives to 0', () => {
@@ -216,6 +255,32 @@ describe('volumeSmoke params', () => {
     expect(
       normalizeVolumeSmokeParams({ spawnVariationAmount: -2 }).spawnVariationAmount,
     ).toBe(0);
+  });
+
+  it('spawnVariationAmount baselines stay below curl-period saturation', () => {
+    // Default turbFrequency=8 → UVW period ≈ 0.125. Old amps (2.2 / 48) made
+    // amount≈0.05 already fully decorrelate curl samples.
+    expect(SPAWN_NOISE_OFFSET_AMP).toBeLessThanOrEqual(0.25);
+    expect(SPAWN_TIME_PHASE_AMP).toBeLessThanOrEqual(6);
+    for (const seed of [1, 2, 99, 12345, 0xffffffff]) {
+      const small = buildSpawnVariation(seed, 0.1);
+      expect(Math.abs(small.noiseOffset.x)).toBeLessThanOrEqual(
+        SPAWN_NOISE_OFFSET_AMP * 0.1 + 1e-9,
+      );
+      expect(Math.abs(small.noiseOffset.y)).toBeLessThanOrEqual(
+        SPAWN_NOISE_OFFSET_AMP * 0.1 + 1e-9,
+      );
+      expect(Math.abs(small.noiseOffset.z)).toBeLessThanOrEqual(
+        SPAWN_NOISE_OFFSET_AMP * 0.1 + 1e-9,
+      );
+      expect(small.timePhase).toBeGreaterThanOrEqual(0);
+      expect(small.timePhase).toBeLessThanOrEqual(SPAWN_TIME_PHASE_AMP * 0.1 + 1e-9);
+      const full = buildSpawnVariation(seed, 1);
+      expect(Math.abs(full.noiseOffset.x)).toBeLessThanOrEqual(
+        SPAWN_NOISE_OFFSET_AMP + 1e-9,
+      );
+      expect(full.timePhase).toBeLessThanOrEqual(SPAWN_TIME_PHASE_AMP + 1e-9);
+    }
   });
 
   it('seed shape gizmo geometry differs by seedShape', () => {

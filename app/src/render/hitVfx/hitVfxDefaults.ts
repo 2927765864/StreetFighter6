@@ -107,22 +107,23 @@ export function createUngardedDefaultRecipe(): HitVfxRecipe {
 /** Plan §3.6 block_default */
 export function createBlockDefaultRecipe(): HitVfxRecipe {
   const base = createUngardedDefaultRecipe();
+  // Deep-clone elements so block/onHit recipes never share params objects.
   const elements = base.elements.map((el) => {
-    if (el.type === 'sweat') {
-      return { ...el, enabled: false };
+    const copy = structuredClone(el);
+    if (copy.type === 'sweat') {
+      copy.enabled = false;
+      return copy;
     }
-    if (el.type === 'spark') {
-      return {
-        ...el,
-        params: {
-          ...el.params,
-          count: 14,
-          brightness: 0.8,
-          light: { ...el.params.light, intensity: 2.2 },
-        },
+    if (copy.type === 'spark') {
+      copy.params = {
+        ...copy.params,
+        count: 14,
+        brightness: 0.8,
+        light: { ...copy.params.light, intensity: 2.2 },
       };
+      return copy;
     }
-    return { ...el };
+    return copy;
   });
   return {
     id: 'block_default',

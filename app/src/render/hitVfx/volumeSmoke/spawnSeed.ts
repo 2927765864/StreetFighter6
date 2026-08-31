@@ -2,7 +2,15 @@
  * Seeded spawn variation for hit smoke.
  * Same seed → same jitter. Use randomUint32() when "randomize each spawn" is on.
  * `amount` scales all jitter: 0 = none, 1 = authored baseline, >1 = stronger.
+ *
+ * noiseOffset / timePhase baselines stay near ~1 curl period at default turbFrequency=8
+ * (UVW period ≈ 1/8). Larger values saturate early: amount≈0.05 already looks fully random.
  */
+
+/** UVW curl-sample shift at amount=1 (~1.4 periods @ turbFrequency=8). */
+export const SPAWN_NOISE_OFFSET_AMP = 0.18;
+/** Simulation time phase (seconds) at amount=1 (~1 ambient period @ turbFrequency=8). */
+export const SPAWN_TIME_PHASE_AMP = 4;
 
 export function mulberry32(seed: number): () => number {
   let a = seed >>> 0;
@@ -72,8 +80,12 @@ export function buildSpawnVariation(
   return {
     seed: seedU,
     amount: amt,
-    noiseOffset: { x: signed(2.2), y: signed(2.2), z: signed(2.2) },
-    timePhase: rng() * 48 * amt,
+    noiseOffset: {
+      x: signed(SPAWN_NOISE_OFFSET_AMP),
+      y: signed(SPAWN_NOISE_OFFSET_AMP),
+      z: signed(SPAWN_NOISE_OFFSET_AMP),
+    },
+    timePhase: rng() * SPAWN_TIME_PHASE_AMP * amt,
     centerOffsetUVW: {
       x: signed(0.035),
       y: signed(0.035),

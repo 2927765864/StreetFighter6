@@ -56,6 +56,8 @@ export type HitVfxEditorPanelHooks = {
   replay: () => string;
   /** Always fire one preview (does not toggle loop). */
   replayNow: () => void;
+  /** Soft-replay one volumeSmoke element without clearing siblings. */
+  replayVolumeSmokeElement?: (elementId: string) => void;
   stepFrame: () => void;
   invalidate: () => void;
   onConfigChanged: (key: string) => void;
@@ -951,9 +953,10 @@ export function setupHitVfxEditorPanel(
       const volumeBump = () => {
         // Persist into CONFIG recipes, but do NOT invalidate/clear the pool —
         // that made the viewport look "frozen" until a manual replay.
+        // Also avoid full-recipe replay: siblings must keep their own life/params.
         notify('hitVfxRecipes');
         hooks.onVolumeSmokeParamsChanged?.(element.params, element.id);
-        scheduleVolumeSmokeReplay();
+        scheduleVolumeSmokeReplay(element.id);
       };
       bindParamFields(inspBody, element, volumeBump);
       bindVolumeSmokeExtras(inspBody, element, volumeBump);
@@ -966,13 +969,22 @@ export function setupHitVfxEditorPanel(
   };
 
   let volumeReplayTimer = 0;
-  const scheduleVolumeSmokeReplay = () => {
+  let volumeReplayElementId: string | null = null;
+  const scheduleVolumeSmokeReplay = (elementId: string) => {
+    volumeReplayElementId = elementId;
     if (volumeReplayTimer) window.clearTimeout(volumeReplayTimer);
     volumeReplayTimer = window.setTimeout(() => {
       volumeReplayTimer = 0;
-      // Clear previous burst, then always re-fire (do not toggle loop).
-      hooks.invalidate();
-      hooks.replayNow();
+      const id = volumeReplayElementId;
+      volumeReplayElementId = null;
+      if (!id) return;
+      // Respawn only the edited element — never wipe sibling volumeSmoke bursts.
+      if (hooks.replayVolumeSmokeElement) {
+        hooks.replayVolumeSmokeElement(id);
+      } else {
+        hooks.invalidate();
+        hooks.replayNow();
+      }
     }, 280);
   };
 
@@ -1960,8 +1972,8 @@ function volumeSmokeParamsHtml(p: VolumeSmokeParams): string {
       ${checkRow('显示初始形状', 'showSeedShape', p.showSeedShape)}
       ${numRow('随机种子', 'spawnSeed', p.spawnSeed, '1')}
       <p class="hvfx-hint">同一种子 + 相同参数/命中 → 烟雾过程完全一样</p>
-      ${numRow('随机幅度', 'spawnVariationAmount', p.spawnVariationAmount)}
-      <p class="hvfx-hint">0=完全不随机；1=当前默认抖动；大于1可加大抖动</p>
+      ${numRow('随机幅度', 'spawnVariationAmount', p.spawnVariationAmount, '0.05')}
+      <p class="hvfx-hint">0=完全不随机；0.1~0.3=细微差异；1=默认抖动；大于1可再加大</p>
       ${checkRow('每次随机种子', 'randomizeSeed', p.randomizeSeed)}
       <div class="hvfx-row"><button type="button" id="hvfx-vs-reroll-seed">掷一次种子</button></div>
       ${numRow('烟雾出现高度偏置 (米)', 'spawnHeight', p.spawnHeight)}

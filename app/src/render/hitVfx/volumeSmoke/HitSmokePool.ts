@@ -85,10 +85,15 @@ export class HitSmokePool {
     if (splatParams.ringWidth != null) volume.params.ringWidth = splatParams.ringWidth;
     if (splatParams.columnHeight != null)
       volume.params.columnHeight = splatParams.columnHeight;
-    if (splatParams.seedRotation != null)
-      volume.params.seedRotation = splatParams.seedRotation;
-    if (splatParams.seedOffset != null)
-      volume.params.seedOffset = splatParams.seedOffset;
+    // Clone nested vectors — never alias recipe / sibling params into the volume.
+    if (splatParams.seedRotation != null) {
+      const r = splatParams.seedRotation as { x: number; y: number; z: number };
+      volume.params.seedRotation = { x: r.x, y: r.y, z: r.z };
+    }
+    if (splatParams.seedOffset != null) {
+      const o = splatParams.seedOffset as { x: number; y: number; z: number };
+      volume.params.seedOffset = { x: o.x, y: o.y, z: o.z };
+    }
     if (splatParams.impulseRadial != null)
       volume.params.impulseRadial = splatParams.impulseRadial;
     if (splatParams.impulseSwirl != null)

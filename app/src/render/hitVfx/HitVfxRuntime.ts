@@ -13,6 +13,7 @@ import type {
   HitVfxHeight,
   HitVfxHeightOffset,
   HitVfxRecipe,
+  HitVfxRecipeKind,
   HitVfxStrength,
   HitVfxTriggerArgs,
 } from './hitVfxTypes';
@@ -429,6 +430,75 @@ export class HitVfxRuntime {
       preview?.elementId,
       sizeMul,
     );
+  }
+
+  /**
+   * Editor soft-replay: clear + re-schedule only one volumeSmoke element so
+   * sibling instances in the same group keep their own authored params/life.
+   */
+  replayVolumeSmokeElement(
+    elementId: string,
+    args: {
+      kind: HitVfxRecipeKind;
+      strength: HitVfxStrength;
+      height: HitVfxHeight;
+      x: number;
+      facing: number;
+      axis?: [number, number, number];
+    },
+  ): void {
+    if (!this.volumeSmoke || !this.cfg.hitVfxEnabled) return;
+    const recipeId =
+      args.kind === 'onBlock'
+        ? this.cfg.hitVfxActiveRecipeOnBlockId
+        : this.cfg.hitVfxActiveRecipeOnHitId;
+    const recipe = this.recipesById.get(recipeId);
+    if (!recipe) return;
+    const el = recipe.elements.find(
+      (e) =>
+        e.id === elementId &&
+        e.type === 'volumeSmoke' &&
+        e.enabled &&
+        recipe.groups.find((g) => g.id === e.groupId)?.enabled !== false,
+    );
+    if (!el || el.type !== 'volumeSmoke') return;
+
+    this.volumeSmoke.clearElement(elementId);
+
+    const off = this.cfg.hitVfxHeightOffsets[args.height] ??
+      this.cfg.hitVfxHeightOffsets.m;
+    const worldPos = new THREE.Vector3(
+      args.x,
+      this.cfg.modelYOffset + off.y,
+      off.z * (args.facing >= 0 ? 1 : -1),
+    );
+    const punchAxis =
+      args.axis != null
+        ? new THREE.Vector3(args.axis[0], args.axis[1], args.axis[2]).normalize()
+        : new THREE.Vector3(-args.facing, 0, 0).normalize();
+    const scale = recipe.strengthScale[args.strength];
+    const seed = this.cfg.hitVfxSeedLocked
+      ? this.cfg.hitVfxSeed >>> 0
+      : ephemeralSeed();
+    const spawnSeed = el.params.randomizeSeed
+      ? ephemeralSeed()
+      : this.cfg.hitVfxSeedLocked
+        ? seed
+        : el.params.spawnSeed >>> 0;
+
+    void this.volumeSmoke.ensureReady(
+      VolumeSmokeRuntime.maxPoolSizeFromRecipe(recipe),
+    );
+    this.volumeSmoke.schedule({
+      params: el.params,
+      worldPos,
+      worldNormal: punchAxis,
+      startDelaySec: el.startDelaySec,
+      lifetimeMul: scale.lifetimeMul,
+      sizeMul: scale.sizeMul,
+      spawnSeed,
+      elementId: el.id,
+    });
   }
 
   dispose(): void {
