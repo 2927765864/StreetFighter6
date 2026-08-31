@@ -10,6 +10,7 @@ import {
   rebuildSeedShapeGizmo,
   seedShapeGizmoKind,
 } from './seedShapeGizmo';
+import { scaleVolumeSmokeWorldSizes } from './scaleWorldSize';
 import { buildSpawnVariation, randomUint32 } from './spawnSeed';
 
 export type VolumeSmokeSpawnRequest = {
@@ -19,6 +20,8 @@ export type VolumeSmokeSpawnRequest = {
   /** Absolute start delay from trigger time. */
   startDelaySec: number;
   lifetimeMul: number;
+  /** strengthScale.sizeMul — self-similar world size (see scaleVolumeSmokeWorldSizes). */
+  sizeMul: number;
   spawnSeed: number;
   /** Recipe element id — used to keep editor seed gizmo on the selection. */
   elementId?: string;
@@ -27,10 +30,12 @@ export type VolumeSmokeSpawnRequest = {
 type PendingSpawn = VolumeSmokeSpawnRequest & { fireAt: number };
 
 type ActiveTrack = {
+  /** Scaled params fed to sim each tick (hitRadius is reapplied in stepSimulation). */
   params: VolumeSmokeParams;
   deathAt: number;
   elementId?: string;
   lifetimeMul: number;
+  sizeMul: number;
   /** Baked smokeLifespan * lifetimeMul — kept per instance so siblings don't share life. */
   effectiveLifespan: number;
   volume: import('./HitSmokeVolume').HitSmokeVolume;
@@ -257,8 +262,8 @@ export class VolumeSmokeRuntime {
       return;
     }
 
-    const p = req.params;
-    if (p.useRenderPipeline && !this.warnedPipeline) {
+    const author = req.params;
+    if (author.useRenderPipeline && !this.warnedPipeline) {
       console.warn(
         '[volumeSmoke] useRenderPipeline is kept for parity but the host scene uses direct render.',
       );
@@ -266,11 +271,14 @@ export class VolumeSmokeRuntime {
     }
 
     let seed = req.spawnSeed >>> 0;
-    if (p.randomizeSeed) {
+    if (author.randomizeSeed) {
       seed = randomUint32();
-      p.spawnSeed = seed;
+      // Write back onto recipe params so the editor can display the rolled seed.
+      author.spawnSeed = seed;
     }
-    const variation = buildSpawnVariation(seed);
+    const p = scaleVolumeSmokeWorldSizes(author, req.sizeMul);
+    p.spawnSeed = seed;
+    const variation = buildSpawnVariation(seed, p.spawnVariationAmount);
 
     const pos = req.worldPos.clone();
     pos.y += p.spawnHeight;
@@ -305,6 +313,7 @@ export class VolumeSmokeRuntime {
       impulseSubsteps: p.impulseSubsteps,
       impulseScaleWithBox: p.impulseScaleWithBox,
       spawnSeed: seed,
+      spawnVariationAmount: p.spawnVariationAmount,
       variation,
     });
 
@@ -336,6 +345,7 @@ export class VolumeSmokeRuntime {
       deathAt: this.clockSec + trackHorizon + 0.05,
       elementId: req.elementId,
       lifetimeMul: req.lifetimeMul,
+      sizeMul: req.sizeMul,
       effectiveLifespan: life,
       volume,
     });
@@ -354,23 +364,31 @@ export class VolumeSmokeRuntime {
   /**
    * Editor live path: push params into the matching element's running volume(s)
    * + refresh seed gizmo — never rewrite sibling volumeSmoke instances.
+   * `params` are author (unscaled) values; `sizeMul` applies self-similar world scale.
    */
   applyEditorParams(
     params: VolumeSmokeParams,
     previewOrigin?: THREE.Vector3,
     previewNormal?: THREE.Vector3,
     elementId?: string,
+    sizeMul?: number,
   ): void {
     if (elementId !== undefined) {
       this.editorGizmoElementId = elementId;
     }
-    this.activeParams = params;
-    this.lighting.apply(params);
+    const gizmoMul =
+      sizeMul !== undefined
+        ? sizeMul
+        : (this.activeTracks.find(
+            (t) =>
+              elementId == null ||
+              t.elementId == null ||
+              t.elementId === elementId,
+          )?.sizeMul ?? 1);
+    const scaledForGizmo = scaleVolumeSmokeWorldSizes(params, gizmoMul);
+    this.activeParams = scaledForGizmo;
+    this.lighting.apply(scaledForGizmo);
     if (this.pool && this.ready) {
-      const boxSize = params.unrestricted
-        ? params.unrestrictedVolumeSize
-        : params.volumeSize;
-      const sim = simParamsFrom(params);
       const keyPos = this.lighting.syncKeyLightPos();
       for (const track of this.activeTracks) {
         if (
@@ -381,18 +399,24 @@ export class VolumeSmokeRuntime {
           continue;
         }
         if (!track.volume.active) continue;
-        track.params = params;
+        if (sizeMul !== undefined) track.sizeMul = sizeMul;
+        const scaled = scaleVolumeSmokeWorldSizes(params, track.sizeMul);
+        const boxSize = scaled.unrestricted
+          ? scaled.unrestrictedVolumeSize
+          : scaled.volumeSize;
+        const sim = simParamsFrom(scaled);
+        track.params = scaled;
         track.effectiveLifespan = Math.max(
           0.05,
-          params.smokeLifespan * track.lifetimeMul,
+          scaled.smokeLifespan * track.lifetimeMul,
         );
         track.volume.maxLife =
-          params.endCondition === 'density'
+          scaled.endCondition === 'density'
             ? Number.POSITIVE_INFINITY
             : track.effectiveLifespan;
-        track.volume.setUnrestricted(params.unrestricted);
+        track.volume.setUnrestricted(scaled.unrestricted);
         track.volume.setVolumeSize(boxSize);
-        track.volume.params.hitRadius = params.hitRadius;
+        track.volume.params.hitRadius = scaled.hitRadius;
         track.volume.syncHitRadiusUVW();
         const simForTrack = {
           ...sim,
@@ -409,7 +433,7 @@ export class VolumeSmokeRuntime {
         this.gizmos.previewNormal.copy(previewNormal).normalize();
       }
     }
-    this.syncGizmos(params);
+    this.syncGizmos(scaledForGizmo);
   }
 
   tick(dt: number): void {

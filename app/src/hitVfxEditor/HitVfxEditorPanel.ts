@@ -1957,6 +1957,8 @@ function volumeSmokeParamsHtml(p: VolumeSmokeParams): string {
       ${checkRow('显示初始形状', 'showSeedShape', p.showSeedShape)}
       ${numRow('随机种子', 'spawnSeed', p.spawnSeed, '1')}
       <p class="hvfx-hint">同一种子 + 相同参数/命中 → 烟雾过程完全一样</p>
+      ${numRow('随机幅度', 'spawnVariationAmount', p.spawnVariationAmount)}
+      <p class="hvfx-hint">0=完全不随机；1=当前默认抖动；大于1可加大抖动</p>
       ${checkRow('每次随机种子', 'randomizeSeed', p.randomizeSeed)}
       <div class="hvfx-row"><button type="button" id="hvfx-vs-reroll-seed">掷一次种子</button></div>
       ${numRow('烟雾出现高度偏置 (米)', 'spawnHeight', p.spawnHeight)}

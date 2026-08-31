@@ -725,6 +725,403 @@
     "pantsHealthSessionMaxEntries": 1500,
     "pantsHealthSessionKeep": 20,
     "pantsFeelNote": "",
+    "hitVfxEnabled": true,
+    "hitVfxRecipes": [
+      {
+        "id": "ungarded_default",
+        "name": "不格挡测试",
+        "kind": "onHit",
+        "groups": [
+          {
+            "id": "main",
+            "name": "主组",
+            "enabled": true
+          }
+        ],
+        "elements": [
+          {
+            "id": "volumeSmoke_ceb1ebbe",
+            "name": "圆环烟",
+            "type": "volumeSmoke",
+            "enabled": true,
+            "groupId": "main",
+            "startDelaySec": 0,
+            "receiveSparkLight": false,
+            "params": {
+              "simulate": true,
+              "simSpeed": 2,
+              "pressureIterations": 6,
+              "volumeSize": 6,
+              "unrestricted": true,
+              "unrestrictedVolumeSize": 12,
+              "fixedSubstepsHz": 120,
+              "hitRadius": 1,
+              "spawnHeight": 0,
+              "seedShape": "ring",
+              "shapeThickness": 0.1,
+              "ringRadiusRatio": 1,
+              "ringWidth": 0.1,
+              "columnHeight": 2.75,
+              "seedRotation": {
+                "x": 90,
+                "y": 0,
+                "z": 0
+              },
+              "showSeedShape": false,
+              "spawnSeed": 2577147952,
+              "randomizeSeed": true,
+              "hitImpulse": 40,
+              "hitDensity": 10,
+              "hitTemperature": 8,
+              "impulseRadial": 1,
+              "impulseSwirl": 0,
+              "impulseSubsteps": 25,
+              "impulseScaleWithBox": false,
+              "velDisplayWarp": 0,
+              "poolSize": 1,
+              "densityStop": 9,
+              "endCondition": "lifespan",
+              "fadeOutSec": 0.3,
+              "fadeCurve": "easeOut",
+              "buoyancy": 1,
+              "weight": 0.15,
+              "turbulence": 1,
+              "turbulenceDecay": 0.05,
+              "turbFrequency": 3,
+              "turbulenceBias": 0.21,
+              "turbulenceDir": {
+                "x": 1,
+                "y": 0,
+                "z": 0
+              },
+              "showTurbulenceDir": true,
+              "velDamping": 0.1,
+              "smokeLifespan": 0.6,
+              "tempLifespan": 0.8,
+              "raymarchSteps": 4,
+              "resolutionScale": 0.5,
+              "denoise": true,
+              "denoiseStrength": 0.5,
+              "shadowAbsorption": 10,
+              "shadowAmbient": 0.28,
+              "powderStrength": 1,
+              "multiScattering": 0,
+              "phaseAsymmetry": 0,
+              "smokeColor": "#b0b0b0",
+              "densityGain": 2,
+              "stepsDecayEnable": true,
+              "useRenderPipeline": false,
+              "lightingMode": "original",
+              "toneMapping": "ACESFilmic",
+              "exposure": 1,
+              "keyLightIntensity": 800,
+              "globalLight": true,
+              "showFloor": false,
+              "expandedSections": {
+                "basicRun": true,
+                "simDomain": true,
+                "simTime": false,
+                "hitSplat": true,
+                "hitPool": true,
+                "fluidForces": true,
+                "fluidLife": true,
+                "renderLook": true,
+                "renderPost": false,
+                "sceneLight": true
+              }
+            }
+          },
+          {
+            "id": "volumeSmoke_5fe8d639",
+            "name": "柱子烟",
+            "type": "volumeSmoke",
+            "enabled": true,
+            "groupId": "main",
+            "startDelaySec": 0,
+            "receiveSparkLight": false,
+            "params": {
+              "simulate": true,
+              "simSpeed": 3,
+              "pressureIterations": 6,
+              "volumeSize": 6,
+              "unrestricted": true,
+              "unrestrictedVolumeSize": 12,
+              "fixedSubstepsHz": 120,
+              "hitRadius": 0.2,
+              "spawnHeight": 0,
+              "seedShape": "column",
+              "shapeThickness": 0.28,
+              "ringRadiusRatio": 0.65,
+              "ringWidth": 0.22,
+              "columnHeight": 4,
+              "seedRotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "showSeedShape": false,
+              "spawnSeed": 2049270956,
+              "randomizeSeed": false,
+              "hitImpulse": 0,
+              "hitDensity": 4,
+              "hitTemperature": 8,
+              "impulseRadial": 0,
+              "impulseSwirl": 0,
+              "impulseSubsteps": 1,
+              "impulseScaleWithBox": false,
+              "velDisplayWarp": 0.04,
+              "poolSize": 1,
+              "densityStop": 0.02,
+              "endCondition": "lifespan",
+              "fadeOutSec": 0.3,
+              "fadeCurve": "easeOut",
+              "buoyancy": 1,
+              "weight": 0.15,
+              "turbulence": 5,
+              "turbulenceDecay": 0.05,
+              "turbFrequency": 15,
+              "turbulenceBias": 0.4,
+              "turbulenceDir": {
+                "x": 1,
+                "y": 0,
+                "z": 0
+              },
+              "showTurbulenceDir": true,
+              "velDamping": 0,
+              "smokeLifespan": 2,
+              "tempLifespan": 0.8,
+              "raymarchSteps": 4,
+              "resolutionScale": 0.5,
+              "denoise": true,
+              "denoiseStrength": 0.5,
+              "shadowAbsorption": 10,
+              "shadowAmbient": 0.28,
+              "powderStrength": 0,
+              "multiScattering": 0,
+              "phaseAsymmetry": 0,
+              "smokeColor": "#b0b0b0",
+              "densityGain": 2,
+              "stepsDecayEnable": true,
+              "useRenderPipeline": false,
+              "lightingMode": "original",
+              "toneMapping": "ACESFilmic",
+              "exposure": 1,
+              "keyLightIntensity": 800,
+              "globalLight": true,
+              "showFloor": false,
+              "expandedSections": {
+                "basicRun": true,
+                "simDomain": true,
+                "simTime": false,
+                "hitSplat": true,
+                "hitPool": true,
+                "fluidForces": true,
+                "fluidLife": true,
+                "renderLook": true,
+                "renderPost": false,
+                "sceneLight": true
+              }
+            }
+          }
+        ],
+        "strengthScale": {
+          "L": {
+            "countMul": 0.65,
+            "sizeMul": 0.03,
+            "brightnessMul": 0.75,
+            "lifetimeMul": 0.9,
+            "lightIntensityMul": 0.7
+          },
+          "M": {
+            "countMul": 1,
+            "sizeMul": 1,
+            "brightnessMul": 1,
+            "lifetimeMul": 1,
+            "lightIntensityMul": 1
+          },
+          "H": {
+            "countMul": 1.35,
+            "sizeMul": 1.15,
+            "brightnessMul": 1.25,
+            "lifetimeMul": 1.1,
+            "lightIntensityMul": 1.35
+          }
+        }
+      },
+      {
+        "id": "block_default",
+        "name": "格挡默认",
+        "kind": "onBlock",
+        "groups": [
+          {
+            "id": "main",
+            "name": "主组",
+            "enabled": true
+          }
+        ],
+        "elements": [
+          {
+            "id": "spark",
+            "name": "打击火花",
+            "type": "spark",
+            "enabled": true,
+            "groupId": "main",
+            "startDelaySec": 0,
+            "receiveSparkLight": false,
+            "params": {
+              "count": 14,
+              "lifetimeSec": [
+                0.08,
+                0.18
+              ],
+              "speed": [
+                2.5,
+                6
+              ],
+              "size": [
+                0.03,
+                0.08
+              ],
+              "colorStart": 16769184,
+              "colorEnd": 16736288,
+              "brightness": 0.8,
+              "coneAngleRad": 0.7,
+              "drag": 0.15,
+              "gravityY": 0,
+              "blend": "additive",
+              "light": {
+                "enabled": true,
+                "color": 16756832,
+                "intensity": 2.2,
+                "distance": 2.8,
+                "decay": 2,
+                "lifetimeSec": 0.12,
+                "intensityEnd": 0,
+                "castOnCharacter": true,
+                "castOnVfxElements": true
+              }
+            }
+          },
+          {
+            "id": "sparkDebris",
+            "name": "附带火星",
+            "type": "sparkDebris",
+            "enabled": true,
+            "groupId": "main",
+            "startDelaySec": 0,
+            "receiveSparkLight": true,
+            "params": {
+              "count": 16,
+              "lifetimeSec": [
+                0.12,
+                0.28
+              ],
+              "speed": [
+                1.2,
+                3.5
+              ],
+              "size": [
+                0.02,
+                0.05
+              ],
+              "color": 16764040,
+              "gravityY": -2,
+              "drag": 0.25,
+              "coneAngleRad": 0.9,
+              "blend": "additive"
+            }
+          },
+          {
+            "id": "sweat",
+            "name": "汗珠",
+            "type": "sweat",
+            "enabled": false,
+            "groupId": "main",
+            "startDelaySec": 0,
+            "receiveSparkLight": true,
+            "params": {
+              "count": 8,
+              "lifetimeSec": [
+                0.25,
+                0.55
+              ],
+              "speed": [
+                1,
+                2.8
+              ],
+              "size": [
+                0.015,
+                0.035
+              ],
+              "color": 13691135,
+              "gravityY": 9.8,
+              "drag": 0.08,
+              "coneAngleRad": 0.85,
+              "blend": "alpha",
+              "collideGround": false
+            }
+          }
+        ],
+        "strengthScale": {
+          "L": {
+            "countMul": 0.65,
+            "sizeMul": 0.85,
+            "brightnessMul": 0.75,
+            "lifetimeMul": 0.9,
+            "lightIntensityMul": 0.7
+          },
+          "M": {
+            "countMul": 1,
+            "sizeMul": 1,
+            "brightnessMul": 1,
+            "lifetimeMul": 1,
+            "lightIntensityMul": 1
+          },
+          "H": {
+            "countMul": 1.35,
+            "sizeMul": 1.15,
+            "brightnessMul": 1.25,
+            "lifetimeMul": 1.1,
+            "lightIntensityMul": 1.35
+          }
+        }
+      }
+    ],
+    "hitVfxElementPresets": [],
+    "hitVfxActiveRecipeOnHitId": "ungarded_default",
+    "hitVfxActiveRecipeOnBlockId": "block_default",
+    "hitVfxSelectedRecipeId": "ungarded_default",
+    "hitVfxSelectedElementId": "volumeSmoke_ceb1ebbe",
+    "hitVfxSelectedGroupId": "main",
+    "hitVfxPreviewActive": false,
+    "hitVfxPreviewDummyVisible": false,
+    "hitVfxTimeScale": 1,
+    "hitVfxPaused": false,
+    "hitVfxStepFrames": 0,
+    "hitVfxSeedLocked": true,
+    "hitVfxSeed": 1,
+    "hitVfxFollowHitstop": false,
+    "hitVfxHeightOffsets": {
+      "h": {
+        "y": 1.55,
+        "z": 0
+      },
+      "m": {
+        "y": 1.15,
+        "z": 0
+      },
+      "l": {
+        "y": 0.55,
+        "z": 0
+      }
+    },
+    "hitVfxMaxConcurrent": 6,
+    "hitVfxSparkLightPoolSize": 4,
+    "hitVfxDebug": false,
+    "hitVfxPreviewHeight": "m",
+    "hitVfxPreviewStrength": "M",
+    "hitVfxPreviewKind": "onHit",
+    "hitVfxPreviewLoop": false,
     "__version": 1,
     "expandedSections": {
       "sim": true,
@@ -743,6 +1140,7 @@
       "headband": true,
       "belt": false,
       "pants": false,
+      "hitVfx": true,
       "extendedSim": false,
       "extendedLoco": false,
       "extendedAnim": false

@@ -22,7 +22,59 @@ import {
   volumeSmokeFadeMul,
   volumeSmokeShouldBeginFade,
 } from '../../../src/render/hitVfx/volumeSmoke/smokeFade';
+import { scaleVolumeSmokeWorldSizes } from '../../../src/render/hitVfx/volumeSmoke/scaleWorldSize';
 import * as THREE from 'three/webgpu';
+
+describe('scaleVolumeSmokeWorldSizes', () => {
+  it('scales absolute world-meter fields self-similarly', () => {
+    const src = defaultVolumeSmokeParams({
+      volumeSize: 3,
+      unrestrictedVolumeSize: 12,
+      hitRadius: 0.36,
+      spawnHeight: 0.2,
+      shapeThickness: 0.28,
+      ringRadiusRatio: 0.65,
+      buoyancy: 2,
+    });
+    const out = scaleVolumeSmokeWorldSizes(src, 2);
+    expect(out.volumeSize).toBeCloseTo(6, 5);
+    expect(out.unrestrictedVolumeSize).toBeCloseTo(24, 5);
+    expect(out.hitRadius).toBeCloseTo(0.72, 5);
+    expect(out.spawnHeight).toBeCloseTo(0.4, 5);
+    // Relative / look params unchanged.
+    expect(out.shapeThickness).toBe(src.shapeThickness);
+    expect(out.ringRadiusRatio).toBe(src.ringRadiusRatio);
+    expect(out.buoyancy).toBe(src.buoyancy);
+    // Does not mutate author params.
+    expect(src.volumeSize).toBe(3);
+    expect(src.hitRadius).toBe(0.36);
+  });
+
+  it('treats sizeMul=1 as identity clone', () => {
+    const src = defaultVolumeSmokeParams({ volumeSize: 4, hitRadius: 0.5 });
+    const out = scaleVolumeSmokeWorldSizes(src, 1);
+    expect(out.volumeSize).toBe(4);
+    expect(out.hitRadius).toBe(0.5);
+    expect(out).not.toBe(src);
+  });
+
+  it('falls back to 1 for non-finite mul and clamps negatives to 0', () => {
+    const src = defaultVolumeSmokeParams({
+      volumeSize: 3,
+      unrestrictedVolumeSize: 12,
+      hitRadius: 0.36,
+      spawnHeight: 0.1,
+    });
+    const bad = scaleVolumeSmokeWorldSizes(src, Number.NaN);
+    expect(bad.volumeSize).toBe(3);
+    expect(bad.hitRadius).toBe(0.36);
+    const zero = scaleVolumeSmokeWorldSizes(src, -2);
+    expect(zero.volumeSize).toBe(0);
+    expect(zero.unrestrictedVolumeSize).toBe(0);
+    expect(zero.hitRadius).toBe(0);
+    expect(zero.spawnHeight).toBe(0);
+  });
+});
 
 describe('volumeSmoke params', () => {
   it('is creatable and defaults include lightingMode', () => {
@@ -133,6 +185,27 @@ describe('volumeSmoke params', () => {
     const b = buildSpawnVariation(12345);
     expect(a.noiseOffset).toEqual(b.noiseOffset);
     expect(a.impulseScale).toBe(b.impulseScale);
+  });
+
+  it('spawnVariationAmount 0 disables jitter and 1 matches baseline', () => {
+    const base = buildSpawnVariation(12345, 1);
+    const none = buildSpawnVariation(12345, 0);
+    const half = buildSpawnVariation(12345, 0.5);
+    expect(none.noiseOffset).toEqual({ x: 0, y: 0, z: 0 });
+    expect(none.timePhase).toBe(0);
+    expect(none.centerOffsetUVW).toEqual({ x: 0, y: 0, z: 0 });
+    expect(none.radiusScale).toBe(1);
+    expect(none.impulseScale).toBe(1);
+    expect(none.swirlScale).toBe(1);
+    expect(none.densityScale).toBe(1);
+    expect(none.temperatureScale).toBe(1);
+    expect(none.seedRotationOffset).toEqual({ x: 0, y: 0, z: 0 });
+    expect(half.noiseOffset.x).toBeCloseTo(base.noiseOffset.x * 0.5, 8);
+    expect(half.impulseScale - 1).toBeCloseTo((base.impulseScale - 1) * 0.5, 8);
+    expect(normalizeVolumeSmokeParams({}).spawnVariationAmount).toBe(1);
+    expect(
+      normalizeVolumeSmokeParams({ spawnVariationAmount: -2 }).spawnVariationAmount,
+    ).toBe(0);
   });
 
   it('seed shape gizmo geometry differs by seedShape', () => {

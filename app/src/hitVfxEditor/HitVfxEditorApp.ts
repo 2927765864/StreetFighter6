@@ -251,11 +251,19 @@ export async function bootHitVfxEditor(): Promise<void> {
       syncRuntime();
     },
     onVolumeSmokeParamsChanged: (params, elementId) => {
+      const recipe =
+        CONFIG.hitVfxRecipes.find(
+          (r) => r.id === CONFIG.hitVfxSelectedRecipeId,
+        ) ?? CONFIG.hitVfxRecipes[0];
+      const strength = CONFIG.hitVfxPreviewStrength;
+      const sizeMul = recipe?.strengthScale[strength]?.sizeMul ?? 1;
       hitVfxRuntime.applyVolumeSmokeEditorParams(params, {
         x: 0,
         height: CONFIG.hitVfxPreviewHeight,
         facing: 1,
         elementId,
+        strength,
+        sizeMul,
       });
     },
   });

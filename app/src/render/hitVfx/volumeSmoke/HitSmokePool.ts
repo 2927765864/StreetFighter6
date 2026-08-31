@@ -100,7 +100,10 @@ export class HitSmokePool {
     const variation =
       splatParams.variation ??
       (splatParams.spawnSeed != null
-        ? buildSpawnVariation(splatParams.spawnSeed as number)
+        ? buildSpawnVariation(
+            splatParams.spawnSeed as number,
+            splatParams.spawnVariationAmount as number | undefined,
+          )
         : null);
 
     volume.armSplat({

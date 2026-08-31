@@ -50,6 +50,8 @@ export type VolumeSmokeParams = {
   showSeedShape: boolean;
   spawnSeed: number;
   randomizeSeed: boolean;
+  /** Scales spawnSeed jitter: 0 = none, 1 = baseline, >1 = stronger. */
+  spawnVariationAmount: number;
   hitImpulse: number;
   hitDensity: number;
   hitTemperature: number;
@@ -330,6 +332,7 @@ export function defaultVolumeSmokeParams(
     showSeedShape: true,
     spawnSeed: 0,
     randomizeSeed: false,
+    spawnVariationAmount: 1,
     hitImpulse: 14,
     hitDensity: 4,
     hitTemperature: 3,
@@ -752,6 +755,10 @@ export function normalizeVolumeSmokeParams(raw: unknown): VolumeSmokeParams {
     showSeedShape: asBool(o.showSeedShape, d.showSeedShape),
     spawnSeed: Math.round(asFinite(o.spawnSeed, d.spawnSeed)) >>> 0,
     randomizeSeed: asBool(o.randomizeSeed, d.randomizeSeed),
+    spawnVariationAmount: Math.max(
+      0,
+      asFinite(o.spawnVariationAmount, d.spawnVariationAmount),
+    ),
     hitImpulse: asFinite(o.hitImpulse, d.hitImpulse),
     hitDensity: asFinite(o.hitDensity, d.hitDensity),
     hitTemperature: asFinite(o.hitTemperature, d.hitTemperature),

@@ -1,6 +1,7 @@
 /**
  * Seeded spawn variation for hit smoke.
  * Same seed → same jitter. Use randomUint32() when "randomize each spawn" is on.
+ * `amount` scales all jitter: 0 = none, 1 = authored baseline, >1 = stronger.
  */
 
 export function mulberry32(seed: number): () => number {
@@ -26,6 +27,7 @@ export function randomUint32(): number {
 
 export type SpawnVariation = {
   seed: number;
+  amount: number;
   noiseOffset: { x: number; y: number; z: number };
   timePhase: number;
   centerOffsetUVW: { x: number; y: number; z: number };
@@ -37,14 +39,41 @@ export type SpawnVariation = {
   seedRotationOffset: { x: number; y: number; z: number };
 };
 
-export function buildSpawnVariation(seed: number): SpawnVariation {
-  const rng = mulberry32(seed >>> 0);
-  const signed = (amp: number) => (rng() * 2 - 1) * amp;
+export function clampSpawnVariationAmount(amount: number | null | undefined): number {
+  if (typeof amount !== 'number' || !Number.isFinite(amount)) return 1;
+  return Math.max(0, amount);
+}
+
+export function buildSpawnVariation(
+  seed: number,
+  amount: number = 1,
+): SpawnVariation {
+  const amt = clampSpawnVariationAmount(amount);
+  const seedU = seed >>> 0;
+  if (amt === 0) {
+    return {
+      seed: seedU,
+      amount: 0,
+      noiseOffset: { x: 0, y: 0, z: 0 },
+      timePhase: 0,
+      centerOffsetUVW: { x: 0, y: 0, z: 0 },
+      radiusScale: 1,
+      impulseScale: 1,
+      swirlScale: 1,
+      densityScale: 1,
+      temperatureScale: 1,
+      seedRotationOffset: { x: 0, y: 0, z: 0 },
+    };
+  }
+
+  const rng = mulberry32(seedU);
+  const signed = (amp: number) => (rng() * 2 - 1) * amp * amt;
 
   return {
-    seed: seed >>> 0,
+    seed: seedU,
+    amount: amt,
     noiseOffset: { x: signed(2.2), y: signed(2.2), z: signed(2.2) },
-    timePhase: rng() * 48,
+    timePhase: rng() * 48 * amt,
     centerOffsetUVW: {
       x: signed(0.035),
       y: signed(0.035),

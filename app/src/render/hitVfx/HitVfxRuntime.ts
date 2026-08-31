@@ -13,6 +13,7 @@ import type {
   HitVfxHeight,
   HitVfxHeightOffset,
   HitVfxRecipe,
+  HitVfxStrength,
   HitVfxTriggerArgs,
 } from './hitVfxTypes';
 import { VolumeSmokeRuntime } from './volumeSmoke/VolumeSmokeRuntime';
@@ -229,6 +230,7 @@ export class HitVfxRuntime {
         worldNormal: punchAxis.clone(),
         startDelaySec: el.startDelaySec,
         lifetimeMul: scale.lifetimeMul,
+        sizeMul: scale.sizeMul,
         spawnSeed,
         elementId: el.id,
       });
@@ -382,16 +384,21 @@ export class HitVfxRuntime {
       facing: number;
       axis?: [number, number, number];
       elementId?: string;
+      /** Preview strength band; used with recipe lookup when sizeMul omitted. */
+      strength?: HitVfxStrength;
+      /** Explicit sizeMul from editor selected recipe (preferred). */
+      sizeMul?: number;
     },
   ): void {
     if (!this.volumeSmoke) return;
     let origin: THREE.Vector3 | undefined;
     let normal: THREE.Vector3 | undefined;
+    const strength = preview?.strength ?? 'M';
     if (preview) {
       origin = worldPosFromTrigger(
         {
           kind: 'onHit',
-          strength: 'M',
+          strength,
           height: preview.height,
           x: preview.x,
           facing: preview.facing,
@@ -409,11 +416,18 @@ export class HitVfxRuntime {
             ).normalize()
           : new THREE.Vector3(-preview.facing, 0, 0).normalize();
     }
+    let sizeMul = preview?.sizeMul;
+    if (sizeMul == null) {
+      const recipeId = this.cfg.hitVfxActiveRecipeOnHitId;
+      const recipe = this.recipesById.get(recipeId);
+      sizeMul = recipe?.strengthScale[strength]?.sizeMul ?? 1;
+    }
     this.volumeSmoke.applyEditorParams(
       params,
       origin,
       normal,
       preview?.elementId,
+      sizeMul,
     );
   }
 
