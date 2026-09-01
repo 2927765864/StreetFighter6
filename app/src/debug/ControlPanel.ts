@@ -306,6 +306,7 @@ function buildDom(): HTMLElement {
           ${rowNumber('logicFps', '逻辑帧率 (fps)', 30, 120, 1)}
           ${rowNumber('maxLogicStepsPerRaf', '每帧最大逻辑步', 1, 8, 1)}
           ${rowNumber('maxFrameTimeMs', '最大帧耗时 (ms)', 16, 250, 1)}
+          ${rowToggle('lockPresentToLogic', '呈现锁定逻辑帧 (高刷≈60)')}
           <div class="ext-block">
             ${rowToggle('extendedSim', '显示扩展参数')}
             <div id="ext-sim" class="is-collapsed">
@@ -846,6 +847,7 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'logicFps', path: 'logicFps' },
   { id: 'maxLogicStepsPerRaf', path: 'maxLogicStepsPerRaf' },
   { id: 'maxFrameTimeMs', path: 'maxFrameTimeMs' },
+  { id: 'lockPresentToLogic', path: 'lockPresentToLogic' },
   { id: 'motionHistoryCapacity', path: 'motionHistoryCapacity' },
   { id: 'actionBufferStandard', path: 'actionBufferStandard' },
   { id: 'actionBufferDash', path: 'actionBufferDash' },
@@ -1075,6 +1077,7 @@ const TOGGLE_IDS = new Set([
   'showHurtboxes',
   'showPushboxes',
   'hurtPartColors',
+  'lockPresentToLogic',
   'scrubFromLogic',
   'footPlantEnabled',
   'rootPoseLockAttack',

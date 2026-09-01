@@ -861,11 +861,13 @@ async function boot(): Promise<void> {
   });
 
   let last = performance.now();
+  let presentAccum = 0;
+  let logicStepsSincePresent = 0;
   let loggedFrame = false;
   function frame(now: number): void {
     const wallDt = (now - last) / 1000;
     last = now;
-    fpsHud.tick(now);
+    presentAccum += wallDt;
 
     ground.visible = cfg.showFallbackGround;
     grid.visible = cfg.showDebugGrid;
@@ -882,11 +884,30 @@ async function boot(): Promise<void> {
         match.step();
       }
     }
+    logicStepsSincePresent += logicSteps;
+
+    // High-refresh: skip empty presents so display stays locked to logicFps.
+    // Pause / box-edit still draw every rAF for tooling.
+    const mustPresent =
+      hooks.boxEditActive ||
+      hooks.paused ||
+      !cfg.lockPresentToLogic ||
+      logicSteps > 0;
+    if (!mustPresent) {
+      requestAnimationFrame(frame);
+      return;
+    }
+
+    const presentDt = presentAccum;
+    presentAccum = 0;
+    const presentLogicSteps = logicStepsSincePresent;
+    logicStepsSincePresent = 0;
+    fpsHud.tick(now, presentLogicSteps);
 
     {
       const steps = cfg.hitVfxStepFrames;
       if (steps > 0) cfg.hitVfxStepFrames = 0;
-      hitVfxRuntime.tick(wallDt, match.hitstopTimer > 0, () => steps);
+      hitVfxRuntime.tick(presentDt, match.hitstopTimer > 0, () => steps);
     }
 
     const fullW = window.innerWidth;
@@ -914,7 +935,7 @@ async function boot(): Promise<void> {
       },
       {
         lerp: cfg.cameraLerp,
-        dt: wallDt,
+        dt: presentDt,
         deadzone: cfg.cameraFollowDeadzone,
       },
     );
@@ -942,18 +963,18 @@ async function boot(): Promise<void> {
       });
     }
 
-    // Free-run + dual-advance clip time use logicSteps/60 (authored 60Hz).
-    // Wall dt still drives blend *weight* windows and cloth physics.
+    // Free-run + dual-advance clip time use presentLogicSteps/60 (authored 60Hz).
+    // Present dt drives blend *weight* windows and cloth physics.
     {
       const p1Front =
         pickDisplayFrontId(
           match.p1.lastAttackAcceptSeq,
           match.p2.lastAttackAcceptSeq,
         ) === 'p1';
-      p1View.syncFromLogic(match.p1, cfg, wallDt, logicSteps, {
+      p1View.syncFromLogic(match.p1, cfg, presentDt, presentLogicSteps, {
         displayFront: p1Front,
       });
-      p2View.syncFromLogic(match.p2, cfg, wallDt, logicSteps, {
+      p2View.syncFromLogic(match.p2, cfg, presentDt, presentLogicSteps, {
         displayFront: !p1Front,
       });
     }

@@ -40,6 +40,12 @@ export type MutableSimConfig = {
   logicFps: number;
   maxLogicStepsPerRaf: number;
   maxFrameTimeMs: number;
+  /**
+   * When true (default), skip WebGPU present on rAF ticks with 0 logic steps so
+   * display stays aligned with logicFps on high-refresh monitors (no 120Hz
+   * camera/cloth vs 60Hz pose split). Pause / box-edit always present.
+   */
+  lockPresentToLogic: boolean;
   worldScale: number;
   modelScale: number;
   modelYOffset: number;
@@ -380,6 +386,7 @@ export function createDefaultSimConfig(): MutableSimConfig {
     logicFps: LOGIC_FPS,
     maxLogicStepsPerRaf: MAX_LOGIC_STEPS_PER_RAF,
     maxFrameTimeMs: MAX_FRAME_TIME_MS,
+    lockPresentToLogic: true,
     worldScale: WORLD_SCALE,
     modelScale: 0.9,
     modelYOffset: 0,

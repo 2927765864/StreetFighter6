@@ -45,6 +45,7 @@ import {
   advanceFromTime,
   blendToWeight,
   stepDualAdvanceClocks,
+  wrapClipTime,
   type CrossfadeAdvanceMode,
 } from '../combat/anim/PoseBlendMath';
 import {
@@ -1183,11 +1184,15 @@ export class FighterView {
     b.toAdvancedSec = next.toAdvancedSec;
     const w = blendToWeight(b.elapsed, b.duration);
 
+    // Looping old layers (idle→walk etc.) must wrap; clamp would pin the seam.
+    const fromLoops =
+      b.from.loop === THREE.LoopRepeat || b.from.loop === THREE.LoopPingPong;
     const fromT = advanceFromTime(
       b.fromStartTimeSec,
       b.fromAdvancedSec,
       b.from.getClip().duration,
       b.mode,
+      fromLoops,
     );
     this.scrubActionTo(b.from, fromT, 1 - w, false);
 
@@ -1951,10 +1956,12 @@ export class FighterView {
           const w = this.stepPoseBlend(wallDtSec, freeRunDt);
           if (this.poseBlend) {
             // Both tracks paused during blend — scrub free-run `to` by logic dt
-            // (same as idle). mixer.update alone would leave to.time stuck at 0.
+            // (same as idle). Wrap so long blends do not pin the loop end.
             const clip = action.getClip();
-            const end = Math.max(0, clip.duration - 1e-4);
-            const toT = Math.min(this.poseBlend.toAdvancedSec, end);
+            const toT = wrapClipTime(
+              this.poseBlend.toAdvancedSec,
+              clip.duration,
+            );
             this.scrubActionTo(action, toT, w, true);
           } else {
             action.paused = false;
@@ -2005,8 +2012,10 @@ export class FighterView {
           if (this.poseBlend) {
             // Dual-advance: new free-run track advances from 0 by logic steps
             const clip = action.getClip();
-            const end = Math.max(0, clip.duration - 1e-4);
-            const toT = Math.min(this.poseBlend.toAdvancedSec, end);
+            const toT = wrapClipTime(
+              this.poseBlend.toAdvancedSec,
+              clip.duration,
+            );
             this.scrubActionTo(action, toT, w, true);
           } else {
             action.paused = false;

@@ -6,8 +6,21 @@
 export type CrossfadeAdvanceMode = 'dual' | 'freeze';
 
 /**
+ * Looping clip time into [0, duration-eps]. Used by free-run blend layers so
+ * long dual-advance windows do not pin at the last authored sample.
+ */
+export function wrapClipTime(timeSec: number, clipDurationSec: number): number {
+  const dur = Math.max(0, clipDurationSec);
+  if (dur <= 1e-8) return 0;
+  const end = Math.max(0, dur - 1e-4);
+  let t = timeSec % dur;
+  if (t < 0) t += dur;
+  return Math.min(t, end);
+}
+
+/**
  * Old-layer clip time during a blend window.
- * dual: start + advanced authored seconds, clamped to clip end.
+ * dual: start + advanced authored seconds (clamp, or wrap when `wrapLoop`).
  * freeze: always start (historical scheme 2).
  *
  * `fromAdvancedSec` is accumulated at authored 60Hz (logicSteps/60), not rAF
@@ -19,12 +32,15 @@ export function advanceFromTime(
   fromAdvancedSec: number,
   clipDuration: number,
   mode: CrossfadeAdvanceMode,
+  wrapLoop = false,
 ): number {
   const end = Math.max(0, clipDuration - 1e-4);
   if (mode === 'freeze') {
     return Math.min(Math.max(0, fromStartTimeSec), end);
   }
-  return Math.min(Math.max(0, fromStartTimeSec + fromAdvancedSec), end);
+  const raw = fromStartTimeSec + fromAdvancedSec;
+  if (wrapLoop) return wrapClipTime(raw, clipDuration);
+  return Math.min(Math.max(0, raw), end);
 }
 
 /**

@@ -4,6 +4,7 @@ import {
   blendToWeight,
   blendWallDt,
   stepDualAdvanceClocks,
+  wrapClipTime,
 } from '../../src/combat/anim/PoseBlendMath';
 
 describe('PoseBlendMath §3.11 dual-advance', () => {
@@ -15,6 +16,19 @@ describe('PoseBlendMath §3.11 dual-advance', () => {
   it('dual clamps at clip end', () => {
     const end = 2 - 1e-4;
     expect(advanceFromTime(1.9, 0.5, 2, 'dual')).toBeCloseTo(end, 6);
+  });
+
+  it('dual wraps when wrapLoop is set (idle free-run old layer)', () => {
+    expect(advanceFromTime(1.9, 0.3, 2, 'dual', true)).toBeCloseTo(0.2, 6);
+  });
+
+  it('wrapClipTime rings into duration-eps', () => {
+    const end = 2 - 1e-4;
+    expect(wrapClipTime(0, 2)).toBe(0);
+    expect(wrapClipTime(2.25, 2)).toBeCloseTo(0.25, 6);
+    expect(wrapClipTime(2, 2)).toBeCloseTo(0, 6);
+    expect(wrapClipTime(-0.1, 2)).toBeCloseTo(1.9, 6);
+    expect(wrapClipTime(end, 2)).toBeCloseTo(end, 6);
   });
 
   it('freeze ignores advanced seconds', () => {

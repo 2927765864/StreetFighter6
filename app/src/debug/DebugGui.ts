@@ -84,6 +84,7 @@ export function createDebugGui(
     .onChange(() => {
       clock.reconfigure(cfg.logicFps, cfg.maxLogicStepsPerRaf, cfg.maxFrameTimeMs);
     });
+  sim.add(cfg, 'lockPresentToLogic').name('呈现锁定逻辑帧');
 
   const matchFolder = gui.addFolder('对局');
   const matchState = {

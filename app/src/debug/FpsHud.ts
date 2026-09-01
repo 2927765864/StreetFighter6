@@ -1,6 +1,6 @@
 /**
- * Top-right real-time FPS overlay.
- * Counts RAF frames; paints integer FPS every 0.5s.
+ * Top-right present-rate overlay.
+ * Counts presented frames (call only when a frame is drawn); optional logic Hz.
  */
 export const FPS_HUD_REFRESH_MS = 500;
 
@@ -13,6 +13,7 @@ export function computeIntegerFps(frames: number, elapsedMs: number): number {
 export class FpsHud {
   private root: HTMLDivElement | null = null;
   private frames = 0;
+  private logicSteps = 0;
   private windowStartMs = 0;
 
   ensureDom(): void {
@@ -39,24 +40,32 @@ export class FpsHud {
     this.root = el;
   }
 
-  /** Call once per rendered frame with performance.now(). */
-  tick(nowMs: number): void {
+  /**
+   * Call once per *presented* frame.
+   * @param logicStepsThisPresent logic ticks consumed since last present
+   */
+  tick(nowMs: number, logicStepsThisPresent = 0): void {
     this.ensureDom();
     if (!this.root) return;
 
     if (this.windowStartMs === 0) {
       this.windowStartMs = nowMs;
       this.frames = 0;
+      this.logicSteps = 0;
     }
 
     this.frames += 1;
+    this.logicSteps += Math.max(0, logicStepsThisPresent);
     const elapsed = nowMs - this.windowStartMs;
     if (elapsed < FPS_HUD_REFRESH_MS) return;
 
     const fps = computeIntegerFps(this.frames, elapsed);
-    this.root.textContent = `${fps} FPS`;
+    const logicHz = computeIntegerFps(this.logicSteps, elapsed);
+    // Present rate vs logic steps/sec (should match when lockPresentToLogic).
+    this.root.textContent = `${fps} FPS · L${logicHz}`;
     this.windowStartMs = nowMs;
     this.frames = 0;
+    this.logicSteps = 0;
   }
 
   dispose(): void {

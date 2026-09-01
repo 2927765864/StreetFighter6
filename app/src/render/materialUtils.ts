@@ -1,4 +1,5 @@
 import * as THREE from 'three/webgpu';
+import { trimLoopDuplicateEndDuration } from './loopClipTrim';
 
 /** Max texture edge after load — SF6 interim glb ships multiple 4K maps (~293MB). */
 const MAX_TEX_SIZE = 1024;
@@ -1136,6 +1137,8 @@ export function sanitizeReAnimationClips(
           `dropArmQuat=${droppedArmQuat} (tracks ${before}→${next.tracks.length})`,
       );
     }
+    // Idle/crouch loops: duplicate end key (== first) causes LoopRepeat hitch.
+    trimLoopDuplicateEndDuration(next);
     return next;
   });
 }
