@@ -38,5 +38,19 @@ export const SEED_SHAPE_PARAM_KEYS = Object.freeze({
   sphere: [] as const,
   disk: ['shapeThickness', 'seedRotation'] as const,
   ring: ['shapeThickness', 'ringRadiusRatio', 'ringWidth', 'seedRotation'] as const,
+  arc: [
+    'shapeThickness',
+    'ringRadiusRatio',
+    'ringWidth',
+    'arcAngle',
+    'seedRotation',
+  ] as const,
+  arrow: [
+    'shapeThickness',
+    'ringWidth',
+    'arrowAngle',
+    'arrowLength',
+    'seedRotation',
+  ] as const,
   column: ['columnHeight', 'seedRotation'] as const,
 });

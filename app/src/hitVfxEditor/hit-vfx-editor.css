@@ -150,8 +150,15 @@ body {
 }
 
 #hvfx-inspector-pane {
-  width: 340px;
+  width: 420px;
   border-left: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+#hvfx-inspector-pane .hvfx-pane-body {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
 }
 
 #hvfx-viewport-pane {
@@ -461,7 +468,65 @@ body {
 .hvfx-insp-empty {
   opacity: 0.55;
   font-size: 12px;
-  padding: 8px 2px;
+  padding: 12px 12px;
+}
+
+.hvfx-insp-shell {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+}
+
+.hvfx-insp-tabs {
+  flex: 0 0 80px;
+  overflow-y: auto;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.25);
+  padding: 6px 4px;
+}
+
+.hvfx-insp-tab {
+  display: block;
+  width: 100%;
+  text-align: left;
+  margin: 2px 0;
+  padding: 7px 8px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: #9aa6bc;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.hvfx-insp-tab:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #c8d0e0;
+}
+
+.hvfx-insp-tab.is-active {
+  background: rgba(80, 120, 200, 0.28);
+  color: #fff;
+}
+
+.hvfx-insp-content {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 8px 10px 16px;
+  min-width: 0;
+}
+
+.hvfx-insp-group {
+  display: none;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.hvfx-insp-group.is-active {
+  display: block;
 }
 
 .hvfx-insp-section {
@@ -542,6 +607,13 @@ body {
   font-size: 11px;
   opacity: 0.55;
   line-height: 1.35;
+}
+
+.hvfx-subhead {
+  margin: 10px 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.85;
 }
 
 .hvfx-vs-section-header {

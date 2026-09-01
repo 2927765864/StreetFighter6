@@ -10,7 +10,17 @@ export type HitVfxElementType =
   | 'smokeRing'
   | 'volumeSmoke';
 
-export type VolumeSmokeSeedShape = 'sphere' | 'disk' | 'ring' | 'column';
+export type VolumeSmokeSeedShape =
+  | 'sphere'
+  | 'disk'
+  | 'ring'
+  | 'arc'
+  | 'arrow'
+  | 'column';
+/** Initial hit impulse: whole-blob push vs radial explode from seed center. */
+export type VolumeSmokeImpulseMode = 'direction' | 'scatter';
+/** Direction-mode axis: follow hit normal (legacy) or recipe local XYZ. */
+export type VolumeSmokeImpulseDirSource = 'hit' | 'custom';
 export type VolumeSmokeLightingMode = 'original' | 'project';
 export type VolumeSmokeToneMapping =
   | 'None'
@@ -45,6 +55,12 @@ export type VolumeSmokeParams = {
   shapeThickness: number;
   ringRadiusRatio: number;
   ringWidth: number;
+  /** Arc (parenthesis) angular span in degrees; only used when seedShape === 'arc'. */
+  arcAngle: number;
+  /** Arrow (">") interior angle between arms in degrees. */
+  arrowAngle: number;
+  /** Arrow arm length as a fraction of hitRadius. */
+  arrowLength: number;
   columnHeight: number;
   seedRotation: { x: number; y: number; z: number };
   /** Seed center offset in volume UVW (0 = box center; ±0.5 ≈ half-box). */
@@ -54,9 +70,45 @@ export type VolumeSmokeParams = {
   randomizeSeed: boolean;
   /** Scales spawnSeed jitter: 0 = none, 1 = baseline, >1 = stronger. */
   spawnVariationAmount: number;
+  /**
+   * Strand (缕烟) initial fill: ropes inside the seed shell instead of a solid blob.
+   * Off → legacy solid seedWeight. See docs/hit-vfx-volume-smoke-strand-consensus-v0.md.
+   */
+  strandMode: boolean;
+  /** Baseline rope count (≈N; wobbles with strandRandomAmount). Clamped 1..48. */
+  strandCount: number;
+  /** Rope length as a fraction of hitRadius. */
+  strandLength: number;
+  /** Rope thickness as a fraction of hitRadius. */
+  strandThickness: number;
+  /** Spacing between ropes as a fraction of hitRadius. */
+  strandSpacing: number;
+  /** Extra twist of the whole bundle around the shape axis (degrees). */
+  strandTwistDeg: number;
+  /** Per-rope angle jitter amplitude (degrees). */
+  strandAngleJitterDeg: number;
+  /** Bend amount: 0 ≈ straight, ~0.55 default, up to ~2 very bent. */
+  strandBend: number;
+  /** 0 = hard clip to shell; 1 = allow mild protrusion (default ~0.65). */
+  strandEdgeSoftness: number;
+  /** Soft halo beside ropes (0 = clean gaps). */
+  strandGapFill: number;
+  /** Scales strand-layout randomness only (independent of spawnVariationAmount). */
+  strandRandomAmount: number;
   hitImpulse: number;
   hitDensity: number;
   hitTemperature: number;
+  /**
+   * Initial impulse pattern. See docs/hit-vfx-volume-smoke-impulse-mode-consensus-v0.md.
+   * `direction` = push along an axis; `scatter` = radial from seed center.
+   */
+  impulseMode: VolumeSmokeImpulseMode;
+  /** When impulseMode === 'direction': hit normal vs recipe impulseDir (object-local). */
+  impulseDirSource: VolumeSmokeImpulseDirSource;
+  /** Object-local push axis when impulseDirSource === 'custom'. */
+  impulseDir: { x: number; y: number; z: number };
+  showImpulseDir: boolean;
+  /** Direction mode only: 0 = pure axis push; 1 = pure radial (scatter forces 1). */
   impulseRadial: number;
   impulseSwirl: number;
   impulseSubsteps: number;
@@ -329,6 +381,9 @@ export function defaultVolumeSmokeParams(
     shapeThickness: 0.28,
     ringRadiusRatio: 0.65,
     ringWidth: 0.22,
+    arcAngle: 140,
+    arrowAngle: 70,
+    arrowLength: 1,
     columnHeight: 1.4,
     seedRotation: { x: 0, y: 0, z: 0 },
     seedOffset: { x: 0, y: 0, z: 0 },
@@ -336,9 +391,24 @@ export function defaultVolumeSmokeParams(
     spawnSeed: 0,
     randomizeSeed: false,
     spawnVariationAmount: 1,
+    strandMode: false,
+    strandCount: 8,
+    strandLength: 0.85,
+    strandThickness: 0.18,
+    strandSpacing: 0.22,
+    strandTwistDeg: 0,
+    strandAngleJitterDeg: 18,
+    strandBend: 0.55,
+    strandEdgeSoftness: 0.65,
+    strandGapFill: 0.12,
+    strandRandomAmount: 1,
     hitImpulse: 14,
     hitDensity: 4,
     hitTemperature: 3,
+    impulseMode: 'direction',
+    impulseDirSource: 'hit',
+    impulseDir: { x: 0, y: 1, z: 0 },
+    showImpulseDir: true,
     impulseRadial: 0.2,
     impulseSwirl: 1.2,
     impulseSubsteps: 8,
@@ -699,6 +769,8 @@ const SEED_SHAPES: VolumeSmokeSeedShape[] = [
   'sphere',
   'disk',
   'ring',
+  'arc',
+  'arrow',
   'column',
 ];
 
@@ -709,6 +781,8 @@ const FADE_CURVES: VolumeSmokeFadeCurve[] = [
   'easeIn',
   'smoothstep',
 ];
+const IMPULSE_MODES: VolumeSmokeImpulseMode[] = ['direction', 'scatter'];
+const IMPULSE_DIR_SOURCES: VolumeSmokeImpulseDirSource[] = ['hit', 'custom'];
 
 export function normalizeVolumeSmokeParams(raw: unknown): VolumeSmokeParams {
   const o = (raw && typeof raw === 'object' ? raw : {}) as Record<
@@ -726,6 +800,24 @@ export function normalizeVolumeSmokeParams(raw: unknown): VolumeSmokeParams {
     : d.toneMapping;
   const lightingMode: VolumeSmokeLightingMode =
     o.lightingMode === 'project' ? 'project' : 'original';
+  // Legacy recipes without impulseMode keep today's "follow hit normal" push.
+  const hasImpulseMode = Object.prototype.hasOwnProperty.call(o, 'impulseMode');
+  const impulseModeRaw = String(o.impulseMode ?? d.impulseMode);
+  const impulseMode = IMPULSE_MODES.includes(
+    impulseModeRaw as VolumeSmokeImpulseMode,
+  )
+    ? (impulseModeRaw as VolumeSmokeImpulseMode)
+    : d.impulseMode;
+  const impulseDirSourceRaw = String(
+    o.impulseDirSource ?? (hasImpulseMode ? d.impulseDirSource : 'hit'),
+  );
+  const impulseDirSource = IMPULSE_DIR_SOURCES.includes(
+    impulseDirSourceRaw as VolumeSmokeImpulseDirSource,
+  )
+    ? (impulseDirSourceRaw as VolumeSmokeImpulseDirSource)
+    : hasImpulseMode
+      ? d.impulseDirSource
+      : 'hit';
   const expandedRaw =
     o.expandedSections && typeof o.expandedSections === 'object'
       ? (o.expandedSections as Record<string, unknown>)
@@ -753,6 +845,15 @@ export function normalizeVolumeSmokeParams(raw: unknown): VolumeSmokeParams {
     shapeThickness: asFinite(o.shapeThickness, d.shapeThickness),
     ringRadiusRatio: asFinite(o.ringRadiusRatio, d.ringRadiusRatio),
     ringWidth: asFinite(o.ringWidth, d.ringWidth),
+    arcAngle: Math.min(
+      360,
+      Math.max(1, asFinite(o.arcAngle, d.arcAngle)),
+    ),
+    arrowAngle: Math.min(
+      179,
+      Math.max(5, asFinite(o.arrowAngle, d.arrowAngle)),
+    ),
+    arrowLength: Math.max(0.05, asFinite(o.arrowLength, d.arrowLength)),
     columnHeight: asFinite(o.columnHeight, d.columnHeight),
     seedRotation: asVec3(o.seedRotation, d.seedRotation),
     seedOffset: asVec3(o.seedOffset, d.seedOffset),
@@ -763,9 +864,42 @@ export function normalizeVolumeSmokeParams(raw: unknown): VolumeSmokeParams {
       0,
       asFinite(o.spawnVariationAmount, d.spawnVariationAmount),
     ),
+    strandMode: asBool(o.strandMode, d.strandMode),
+    strandCount: Math.max(
+      1,
+      Math.min(48, Math.round(asFinite(o.strandCount, d.strandCount))),
+    ),
+    strandLength: Math.max(0.02, asFinite(o.strandLength, d.strandLength)),
+    strandThickness: Math.max(
+      0.005,
+      asFinite(o.strandThickness, d.strandThickness),
+    ),
+    strandSpacing: Math.max(0.02, asFinite(o.strandSpacing, d.strandSpacing)),
+    strandTwistDeg: asFinite(o.strandTwistDeg, d.strandTwistDeg),
+    strandAngleJitterDeg: Math.max(
+      0,
+      asFinite(o.strandAngleJitterDeg, d.strandAngleJitterDeg),
+    ),
+    strandBend: Math.max(0, asFinite(o.strandBend, d.strandBend)),
+    strandEdgeSoftness: Math.max(
+      0,
+      Math.min(1, asFinite(o.strandEdgeSoftness, d.strandEdgeSoftness)),
+    ),
+    strandGapFill: Math.max(
+      0,
+      Math.min(1, asFinite(o.strandGapFill, d.strandGapFill)),
+    ),
+    strandRandomAmount: Math.max(
+      0,
+      asFinite(o.strandRandomAmount, d.strandRandomAmount),
+    ),
     hitImpulse: asFinite(o.hitImpulse, d.hitImpulse),
     hitDensity: asFinite(o.hitDensity, d.hitDensity),
     hitTemperature: asFinite(o.hitTemperature, d.hitTemperature),
+    impulseMode,
+    impulseDirSource,
+    impulseDir: asVec3(o.impulseDir, d.impulseDir),
+    showImpulseDir: asBool(o.showImpulseDir, d.showImpulseDir),
     impulseRadial: asFinite(o.impulseRadial, d.impulseRadial),
     impulseSwirl: asFinite(o.impulseSwirl, d.impulseSwirl),
     impulseSubsteps: Math.round(

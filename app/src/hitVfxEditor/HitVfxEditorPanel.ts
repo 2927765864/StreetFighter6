@@ -101,6 +101,82 @@ const STRENGTH_MUL_LABELS: Record<
   lightIntensityMul: '光强倍率',
 };
 
+type InspTabDef = { id: string; label: string; html: string };
+
+/** Session-only active inspector tab per selection (not serialized into recipes). */
+const inspActiveTabByKey = new Map<string, string>();
+
+function inspTabShell(tabs: InspTabDef[], activeId: string): string {
+  if (tabs.length === 0) return '';
+  const active = tabs.some((t) => t.id === activeId) ? activeId : tabs[0]!.id;
+  const nav = tabs
+    .map(
+      (t) =>
+        `<button type="button" class="hvfx-insp-tab${
+          t.id === active ? ' is-active' : ''
+        }" data-insp-tab="${escapeAttr(t.id)}">${escapeHtml(t.label)}</button>`,
+    )
+    .join('');
+  const groups = tabs
+    .map(
+      (t) =>
+        `<div class="hvfx-insp-group${
+          t.id === active ? ' is-active' : ''
+        }" data-insp-group="${escapeAttr(t.id)}">${t.html}</div>`,
+    )
+    .join('');
+  return `<div class="hvfx-insp-shell"><nav class="hvfx-insp-tabs" aria-label="检查器分类">${nav}</nav><div class="hvfx-insp-content">${groups}</div></div>`;
+}
+
+function resolveInspTab(
+  selectionKey: string,
+  tabs: InspTabDef[],
+  fallbackId?: string,
+): string {
+  const saved = inspActiveTabByKey.get(selectionKey);
+  if (saved && tabs.some((t) => t.id === saved)) return saved;
+  if (fallbackId && tabs.some((t) => t.id === fallbackId)) return fallbackId;
+  return tabs[0]?.id ?? '';
+}
+
+function bindInspTabs(root: HTMLElement, selectionKey: string): void {
+  const tabs = [
+    ...root.querySelectorAll<HTMLButtonElement>('[data-insp-tab]'),
+  ];
+  const groups = [
+    ...root.querySelectorAll<HTMLElement>('[data-insp-group]'),
+  ];
+  tabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      const id = tab.dataset.inspTab ?? '';
+      inspActiveTabByKey.set(selectionKey, id);
+      tabs.forEach((t) =>
+        t.classList.toggle('is-active', t.dataset.inspTab === id),
+      );
+      groups.forEach((g) =>
+        g.classList.toggle('is-active', g.dataset.inspGroup === id),
+      );
+    });
+  });
+}
+
+function elementCommonFieldsHtml(
+  element: HitVfxElement,
+  groupOpts: string,
+  typeLabel: string,
+): string {
+  return `
+    <div class="hvfx-insp-section">
+      <h3>元素 · ${escapeHtml(typeLabel)}</h3>
+      <div class="hvfx-row"><label>名称</label><input type="text" id="insp-el-name" value="${escapeAttr(element.name)}" /></div>
+      <div class="hvfx-row inline"><label>启用</label><input type="checkbox" id="insp-el-en" ${element.enabled ? 'checked' : ''} /></div>
+      <div class="hvfx-row"><label>所属分组</label><select id="insp-el-group">${groupOpts}</select></div>
+      <div class="hvfx-row"><label>开始延迟(秒)</label><input type="number" id="insp-el-delay" step="0.01" min="0" value="${element.startDelaySec}" /></div>
+      <div class="hvfx-row inline"><label>接受火花光照</label><input type="checkbox" id="insp-el-recv" ${element.receiveSparkLight ? 'checked' : ''} /></div>
+    </div>
+  `;
+}
+
 function hexToColorInput(n: number): string {
   return `#${(n >>> 0).toString(16).padStart(6, '0').slice(-6)}`;
 }
@@ -759,7 +835,12 @@ export function setupHitVfxEditorPanel(
     }
 
     const ho = CONFIG.hitVfxHeightOffsets;
-    inspBody.innerHTML = `
+    const selectionKey = `recipe:${recipe.id}`;
+    const tabs: InspTabDef[] = [
+      {
+        id: 'recipe',
+        label: '配方',
+        html: `
       <div class="hvfx-insp-section">
         <h3>配方</h3>
         <div class="hvfx-row"><label>名称</label><input type="text" id="insp-recipe-name" value="${escapeAttr(recipe.name)}" /></div>
@@ -769,8 +850,13 @@ export function setupHitVfxEditorPanel(
             <option value="onBlock" ${recipe.kind === 'onBlock' ? 'selected' : ''}>格挡 onBlock</option>
           </select>
         </div>
-      </div>
-      ${strengthHtml}
+      </div>`,
+      },
+      { id: 'strength', label: '力度', html: strengthHtml },
+      {
+        id: 'anchors',
+        label: '挂点',
+        html: `
       <div class="hvfx-insp-section">
         <h3>高度挂点偏移（全局）</h3>
         <div class="hvfx-row pair">
@@ -785,8 +871,14 @@ export function setupHitVfxEditorPanel(
           <div><label>腿 Y</label><input type="number" data-ho="l.y" step="0.01" value="${ho.l.y}" /></div>
           <div><label>腿 Z</label><input type="number" data-ho="l.z" step="0.01" value="${ho.l.z}" /></div>
         </div>
-      </div>
-    `;
+      </div>`,
+      },
+    ];
+    inspBody.innerHTML = inspTabShell(
+      tabs,
+      resolveInspTab(selectionKey, tabs),
+    );
+    bindInspTabs(inspBody, selectionKey);
 
     (inspBody.querySelector('#insp-recipe-name') as HTMLInputElement).addEventListener(
       'change',
@@ -833,14 +925,25 @@ export function setupHitVfxEditorPanel(
   };
 
   const renderGroupInspector = (recipe: HitVfxRecipe, group: HitVfxGroup) => {
-    inspBody.innerHTML = `
+    const selectionKey = `group:${recipe.id}:${group.id}`;
+    const tabs: InspTabDef[] = [
+      {
+        id: 'group',
+        label: '分组',
+        html: `
       <div class="hvfx-insp-section">
         <h3>分组</h3>
         <div class="hvfx-row"><label>名称</label><input type="text" id="insp-group-name" value="${escapeAttr(group.name)}" /></div>
         <div class="hvfx-row inline"><label>启用整组</label><input type="checkbox" id="insp-group-en" ${group.enabled ? 'checked' : ''} /></div>
         <p class="hvfx-hint">关闭后该组内元素运行时全部跳过。</p>
-      </div>
-    `;
+      </div>`,
+      },
+    ];
+    inspBody.innerHTML = inspTabShell(
+      tabs,
+      resolveInspTab(selectionKey, tabs),
+    );
+    bindInspTabs(inspBody, selectionKey);
     (inspBody.querySelector('#insp-group-name') as HTMLInputElement).addEventListener(
       'change',
       (e) => {
@@ -872,37 +975,50 @@ export function setupHitVfxEditorPanel(
       )
       .join('');
 
-    let typeParams = '';
-    if (element.type === 'spark') {
-      typeParams = sparkParamsHtml(element.params);
-    } else if (element.type === 'sparkDebris') {
-      typeParams = sparkDebrisParamsHtml(element.params);
-    } else if (element.type === 'smokeRing') {
-      typeParams = smokeRingParamsHtml(element.params);
-    } else if (element.type === 'dust') {
-      typeParams = dustParamsHtml(element.params);
-    } else if (element.type === 'sweat') {
-      typeParams = sweatParamsHtml(element.params);
-    } else if (element.type === 'volumeSmoke') {
-      typeParams = volumeSmokeParamsHtml(element.params);
-    }
-
     const typeLabel =
       ELEMENT_TYPE_LABEL[
         element.type as Exclude<HitVfxElementType, 'sparkLight'>
       ] ?? element.type;
 
-    inspBody.innerHTML = `
-      <div class="hvfx-insp-section">
-        <h3>元素 · ${typeLabel}</h3>
-        <div class="hvfx-row"><label>名称</label><input type="text" id="insp-el-name" value="${escapeAttr(element.name)}" /></div>
-        <div class="hvfx-row inline"><label>启用</label><input type="checkbox" id="insp-el-en" ${element.enabled ? 'checked' : ''} /></div>
-        <div class="hvfx-row"><label>所属分组</label><select id="insp-el-group">${groupOpts}</select></div>
-        <div class="hvfx-row"><label>开始延迟(秒)</label><input type="number" id="insp-el-delay" step="0.01" min="0" value="${element.startDelaySec}" /></div>
-        <div class="hvfx-row inline"><label>接受火花光照</label><input type="checkbox" id="insp-el-recv" ${element.receiveSparkLight ? 'checked' : ''} /></div>
-      </div>
-      ${typeParams}
-    `;
+    const selectionKey = `element:${element.id}`;
+    const commonHtml = elementCommonFieldsHtml(element, groupOpts, typeLabel);
+    const tabs: InspTabDef[] = [
+      { id: 'common', label: '通用', html: commonHtml },
+    ];
+
+    if (element.type === 'spark') {
+      tabs.push(...sparkParamsTabs(element.params));
+    } else if (element.type === 'sparkDebris') {
+      tabs.push({
+        id: 'params',
+        label: '参数',
+        html: sparkDebrisParamsHtml(element.params),
+      });
+    } else if (element.type === 'smokeRing') {
+      tabs.push(...smokeRingParamsTabs(element.params));
+    } else if (element.type === 'dust') {
+      tabs.push({
+        id: 'params',
+        label: '参数',
+        html: dustParamsHtml(element.params),
+      });
+    } else if (element.type === 'sweat') {
+      tabs.push({
+        id: 'params',
+        label: '参数',
+        html: sweatParamsHtml(element.params),
+      });
+    } else if (element.type === 'volumeSmoke') {
+      tabs.push(...volumeSmokeParamsTabs(element.params));
+    }
+
+    const fallbackTab =
+      element.type === 'volumeSmoke' ? 'hit' : tabs[1]?.id ?? 'common';
+    inspBody.innerHTML = inspTabShell(
+      tabs,
+      resolveInspTab(selectionKey, tabs, fallbackTab),
+    );
+    bindInspTabs(inspBody, selectionKey);
 
     const paramBump = () => {
       notify('hitVfxRecipes');
@@ -1011,6 +1127,58 @@ export function setupHitVfxEditorPanel(
         });
       });
 
+    const syncStrandModeRows = () => {
+      const on = !!element.params.strandMode;
+      root.querySelectorAll<HTMLElement>('[data-strand-mode]').forEach((row) => {
+        row.style.display = on ? '' : 'none';
+      });
+    };
+    syncStrandModeRows();
+    root
+      .querySelectorAll<HTMLInputElement>('[data-p="strandMode"]')
+      .forEach((inp) => {
+        inp.addEventListener('change', () => {
+          element.params.strandMode = inp.checked;
+          syncStrandModeRows();
+        });
+      });
+
+    const syncImpulseModeRows = () => {
+      const mode = element.params.impulseMode;
+      const dirSource = element.params.impulseDirSource;
+      root.querySelectorAll<HTMLElement>('[data-impulse-mode]').forEach((row) => {
+        const allowed = (row.dataset.impulseMode ?? '').split(',');
+        row.style.display = allowed.includes(mode) ? '' : 'none';
+      });
+      root
+        .querySelectorAll<HTMLElement>('[data-impulse-dir-source]')
+        .forEach((row) => {
+          const allowed = (row.dataset.impulseDirSource ?? '').split(',');
+          const show =
+            mode === 'direction' && allowed.includes(dirSource);
+          row.style.display = show ? '' : 'none';
+        });
+    };
+    syncImpulseModeRows();
+    root
+      .querySelectorAll<HTMLSelectElement>('[data-p="impulseMode"]')
+      .forEach((sel) => {
+        sel.addEventListener('change', () => {
+          element.params.impulseMode =
+            sel.value as VolumeSmokeParams['impulseMode'];
+          syncImpulseModeRows();
+        });
+      });
+    root
+      .querySelectorAll<HTMLSelectElement>('[data-p="impulseDirSource"]')
+      .forEach((sel) => {
+        sel.addEventListener('change', () => {
+          element.params.impulseDirSource =
+            sel.value as VolumeSmokeParams['impulseDirSource'];
+          syncImpulseModeRows();
+        });
+      });
+
     const syncEndConditionRows = () => {
       const mode = element.params.endCondition;
       root.querySelectorAll<HTMLElement>('[data-end-mode]').forEach((row) => {
@@ -1056,23 +1224,6 @@ export function setupHitVfxEditorPanel(
           queueMicrotask(syncLightingDisabled);
         });
       });
-
-    root.querySelectorAll<HTMLElement>('[data-section-key]').forEach((body) => {
-      const key = body.dataset.sectionKey as keyof VolumeSmokeParams['expandedSections'];
-      const open = element.params.expandedSections[key];
-      body.style.display = open ? '' : 'none';
-    });
-    root.querySelectorAll<HTMLInputElement>('[data-section-toggle]').forEach((inp) => {
-      inp.addEventListener('change', () => {
-        const key = inp.dataset.sectionToggle as keyof VolumeSmokeParams['expandedSections'];
-        element.params.expandedSections[key] = inp.checked;
-        const body = root.querySelector<HTMLElement>(
-          `[data-section-key="${key}"]`,
-        );
-        if (body) body.style.display = inp.checked ? '' : 'none';
-        bump();
-      });
-    });
 
     const reroll = root.querySelector('#hvfx-vs-reroll-seed');
     reroll?.addEventListener('click', () => {
@@ -1709,7 +1860,7 @@ function setParamPath(
   }
 }
 
-function numRow(label: string, path: string, value: number, step = 'any'): string {
+function numRow(label: string, path: string, value: number, step = '0.01'): string {
   return `<div class="hvfx-row"><label>${label}</label><input type="number" data-p="${path}" step="${step}" value="${value}" /></div>`;
 }
 
@@ -1717,7 +1868,7 @@ function pairRow(
   label: string,
   path: string,
   value: [number, number],
-  step = 'any',
+  step = '0.01',
 ): string {
   return `<div class="hvfx-row pair">
     <div><label>${label} 最小</label><input type="number" data-p="${path}.0" step="${step}" value="${value[0]}" /></div>
@@ -1735,8 +1886,12 @@ function checkRow(label: string, path: string, value: boolean): string {
   return `<div class="hvfx-row inline"><label>${label}</label><input type="checkbox" data-p="${path}" ${value ? 'checked' : ''} /></div>`;
 }
 
-function sparkParamsHtml(p: SparkParams): string {
-  return `
+function sparkParamsTabs(p: SparkParams): InspTabDef[] {
+  return [
+    {
+      id: 'params',
+      label: '参数',
+      html: `
     <div class="hvfx-insp-section">
       <h3>火花参数</h3>
       ${numRow('数量', 'count', p.count, '1')}
@@ -1750,7 +1905,12 @@ function sparkParamsHtml(p: SparkParams): string {
       ${numRow('阻力', 'drag', p.drag)}
       ${numRow('重力Y', 'gravityY', p.gravityY)}
       <div class="hvfx-row"><label>混合</label><div class="hvfx-readonly">additive（只读）</div></div>
-    </div>
+    </div>`,
+    },
+    {
+      id: 'light',
+      label: '光照',
+      html: `
     <div class="hvfx-insp-section">
       <h3>火花光照</h3>
       ${checkRow('光照启用', 'light.enabled', p.light.enabled)}
@@ -1763,8 +1923,9 @@ function sparkParamsHtml(p: SparkParams): string {
       ${checkRow('启用点光', 'light.castOnCharacter', p.light.castOnCharacter)}
       ${checkRow('照同组特效', 'light.castOnVfxElements', p.light.castOnVfxElements)}
       <p class="hvfx-hint">点光仅在命中特效层生效，不会照亮角色与场景；「照同组特效」会提高粒子亮度倍率。</p>
-    </div>
-  `;
+    </div>`,
+    },
+  ];
 }
 
 function sparkDebrisParamsHtml(p: SparkDebrisParams): string {
@@ -1802,16 +1963,31 @@ function dustParamsHtml(p: DustParams): string {
   `;
 }
 
-function smokeRingParamsHtml(p: SmokeRingParams): string {
-  return `
+function smokeRingParamsTabs(p: SmokeRingParams): InspTabDef[] {
+  return [
+    {
+      id: 'structure',
+      label: '结构',
+      html: `
     <div class="hvfx-insp-section">
-      <h3>涡环烟参数</h3>
+      <h3>涡环结构</h3>
       ${numRow('染料数量', 'dyeCount', p.dyeCount, '1')}
       ${numRow('细丝数量', 'filamentCount', p.filamentCount, '1')}
-      ${pairRow('寿命(秒)', 'lifetimeSec', p.lifetimeSec)}
-      ${pairRow('细丝寿命', 'filamentLifetimeSec', p.filamentLifetimeSec)}
       ${numRow('环半径', 'ringRadius', p.ringRadius)}
       ${numRow('管半径', 'tubeRadius', p.tubeRadius)}
+      ${numRow('势网格', 'potentialGrid', p.potentialGrid, '1')}
+      ${checkRow('深度排序', 'sortByDepth', p.sortByDepth)}
+      <div class="hvfx-row"><label>混合</label><div class="hvfx-readonly">alpha（只读）</div></div>
+    </div>`,
+    },
+    {
+      id: 'motion',
+      label: '运动',
+      html: `
+    <div class="hvfx-insp-section">
+      <h3>涡环运动</h3>
+      ${pairRow('寿命(秒)', 'lifetimeSec', p.lifetimeSec)}
+      ${pairRow('细丝寿命', 'filamentLifetimeSec', p.filamentLifetimeSec)}
       ${numRow('切向涡强(环量)', 'vortexStrength', p.vortexStrength)}
       ${numRow('径向扩张', 'expandStrength', p.expandStrength)}
       ${numRow('轴向速度', 'axialSpeed', p.axialSpeed)}
@@ -1820,18 +1996,24 @@ function smokeRingParamsHtml(p: SmokeRingParams): string {
       ${numRow('curl时间速度', 'curlSpeed', p.curlSpeed)}
       ${numRow('阻力', 'drag', p.drag)}
       ${numRow('重力Y', 'gravityY', p.gravityY)}
+      ${numRow('helix helicity', 'helixHelicity', p.helixHelicity)}
+      ${numRow('helix coherence', 'helixCoherence', p.helixCoherence)}
+      ${numRow('helix decay', 'helixDecay', p.helixDecay)}
+    </div>`,
+    },
+    {
+      id: 'look',
+      label: '外观',
+      html: `
+    <div class="hvfx-insp-section">
+      <h3>涡环外观</h3>
       ${pairRow('尺寸', 'size', p.size)}
       ${numRow('细丝宽度', 'filamentWidth', p.filamentWidth)}
       ${colorRow('颜色', 'color', p.color)}
       ${numRow('不透明度', 'opacity', p.opacity)}
-      ${numRow('helix helicity', 'helixHelicity', p.helixHelicity)}
-      ${numRow('helix coherence', 'helixCoherence', p.helixCoherence)}
-      ${numRow('helix decay', 'helixDecay', p.helixDecay)}
-      ${numRow('势网格', 'potentialGrid', p.potentialGrid, '1')}
-      ${checkRow('深度排序', 'sortByDepth', p.sortByDepth)}
-      <div class="hvfx-row"><label>混合</label><div class="hvfx-readonly">alpha（只读）</div></div>
-    </div>
-  `;
+    </div>`,
+    },
+  ];
 }
 
 function sweatParamsHtml(p: SweatParams): string {
@@ -1878,7 +2060,7 @@ function vec3Row(
   label: string,
   path: string,
   value: { x: number; y: number; z: number },
-  step = 'any',
+  step = '0.01',
 ): string {
   return `<div class="hvfx-row hvfx-vec3"><label>${label}</label>
     <div class="hvfx-vec3-inputs">
@@ -1889,87 +2071,97 @@ function vec3Row(
   </div>`;
 }
 
-function sectionBlock(
-  title: string,
-  sectionKey: keyof VolumeSmokeParams['expandedSections'],
-  expanded: boolean,
-  body: string,
-): string {
-  return `
-    <div class="hvfx-insp-section hvfx-vs-section">
-      <div class="hvfx-vs-section-header">
-        <h3>${title}</h3>
-        <label class="hvfx-vs-expand"><span>${expanded ? '展开' : '收起'}</span>
-          <input type="checkbox" data-section-toggle="${sectionKey}" ${expanded ? 'checked' : ''} />
-        </label>
-      </div>
-      <div data-section-key="${sectionKey}" class="hvfx-vs-section-body">
-        ${body}
-      </div>
-    </div>
-  `;
-}
-
-function volumeSmokeParamsHtml(p: VolumeSmokeParams): string {
-  const ex = p.expandedSections;
+function volumeSmokeParamsTabs(p: VolumeSmokeParams): InspTabDef[] {
   const dyeDissipation =
     p.smokeLifespan >= 100 ? 0 : Number((1 / p.smokeLifespan).toFixed(4));
-  const velDissipation = Number((1 / Math.max(0.001, p.tempLifespan)).toFixed(4));
+  const velDissipation = Number(
+    (1 / Math.max(0.001, p.tempLifespan)).toFixed(4),
+  );
   const originalOnly = p.lightingMode === 'project' ? ' hvfx-disabled' : '';
 
-  return `
-    ${sectionBlock(
-      '【基础】运行控制',
-      'basicRun',
-      ex.basicRun,
-      `
+  return [
+    {
+      id: 'basic',
+      label: '基础',
+      html: `
+    <div class="hvfx-insp-section">
+      <h3>运行控制</h3>
       ${checkRow('启用模拟', 'simulate', p.simulate)}
       ${numRow('模拟速度', 'simSpeed', p.simSpeed)}
       <div class="hvfx-row"><label>网格尺寸（只读）</label><div class="hvfx-readonly">${GRID}</div></div>
       <div class="hvfx-row"><label>涡度模式（只读）</label><div class="hvfx-readonly">Official-Precompute</div></div>
-      `,
-    )}
-    ${sectionBlock(
-      '【模拟】流体域',
-      'simDomain',
-      ex.simDomain,
-      `
+    </div>`,
+    },
+    {
+      id: 'sim',
+      label: '模拟',
+      html: `
+    <div class="hvfx-insp-section">
+      <h3>流体域</h3>
       ${numRow('方盒尺寸 (米)', 'volumeSize', p.volumeSize)}
       ${checkRow('无限制(外扩)', 'unrestricted', p.unrestricted)}
       ${numRow('无限制盒尺寸 (米)', 'unrestrictedVolumeSize', p.unrestrictedVolumeSize)}
       ${numRow('压力迭代次数（偶数）', 'pressureIterations', p.pressureIterations, '2')}
-      `,
-    )}
-    ${sectionBlock(
-      '【模拟】时间步进',
-      'simTime',
-      ex.simTime,
-      `${numRow('固定子步频率 (Hz)', 'fixedSubstepsHz', p.fixedSubstepsHz, '1')}`,
-    )}
-    ${sectionBlock(
-      '【受击】溅射与种子',
-      'hitSplat',
-      ex.hitSplat,
-      `
+    </div>
+    <div class="hvfx-insp-section">
+      <h3>时间步进</h3>
+      ${numRow('固定子步频率 (Hz)', 'fixedSubstepsHz', p.fixedSubstepsHz, '1')}
+    </div>`,
+    },
+    {
+      id: 'hit',
+      label: '受击',
+      html: `
+    <div class="hvfx-insp-section">
+      <h3>溅射与种子</h3>
       ${numRow('烟雾初始半径 (米)', 'hitRadius', p.hitRadius)}
-      <p class="hvfx-hint">控制烟团整体大小（球/盘/环/柱共用）</p>
+      <p class="hvfx-hint">控制烟团整体大小（球/盘/环/弧/箭/柱共用）</p>
       ${selectRow('烟团形状', 'seedShape', p.seedShape, [
         { value: 'sphere', label: '球' },
         { value: 'disk', label: '盘' },
         { value: 'ring', label: '环' },
+        { value: 'arc', label: '弧（）' },
+        { value: 'arrow', label: '箭（>）' },
         { value: 'column', label: '柱' },
       ])}
-      <div data-seed-shapes="disk,ring">${numRow('盘/环厚度比', 'shapeThickness', p.shapeThickness)}</div>
-      <div data-seed-shapes="ring">${numRow('环中心半径比', 'ringRadiusRatio', p.ringRadiusRatio)}</div>
-      <div data-seed-shapes="ring">${numRow('环管宽度比', 'ringWidth', p.ringWidth)}</div>
+      <div data-seed-shapes="disk,ring,arc,arrow">${numRow('盘/环厚度比', 'shapeThickness', p.shapeThickness)}</div>
+      <div data-seed-shapes="ring,arc">${numRow('环中心半径比', 'ringRadiusRatio', p.ringRadiusRatio)}</div>
+      <div data-seed-shapes="ring,arc,arrow">${numRow('环管/臂宽度比', 'ringWidth', p.ringWidth)}</div>
+      <div data-seed-shapes="arc">${numRow('弧张开角 (°)', 'arcAngle', p.arcAngle, '1')}</div>
+      <div data-seed-shapes="arc"><p class="hvfx-hint">一段圆环，默认像「）」；用烟团旋转 Y 调开口朝向</p></div>
+      <div data-seed-shapes="arrow">${numRow('箭张开角 (°)', 'arrowAngle', p.arrowAngle, '1')}</div>
+      <div data-seed-shapes="arrow">${numRow('箭边长比', 'arrowLength', p.arrowLength, '0.05')}</div>
+      <div data-seed-shapes="arrow"><p class="hvfx-hint">尖端在中心朝 +X，开口朝 −X（像「>」）；边长相对命中半径</p></div>
       <div data-seed-shapes="column">${numRow('柱高度比', 'columnHeight', p.columnHeight)}</div>
-      <div data-seed-shapes="disk,ring,column">
+      <div data-seed-shapes="disk,ring,arc,arrow,column">
         ${vec3Row('烟团旋转 (° XYZ)', 'seedRotation', p.seedRotation, '1')}
         <p class="hvfx-hint">先对齐受击方向，再按 XYZ 欧拉角倾斜（球对称，旋转无效）</p>
       </div>
       ${vec3Row('烟团偏移 (UVW)', 'seedOffset', p.seedOffset, '0.01')}
       <p class="hvfx-hint">相对盒心偏移种子位置（UVW；0.5≈半盒）；过大可能被裁切</p>
       ${checkRow('显示初始形状', 'showSeedShape', p.showSeedShape)}
+      <div class="hvfx-subhead">缕烟</div>
+      <p class="hvfx-hint">开启后：外形壳内由一缕一缕弯绳组成，不再整团棉花填充。关闭则与过去一致。</p>
+      ${checkRow('启用缕烟', 'strandMode', p.strandMode)}
+      <div data-strand-mode="1">
+        ${numRow('条数', 'strandCount', p.strandCount, '1')}
+        <p class="hvfx-hint">约 1～48；条数少时会自动拉大间距以铺满外形</p>
+        ${numRow('每缕长度比', 'strandLength', p.strandLength)}
+        <p class="hvfx-hint">相对烟团半径；调小会变短。不会再为了铺满外形而自动拉长</p>
+        ${numRow('每缕粗细比', 'strandThickness', p.strandThickness)}
+        <p class="hvfx-hint">相对烟团半径。过细时仍按参数收细；网格保活用锐利约 1 体素丝带，不再把绳子整体加粗</p>
+        ${numRow('缕间隔比', 'strandSpacing', p.strandSpacing)}
+        <p class="hvfx-hint">略微调节铺开到外形边缘的程度</p>
+        ${numRow('整体扭转 (°)', 'strandTwistDeg', p.strandTwistDeg, '1')}
+        ${numRow('各缕角度随机 (°)', 'strandAngleJitterDeg', p.strandAngleJitterDeg, '1')}
+        ${numRow('弯曲强度', 'strandBend', p.strandBend)}
+        ${numRow('外形边缘软硬', 'strandEdgeSoftness', p.strandEdgeSoftness)}
+        <p class="hvfx-hint">0=严裁在外形内；1=允许轻微探出</p>
+        ${numRow('缝旁淡烟', 'strandGapFill', p.strandGapFill)}
+        <p class="hvfx-hint">0=缝尽量空；越大绳旁淡烟越多</p>
+        ${numRow('缕烟总随机强度', 'strandRandomAmount', p.strandRandomAmount, '0.05')}
+        <p class="hvfx-hint">只影响缕的排布乱量；与上方「随机幅度」分开</p>
+      </div>
       ${numRow('随机种子', 'spawnSeed', p.spawnSeed, '1')}
       <p class="hvfx-hint">同一种子 + 相同参数/命中 → 烟雾过程完全一样</p>
       ${numRow('随机幅度', 'spawnVariationAmount', p.spawnVariationAmount, '0.05')}
@@ -1978,32 +2170,48 @@ function volumeSmokeParamsHtml(p: VolumeSmokeParams): string {
       <div class="hvfx-row"><button type="button" id="hvfx-vs-reroll-seed">掷一次种子</button></div>
       ${numRow('烟雾出现高度偏置 (米)', 'spawnHeight', p.spawnHeight)}
       ${numRow('冲击力', 'hitImpulse', p.hitImpulse)}
-      ${numRow('爆炸占比', 'impulseRadial', p.impulseRadial)}
-      <p class="hvfx-hint">0=沿受击方向推；1=四面炸开（容易被压力吃掉）</p>
+      ${selectRow('冲击力模式', 'impulseMode', p.impulseMode, [
+        { value: 'direction', label: '方向' },
+        { value: 'scatter', label: '四散' },
+      ])}
+      <p class="hvfx-hint">方向=整体沿轴推；四散=以烟团中心向外炸开</p>
+      <div data-impulse-mode="direction">
+        ${selectRow('方向来源', 'impulseDirSource', p.impulseDirSource, [
+          { value: 'hit', label: '受击方向' },
+          { value: 'custom', label: '自定义本地 XYZ' },
+        ])}
+        <div data-impulse-dir-source="custom">
+          ${vec3Row('冲击方向 (本地 XYZ)', 'impulseDir', p.impulseDir)}
+          <p class="hvfx-hint">烟盒本地轴；零向量回退为 +Y</p>
+        </div>
+        ${checkRow('显示冲击方向', 'showImpulseDir', p.showImpulseDir)}
+        ${numRow('爆炸占比', 'impulseRadial', p.impulseRadial)}
+        <p class="hvfx-hint">0=纯沿轴推；加大则混入从中心向外的分量</p>
+      </div>
+      <div data-impulse-mode="scatter">
+        <p class="hvfx-hint">四散：从形状中心向四面八方施力（纯径向；不可压缩投影可能削弱炸开感）</p>
+      </div>
       ${numRow('旋转推力', 'impulseSwirl', p.impulseSwirl)}
-      <p class="hvfx-hint">绕受击方向打转，更能真正带动烟雾</p>
+      <p class="hvfx-hint">绕冲击轴打转，更能真正带动烟雾</p>
       ${numRow('持续施力子步', 'impulseSubsteps', p.impulseSubsteps, '1')}
       ${checkRow('推力随盒子缩放', 'impulseScaleWithBox', p.impulseScaleWithBox)}
       ${numRow('密度', 'hitDensity', p.hitDensity)}
       ${numRow('温度', 'hitTemperature', p.hitTemperature)}
       ${numRow('显示速度扭曲', 'velDisplayWarp', p.velDisplayWarp)}
       <p class="hvfx-hint">过大容易闪白；与冲击运动无关</p>
-      `,
-    )}
-    ${sectionBlock(
-      '【受击】对象池',
-      'hitPool',
-      ex.hitPool,
-      `
+    </div>
+    <div class="hvfx-insp-section">
+      <h3>对象池</h3>
       ${numRow('对象池数量', 'poolSize', p.poolSize, '1')}
       <p class="hvfx-hint">更改对象池会重建体积实例，可能短暂卡顿。</p>
-      `,
-    )}
-    ${sectionBlock(
-      '【流体】浮力与湍流',
-      'fluidForces',
-      ex.fluidForces,
-      `
+    </div>`,
+    },
+    {
+      id: 'fluid',
+      label: '流体',
+      html: `
+    <div class="hvfx-insp-section">
+      <h3>浮力与湍流</h3>
       ${numRow('浮力', 'buoyancy', p.buoyancy)}
       ${numRow('重力', 'weight', p.weight)}
       ${numRow('湍流强度', 'turbulence', p.turbulence)}
@@ -2013,13 +2221,9 @@ function volumeSmokeParamsHtml(p: VolumeSmokeParams): string {
       ${vec3Row('湍流方向 (XYZ)', 'turbulenceDir', p.turbulenceDir)}
       ${checkRow('显示湍流方向', 'showTurbulenceDir', p.showTurbulenceDir)}
       ${numRow('速度阻尼', 'velDamping', p.velDamping)}
-      `,
-    )}
-    ${sectionBlock(
-      '【流体】关闭与渐隐',
-      'fluidLife',
-      ex.fluidLife,
-      `
+    </div>
+    <div class="hvfx-insp-section">
+      <h3>关闭与渐隐</h3>
       ${selectRow('关闭条件', 'endCondition', p.endCondition, [
         { value: 'lifespan', label: '烟雾寿命' },
         { value: 'density', label: '密度截止' },
@@ -2032,7 +2236,7 @@ function volumeSmokeParamsHtml(p: VolumeSmokeParams): string {
         <label data-smoke-life-label>${
           p.endCondition === 'density' ? '染料寿命 (耗散)' : '烟雾寿命 (秒)'
         }</label>
-        <input type="number" step="any" data-p="smokeLifespan" value="${p.smokeLifespan}" />
+        <input type="number" step="0.01" data-p="smokeLifespan" value="${p.smokeLifespan}" />
       </div>
       <p class="hvfx-hint" data-end-hint="lifespan">到达寿命后开始渐隐，并同时驱动染料耗散。</p>
       <p class="hvfx-hint" data-end-hint="density">染料寿命不负责关闭，只影响耗散快慢。</p>
@@ -2046,13 +2250,14 @@ function volumeSmokeParamsHtml(p: VolumeSmokeParams): string {
       ${numRow('温度寿命 (秒)', 'tempLifespan', p.tempLifespan)}
       <div class="hvfx-row"><label>染料耗散预览</label><div class="hvfx-readonly">${dyeDissipation}</div></div>
       <div class="hvfx-row"><label>速度耗散预览</label><div class="hvfx-readonly">${velDissipation}</div></div>
-      `,
-    )}
-    ${sectionBlock(
-      '【渲染】光线与外观',
-      'renderLook',
-      ex.renderLook,
-      `
+    </div>`,
+    },
+    {
+      id: 'render',
+      label: '渲染',
+      html: `
+    <div class="hvfx-insp-section">
+      <h3>光线与外观</h3>
       ${numRow('光线步进次数', 'raymarchSteps', p.raymarchSteps, '1')}
       ${cssColorRow('烟雾颜色', 'smokeColor', p.smokeColor)}
       ${numRow('密度增益', 'densityGain', p.densityGain)}
@@ -2061,26 +2266,23 @@ function volumeSmokeParamsHtml(p: VolumeSmokeParams): string {
       ${numRow('粉末效应', 'powderStrength', p.powderStrength)}
       ${numRow('多重散射', 'multiScattering', p.multiScattering)}
       ${numRow('相位不对称 (g)', 'phaseAsymmetry', p.phaseAsymmetry)}
-      `,
-    )}
-    ${sectionBlock(
-      '【渲染】后期与管线',
-      'renderPost',
-      ex.renderPost,
-      `
+    </div>
+    <div class="hvfx-insp-section">
+      <h3>后期与管线</h3>
       ${numRow('渲染分辨率缩放', 'resolutionScale', p.resolutionScale)}
       ${checkRow('启用降噪', 'denoise', p.denoise)}
       ${numRow('降噪强度', 'denoiseStrength', p.denoiseStrength)}
       ${checkRow('步进随时间衰减', 'stepsDecayEnable', p.stepsDecayEnable)}
       ${checkRow('使用渲染管线', 'useRenderPipeline', p.useRenderPipeline)}
       <p class="hvfx-hint">宿主场景默认直渲；开启管线目前仅保留参数兼容。</p>
-      `,
-    )}
-    ${sectionBlock(
-      '【场景】光照与色调',
-      'sceneLight',
-      ex.sceneLight,
-      `
+    </div>`,
+    },
+    {
+      id: 'scene',
+      label: '场景',
+      html: `
+    <div class="hvfx-insp-section">
+      <h3>光照与色调</h3>
       ${selectRow('光照模式', 'lightingMode', p.lightingMode, [
         { value: 'original', label: '原项目光照' },
         { value: 'project', label: '本项目光照' },
@@ -2101,7 +2303,7 @@ function volumeSmokeParamsHtml(p: VolumeSmokeParams): string {
         ${checkRow('显示地面', 'showFloor', p.showFloor)}
         <p class="hvfx-hint">以上五项仅「原项目光照」生效；本项目光照使用 LightRig。原项目主光只照体素烟自身（及可选 debug 地面），不会照亮角色与场景；共享场景下默认不改写全局色调映射/曝光。</p>
       </div>
-      `,
-    )}
-  `;
+    </div>`,
+    },
+  ];
 }

@@ -31,6 +31,7 @@ import {
   scaleVolumeSmokeWorldSizes,
   volumeSmokeTrackMatchesEditorFocus,
 } from '../../../src/render/hitVfx/volumeSmoke/scaleWorldSize';
+import { resolveVolumeSmokeImpulse } from '../../../src/render/hitVfx/volumeSmoke/impulseMode';
 import { VolumeSmokeLighting } from '../../../src/render/hitVfx/volumeSmoke/VolumeSmokeLighting';
 import * as THREE from 'three/webgpu';
 import type { WebGPURenderer } from 'three/webgpu';
@@ -69,6 +70,7 @@ describe('scaleVolumeSmokeWorldSizes', () => {
     expect(out.seedRotation).not.toBe(src.seedRotation);
     expect(out.seedOffset).not.toBe(src.seedOffset);
     expect(out.turbulenceDir).not.toBe(src.turbulenceDir);
+    expect(out.impulseDir).not.toBe(src.impulseDir);
     expect(out.expandedSections).not.toBe(src.expandedSections);
     out.smokeLifespan = 9;
     out.seedRotation.x = 42;
@@ -81,8 +83,10 @@ describe('scaleVolumeSmokeWorldSizes', () => {
     const b = cloneVolumeSmokeParams(a);
     b.smokeLifespan = 10;
     b.turbulenceDir.x = 0.5;
+    b.impulseDir.x = 0.7;
     expect(a.smokeLifespan).toBe(4);
     expect(a.turbulenceDir.x).toBe(0);
+    expect(a.impulseDir.x).toBe(0);
   });
 
   it('volumeSmokeTrackMatchesEditorFocus isolates siblings and missing ids', () => {
@@ -154,11 +158,77 @@ describe('volumeSmoke params', () => {
     expect(n.fadeCurve).toBe('smoothstep');
     expect(n.fadeOutSec).toBe(0);
     expect(n.seedOffset).toEqual({ x: 0.12, y: -0.05, z: 0.2 });
+    expect(n.arcAngle).toBe(140);
     expect(normalizeVolumeSmokeParams({}).seedOffset).toEqual({
       x: 0,
       y: 0,
       z: 0,
     });
+  });
+
+  it('normalize accepts arc seedShape and clamps arcAngle', () => {
+    const n = normalizeVolumeSmokeParams({
+      seedShape: 'arc',
+      arcAngle: 999,
+    });
+    expect(n.seedShape).toBe('arc');
+    expect(n.arcAngle).toBe(360);
+    expect(normalizeVolumeSmokeParams({ seedShape: 'arc', arcAngle: -5 }).arcAngle).toBe(
+      1,
+    );
+  });
+
+  it('legacy recipes without impulseMode keep direction + hit source', () => {
+    const n = normalizeVolumeSmokeParams({ hitImpulse: 10 });
+    expect(n.impulseMode).toBe('direction');
+    expect(n.impulseDirSource).toBe('hit');
+    expect(n.impulseDir).toEqual({ x: 0, y: 1, z: 0 });
+  });
+
+  it('normalize accepts impulse mode scatter and custom local dir', () => {
+    const n = normalizeVolumeSmokeParams({
+      impulseMode: 'scatter',
+      impulseDirSource: 'custom',
+      impulseDir: { x: 2, y: 0, z: 0 },
+      showImpulseDir: false,
+    });
+    expect(n.impulseMode).toBe('scatter');
+    expect(n.impulseDirSource).toBe('custom');
+    expect(n.impulseDir).toEqual({ x: 2, y: 0, z: 0 });
+    expect(n.showImpulseDir).toBe(false);
+  });
+
+  it('resolveVolumeSmokeImpulse: direction/custom vs hit vs scatter', () => {
+    const hit = { x: 0, y: 0, z: 1 };
+    const custom = resolveVolumeSmokeImpulse({
+      mode: 'direction',
+      dirSource: 'custom',
+      impulseDir: { x: 3, y: 0, z: 0 },
+      hitDirOS: hit,
+      impulseRadial: 0.25,
+    });
+    expect(custom.dirOS.x).toBeCloseTo(1, 5);
+    expect(custom.dirOS.y).toBeCloseTo(0, 5);
+    expect(custom.radial).toBeCloseTo(0.25, 5);
+
+    const fromHit = resolveVolumeSmokeImpulse({
+      mode: 'direction',
+      dirSource: 'hit',
+      impulseDir: { x: 1, y: 0, z: 0 },
+      hitDirOS: hit,
+      impulseRadial: 0.1,
+    });
+    expect(fromHit.dirOS.z).toBeCloseTo(1, 5);
+    expect(fromHit.radial).toBeCloseTo(0.1, 5);
+
+    const scatter = resolveVolumeSmokeImpulse({
+      mode: 'scatter',
+      dirSource: 'custom',
+      impulseDir: { x: 0, y: 1, z: 0 },
+      hitDirOS: hit,
+      impulseRadial: 0.2,
+    });
+    expect(scatter.radial).toBe(1);
   });
 
   it('fade mul curves reach 0 at t=1 and 1 at t=0', () => {
@@ -293,16 +363,44 @@ describe('volumeSmoke params', () => {
     const ring = createSeedShapeGeometry(
       defaultVolumeSmokeParams({ seedShape: 'ring' }),
     );
+    const arc = createSeedShapeGeometry(
+      defaultVolumeSmokeParams({ seedShape: 'arc', arcAngle: 140 }),
+    );
+    const arrow = createSeedShapeGeometry(
+      defaultVolumeSmokeParams({ seedShape: 'arrow', arrowAngle: 70, arrowLength: 1 }),
+    );
     const column = createSeedShapeGeometry(
       defaultVolumeSmokeParams({ seedShape: 'column' }),
     );
     expect(sphere).toBeInstanceOf(THREE.SphereGeometry);
     expect(disk).toBeInstanceOf(THREE.CylinderGeometry);
     expect(ring).toBeInstanceOf(THREE.TorusGeometry);
+    expect(arc).toBeInstanceOf(THREE.TorusGeometry);
+    expect(arrow).toBeInstanceOf(THREE.BufferGeometry);
     expect(column).toBeInstanceOf(THREE.CylinderGeometry);
     expect(seedShapeGizmoKind(defaultVolumeSmokeParams({ seedShape: 'ring' }))).toContain(
       'ring:',
     );
+    expect(seedShapeGizmoKind(defaultVolumeSmokeParams({ seedShape: 'arc' }))).toContain(
+      'arc:',
+    );
+    expect(seedShapeGizmoKind(defaultVolumeSmokeParams({ seedShape: 'arrow' }))).toContain(
+      'arrow:',
+    );
+    const kindArcA = seedShapeGizmoKind(
+      defaultVolumeSmokeParams({ seedShape: 'arc', arcAngle: 90 }),
+    );
+    const kindArcB = seedShapeGizmoKind(
+      defaultVolumeSmokeParams({ seedShape: 'arc', arcAngle: 180 }),
+    );
+    expect(kindArcA).not.toBe(kindArcB);
+    const kindArrowA = seedShapeGizmoKind(
+      defaultVolumeSmokeParams({ seedShape: 'arrow', arrowAngle: 50 }),
+    );
+    const kindArrowB = seedShapeGizmoKind(
+      defaultVolumeSmokeParams({ seedShape: 'arrow', arrowAngle: 120 }),
+    );
+    expect(kindArrowA).not.toBe(kindArrowB);
     const kindA = seedShapeGizmoKind(defaultVolumeSmokeParams());
     const kindB = seedShapeGizmoKind(
       defaultVolumeSmokeParams({ seedOffset: { x: 0.1, y: 0, z: 0 } }),
@@ -311,7 +409,82 @@ describe('volumeSmoke params', () => {
     sphere.dispose();
     disk.dispose();
     ring.dispose();
+    arc.dispose();
+    arrow.dispose();
     column.dispose();
+  });
+
+  it('normalize accepts arrow seedShape and clamps arrow params', () => {
+    const n = normalizeVolumeSmokeParams({
+      seedShape: 'arrow',
+      arrowAngle: 999,
+      arrowLength: -1,
+    });
+    expect(n.seedShape).toBe('arrow');
+    expect(n.arrowAngle).toBe(179);
+    expect(n.arrowLength).toBe(0.05);
+    expect(normalizeVolumeSmokeParams({}).arrowAngle).toBe(70);
+    expect(normalizeVolumeSmokeParams({}).arrowLength).toBe(1);
+  });
+
+  it('arrow gizmo tip is at origin and arms open toward −X', () => {
+    const geo = createSeedShapeGeometry(
+      defaultVolumeSmokeParams({
+        seedShape: 'arrow',
+        arrowAngle: 60,
+        arrowLength: 1,
+        hitRadius: 1,
+      }),
+    );
+    const pos = geo.getAttribute('position');
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let sumX = 0;
+    let n = 0;
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i);
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      sumX += x;
+      n += 1;
+    }
+    expect(n).toBeGreaterThan(10);
+    // Tip at origin; arms go toward −X so most mass / extent is on −X.
+    expect(maxX).toBeLessThan(0.15);
+    expect(minX).toBeLessThan(-0.5);
+    expect(sumX / n).toBeLessThan(0);
+    geo.dispose();
+  });
+
+  it('arc gizmo is centered on +X (matches shader tangent / ")" opening −X)', () => {
+    const arcDeg = 90;
+    const geo = createSeedShapeGeometry(
+      defaultVolumeSmokeParams({ seedShape: 'arc', arcAngle: arcDeg, hitRadius: 1 }),
+    );
+    const pos = geo.getAttribute('position');
+    let sumAng = 0;
+    let n = 0;
+    let minAng = Infinity;
+    let maxAng = -Infinity;
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i);
+      const z = pos.getZ(i);
+      const rho = Math.hypot(x, z);
+      if (rho < 0.4) continue;
+      const ang = Math.atan2(z, x);
+      sumAng += ang;
+      n += 1;
+      if (ang < minAng) minAng = ang;
+      if (ang > maxAng) maxAng = ang;
+    }
+    expect(n).toBeGreaterThan(10);
+    const meanAng = sumAng / n;
+    // Midpoint of arc should sit near +X (0 rad), not +Z (π/2).
+    expect(Math.abs(meanAng)).toBeLessThan(0.2);
+    const half = ((arcDeg / 2) * Math.PI) / 180;
+    expect(minAng).toBeGreaterThan(-half - 0.35);
+    expect(maxAng).toBeLessThan(half + 0.35);
+    geo.dispose();
   });
 
   it('normalize round-trips seedShape through JSON', () => {

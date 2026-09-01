@@ -83,6 +83,10 @@ export class HitSmokePool {
     if (splatParams.ringRadiusRatio != null)
       volume.params.ringRadiusRatio = splatParams.ringRadiusRatio;
     if (splatParams.ringWidth != null) volume.params.ringWidth = splatParams.ringWidth;
+    if (splatParams.arcAngle != null) volume.params.arcAngle = splatParams.arcAngle;
+    if (splatParams.arrowAngle != null) volume.params.arrowAngle = splatParams.arrowAngle;
+    if (splatParams.arrowLength != null)
+      volume.params.arrowLength = splatParams.arrowLength;
     if (splatParams.columnHeight != null)
       volume.params.columnHeight = splatParams.columnHeight;
     // Clone nested vectors — never alias recipe / sibling params into the volume.
@@ -94,6 +98,36 @@ export class HitSmokePool {
       const o = splatParams.seedOffset as { x: number; y: number; z: number };
       volume.params.seedOffset = { x: o.x, y: o.y, z: o.z };
     }
+    if (splatParams.strandMode != null) volume.params.strandMode = !!splatParams.strandMode;
+    if (splatParams.strandCount != null) volume.params.strandCount = splatParams.strandCount;
+    if (splatParams.strandLength != null)
+      volume.params.strandLength = splatParams.strandLength;
+    if (splatParams.strandThickness != null)
+      volume.params.strandThickness = splatParams.strandThickness;
+    if (splatParams.strandSpacing != null)
+      volume.params.strandSpacing = splatParams.strandSpacing;
+    if (splatParams.strandTwistDeg != null)
+      volume.params.strandTwistDeg = splatParams.strandTwistDeg;
+    if (splatParams.strandAngleJitterDeg != null)
+      volume.params.strandAngleJitterDeg = splatParams.strandAngleJitterDeg;
+    if (splatParams.strandBend != null) volume.params.strandBend = splatParams.strandBend;
+    if (splatParams.strandEdgeSoftness != null)
+      volume.params.strandEdgeSoftness = splatParams.strandEdgeSoftness;
+    if (splatParams.strandGapFill != null)
+      volume.params.strandGapFill = splatParams.strandGapFill;
+    if (splatParams.strandRandomAmount != null)
+      volume.params.strandRandomAmount = splatParams.strandRandomAmount;
+    if (splatParams.spawnSeed != null) volume.params.spawnSeed = splatParams.spawnSeed;
+    if (splatParams.impulseMode != null)
+      volume.params.impulseMode = splatParams.impulseMode;
+    if (splatParams.impulseDirSource != null)
+      volume.params.impulseDirSource = splatParams.impulseDirSource;
+    if (splatParams.impulseDir != null) {
+      const d = splatParams.impulseDir as { x: number; y: number; z: number };
+      volume.params.impulseDir = { x: d.x, y: d.y, z: d.z };
+    }
+    if (splatParams.showImpulseDir != null)
+      volume.params.showImpulseDir = !!splatParams.showImpulseDir;
     if (splatParams.impulseRadial != null)
       volume.params.impulseRadial = splatParams.impulseRadial;
     if (splatParams.impulseSwirl != null)

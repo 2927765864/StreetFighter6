@@ -1,3 +1,16 @@
+/** Base scrub quantum when HTML step is "any"/empty/invalid. */
+export const DRAG_SCRUB_DEFAULT_STEP = 0.01;
+
+/**
+ * Resolve scrub step from an input's HTML step attribute/IDL value.
+ * Explicit positive steps win; "any"/empty/invalid → 0.01 (not 1).
+ */
+export function resolveDragScrubStep(stepAttr: string): number {
+  if (stepAttr === 'any' || stepAttr === '') return DRAG_SCRUB_DEFAULT_STEP;
+  const s = Number(stepAttr);
+  return Number.isFinite(s) && s > 0 ? s : DRAG_SCRUB_DEFAULT_STEP;
+}
+
 /**
  * Unity-style horizontal drag-scrub on number inputs.
  * Click focuses for keyboard; drag changes value with optional accel.
@@ -13,10 +26,7 @@ export function attachDragScrub(input: HTMLInputElement): void {
   let moved = false;
   let pointerId = -1;
 
-  const stepOf = (): number => {
-    const s = Number(input.step);
-    return Number.isFinite(s) && s > 0 ? s : 1;
-  };
+  const stepOf = (): number => resolveDragScrubStep(input.step);
 
   const clamp = (v: number): number => {
     const min = input.min !== '' ? Number(input.min) : -Infinity;

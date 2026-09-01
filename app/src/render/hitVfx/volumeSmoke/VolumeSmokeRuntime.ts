@@ -67,10 +67,29 @@ function simParamsFrom(p: VolumeSmokeParams): Record<string, unknown> {
     shapeThickness: p.shapeThickness,
     ringRadiusRatio: p.ringRadiusRatio,
     ringWidth: p.ringWidth,
+    arcAngle: p.arcAngle,
+    arrowAngle: p.arrowAngle,
+    arrowLength: p.arrowLength,
     columnHeight: p.columnHeight,
     seedRotation: { ...p.seedRotation },
     seedOffset: { ...(p.seedOffset ?? { x: 0, y: 0, z: 0 }) },
+    spawnSeed: p.spawnSeed,
+    strandMode: p.strandMode,
+    strandCount: p.strandCount,
+    strandLength: p.strandLength,
+    strandThickness: p.strandThickness,
+    strandSpacing: p.strandSpacing,
+    strandTwistDeg: p.strandTwistDeg,
+    strandAngleJitterDeg: p.strandAngleJitterDeg,
+    strandBend: p.strandBend,
+    strandEdgeSoftness: p.strandEdgeSoftness,
+    strandGapFill: p.strandGapFill,
+    strandRandomAmount: p.strandRandomAmount,
     hitImpulse: p.hitImpulse,
+    impulseMode: p.impulseMode,
+    impulseDirSource: p.impulseDirSource,
+    impulseDir: { ...p.impulseDir },
+    showImpulseDir: p.showImpulseDir,
     impulseRadial: p.impulseRadial,
     impulseSwirl: p.impulseSwirl,
     impulseSubsteps: p.impulseSubsteps,
@@ -135,6 +154,7 @@ export class VolumeSmokeRuntime {
   private editorGizmoElementId: string | null | undefined = undefined;
   private gizmos: {
     turbArrow: THREE.ArrowHelper;
+    impulseArrow: THREE.ArrowHelper;
     seedGroup: THREE.Group;
     seedKind: string;
     previewOrigin: THREE.Vector3;
@@ -324,9 +344,27 @@ export class VolumeSmokeRuntime {
       shapeThickness: p.shapeThickness,
       ringRadiusRatio: p.ringRadiusRatio,
       ringWidth: p.ringWidth,
+      arcAngle: p.arcAngle,
+      arrowAngle: p.arrowAngle,
+      arrowLength: p.arrowLength,
       columnHeight: p.columnHeight,
       seedRotation: p.seedRotation,
       seedOffset: p.seedOffset,
+      strandMode: p.strandMode,
+      strandCount: p.strandCount,
+      strandLength: p.strandLength,
+      strandThickness: p.strandThickness,
+      strandSpacing: p.strandSpacing,
+      strandTwistDeg: p.strandTwistDeg,
+      strandAngleJitterDeg: p.strandAngleJitterDeg,
+      strandBend: p.strandBend,
+      strandEdgeSoftness: p.strandEdgeSoftness,
+      strandGapFill: p.strandGapFill,
+      strandRandomAmount: p.strandRandomAmount,
+      impulseMode: p.impulseMode,
+      impulseDirSource: p.impulseDirSource,
+      impulseDir: p.impulseDir,
+      showImpulseDir: p.showImpulseDir,
       impulseRadial: p.impulseRadial,
       impulseSwirl: p.impulseSwirl,
       impulseSubsteps: p.impulseSubsteps,
@@ -559,6 +597,7 @@ export class VolumeSmokeRuntime {
   private hideEditorGizmos(): void {
     if (!this.gizmos) return;
     this.gizmos.turbArrow.visible = false;
+    this.gizmos.impulseArrow.visible = false;
     this.gizmos.seedGroup.visible = false;
     this.gizmos.seedKind = '';
   }
@@ -574,12 +613,23 @@ export class VolumeSmokeRuntime {
       0.1,
     );
     turbArrow.visible = false;
+    const impulseArrow = new THREE.ArrowHelper(
+      new THREE.Vector3(0, 1, 0),
+      new THREE.Vector3(),
+      0.85,
+      0xff8844,
+      0.16,
+      0.1,
+    );
+    impulseArrow.visible = false;
     const seedGroup = new THREE.Group();
     seedGroup.visible = false;
     this.scene.add(turbArrow);
+    this.scene.add(impulseArrow);
     this.scene.add(seedGroup);
     this.gizmos = {
       turbArrow,
+      impulseArrow,
       seedGroup,
       seedKind: '',
       previewOrigin: new THREE.Vector3(0, 1, 0),
@@ -591,7 +641,8 @@ export class VolumeSmokeRuntime {
     this.ensureGizmos();
     if (!this.gizmos) return;
 
-    const { turbArrow, seedGroup, previewOrigin, previewNormal } = this.gizmos;
+    const { turbArrow, impulseArrow, seedGroup, previewOrigin, previewNormal } =
+      this.gizmos;
     const origin = previewOrigin.clone();
     origin.y += p.spawnHeight;
 
@@ -605,6 +656,21 @@ export class VolumeSmokeRuntime {
     else dir.normalize();
     turbArrow.setDirection(dir);
     turbArrow.visible = !!p.showTurbulenceDir;
+
+    impulseArrow.position.copy(origin);
+    const showImpulse = !!p.showImpulseDir && p.impulseMode === 'direction';
+    if (showImpulse) {
+      const idir = new THREE.Vector3();
+      if (p.impulseDirSource === 'custom') {
+        idir.set(p.impulseDir.x, p.impulseDir.y, p.impulseDir.z);
+      } else {
+        idir.copy(previewNormal);
+      }
+      if (idir.lengthSq() < 1e-8) idir.set(0, 1, 0);
+      else idir.normalize();
+      impulseArrow.setDirection(idir);
+    }
+    impulseArrow.visible = showImpulse;
 
     if (!p.showSeedShape) {
       seedGroup.visible = false;
@@ -636,11 +702,14 @@ export class VolumeSmokeRuntime {
     this.ready = false;
     if (this.gizmos) {
       this.scene.remove(this.gizmos.turbArrow);
+      this.scene.remove(this.gizmos.impulseArrow);
       this.scene.remove(this.gizmos.seedGroup);
-      this.gizmos.turbArrow.line.geometry.dispose();
-      (this.gizmos.turbArrow.line.material as THREE.Material).dispose();
-      this.gizmos.turbArrow.cone.geometry.dispose();
-      (this.gizmos.turbArrow.cone.material as THREE.Material).dispose();
+      for (const arrow of [this.gizmos.turbArrow, this.gizmos.impulseArrow]) {
+        arrow.line.geometry.dispose();
+        (arrow.line.material as THREE.Material).dispose();
+        arrow.cone.geometry.dispose();
+        (arrow.cone.material as THREE.Material).dispose();
+      }
       while (this.gizmos.seedGroup.children.length) {
         const c = this.gizmos.seedGroup.children.pop()!;
         if ((c as THREE.Mesh).geometry) (c as THREE.Mesh).geometry.dispose();

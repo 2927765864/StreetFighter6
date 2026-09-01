@@ -2,8 +2,8 @@ import type { VolumeSmokeParams } from '../hitVfxTypes';
 
 /**
  * Deep-enough clone for volumeSmoke params so per-instance tracks never share
- * nested objects (seedRotation / seedOffset / turbulenceDir / expandedSections)
- * with the recipe author or with sibling instances.
+ * nested objects (seedRotation / seedOffset / turbulenceDir / impulseDir /
+ * expandedSections) with the recipe author or with sibling instances.
  */
 export function cloneVolumeSmokeParams(
   params: VolumeSmokeParams,
@@ -13,6 +13,7 @@ export function cloneVolumeSmokeParams(
     seedRotation: { ...params.seedRotation },
     seedOffset: { ...(params.seedOffset ?? { x: 0, y: 0, z: 0 }) },
     turbulenceDir: { ...params.turbulenceDir },
+    impulseDir: { ...(params.impulseDir ?? { x: 0, y: 1, z: 0 }) },
     expandedSections: { ...params.expandedSections },
   };
 }

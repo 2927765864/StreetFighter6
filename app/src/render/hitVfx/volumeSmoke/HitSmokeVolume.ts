@@ -2,12 +2,21 @@
 // @ts-nocheck
 import * as THREE from 'three/webgpu';
 import {
-	Fn, If, float, vec3, vec4, uvec3, uint, uniform, instanceIndex,
+	Fn, If, Loop, float, int, vec3, vec4, uvec3, uint, uniform, instanceIndex,
 	texture3D, textureStore, storageTexture, max, min, mix, exp, length, cross, dot,
+	abs, atan, cos, sin, clamp, step,
 	screenCoordinate, interleavedGradientNoise, frameId, fract, floor,
 	smoothstep, cameraPosition, modelWorldMatrixInverse,
 	atomicMax, atomicStore, floatBitsToUint, instancedArray,
 } from 'three/tsl';
+import {
+	MAX_STRANDS,
+	buildStrandSet,
+	enforceMinStrandRadii,
+	minStrandRadiusUVW,
+	packStrandsToBuffer,
+	strandDensMulForThickness,
+} from './strandSeed';
 
 /** seedShape string → shader id */
 export const SEED_SHAPE_ID = Object.freeze( {
@@ -15,12 +24,15 @@ export const SEED_SHAPE_ID = Object.freeze( {
 	disk: 1,
 	ring: 2,
 	column: 3,
+	arc: 4,
+	arrow: 5,
 } );
 import { snoise, snoiseVec3 } from 'three/addons/tsl/math/curlNoise.js';
 import {
 	createStorage3D, GRID, CELL_COUNT, PRESSURE_ITERATIONS, VOLUME_WORLD_SIZE,
 } from './createStorage3D';
 import { computeSeedOrientation } from './seedOrientation';
+import { resolveVolumeSmokeImpulseFromParams } from './impulseMode';
 import {
 	volumeSmokeFadeMul,
 	volumeSmokeShouldBeginFade,
@@ -77,26 +89,49 @@ export class HitSmokeVolume {
 			velDamping: 0.35,
 			/** Initial smoke splat radius in world meters (independent of box size). */
 			hitRadius: 0.36,
-			/** sphere | disk | ring | column — overall size still from hitRadius. */
+			/** sphere | disk | ring | arc | arrow | column — overall size still from hitRadius. */
 			seedShape: 'sphere',
-			/** Disk/ring thickness as a fraction of hitRadius. */
+			/** Disk/ring/arc/arrow thickness as a fraction of hitRadius. */
 			shapeThickness: 0.28,
-			/** Ring midline radius as a fraction of hitRadius. */
+			/** Ring/arc midline radius as a fraction of hitRadius. */
 			ringRadiusRatio: 0.65,
-			/** Ring tube width as a fraction of hitRadius. */
+			/** Ring/arc tube width / arrow arm width as a fraction of hitRadius. */
 			ringWidth: 0.22,
+			/** Arc angular span in degrees (parenthesis / ring segment). */
+			arcAngle: 140,
+			/** Arrow (">") interior angle between arms in degrees. */
+			arrowAngle: 70,
+			/** Arrow arm length as a fraction of hitRadius. */
+			arrowLength: 1.0,
 			/** Column half-height as a fraction of hitRadius. */
 			columnHeight: 1.4,
 			/** Extra seed tilt in degrees (XYZ), applied after aligning +Y to hit dir. */
 			seedRotation: { x: 0, y: 0, z: 0 },
 			/** Seed center offset in volume UVW (0 = box center). */
 			seedOffset: { x: 0, y: 0, z: 0 },
+			spawnSeed: 0,
+			strandMode: false,
+			strandCount: 8,
+			strandLength: 0.85,
+			strandThickness: 0.18,
+			strandSpacing: 0.22,
+			strandTwistDeg: 0,
+			strandAngleJitterDeg: 18,
+			strandBend: 0.55,
+			strandEdgeSoftness: 0.65,
+			strandGapFill: 0.12,
+			strandRandomAmount: 1,
 			hitImpulse: 14.0,
 			hitDensity: 4.0,
 			hitTemperature: 3.0,
-			/** 0 = push along hit direction only; 1 = pure radial explode (mostly cancelled by pressure). */
+			/** 'direction' | 'scatter' — see impulseMode.ts / consensus. */
+			impulseMode: 'direction',
+			impulseDirSource: 'hit',
+			impulseDir: { x: 0, y: 1, z: 0 },
+			showImpulseDir: true,
+			/** Direction mode: 0 = axis push; 1 = radial. Scatter forces 1 at arm time. */
 			impulseRadial: 0.2,
-			/** Spin around hit direction — more divergence-free, survives projection better. */
+			/** Spin around impulse axis — more divergence-free, survives projection better. */
 			impulseSwirl: 1.2,
 			/** Keep applying hit force for this many sim substeps after spawn. */
 			impulseSubsteps: 8,
@@ -169,8 +204,13 @@ export class HitSmokeVolume {
 		this.uHitRadiusUVW = uniform( this._worldRadiusToUVW( this.params.hitRadius ) );
 		this.uHitDensity = uniform( this.params.hitDensity );
 		this.uHitTemperature = uniform( this.params.hitTemperature );
+		/** Hit / seed orientation axis (object space). */
 		this.uHitDirOS = uniform( new THREE.Vector3( 0, 1, 0 ) );
+		/** Impulse push / swirl axis — may differ from hit when custom direction mode. */
+		this.uImpulseDirOS = uniform( new THREE.Vector3( 0, 1, 0 ) );
 		this.uSeedAxisOS = uniform( new THREE.Vector3( 0, 1, 0 ) );
+		/** Local +X after seed orientation — arc center (")") faces +tangent). */
+		this.uSeedTangentOS = uniform( new THREE.Vector3( 1, 0, 0 ) );
 		/** Curl sample shift from spawnSeed (deterministic per spawn). */
 		this.uNoiseOffset = uniform( new THREE.Vector3( 0, 0, 0 ) );
 		/** Locked jitter from spawnSeed for this burst; cleared on reset. */
@@ -181,7 +221,24 @@ export class HitSmokeVolume {
 		this.uShapeThickness = uniform( this.params.shapeThickness );
 		this.uRingRadiusRatio = uniform( this.params.ringRadiusRatio );
 		this.uRingWidth = uniform( this.params.ringWidth );
+		this.uArcHalfRad = uniform(
+			Math.max( ( this.params.arcAngle || 140 ) * 0.5 * Math.PI / 180, 1e-3 ),
+		);
+		this.uArrowHalfRad = uniform(
+			Math.max( ( this.params.arrowAngle || 70 ) * 0.5 * Math.PI / 180, 1e-3 ),
+		);
+		this.uArrowLength = uniform( this.params.arrowLength ?? 1.0 );
 		this.uColumnHeight = uniform( this.params.columnHeight );
+		// Strand (缕烟) seed — CPU packs into strandBuf; seedWeight composites when mode on.
+		this.uStrandMode = uniform( this.params.strandMode ? 1.0 : 0.0 );
+		this.uStrandCount = uniform( 0.0 );
+		this.uStrandGapFill = uniform( this.params.strandGapFill );
+		this.uStrandEdgeSoft = uniform( this.params.strandEdgeSoftness );
+		this.uStrandHaloR = uniform( 0.05 );
+		/** Compensates thin rope fill vs solid blob so dye/impulse stay in fluid range. */
+		this.uStrandDensMul = uniform( 1.35 );
+		this.strandBuf = instancedArray( MAX_STRANDS * 4, 'vec4' );
+		this._strandCpuBuf = new Float32Array( MAX_STRANDS * 16 );
 		// Live hit-force state (set by armSplat, decayed each substep)
 		this.uImpulseActive = uniform( 0.0 );
 		this.uImpulseRadial = uniform( this.params.impulseRadial );
@@ -245,12 +302,33 @@ export class HitSmokeVolume {
 			uVelDamping, uDissipation, uCooling, uVolumeWorldSize,
 			uBoundaryLimit,
 			uHitCenterUVW, uHitRadiusUVW, uHitDensity, uHitTemperature,
-			uHitDirOS, uSeedAxisOS, uNoiseOffset, uDoSplat,
-			uSeedShape, uShapeThickness, uRingRadiusRatio, uRingWidth, uColumnHeight,
+			uHitDirOS, uImpulseDirOS, uSeedAxisOS, uSeedTangentOS, uNoiseOffset, uDoSplat,
+			uSeedShape, uShapeThickness, uRingRadiusRatio, uRingWidth, uArcHalfRad,
+			uArrowHalfRad, uArrowLength, uColumnHeight,
+			uStrandMode, uStrandCount, uStrandGapFill, uStrandEdgeSoft, uStrandHaloR,
+			uStrandDensMul,
+			strandBuf,
 			uImpulseActive, uImpulseRadial, uImpulseSwirl, uImpulseScaleBox,
 		} = this;
 
+		const distToSegment = ( a, b, p ) => {
+
+			const ab = b.sub( a );
+			const denom = max( dot( ab, ab ), float( 1e-8 ) );
+			const t = clamp( dot( p.sub( a ), ab ).div( denom ), float( 0 ), float( 1 ) );
+			return length( p.sub( a.add( ab.mul( t ) ) ) );
+
+		};
+
+		const bezier3 = ( p0, p1, p2, t ) => {
+
+			const u = float( 1 ).sub( t );
+			return p0.mul( u.mul( u ) ).add( p1.mul( float( 2 ).mul( u ).mul( t ) ) ).add( p2.mul( t.mul( t ) ) );
+
+		};
+
 		// Seed mask: overall size = uHitRadiusUVW; axis = hit dir + seedRotation.
+		// Optional strand mode: composite rope tubes + halo inside the shell.
 		const seedWeight = Fn( ( [ uvw ] ) => {
 
 			const axis = uSeedAxisOS.div( max( length( uSeedAxisOS ), float( 1e-4 ) ) );
@@ -270,6 +348,32 @@ export class HitSmokeVolume {
 			const ringW = max( r.mul( uRingWidth ), float( 1e-4 ) );
 			const ringDelta = rho.sub( ringPeak );
 			const wRing = exp( ringDelta.mul( ringDelta ).negate().div( ringW.mul( ringW ) ) ).mul( alongW );
+
+			// Arc = ring segment centered on local +X (")" opening faces −X).
+			const tangent = uSeedTangentOS.div( max( length( uSeedTangentOS ), float( 1e-4 ) ) );
+			// Same as gizmo / strandSeed: +Z = tangent × axis (not axis × tangent).
+			const bitangent = cross( tangent, axis );
+			const ang = atan( dot( planar, bitangent ), dot( planar, tangent ) );
+			const halfSpan = max( uArcHalfRad, float( 1e-3 ) );
+			const soft = max( halfSpan.mul( float( 0.22 ) ), float( 0.06 ) );
+			const wAngle = float( 1 ).sub(
+				smoothstep( halfSpan.sub( soft ), halfSpan.add( soft ), abs( ang ) ),
+			);
+			const wArc = wRing.mul( wAngle );
+
+			// Arrow ">" : tip at center pointing +tangent; arms open toward −tangent.
+			const halfOpen = max( uArrowHalfRad, float( 1e-3 ) );
+			const armLen = max( r.mul( uArrowLength ), float( 1e-4 ) );
+			const cOpen = cos( halfOpen );
+			const sOpen = sin( halfOpen );
+			const dirU = tangent.mul( cOpen.negate() ).add( bitangent.mul( sOpen ) );
+			const dirL = tangent.mul( cOpen.negate() ).add( bitangent.mul( sOpen.negate() ) );
+			const tU = clamp( dot( planar, dirU ), float( 0 ), armLen );
+			const tL = clamp( dot( planar, dirL ), float( 0 ), armLen );
+			const dU = length( planar.sub( dirU.mul( tU ) ) );
+			const dL = length( planar.sub( dirL.mul( tL ) ) );
+			const dArm = min( dU, dL );
+			const wArrow = exp( dArm.mul( dArm ).negate().div( ringW.mul( ringW ) ) ).mul( alongW );
 
 			const colH = max( r.mul( uColumnHeight ), float( 1e-4 ) );
 			const wColumn = exp( rho.mul( rho ).negate().div( r.mul( r ) ) )
@@ -291,6 +395,103 @@ export class HitSmokeVolume {
 				w.assign( wColumn );
 
 			} );
+			If( uSeedShape.equal( float( 4 ) ), () => {
+
+				w.assign( wArc );
+
+			} );
+			If( uSeedShape.equal( float( 5 ) ), () => {
+
+				w.assign( wArrow );
+
+			} );
+
+			If( uStrandMode.greaterThan( 0.5 ), () => {
+
+				const sw = float( 0 ).toVar();
+				const dMin = float( 10 ).toVar();
+				const rNear = max( uStrandHaloR, float( 1e-4 ) ).toVar();
+
+				Loop( { start: int( 0 ), end: int( MAX_STRANDS ), type: 'int', condition: '<' }, ( { i } ) => {
+
+					If( float( i ).lessThan( uStrandCount ), () => {
+
+						const base = i.mul( int( 4 ) );
+						const a = strandBuf.element( base );
+						const b = strandBuf.element( base.add( int( 1 ) ) );
+						const c = strandBuf.element( base.add( int( 2 ) ) );
+						const p0 = a.xyz;
+						const p1 = b.xyz;
+						const p2 = c.xyz;
+						const r0 = max( a.w, float( 1e-5 ) );
+						const rMid = max( b.w, float( 1e-5 ) );
+						const r1 = max( c.w, float( 1e-5 ) );
+
+						const q0 = bezier3( p0, p1, p2, float( 0 ) );
+						const q1 = bezier3( p0, p1, p2, float( 0.25 ) );
+						const q2 = bezier3( p0, p1, p2, float( 0.5 ) );
+						const q3 = bezier3( p0, p1, p2, float( 0.75 ) );
+						const q4 = bezier3( p0, p1, p2, float( 1 ) );
+
+						const radAt = ( t ) => {
+
+							const t01 = clamp( t, float( 0 ), float( 1 ) );
+							const low = mix( r0, rMid, clamp( t01.mul( 2.0 ), float( 0 ), float( 1 ) ) );
+							const high = mix( rMid, r1, clamp( t01.sub( 0.5 ).mul( 2.0 ), float( 0 ), float( 1 ) ) );
+							return mix( low, high, step( float( 0.5 ), t01 ) );
+
+						};
+
+						const d0 = distToSegment( q0, q1, uvw );
+						const d1 = distToSegment( q1, q2, uvw );
+						const d2 = distToSegment( q2, q3, uvw );
+						const d3 = distToSegment( q3, q4, uvw );
+						// Artistic Gaussian follows authored radius (can be sub-voxel).
+						// Sharp ~1-voxel cover ribbon engages only when rArt is too thin
+						// to hit the lattice — survival without soft-fattening all ratios.
+						const tubeAt = ( d, t ) => {
+
+							const rArt = max( radAt( t ).mul( float( 1.05 ) ), float( 1e-5 ) );
+							const artistic = exp( d.mul( d ).negate().div( rArt.mul( rArt ) ) );
+							const cover = smoothstep( float( TEXEL * 0.68 ), float( TEXEL * 0.12 ), d );
+							const needCover = float( 1 ).sub(
+								smoothstep( float( TEXEL * 0.35 ), float( TEXEL * 0.7 ), radAt( t ) ),
+							);
+							return max( artistic, cover.mul( needCover ) );
+
+						};
+						const tube0 = tubeAt( d0, float( 0.125 ) );
+						const tube1 = tubeAt( d1, float( 0.375 ) );
+						const tube2 = tubeAt( d2, float( 0.625 ) );
+						const tube3 = tubeAt( d3, float( 0.875 ) );
+						const tube = max( max( tube0, tube1 ), max( tube2, tube3 ) );
+						const d = min( min( d0, d1 ), min( d2, d3 ) );
+						const rad = radAt( float( 0.5 ) );
+						sw.assign( max( sw, tube ) );
+						If( d.lessThan( dMin ), () => {
+
+							dMin.assign( d );
+							rNear.assign( rad );
+
+						} );
+
+					} );
+
+				} );
+
+				const gateHard = smoothstep( float( 0.08 ), float( 0.25 ), w );
+				const gateSoft = smoothstep( float( 0.01 ), float( 0.12 ), w );
+				const gate = mix( gateHard, gateSoft, uStrandEdgeSoft );
+				// Keep a floor so ropes just outside the soft shell still inject / receive impulse.
+				const gateFloor = max( gate, float( 0.28 ) );
+				const haloR = max( rNear.mul( float( 2.2 ) ), uStrandHaloR );
+				const halo = w.mul( uStrandGapFill )
+					.mul( exp( dMin.mul( dMin ).negate().div( haloR.mul( haloR ) ) ) )
+					.mul( float( 1 ).sub( min( sw, float( 1 ) ) ) );
+				w.assign( sw.mul( gateFloor ).mul( uStrandDensMul ).add( halo ) );
+
+			} );
+
 			return w;
 
 		} );
@@ -371,7 +572,7 @@ export class HitSmokeVolume {
 			const turbulence = rawTurb.mul( uVolumeWorldSize.y );
 			newVel.addAssign( turbulence.mul( uDt ) );
 
-			// Hit impulse: mostly directional + swirl (survives projection better than pure radial explode).
+			// Hit impulse: directional and/or radial + swirl (axis = uImpulseDirOS, not seed hit).
 			// Applied for several substeps; dye is injected before this pass on the spawn frame.
 			If( uImpulseActive.greaterThan( 0.001 ), () => {
 
@@ -379,8 +580,8 @@ export class HitSmokeVolume {
 				const dist = length( delta );
 				const w = seedWeight( uvw );
 				const radial = delta.div( max( dist, float( 1e-4 ) ) );
-				const swirl = cross( uHitDirOS, radial );
-				const dirPush = uHitDirOS.mul( float( 1.0 ).sub( uImpulseRadial ) )
+				const swirl = cross( uImpulseDirOS, radial );
+				const dirPush = uImpulseDirOS.mul( float( 1.0 ).sub( uImpulseRadial ) )
 					.add( radial.mul( uImpulseRadial ) )
 					.add( swirl.mul( uImpulseSwirl ) );
 				const dirN = dirPush.div( max( length( dirPush ), float( 1e-4 ) ) );
@@ -751,12 +952,101 @@ export class HitSmokeVolume {
 		this.uShapeThickness.value = this.params.shapeThickness;
 		this.uRingRadiusRatio.value = this.params.ringRadiusRatio;
 		this.uRingWidth.value = this.params.ringWidth;
+		this.uArcHalfRad.value = Math.max(
+			( this.params.arcAngle ?? 140 ) * 0.5 * Math.PI / 180,
+			1e-3,
+		);
+		this.uArrowHalfRad.value = Math.max(
+			( this.params.arrowAngle ?? 70 ) * 0.5 * Math.PI / 180,
+			1e-3,
+		);
+		this.uArrowLength.value = this.params.arrowLength ?? 1.0;
 		this.uColumnHeight.value = this.params.columnHeight;
 		this.syncSeedAxis();
 
 	}
 
-	/** Hit direction + seedRotation (+ spawnSeed tilt) → shape axis. */
+	/**
+	 * Build strand ropes on CPU and upload to strandBuf.
+	 * Call after center / radius / seed axis are current (armSplat).
+	 */
+	syncStrandSeed() {
+
+		const p = this.params;
+		if ( ! p.strandMode ) {
+
+			this.uStrandMode.value = 0;
+			this.uStrandCount.value = 0;
+			this.uStrandGapFill.value = 0;
+			return;
+
+		}
+
+		const seed = ( this._spawnVariation?.seed ?? p.spawnSeed ?? 0 ) >>> 0;
+		const center = this.uHitCenterUVW.value;
+		const axis = this.uSeedAxisOS.value;
+		const tangent = this.uSeedTangentOS.value;
+		const strands = buildStrandSet( {
+			params: {
+				strandMode: true,
+				strandCount: p.strandCount ?? 8,
+				strandLength: p.strandLength ?? 0.85,
+				strandThickness: p.strandThickness ?? 0.18,
+				strandSpacing: p.strandSpacing ?? 0.22,
+				strandTwistDeg: p.strandTwistDeg ?? 0,
+				strandAngleJitterDeg: p.strandAngleJitterDeg ?? 18,
+				strandBend: p.strandBend ?? 0.55,
+				strandEdgeSoftness: p.strandEdgeSoftness ?? 0.65,
+				strandGapFill: p.strandGapFill ?? 0.12,
+				strandRandomAmount: p.strandRandomAmount ?? 1,
+				seedShape: p.seedShape || 'sphere',
+				shapeThickness: p.shapeThickness ?? 0.28,
+				ringRadiusRatio: p.ringRadiusRatio ?? 0.65,
+				ringWidth: p.ringWidth ?? 0.22,
+				arcAngle: p.arcAngle ?? 140,
+				arrowAngle: p.arrowAngle ?? 70,
+				arrowLength: p.arrowLength ?? 1,
+				columnHeight: p.columnHeight ?? 1.4,
+			},
+			spawnSeed: seed,
+			centerUVW: { x: center.x, y: center.y, z: center.z },
+			hitRadiusUVW: this.uHitRadiusUVW.value,
+			axis: { x: axis.x, y: axis.y, z: axis.z },
+			tangent: { x: tangent.x, y: tangent.y, z: tangent.z },
+		} );
+
+		const minR = minStrandRadiusUVW( GRID );
+		enforceMinStrandRadii( strands, minR );
+		packStrandsToBuffer( strands, this._strandCpuBuf );
+		const attr = this.strandBuf.value;
+		const gpuArray = attr?.array;
+		if ( gpuArray && gpuArray.length >= this._strandCpuBuf.length ) {
+
+			gpuArray.set( this._strandCpuBuf );
+			attr.needsUpdate = true;
+			attr.version = ( attr.version | 0 ) + 1;
+
+		} else if ( ! this._strandUploadWarned ) {
+
+			this._strandUploadWarned = true;
+			console.warn( '[volumeSmoke] strand buffer upload skipped; ropes may look empty' );
+
+		}
+
+		const thickness = p.strandThickness ?? 0.18;
+		const hitR = this.uHitRadiusUVW.value;
+		this.uStrandMode.value = 1;
+		this.uStrandCount.value = strands.length;
+		this.uStrandGapFill.value = p.strandGapFill ?? 0.12;
+		this.uStrandEdgeSoft.value = p.strandEdgeSoftness ?? 0.65;
+		// Thin ropes: boost density; cover ribbon (shader) handles grid hits.
+		this.uStrandDensMul.value = strandDensMulForThickness( thickness, hitR, GRID );
+		// Halo follows authored thickness only — no survival-floor bloom.
+		this.uStrandHaloR.value = Math.max( 1e-4, thickness * hitR * 2.2 );
+
+	}
+
+	/** Hit direction + seedRotation (+ spawnSeed tilt) → shape axis + arc tangent. */
 	syncSeedAxis() {
 
 		const base = this.params.seedRotation || { x: 0, y: 0, z: 0 };
@@ -775,6 +1065,7 @@ export class HitSmokeVolume {
 			this._seedQuat,
 			this.uSeedAxisOS.value,
 		);
+		this.uSeedTangentOS.value.set( 1, 0, 0 ).applyQuaternion( this._seedQuat ).normalize();
 
 	}
 
@@ -886,10 +1177,19 @@ export class HitSmokeVolume {
 		this.uHitCenterUVW.value.copy( baseCenter );
 		if ( dirOS ) this.uHitDirOS.value.copy( dirOS ).normalize();
 		this.syncSeedAxis();
+		this.syncStrandSeed();
+
+		const hitForImpulse = this.uHitDirOS.value;
+		const resolved = resolveVolumeSmokeImpulseFromParams( this.params, {
+			x: hitForImpulse.x,
+			y: hitForImpulse.y,
+			z: hitForImpulse.z,
+		} );
+		this.uImpulseDirOS.value.set( resolved.dirOS.x, resolved.dirOS.y, resolved.dirOS.z );
+		this.uImpulseRadial.value = resolved.radial;
 
 		const strength = ( impulse != null ? impulse : this.params.hitImpulse ) * ( v?.impulseScale ?? 1 );
 		this.uImpulseActive.value = strength;
-		this.uImpulseRadial.value = this.params.impulseRadial;
 		this.uImpulseSwirl.value = this.params.impulseSwirl * ( v?.swirlScale ?? 1 );
 		this.uImpulseScaleBox.value = this.params.impulseScaleWithBox ? 1.0 : 0.0;
 		this._impulseLeft = Math.max( 1, Math.round( this.params.impulseSubsteps ?? 8 ) );
@@ -1033,12 +1333,39 @@ export class HitSmokeVolume {
 		if ( p.shapeThickness != null ) this.params.shapeThickness = p.shapeThickness;
 		if ( p.ringRadiusRatio != null ) this.params.ringRadiusRatio = p.ringRadiusRatio;
 		if ( p.ringWidth != null ) this.params.ringWidth = p.ringWidth;
+		if ( p.arcAngle != null ) this.params.arcAngle = p.arcAngle;
+		if ( p.arrowAngle != null ) this.params.arrowAngle = p.arrowAngle;
+		if ( p.arrowLength != null ) this.params.arrowLength = p.arrowLength;
 		if ( p.columnHeight != null ) this.params.columnHeight = p.columnHeight;
 		if ( p.seedRotation != null ) this.params.seedRotation = p.seedRotation;
 		if ( p.seedOffset != null ) this.params.seedOffset = p.seedOffset;
 		this.syncHitRadiusUVW();
 		this.syncSeedShape();
-		if ( p.impulseRadial != null ) this.uImpulseRadial.value = p.impulseRadial;
+		if ( p.impulseMode != null ) this.params.impulseMode = p.impulseMode;
+		if ( p.impulseDirSource != null ) this.params.impulseDirSource = p.impulseDirSource;
+		if ( p.impulseDir != null ) {
+
+			const d = p.impulseDir;
+			this.params.impulseDir = { x: d.x || 0, y: d.y || 0, z: d.z || 0 };
+
+		}
+		if ( p.showImpulseDir != null ) this.params.showImpulseDir = !! p.showImpulseDir;
+		if ( p.impulseRadial != null ) this.params.impulseRadial = p.impulseRadial;
+		if (
+			p.impulseMode != null ||
+			p.impulseDirSource != null ||
+			p.impulseDir != null ||
+			p.impulseRadial != null
+		) {
+
+			const hit = this.uHitDirOS.value;
+			const resolved = resolveVolumeSmokeImpulseFromParams( this.params, {
+				x: hit.x, y: hit.y, z: hit.z,
+			} );
+			this.uImpulseDirOS.value.set( resolved.dirOS.x, resolved.dirOS.y, resolved.dirOS.z );
+			this.uImpulseRadial.value = resolved.radial;
+
+		}
 		if ( p.impulseSwirl != null ) {
 
 			const swirlScale = this._spawnVariation?.swirlScale ?? 1;
