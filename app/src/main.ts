@@ -66,6 +66,7 @@ import {
 import { AnimClipLibrary } from './render/AnimClipLibrary';
 import { loadFighterMeshFromUrl } from './render/loadFighterMesh';
 import { HitVfxRuntime } from './render/hitVfx/HitVfxRuntime';
+import { WudaPlumeBurst } from './render/wudaParticle/WudaPlumeBurst';
 import { HitVfxDirector } from './render/hitVfx/HitVfxDirector';
 
 // Mesh-only skinned Ryu; combat clips from private/assets/ryu/anims via map
@@ -263,6 +264,13 @@ async function boot(): Promise<void> {
   });
   const hitVfxDirector = new HitVfxDirector(hitVfxRuntime);
   match.opts.onHitVfx = (ev) => hitVfxDirector.onMatchContact(ev);
+
+  // Wuda coat detach splash: same overlay scene as hit VFX (composites above fighters).
+  const wudaPlumeBurst = new WudaPlumeBurst({
+    renderer,
+    scene: hitVfxScene,
+    camera,
+  });
 
   /** Training-field keeps combat VFX only; editing lives on /hit-vfx.html. */
   const syncHitVfxFromConfig = (): void => {
@@ -484,6 +492,8 @@ async function boot(): Promise<void> {
 
   const p1View = new FighterView(scene, 0x4a90d9);
   const p2View = new FighterView(scene, 0xd94a4a);
+  p1View.setWudaPlumeBurst(wudaPlumeBurst);
+  p2View.setWudaPlumeBurst(wudaPlumeBurst);
   // Prefer hips world Y so crouch animation and jump both drive follow lights.
   followOriginRef.get = (who) => {
     const f = who === 'p1' ? match.p1 : match.p2;
@@ -908,6 +918,9 @@ async function boot(): Promise<void> {
       const steps = cfg.hitVfxStepFrames;
       if (steps > 0) cfg.hitVfxStepFrames = 0;
       hitVfxRuntime.tick(presentDt, match.hitstopTimer > 0, () => steps);
+      // Coat detach splash keeps moving on wall clock (same as coat free particles).
+      wudaPlumeBurst.setCamera(camera);
+      wudaPlumeBurst.tick(presentDt, camera);
     }
 
     const fullW = window.innerWidth;

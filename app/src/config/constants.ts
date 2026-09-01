@@ -414,6 +414,12 @@ export type MutableSimConfig = {
   wudaRespawnStuck: boolean;
   wudaShowDebug: boolean;
   wudaAlsoPlumeBurst: boolean;
+  /**
+   * When true: detach only while attack hitboxes exist this logic frame
+   * (`phase===attack` && `mover.currentHitBoxesLocal().length>0`).
+   * Velocity sensing still runs; this is a detach lock only.
+   */
+  wudaDetachOnlyOnActiveHit: boolean;
 };
 
 export function createDefaultSimConfig(): MutableSimConfig {
@@ -730,6 +736,7 @@ export function createDefaultSimConfig(): MutableSimConfig {
     wudaRespawnStuck: false,
     wudaShowDebug: false,
     wudaAlsoPlumeBurst: false,
+    wudaDetachOnlyOnActiveHit: false,
   };
 }
 

@@ -14,9 +14,10 @@ import {
   computeSurfaceVelocity,
   freeLifetimeFromSpeed,
   integrateFreeParticle,
-  shouldDetach,
+  shouldDetachWithLock,
 } from './wudaCoatMath';
 import type { WudaCoatStats, WudaParticleState, WudaSurfaceSample } from './wudaTypes';
+import type { WudaPlumeBurst } from './WudaPlumeBurst';
 
 type Slot = {
   sample: WudaSurfaceSample;
@@ -48,6 +49,7 @@ export class WudaCoatRuntime {
   private lastStats: WudaCoatStats = { stuck: 0, free: 0, dead: 0 };
   private dummy = new THREE.Object3D();
   private readonly _color = new THREE.Color();
+  private plumeBurst: WudaPlumeBurst | null = null;
 
   get isBound(): boolean {
     return this.mesh != null;
@@ -55,6 +57,11 @@ export class WudaCoatRuntime {
 
   getLastStats(): WudaCoatStats {
     return this.lastStats;
+  }
+
+  /** Shared optional plume splash (main wires one instance for both fighters). */
+  setPlumeBurst(burst: WudaPlumeBurst | null): void {
+    this.plumeBurst = burst;
   }
 
   bind(
@@ -157,7 +164,16 @@ export class WudaCoatRuntime {
     return true;
   }
 
-  update(wallDtSec: number, cfg: MutableSimConfig): void {
+  /**
+   * @param opts.allowDetach when false, velocity still updates but stuck→free is locked
+   *   (used by wudaDetachOnlyOnActiveHit outside attack hitbox frames).
+   */
+  update(
+    wallDtSec: number,
+    cfg: MutableSimConfig,
+    opts?: { allowDetach?: boolean },
+  ): void {
+    const allowDetach = opts?.allowDetach !== false;
     if (!cfg.wudaEnabled) {
       if (this.instanced) this.instanced.visible = false;
       this.lastStats = { stuck: 0, free: 0, dead: 0 };
@@ -238,15 +254,18 @@ export class WudaCoatRuntime {
         const prevSpeed = s.prevVel.length();
         const accelMag = _accel.length();
 
-        const detach = shouldDetach({
-          speed,
-          prevSpeed,
-          accelMag,
-          detachSpeed: cfg.wudaDetachSpeed,
-          detachAccel: cfg.wudaDetachAccel,
-          detachSpeedDrop: cfg.wudaDetachSpeedDrop,
-          detachSpeedDropMinPrev: cfg.wudaDetachSpeedDropMinPrev,
-        });
+        const detach = shouldDetachWithLock(
+          {
+            speed,
+            prevSpeed,
+            accelMag,
+            detachSpeed: cfg.wudaDetachSpeed,
+            detachAccel: cfg.wudaDetachAccel,
+            detachSpeedDrop: cfg.wudaDetachSpeedDrop,
+            detachSpeedDropMinPrev: cfg.wudaDetachSpeedDropMinPrev,
+          },
+          allowDetach,
+        );
 
         s.prevPos.copy(s.pos);
         s.prevVel.copy(_vel);
@@ -265,6 +284,9 @@ export class WudaCoatRuntime {
             speed,
             cfg.wudaSpeedToLife,
           );
+          if (cfg.wudaAlsoPlumeBurst && this.plumeBurst) {
+            this.plumeBurst.queueDetach(s.pos, s.vel);
+          }
           free++;
           this.writeInstance(i, s.pos, cfg.wudaFreeSize, cfg, false);
         } else {
@@ -323,6 +345,12 @@ export class WudaCoatRuntime {
     opacityMat.transparent = true;
     this.instanced!.visible = true;
     this.lastStats = { stuck, free, dead };
+
+    if (cfg.wudaAlsoPlumeBurst && this.plumeBurst) {
+      this.plumeBurst.flush(cfg);
+    } else {
+      this.plumeBurst?.flush({ ...cfg, wudaAlsoPlumeBurst: false });
+    }
   }
 
   private writeInstance(

@@ -282,6 +282,9 @@ export function createDebugGui(
 
   const wuda = gui.addFolder('武打粒子');
   wuda.add(cfg, 'wudaEnabled').name('启用');
+  wuda
+    .add(cfg, 'wudaDetachOnlyOnActiveHit')
+    .name('仅攻击发生帧可脱落');
   wuda.add(cfg, 'wudaParticleCount', 64, 2048, 64).name('粒子数');
   wuda.add(cfg, 'wudaSeed', 0, 999999, 1).name('随机种子');
   wuda.add(cfg, 'wudaDetachSpeed', 0, 20, 0.1).name('脱落速度阈值');
@@ -314,7 +317,9 @@ export function createDebugGui(
   wuda.add(cfg, 'wudaBlendAdditive').name('加色混合');
   wuda.add(cfg, 'wudaRespawnStuck').name('死后回到粘着');
   wuda.add(cfg, 'wudaShowDebug').name('显示调试色');
-  wuda.add(cfg, 'wudaAlsoPlumeBurst').name('脱落时plume增强(未接)');
+  wuda
+    .add(cfg, 'wudaAlsoPlumeBurst')
+    .name('脱落时再喷一撮特效粒子');
 
   const headband = gui.addFolder('头巾物理');
   headband.add(cfg, 'headbandPhysicsEnabled').name('启用头巾物理');

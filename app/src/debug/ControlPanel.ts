@@ -665,6 +665,7 @@ function buildDom(): HTMLElement {
           '【表现】武打粒子',
           `
           ${rowToggle('wudaEnabled', '启用武打粒子涂层')}
+          ${rowToggle('wudaDetachOnlyOnActiveHit', '仅攻击发生帧可脱落（锁）')}
           ${rowNumber('wudaParticleCount', '粒子数', 64, 2048, 64)}
           ${rowNumber('wudaSeed', '随机种子', 0, 999999, 1)}
           ${rowNumber('wudaDetachSpeed', '脱落速度阈值', 0, 20, 0.1)}
@@ -695,7 +696,7 @@ function buildDom(): HTMLElement {
           ${rowToggle('wudaBlendAdditive', '加色混合')}
           ${rowToggle('wudaRespawnStuck', '死后回到粘着')}
           ${rowToggle('wudaShowDebug', '调试色（绿=粘 / 橙=飞）')}
-          ${rowToggle('wudaAlsoPlumeBurst', '脱落时plume增强(预留)')}
+          ${rowToggle('wudaAlsoPlumeBurst', '脱落时再喷一撮特效粒子')}
           `,
           'expandWuda',
         )}
@@ -998,6 +999,7 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'plantSlewPerSec', path: 'plantSlewPerSec' },
   { id: 'showFootDebug', path: 'showFootDebug' },
   { id: 'wudaEnabled', path: 'wudaEnabled' },
+  { id: 'wudaDetachOnlyOnActiveHit', path: 'wudaDetachOnlyOnActiveHit' },
   { id: 'wudaParticleCount', path: 'wudaParticleCount' },
   { id: 'wudaSeed', path: 'wudaSeed' },
   { id: 'wudaDetachSpeed', path: 'wudaDetachSpeed' },
@@ -1165,6 +1167,7 @@ const TOGGLE_IDS = new Set([
   'lightEnabled',
   'lightCastShadow',
   'wudaEnabled',
+  'wudaDetachOnlyOnActiveHit',
   'wudaBlendAdditive',
   'wudaRespawnStuck',
   'wudaShowDebug',

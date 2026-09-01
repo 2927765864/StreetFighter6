@@ -50,6 +50,27 @@ export function shouldDetach(input: DetachCheckInput): boolean {
   return false;
 }
 
+/**
+ * Detach lock for「仅发生帧」: velocity math still runs; only blocks state→free.
+ * `allowDetach` false → never detach this frame.
+ */
+export function shouldDetachWithLock(
+  input: DetachCheckInput,
+  allowDetach: boolean,
+): boolean {
+  if (!allowDetach) return false;
+  return shouldDetach(input);
+}
+
+/** True when this fighter is on an attack hitbox-active logic frame. */
+export function isAttackActiveHitFrame(fighter: {
+  phase: string;
+  mover: { currentHitBoxesLocal: () => unknown[] };
+}): boolean {
+  if (fighter.phase !== 'attack') return false;
+  return fighter.mover.currentHitBoxesLocal().length > 0;
+}
+
 export function integrateFreeParticle(
   pos: THREE.Vector3,
   vel: THREE.Vector3,

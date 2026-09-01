@@ -10,7 +10,9 @@ import {
   computeSurfaceVelocity,
   freeLifetimeFromSpeed,
   integrateFreeParticle,
+  isAttackActiveHitFrame,
   shouldDetach,
+  shouldDetachWithLock,
 } from '../../src/render/wudaParticle/wudaCoatMath';
 
 describe('wuda CONFIG defaults', () => {
@@ -49,11 +51,13 @@ describe('wuda CONFIG defaults', () => {
       'wudaRespawnStuck',
       'wudaShowDebug',
       'wudaAlsoPlumeBurst',
+      'wudaDetachOnlyOnActiveHit',
     ] as const;
     for (const k of keys) {
       expect(cfg).toHaveProperty(k);
     }
     expect(cfg.wudaEnabled).toBe(false);
+    expect(cfg.wudaDetachOnlyOnActiveHit).toBe(false);
     expect(cfg.wudaParticleCount).toBe(512);
   });
 });
@@ -150,5 +154,41 @@ describe('wudaCoatMath', () => {
 
   it('speedToLife increases life', () => {
     expect(freeLifetimeFromSpeed(0.6, 5, 0.2)).toBeGreaterThan(0.6);
+  });
+
+  it('detach lock blocks even when thresholds would fire', () => {
+    const input = {
+      speed: 10,
+      prevSpeed: 10,
+      accelMag: 100,
+      detachSpeed: 4,
+      detachAccel: 60,
+      detachSpeedDrop: 3,
+      detachSpeedDropMinPrev: 2,
+    };
+    expect(shouldDetach(input)).toBe(true);
+    expect(shouldDetachWithLock(input, false)).toBe(false);
+    expect(shouldDetachWithLock(input, true)).toBe(true);
+  });
+
+  it('isAttackActiveHitFrame requires attack phase and hit boxes', () => {
+    expect(
+      isAttackActiveHitFrame({
+        phase: 'idle',
+        mover: { currentHitBoxesLocal: () => [{ x: 0 }] },
+      }),
+    ).toBe(false);
+    expect(
+      isAttackActiveHitFrame({
+        phase: 'attack',
+        mover: { currentHitBoxesLocal: () => [] },
+      }),
+    ).toBe(false);
+    expect(
+      isAttackActiveHitFrame({
+        phase: 'attack',
+        mover: { currentHitBoxesLocal: () => [{ x: 0 }] },
+      }),
+    ).toBe(true);
   });
 });

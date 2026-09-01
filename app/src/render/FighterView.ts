@@ -61,7 +61,9 @@ import { clampBeltDeltaSec } from './belt/beltPhysicsMath';
 import { RyuPantsPhysics } from './pants/RyuPantsPhysics';
 import { clampPantsDeltaSec } from './pants/pantsPhysicsMath';
 import { WudaCoatRuntime } from './wudaParticle/WudaCoatRuntime';
+import type { WudaPlumeBurst } from './wudaParticle/WudaPlumeBurst';
 import { findLargestSkinnedMesh } from './wudaParticle/evalSkinnedSurface';
+import { isAttackActiveHitFrame } from './wudaParticle/wudaCoatMath';
 import {
   isJumpLandBinding,
   shouldFloorClampAttackSole,
@@ -191,6 +193,8 @@ export class FighterView {
   private pants: RyuPantsPhysics | null = null;
   /** Martial-arts coat particles (scheme B); after skeleton world update. */
   private wudaCoat: WudaCoatRuntime | null = null;
+  /** Optional shared plume splash on coat detach (wired from main). */
+  private wudaPlumeBurst: WudaPlumeBurst | null = null;
   /** Scene root — spring debug helpers must parent here (not under fighter). */
   private readonly scene: THREE.Scene;
 
@@ -393,6 +397,7 @@ export class FighterView {
 
     this.wudaCoat?.dispose();
     this.wudaCoat = new WudaCoatRuntime();
+    this.wudaCoat.setPlumeBurst(this.wudaPlumeBurst);
     const coatMesh = findLargestSkinnedMesh(model);
     if (coatMesh) {
       const wc = this.wudaCoat.bind(coatMesh, { parent: this.scene });
@@ -930,12 +935,27 @@ export class FighterView {
     this.updatePantsPhysics(fighter, cfg, wallDtSec);
     this.modelRoot?.updateMatrixWorld(true);
     // Wuda after world matrices (TRAP-LAG); never gated by hitstop.
-    this.updateWudaCoat(cfg, wallDtSec);
+    this.updateWudaCoat(fighter, cfg, wallDtSec);
   }
 
-  /** Surface coat: stuck tracking + detach; wall-clock dt. */
-  private updateWudaCoat(cfg: MutableSimConfig, wallDtSec: number): void {
+  /** Shared detach splash helper (same instance for p1/p2 is OK). */
+  setWudaPlumeBurst(burst: WudaPlumeBurst | null): void {
+    this.wudaPlumeBurst = burst;
+    this.wudaCoat?.setPlumeBurst(burst);
+  }
+
+  /**
+   * Surface coat: stuck tracking + detach; wall-clock dt.
+   * Detach lock (optional): only attack hitbox-active frames when
+   * cfg.wudaDetachOnlyOnActiveHit — velocity sensing still runs.
+   */
+  private updateWudaCoat(
+    fighter: Fighter,
+    cfg: MutableSimConfig,
+    wallDtSec: number,
+  ): void {
     if (!this.wudaCoat?.isBound) return;
+    this.wudaCoat.setPlumeBurst(this.wudaPlumeBurst);
     if (!this.wudaCoat.hasCamera) {
       this.scene.traverse((o) => {
         if ((o as THREE.Camera).isCamera) {
@@ -943,7 +963,9 @@ export class FighterView {
         }
       });
     }
-    this.wudaCoat.update(wallDtSec, cfg);
+    const allowDetach =
+      !cfg.wudaDetachOnlyOnActiveHit || isAttackActiveHitFrame(fighter);
+    this.wudaCoat.update(wallDtSec, cfg, { allowDetach });
   }
 
   private maybePlantAfterPose(
@@ -1722,7 +1744,7 @@ export class FighterView {
       this.updateBeltPhysics(fighter, cfg, wallDtSec);
       this.updatePantsPhysics(fighter, cfg, wallDtSec);
       this.modelRoot?.updateMatrixWorld(true);
-      this.updateWudaCoat(cfg, wallDtSec);
+      this.updateWudaCoat(fighter, cfg, wallDtSec);
       return;
     }
 
