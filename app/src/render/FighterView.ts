@@ -17,7 +17,9 @@ import {
 import { AnimClipLibrary } from './AnimClipLibrary';
 import { ProceduralRyuAnim } from './ProceduralRyuAnim';
 import {
-  freeRunAnimDtSec,
+  clampHitstopAnimRate,
+  freeRunAnimDtSecWithHitstop,
+  hitstopPresentDtSec,
   logicFrameToClipTime,
   remapLogicToClipTime,
   resolveAnimSequenceFrame,
@@ -150,6 +152,11 @@ export class FighterView {
     binding: string;
     time: number;
   } | null = null;
+  /**
+   * Presentation-only clip seconds beyond frozen logic scrub during hitstop.
+   * Cleared when leaving hitstop (snap back to logic frame).
+   */
+  private hitstopPresentOffsetSec = 0;
   /**
    * When true, ignore logic clipId and only advance the preview mixer
    * (used by the animation test panel).
@@ -995,7 +1002,13 @@ export class FighterView {
   ): void {
     if (!this.mixer) return;
     const clip = action.getClip();
-    const t = THREE.MathUtils.clamp(timeSec, 0, Math.max(0, clip.duration - 1e-4));
+    // Hit-slow: creep past frozen logic scrub; cleared when hitstop ends.
+    const withSlow = timeSec + this.hitstopPresentOffsetSec;
+    const t = THREE.MathUtils.clamp(
+      withSlow,
+      0,
+      Math.max(0, clip.duration - 1e-4),
+    );
     // CRITICAL: do NOT use mixer.setTime() while paused — effectiveTimeScale=0 so
     // action.time never advances (attack stuck on frame 0).
     // Also play() before pause: a prior stop()/stopAllAction leaves the action
@@ -1609,13 +1622,21 @@ export class FighterView {
    *   logic frames.
    * @param opts.displayFront when set, drives 2.5D layer (renderOrder +
    *   depthTest); omit to keep legacy default (p1 front).
+   * @param opts.hitstopPresentTicks MatchSim steps that froze on hitstop this
+   *   present; drives presentation hit-slow.
+   * @param opts.inHitstop true while logic hitstop is active (or ticks>0 this
+   *   present). When false, presentation offset snaps back to logic scrub.
    */
   syncFromLogic(
     fighter: Fighter,
     cfg: MutableSimConfig,
     wallDtSec = 1 / 60,
     logicSteps = 1,
-    opts?: { displayFront?: boolean },
+    opts?: {
+      displayFront?: boolean;
+      hitstopPresentTicks?: number;
+      inHitstop?: boolean;
+    },
   ): void {
     const s = cfg.worldScale * cfg.modelScale;
     this.root.scale.set(s, s, fighter.visualFacing * s);
@@ -1630,7 +1651,26 @@ export class FighterView {
 
     const previewDt =
       Math.min(Math.max(wallDtSec, 0), 0.1) * (cfg.timeScaleAnim || 1);
-    const freeRunDt = freeRunAnimDtSec(logicSteps, cfg.timeScaleAnim || 1);
+    const hitstopTicks = Math.max(0, opts?.hitstopPresentTicks ?? 0);
+    const hitstopRate = clampHitstopAnimRate(cfg.hitstopAnimRate);
+    const inHitstop = opts?.inHitstop === true || hitstopTicks > 0;
+    if (!this.previewMode) {
+      if (hitstopTicks > 0 && hitstopRate > 0) {
+        this.hitstopPresentOffsetSec += hitstopPresentDtSec(
+          hitstopTicks,
+          hitstopRate,
+          cfg.timeScaleAnim || 1,
+        );
+      } else if (!inHitstop) {
+        this.hitstopPresentOffsetSec = 0;
+      }
+    }
+    const freeRunDt = freeRunAnimDtSecWithHitstop(
+      logicSteps,
+      hitstopTicks,
+      hitstopRate,
+      cfg.timeScaleAnim || 1,
+    );
     const scrubMode = (cfg.scrubMode ?? 'uniform') as ScrubMode;
     const role = fighter.animRole || 'main';
     this.crossfadeAdvanceMode =
@@ -1658,7 +1698,10 @@ export class FighterView {
         this.clearPoseBlend(true);
         this.playBest(fighter.clipId, role, HARD_CUT);
         const total = Math.max(1, fighter.mover.total);
-        this.procedural.setAttackProgress(fighter.mover.moveFrame / total);
+        const slowFrames = this.hitstopPresentOffsetSec * 60;
+        this.procedural.setAttackProgress(
+          (fighter.mover.moveFrame + slowFrames) / total,
+        );
         this.procedural.update(0, true);
       } else {
         this.playBest(fighter.clipId, role, fadePolicy);

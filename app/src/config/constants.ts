@@ -133,6 +133,11 @@ export type MutableSimConfig = {
   motionHistoryCapacity: number;
   hitstopFramesOnHit: number;
   hitstopFramesOnBlock: number;
+  /**
+   * Presentation playback rate during logic hitstop (0 = hard freeze, 1 = full).
+   * Logic timelines stay frozen; scrub/free-run advance at this fraction.
+   */
+  hitstopAnimRate: number;
   enableCancel: boolean;
   /** Gameplay gate: special command usage (definitions stay loaded). */
   enableSpecials: boolean;
@@ -470,6 +475,8 @@ export function createDefaultSimConfig(): MutableSimConfig {
     motionHistoryCapacity: INPUT_BUFFER_FRAMES,
     hitstopFramesOnHit: HITSTOP_ON_HIT,
     hitstopFramesOnBlock: HITSTOP_ON_BLOCK,
+    /** ~1 visual frame creep over a 13f heavy hitstop; snap-back is tiny. */
+    hitstopAnimRate: 0.08,
     enableCancel: true,
     enableSpecials: false,
     enableThrows: false,

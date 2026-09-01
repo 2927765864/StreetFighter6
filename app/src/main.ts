@@ -965,7 +965,11 @@ async function boot(): Promise<void> {
 
     // Free-run + dual-advance clip time use presentLogicSteps/60 (authored 60Hz).
     // Present dt drives blend *weight* windows and cloth physics.
+    // Hitstop: logic freeze + presentation hit-slow via hitstopPresentTicks.
     {
+      const hitstopPresentTicks = match.hitstopPresentTicks;
+      match.hitstopPresentTicks = 0;
+      const inHitstop = match.hitstopTimer > 0 || hitstopPresentTicks > 0;
       const p1Front =
         pickDisplayFrontId(
           match.p1.lastAttackAcceptSeq,
@@ -973,9 +977,13 @@ async function boot(): Promise<void> {
         ) === 'p1';
       p1View.syncFromLogic(match.p1, cfg, presentDt, presentLogicSteps, {
         displayFront: p1Front,
+        hitstopPresentTicks,
+        inHitstop,
       });
       p2View.syncFromLogic(match.p2, cfg, presentDt, presentLogicSteps, {
         displayFront: !p1Front,
+        hitstopPresentTicks,
+        inHitstop,
       });
     }
 

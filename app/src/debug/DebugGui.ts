@@ -480,6 +480,9 @@ export function createDebugGui(
     .add(cfg, 'hitstopFramesOnBlock', 0, 30, 1)
     .name('Hitstop防御(f)')
     .onChange(syncOpts);
+  cancelFolder
+    .add(cfg, 'hitstopAnimRate', 0, 1, 0.01)
+    .name('卡帧表现倍率');
   cancelFolder.add(cfg, 'showCancelWindow').name('HUD显示取消窗');
 
   const guardFolder = gui.addFolder('防住 / 推挤 / 位移');

@@ -73,6 +73,48 @@ export function freeRunAnimDtSec(
   return dt * (timeScaleAnim || 1);
 }
 
+/** Clamp presentation hitstop rate to [0, 1]. 0 = hard freeze. */
+export function clampHitstopAnimRate(
+  rate: number | null | undefined,
+): number {
+  if (rate == null || !Number.isFinite(rate)) return 0;
+  return Math.min(1, Math.max(0, rate));
+}
+
+/**
+ * Presentation-only dt while logic is in hit freeze.
+ * `hitstopPresentTicks` = MatchSim steps that early-returned on hitstop.
+ */
+export function hitstopPresentDtSec(
+  hitstopPresentTicks: number,
+  hitstopAnimRate: number,
+  timeScaleAnim = 1,
+): number {
+  const rate = clampHitstopAnimRate(hitstopAnimRate);
+  if (rate <= 0) return 0;
+  return freeRunAnimDtSec(hitstopPresentTicks, timeScaleAnim) * rate;
+}
+
+/**
+ * Free-run mixer dt when some of this present's logic steps were hitstop.
+ * Non-hitstop steps advance at full authored rate; hitstop steps at
+ * {@link hitstopAnimRate}.
+ */
+export function freeRunAnimDtSecWithHitstop(
+  logicSteps: number,
+  hitstopPresentTicks: number,
+  hitstopAnimRate: number,
+  timeScaleAnim = 1,
+): number {
+  const steps = Math.max(0, logicSteps);
+  const hs = Math.min(Math.max(0, hitstopPresentTicks), steps);
+  const normal = steps - hs;
+  return (
+    freeRunAnimDtSec(normal, timeScaleAnim) +
+    hitstopPresentDtSec(hs, hitstopAnimRate, timeScaleAnim)
+  );
+}
+
 /**
  * Map an action-timeline frame through animRemap segments to a motion frame.
  * Empty / invalid tables fall back to the logic frame itself.

@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
+  clampHitstopAnimRate,
   freeRunAnimDtSec,
+  freeRunAnimDtSecWithHitstop,
+  hitstopPresentDtSec,
   logicFrameToClipTime,
   remapLogicToClipTime,
   remapLogicToMotionFrame,
@@ -56,6 +59,34 @@ describe('freeRunAnimDtSec', () => {
   it('respects timeScaleAnim and caps like blendWallDt', () => {
     expect(freeRunAnimDtSec(1, 2)).toBeCloseTo(2 / 60, 5);
     expect(freeRunAnimDtSec(120)).toBeCloseTo(0.1, 5);
+  });
+});
+
+describe('hitstop presentation slow', () => {
+  it('clamps hitstopAnimRate to [0, 1]', () => {
+    expect(clampHitstopAnimRate(undefined)).toBe(0);
+    expect(clampHitstopAnimRate(-1)).toBe(0);
+    expect(clampHitstopAnimRate(0.08)).toBeCloseTo(0.08, 5);
+    expect(clampHitstopAnimRate(2)).toBe(1);
+  });
+
+  it('hitstopPresentDtSec is free-run × rate (inherits 0.1s cap)', () => {
+    expect(hitstopPresentDtSec(1, 0)).toBe(0);
+    expect(hitstopPresentDtSec(1, 0.08)).toBeCloseTo((1 / 60) * 0.08, 5);
+    // 13/60 > 0.1 cap inside freeRunAnimDtSec → 0.1 * 0.08
+    expect(hitstopPresentDtSec(13, 0.08)).toBeCloseTo(0.1 * 0.08, 5);
+  });
+
+  it('freeRunAnimDtSecWithHitstop splits normal vs hitstop ticks', () => {
+    // 2 normal + 3 hitstop @ 0.08
+    const dt = freeRunAnimDtSecWithHitstop(5, 3, 0.08);
+    expect(dt).toBeCloseTo(2 / 60 + (3 / 60) * 0.08, 5);
+  });
+
+  it('rate 0 freezes hitstop portion; rate 1 matches full free-run', () => {
+    expect(freeRunAnimDtSecWithHitstop(4, 4, 0)).toBe(0);
+    expect(freeRunAnimDtSecWithHitstop(4, 4, 1)).toBeCloseTo(4 / 60, 5);
+    expect(freeRunAnimDtSecWithHitstop(4, 0, 0.08)).toBeCloseTo(4 / 60, 5);
   });
 });
 

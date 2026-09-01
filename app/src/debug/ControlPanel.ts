@@ -368,6 +368,7 @@ function buildDom(): HTMLElement {
           ${rowToggle('enableThrows', '启用投技指令')}
           ${rowNumber('hitstopFramesOnHit', 'Hitstop 命中 (f)', 0, 30, 1)}
           ${rowNumber('hitstopFramesOnBlock', 'Hitstop 防御 (f)', 0, 30, 1)}
+          ${rowNumber('hitstopAnimRate', '卡帧表现倍率', 0, 1, 0.01)}
           ${rowToggle('showCancelWindow', 'HUD 显示取消窗')}
           `,
           'expandCancelHitstop',
@@ -861,6 +862,7 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'enableThrows', path: 'enableThrows' },
   { id: 'hitstopFramesOnHit', path: 'hitstopFramesOnHit' },
   { id: 'hitstopFramesOnBlock', path: 'hitstopFramesOnBlock' },
+  { id: 'hitstopAnimRate', path: 'hitstopAnimRate' },
   { id: 'showCancelWindow', path: 'showCancelWindow' },
   { id: 'enablePushResolve', path: 'enablePushResolve' },
   { id: 'enableBlockPush', path: 'enableBlockPush' },
@@ -1186,6 +1188,7 @@ export function setupControlPanel(
     'modelYOffset',
     'worldScale',
     'timeScaleAnim',
+    'hitstopAnimRate',
     'showHitboxes',
     'showHurtboxes',
     'showPushboxes',

@@ -90,6 +90,13 @@ describe('MatchSim 5LP', () => {
     expect(sim.p2.hp).toBe(hp0);
     expect(sim.lastHitResult).toBe('block');
     expect(sim.hitstopTimer).toBeGreaterThan(0);
+    // Presentation hit-slow: each frozen logic step increments present ticks.
+    sim.hitstopPresentTicks = 0;
+    const timerBefore = sim.hitstopTimer;
+    sim.pendingInput = neutral();
+    sim.step();
+    expect(sim.hitstopPresentTicks).toBe(1);
+    expect(sim.hitstopTimer).toBe(timerBefore - 1);
     // After hitstop, defender should be pushed away from p1 (p2 starts at +x)
     for (let i = 0; i < 20; i++) {
       sim.pendingInput = neutral();

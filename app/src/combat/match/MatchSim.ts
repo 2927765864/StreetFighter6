@@ -244,6 +244,11 @@ export class MatchSim {
   lastHitResult: HitResult = 'none';
   logicFrame = 0;
   hitstopTimer = 0;
+  /**
+   * Logic steps that early-returned on hitstop since last present consume.
+   * Presentation uses this for hit-slow (not logic advance).
+   */
+  hitstopPresentTicks = 0;
   lastIntent: Intent = {
     kind: 'none',
     priority: -1,
@@ -386,6 +391,7 @@ export class MatchSim {
     this.lastHitResult = 'none';
     this.logicFrame = 0;
     this.hitstopTimer = 0;
+    this.hitstopPresentTicks = 0;
     this.actionBuffer.clear();
     this.history.clear();
     this.drive.setBars(DRIVE_MAX);
@@ -819,6 +825,7 @@ export class MatchSim {
     // Hitstop: still accept input above; skip combat frame advance / displace
     if (this.hitstopTimer > 0) {
       this.hitstopTimer -= 1;
+      this.hitstopPresentTicks += 1;
       // Clear presentation freeze — no walk anim gate across hitstop
       this.stepWalkInputFreezeGate(input.relDir, intent, true);
       this.syncDebugProbe();
