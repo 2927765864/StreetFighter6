@@ -18,6 +18,7 @@ export type ExpandedSections = {
   commandProbe: boolean;
   moveEdit: boolean;
   animTest: boolean;
+  wuda: boolean;
   headband: boolean;
   belt: boolean;
   pants: boolean;

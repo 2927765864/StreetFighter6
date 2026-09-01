@@ -60,6 +60,8 @@ import { RyuBeltPhysics } from './belt/RyuBeltPhysics';
 import { clampBeltDeltaSec } from './belt/beltPhysicsMath';
 import { RyuPantsPhysics } from './pants/RyuPantsPhysics';
 import { clampPantsDeltaSec } from './pants/pantsPhysicsMath';
+import { WudaCoatRuntime } from './wudaParticle/WudaCoatRuntime';
+import { findLargestSkinnedMesh } from './wudaParticle/evalSkinnedSurface';
 import {
   isJumpLandBinding,
   shouldFloorClampAttackSole,
@@ -187,6 +189,8 @@ export class FighterView {
   private belt: RyuBeltPhysics | null = null;
   /** Ryu dougi pants bone-cloth; updated after mixer each frame. */
   private pants: RyuPantsPhysics | null = null;
+  /** Martial-arts coat particles (scheme B); after skeleton world update. */
+  private wudaCoat: WudaCoatRuntime | null = null;
   /** Scene root — spring debug helpers must parent here (not under fighter). */
   private readonly scene: THREE.Scene;
 
@@ -241,6 +245,8 @@ export class FighterView {
       this.belt = null;
       this.pants?.dispose();
       this.pants = null;
+      this.wudaCoat?.dispose();
+      this.wudaCoat = null;
       this.root.remove(this.modelRoot);
       this.modelRoot = null;
     }
@@ -383,6 +389,24 @@ export class FighterView {
       );
     } else {
       console.warn(`[FighterView] pants physics: ${pt.reason}`);
+    }
+
+    this.wudaCoat?.dispose();
+    this.wudaCoat = new WudaCoatRuntime();
+    const coatMesh = findLargestSkinnedMesh(model);
+    if (coatMesh) {
+      const wc = this.wudaCoat.bind(coatMesh, { parent: this.scene });
+      if (wc.ok) {
+        console.info(
+          `[FighterView] wuda coat bound mesh=${wc.meshName} verts=${coatMesh.geometry.getAttribute('position')?.count ?? 0}`,
+        );
+      } else {
+        console.warn(`[FighterView] wuda coat: ${wc.reason}`);
+      }
+    } else {
+      console.warn('[FighterView] wuda coat: no SkinnedMesh on model');
+      this.wudaCoat.dispose();
+      this.wudaCoat = null;
     }
 
     // One-shot sole align after stance pose + spring binds (not per-frame).
@@ -905,6 +929,21 @@ export class FighterView {
     this.updateBeltPhysics(fighter, cfg, wallDtSec);
     this.updatePantsPhysics(fighter, cfg, wallDtSec);
     this.modelRoot?.updateMatrixWorld(true);
+    // Wuda after world matrices (TRAP-LAG); never gated by hitstop.
+    this.updateWudaCoat(cfg, wallDtSec);
+  }
+
+  /** Surface coat: stuck tracking + detach; wall-clock dt. */
+  private updateWudaCoat(cfg: MutableSimConfig, wallDtSec: number): void {
+    if (!this.wudaCoat?.isBound) return;
+    if (!this.wudaCoat.hasCamera) {
+      this.scene.traverse((o) => {
+        if ((o as THREE.Camera).isCamera) {
+          this.wudaCoat!.setCamera(o as THREE.Camera);
+        }
+      });
+    }
+    this.wudaCoat.update(wallDtSec, cfg);
   }
 
   private maybePlantAfterPose(
@@ -1683,6 +1722,7 @@ export class FighterView {
       this.updateBeltPhysics(fighter, cfg, wallDtSec);
       this.updatePantsPhysics(fighter, cfg, wallDtSec);
       this.modelRoot?.updateMatrixWorld(true);
+      this.updateWudaCoat(cfg, wallDtSec);
       return;
     }
 

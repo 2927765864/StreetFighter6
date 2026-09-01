@@ -280,6 +280,42 @@ export function createDebugGui(
   art.add(cfg, 'artEnableRoughnessMap').name('粗糙贴图').onChange(applyArt);
   art.add(cfg, 'artRoughness', 0, 1, 0.01).name('基础粗糙度').onChange(applyArt);
 
+  const wuda = gui.addFolder('武打粒子');
+  wuda.add(cfg, 'wudaEnabled').name('启用');
+  wuda.add(cfg, 'wudaParticleCount', 64, 2048, 64).name('粒子数');
+  wuda.add(cfg, 'wudaSeed', 0, 999999, 1).name('随机种子');
+  wuda.add(cfg, 'wudaDetachSpeed', 0, 20, 0.1).name('脱落速度阈值');
+  wuda.add(cfg, 'wudaDetachAccel', 0, 200, 1).name('脱落加速度阈值');
+  wuda.add(cfg, 'wudaDetachSpeedDrop', 0, 20, 0.1).name('急停速度降');
+  wuda
+    .add(cfg, 'wudaDetachSpeedDropMinPrev', 0, 20, 0.1)
+    .name('急停前速下限');
+  wuda.add(cfg, 'wudaInheritVelScale', 0, 2, 0.05).name('继承速度比');
+  wuda.add(cfg, 'wudaDetachJitter', 0, 2, 0.05).name('脱落抖动');
+  wuda.add(cfg, 'wudaSpeedToLife', 0, 1, 0.05).name('速度→寿命');
+  wuda.add(cfg, 'wudaFreeLifetime', 0.05, 3, 0.05).name('自由寿命');
+  wuda.add(cfg, 'wudaGravityPower', 0, 30, 0.1).name('重力强度');
+  wuda.add(cfg, 'wudaGravityDirX', -1, 1, 0.05).name('重力X');
+  wuda.add(cfg, 'wudaGravityDirY', -1, 1, 0.05).name('重力Y');
+  wuda.add(cfg, 'wudaGravityDirZ', -1, 1, 0.05).name('重力Z');
+  wuda.add(cfg, 'wudaDrag', 0, 15, 0.1).name('阻力');
+  wuda.add(cfg, 'wudaSpeedLimit', 0.1, 50, 0.1).name('速度上限');
+  wuda.add(cfg, 'wudaMaxDeltaSec', 0.016, 0.1, 0.001).name('dt上限');
+  wuda.add(cfg, 'wudaStuckSize', 0.001, 0.05, 0.001).name('粘着尺寸');
+  wuda.add(cfg, 'wudaFreeSize', 0.001, 0.08, 0.001).name('自由尺寸');
+  wuda.add(cfg, 'wudaStuckOpacity', 0, 1, 0.01).name('粘着不透明度');
+  wuda.add(cfg, 'wudaFreeOpacity', 0, 1, 0.01).name('自由不透明度');
+  wuda.add(cfg, 'wudaStuckColorR', 0, 1, 0.01).name('粘着色R');
+  wuda.add(cfg, 'wudaStuckColorG', 0, 1, 0.01).name('粘着色G');
+  wuda.add(cfg, 'wudaStuckColorB', 0, 1, 0.01).name('粘着色B');
+  wuda.add(cfg, 'wudaFreeColorR', 0, 1, 0.01).name('自由色R');
+  wuda.add(cfg, 'wudaFreeColorG', 0, 1, 0.01).name('自由色G');
+  wuda.add(cfg, 'wudaFreeColorB', 0, 1, 0.01).name('自由色B');
+  wuda.add(cfg, 'wudaBlendAdditive').name('加色混合');
+  wuda.add(cfg, 'wudaRespawnStuck').name('死后回到粘着');
+  wuda.add(cfg, 'wudaShowDebug').name('显示调试色');
+  wuda.add(cfg, 'wudaAlsoPlumeBurst').name('脱落时plume增强(未接)');
+
   const headband = gui.addFolder('头巾物理');
   headband.add(cfg, 'headbandPhysicsEnabled').name('启用头巾物理');
   headband.add(cfg, 'headbandUseCenter').name('头部 Center');

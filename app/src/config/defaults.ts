@@ -17,6 +17,7 @@ export function defaultExpandedSections(): ExpandedSections {
     commandProbe: false,
     moveEdit: false,
     animTest: false,
+    wuda: true,
     headband: true,
     belt: true,
     pants: true,

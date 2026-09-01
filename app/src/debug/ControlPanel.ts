@@ -661,6 +661,45 @@ function buildDom(): HTMLElement {
           'expandAnimTest',
         )}
         ${sectionShell(
+          'wuda',
+          '【表现】武打粒子',
+          `
+          ${rowToggle('wudaEnabled', '启用武打粒子涂层')}
+          ${rowNumber('wudaParticleCount', '粒子数', 64, 2048, 64)}
+          ${rowNumber('wudaSeed', '随机种子', 0, 999999, 1)}
+          ${rowNumber('wudaDetachSpeed', '脱落速度阈值', 0, 20, 0.1)}
+          ${rowNumber('wudaDetachAccel', '脱落加速度阈值', 0, 200, 1)}
+          ${rowNumber('wudaDetachSpeedDrop', '急停速度降', 0, 20, 0.1)}
+          ${rowNumber('wudaDetachSpeedDropMinPrev', '急停前速下限', 0, 20, 0.1)}
+          ${rowNumber('wudaInheritVelScale', '继承速度比', 0, 2, 0.05)}
+          ${rowNumber('wudaDetachJitter', '脱落抖动', 0, 2, 0.05)}
+          ${rowNumber('wudaSpeedToLife', '速度→寿命', 0, 1, 0.05)}
+          ${rowNumber('wudaFreeLifetime', '自由寿命', 0.05, 3, 0.05)}
+          ${rowNumber('wudaGravityPower', '重力强度', 0, 30, 0.1)}
+          ${rowNumber('wudaGravityDirX', '重力X', -1, 1, 0.05)}
+          ${rowNumber('wudaGravityDirY', '重力Y', -1, 1, 0.05)}
+          ${rowNumber('wudaGravityDirZ', '重力Z', -1, 1, 0.05)}
+          ${rowNumber('wudaDrag', '阻力', 0, 15, 0.1)}
+          ${rowNumber('wudaSpeedLimit', '速度上限', 0.1, 50, 0.1)}
+          ${rowNumber('wudaMaxDeltaSec', 'dt上限', 0.016, 0.1, 0.001)}
+          ${rowNumber('wudaStuckSize', '粘着尺寸', 0.001, 0.05, 0.001)}
+          ${rowNumber('wudaFreeSize', '自由尺寸', 0.001, 0.08, 0.001)}
+          ${rowNumber('wudaStuckOpacity', '粘着不透明度', 0, 1, 0.01)}
+          ${rowNumber('wudaFreeOpacity', '自由不透明度', 0, 1, 0.01)}
+          ${rowNumber('wudaStuckColorR', '粘着色R', 0, 1, 0.01)}
+          ${rowNumber('wudaStuckColorG', '粘着色G', 0, 1, 0.01)}
+          ${rowNumber('wudaStuckColorB', '粘着色B', 0, 1, 0.01)}
+          ${rowNumber('wudaFreeColorR', '自由色R', 0, 1, 0.01)}
+          ${rowNumber('wudaFreeColorG', '自由色G', 0, 1, 0.01)}
+          ${rowNumber('wudaFreeColorB', '自由色B', 0, 1, 0.01)}
+          ${rowToggle('wudaBlendAdditive', '加色混合')}
+          ${rowToggle('wudaRespawnStuck', '死后回到粘着')}
+          ${rowToggle('wudaShowDebug', '调试色（绿=粘 / 橙=飞）')}
+          ${rowToggle('wudaAlsoPlumeBurst', '脱落时plume增强(预留)')}
+          `,
+          'expandWuda',
+        )}
+        ${sectionShell(
           'headband',
           '【表现】头巾物理',
           `
@@ -958,6 +997,38 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'residualToStanceBlendSec', path: 'residualToStanceBlendSec' },
   { id: 'plantSlewPerSec', path: 'plantSlewPerSec' },
   { id: 'showFootDebug', path: 'showFootDebug' },
+  { id: 'wudaEnabled', path: 'wudaEnabled' },
+  { id: 'wudaParticleCount', path: 'wudaParticleCount' },
+  { id: 'wudaSeed', path: 'wudaSeed' },
+  { id: 'wudaDetachSpeed', path: 'wudaDetachSpeed' },
+  { id: 'wudaDetachAccel', path: 'wudaDetachAccel' },
+  { id: 'wudaDetachSpeedDrop', path: 'wudaDetachSpeedDrop' },
+  { id: 'wudaDetachSpeedDropMinPrev', path: 'wudaDetachSpeedDropMinPrev' },
+  { id: 'wudaInheritVelScale', path: 'wudaInheritVelScale' },
+  { id: 'wudaDetachJitter', path: 'wudaDetachJitter' },
+  { id: 'wudaSpeedToLife', path: 'wudaSpeedToLife' },
+  { id: 'wudaFreeLifetime', path: 'wudaFreeLifetime' },
+  { id: 'wudaGravityPower', path: 'wudaGravityPower' },
+  { id: 'wudaGravityDirX', path: 'wudaGravityDirX' },
+  { id: 'wudaGravityDirY', path: 'wudaGravityDirY' },
+  { id: 'wudaGravityDirZ', path: 'wudaGravityDirZ' },
+  { id: 'wudaDrag', path: 'wudaDrag' },
+  { id: 'wudaSpeedLimit', path: 'wudaSpeedLimit' },
+  { id: 'wudaMaxDeltaSec', path: 'wudaMaxDeltaSec' },
+  { id: 'wudaStuckSize', path: 'wudaStuckSize' },
+  { id: 'wudaFreeSize', path: 'wudaFreeSize' },
+  { id: 'wudaStuckOpacity', path: 'wudaStuckOpacity' },
+  { id: 'wudaFreeOpacity', path: 'wudaFreeOpacity' },
+  { id: 'wudaStuckColorR', path: 'wudaStuckColorR' },
+  { id: 'wudaStuckColorG', path: 'wudaStuckColorG' },
+  { id: 'wudaStuckColorB', path: 'wudaStuckColorB' },
+  { id: 'wudaFreeColorR', path: 'wudaFreeColorR' },
+  { id: 'wudaFreeColorG', path: 'wudaFreeColorG' },
+  { id: 'wudaFreeColorB', path: 'wudaFreeColorB' },
+  { id: 'wudaBlendAdditive', path: 'wudaBlendAdditive' },
+  { id: 'wudaRespawnStuck', path: 'wudaRespawnStuck' },
+  { id: 'wudaShowDebug', path: 'wudaShowDebug' },
+  { id: 'wudaAlsoPlumeBurst', path: 'wudaAlsoPlumeBurst' },
   { id: 'headbandPhysicsEnabled', path: 'headbandPhysicsEnabled' },
   { id: 'headbandUseCenter', path: 'headbandUseCenter' },
   { id: 'headbandStiffness', path: 'headbandStiffness' },
@@ -1093,6 +1164,11 @@ const TOGGLE_IDS = new Set([
   'shadowMapEnabled',
   'lightEnabled',
   'lightCastShadow',
+  'wudaEnabled',
+  'wudaBlendAdditive',
+  'wudaRespawnStuck',
+  'wudaShowDebug',
+  'wudaAlsoPlumeBurst',
   'headbandPhysicsEnabled',
   'headbandUseCenter',
   'headbandShowColliders',
@@ -1277,6 +1353,7 @@ export function setupControlPanel(
     ['expandHitVfx', 'hitVfx', 'sect-hitVfx'],
     ['expandAnimDrive', 'animDrive', 'sect-animDrive'],
     ['expandAnimTest', 'animTest', 'sect-animTest'],
+    ['expandWuda', 'wuda', 'sect-wuda'],
     ['expandHeadband', 'headband', 'sect-headband'],
     ['expandBelt', 'belt', 'sect-belt'],
     ['expandPants', 'pants', 'sect-pants'],

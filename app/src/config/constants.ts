@@ -378,6 +378,42 @@ export type MutableSimConfig = {
   hitVfxPreviewKind: 'onHit' | 'onBlock';
   /** When true, editor「重放」keeps re-triggering after each play finishes. */
   hitVfxPreviewLoop: boolean;
+  /**
+   * 武打粒子（方案 B）：蒙皮薄涂层 + 速度/急停脱落。
+   * docs/wuda-particle-consensus-v0.md · docs/plans/ai-execution-plan-wuda-particle-v0.md
+   */
+  wudaEnabled: boolean;
+  wudaParticleCount: number;
+  wudaSeed: number;
+  wudaDetachSpeed: number;
+  wudaDetachAccel: number;
+  wudaDetachSpeedDrop: number;
+  wudaDetachSpeedDropMinPrev: number;
+  wudaInheritVelScale: number;
+  wudaDetachJitter: number;
+  wudaSpeedToLife: number;
+  wudaFreeLifetime: number;
+  wudaGravityPower: number;
+  wudaGravityDirX: number;
+  wudaGravityDirY: number;
+  wudaGravityDirZ: number;
+  wudaDrag: number;
+  wudaSpeedLimit: number;
+  wudaMaxDeltaSec: number;
+  wudaStuckSize: number;
+  wudaFreeSize: number;
+  wudaStuckOpacity: number;
+  wudaFreeOpacity: number;
+  wudaStuckColorR: number;
+  wudaStuckColorG: number;
+  wudaStuckColorB: number;
+  wudaFreeColorR: number;
+  wudaFreeColorG: number;
+  wudaFreeColorB: number;
+  wudaBlendAdditive: boolean;
+  wudaRespawnStuck: boolean;
+  wudaShowDebug: boolean;
+  wudaAlsoPlumeBurst: boolean;
 };
 
 export function createDefaultSimConfig(): MutableSimConfig {
@@ -662,6 +698,38 @@ export function createDefaultSimConfig(): MutableSimConfig {
     hitVfxPreviewStrength: 'M',
     hitVfxPreviewKind: 'onHit',
     hitVfxPreviewLoop: false,
+    wudaEnabled: false,
+    wudaParticleCount: 512,
+    wudaSeed: 1,
+    wudaDetachSpeed: 4.0,
+    wudaDetachAccel: 60,
+    wudaDetachSpeedDrop: 3.0,
+    wudaDetachSpeedDropMinPrev: 2.0,
+    wudaInheritVelScale: 1.0,
+    wudaDetachJitter: 0.15,
+    wudaSpeedToLife: 0.2,
+    wudaFreeLifetime: 0.6,
+    wudaGravityPower: 9.8,
+    wudaGravityDirX: 0,
+    wudaGravityDirY: -1,
+    wudaGravityDirZ: 0,
+    wudaDrag: 1.5,
+    wudaSpeedLimit: 12,
+    wudaMaxDeltaSec: 0.05,
+    wudaStuckSize: 0.008,
+    wudaFreeSize: 0.012,
+    wudaStuckOpacity: 0.55,
+    wudaFreeOpacity: 0.85,
+    wudaStuckColorR: 0.65,
+    wudaStuckColorG: 0.6,
+    wudaStuckColorB: 0.5,
+    wudaFreeColorR: 0.75,
+    wudaFreeColorG: 0.7,
+    wudaFreeColorB: 0.6,
+    wudaBlendAdditive: false,
+    wudaRespawnStuck: false,
+    wudaShowDebug: false,
+    wudaAlsoPlumeBurst: false,
   };
 }
 
