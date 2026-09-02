@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { createDefaultSimConfig } from '../../src/config/constants';
 import {
   bakeWudaSurfaceSamples,
+  bakeWudaSurfaceSamplesAcrossMeshes,
   interpolateBindPosition,
 } from '../../src/render/wudaParticle/WudaSurfaceBake';
 import {
@@ -21,6 +22,11 @@ describe('wuda CONFIG defaults', () => {
     const keys = [
       'wudaEnabled',
       'wudaAttachMode',
+      'wudaCoverMode',
+      'wudaRegionWeightHead',
+      'wudaRegionWeightTorso',
+      'wudaRegionWeightLimbRoot',
+      'wudaRegionWeightLimbTip',
       'wudaVertexStride',
       'wudaBakeAwaitReadback',
       'wudaShowBakeStats',
@@ -61,6 +67,11 @@ describe('wuda CONFIG defaults', () => {
       expect(cfg).toHaveProperty(k);
     }
     expect(cfg.wudaEnabled).toBe(false);
+    expect(cfg.wudaCoverMode).toBe('allMeshes');
+    expect(cfg.wudaRegionWeightHead).toBeCloseTo(0.1);
+    expect(cfg.wudaRegionWeightTorso).toBeCloseTo(0.4);
+    expect(cfg.wudaRegionWeightLimbRoot).toBeCloseTo(0.25);
+    expect(cfg.wudaRegionWeightLimbTip).toBeCloseTo(0.25);
     expect(cfg.wudaDetachOnlyOnActiveHit).toBe(false);
     expect(cfg.wudaParticleCount).toBe(512);
   });
@@ -84,6 +95,25 @@ describe('bakeWudaSurfaceSamples', () => {
       expect(Math.abs(pos.x)).toBeLessThanOrEqual(1.01);
       expect(Math.abs(pos.y)).toBeLessThanOrEqual(1.01);
     }
+  });
+
+  it('across meshes distributes by area and tags meshIndex', () => {
+    // Unit square area≈1 vs 2x2 square area≈4 → expect ~1:4 ratio
+    const small = new THREE.PlaneGeometry(1, 1, 1, 1);
+    const large = new THREE.PlaneGeometry(2, 2, 1, 1);
+    const baked = bakeWudaSurfaceSamplesAcrossMeshes([small, large], 200, 7);
+    expect(baked.samples.length).toBe(200);
+    let c0 = 0;
+    let c1 = 0;
+    for (const s of baked.samples) {
+      expect(s.meshIndex === 0 || s.meshIndex === 1).toBe(true);
+      if (s.meshIndex === 0) c0++;
+      else c1++;
+    }
+    expect(c1).toBeGreaterThan(c0);
+    expect(c1 / Math.max(1, c0)).toBeGreaterThan(2);
+    small.dispose();
+    large.dispose();
   });
 });
 

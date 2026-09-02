@@ -672,6 +672,17 @@ function buildDom(): HTMLElement {
               <option value="vertexGpuBake">C · 顶点 GPU 烘焙</option>
             </select>
           </div>
+          <div class="panel-row">
+            <div class="panel-row-header"><span>覆盖范围</span></div>
+            <select id="sel-wudaCoverMode">
+              <option value="allMeshes">全身 · 全部蒙皮网格均匀</option>
+              <option value="largestMesh">仅最大网格（旧）</option>
+            </select>
+          </div>
+          ${rowNumber('wudaRegionWeightHead', '部位·头 权重', 0, 1, 0.01)}
+          ${rowNumber('wudaRegionWeightTorso', '部位·躯干 权重', 0, 1, 0.01)}
+          ${rowNumber('wudaRegionWeightLimbRoot', '部位·四肢根部 权重', 0, 1, 0.01)}
+          ${rowNumber('wudaRegionWeightLimbTip', '部位·四肢尾部 权重', 0, 1, 0.01)}
           ${rowNumber('wudaVertexStride', 'C 顶点步长', 1, 32, 1)}
           ${rowToggle('wudaBakeAwaitReadback', 'C 同帧等待回读')}
           ${rowToggle('wudaShowBakeStats', 'C 显示烘焙统计')}
@@ -1009,6 +1020,10 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'plantSlewPerSec', path: 'plantSlewPerSec' },
   { id: 'showFootDebug', path: 'showFootDebug' },
   { id: 'wudaEnabled', path: 'wudaEnabled' },
+  { id: 'wudaRegionWeightHead', path: 'wudaRegionWeightHead' },
+  { id: 'wudaRegionWeightTorso', path: 'wudaRegionWeightTorso' },
+  { id: 'wudaRegionWeightLimbRoot', path: 'wudaRegionWeightLimbRoot' },
+  { id: 'wudaRegionWeightLimbTip', path: 'wudaRegionWeightLimbTip' },
   { id: 'wudaVertexStride', path: 'wudaVertexStride' },
   { id: 'wudaBakeAwaitReadback', path: 'wudaBakeAwaitReadback' },
   { id: 'wudaShowBakeStats', path: 'wudaShowBakeStats' },
@@ -1413,6 +1428,7 @@ export function setupControlPanel(
   bindSelect(ctx, 'sel-plantMode', 'plantMode');
   bindSelect(ctx, 'sel-crossfadeAdvanceMode', 'crossfadeAdvanceMode');
   bindSelect(ctx, 'sel-wudaAttachMode', 'wudaAttachMode');
+  bindSelect(ctx, 'sel-wudaCoverMode', 'wudaCoverMode');
 
   // --- Lights: accordion cards (all lights visible) ---
   const TYPE_LABEL: Record<LightType, string> = {

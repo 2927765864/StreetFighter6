@@ -5,10 +5,9 @@
 import * as THREE from 'three';
 import type { MutableSimConfig } from '../../config/constants';
 import { createMulberry32 } from '../hitVfx/mulberry32';
-import {
-  bakeWudaSurfaceSamples,
-} from './WudaSurfaceBake';
+import { bakeWudaSurfaceSamplesForMeshes } from './WudaSurfaceBake';
 import { evalSkinnedSurfacePoint } from './evalSkinnedSurface';
+import type { WudaRegionWeights } from './wudaBodyRegions';
 import {
   clampWudaDeltaSec,
   computeSurfaceVelocity,
@@ -21,6 +20,7 @@ import type { WudaPlumeBurst } from './WudaPlumeBurst';
 
 type Slot = {
   sample: WudaSurfaceSample;
+  meshIndex: number;
   state: WudaParticleState;
   pos: THREE.Vector3;
   prevPos: THREE.Vector3;
@@ -40,7 +40,7 @@ const _scale = new THREE.Vector3();
 const _camQuat = new THREE.Quaternion();
 
 export class WudaCoatRuntime {
-  private mesh: THREE.SkinnedMesh | null = null;
+  private meshes: THREE.SkinnedMesh[] = [];
   private slots: Slot[] = [];
   private bakeKey = '';
   private instanced: THREE.InstancedMesh | null = null;
@@ -52,7 +52,7 @@ export class WudaCoatRuntime {
   private plumeBurst: WudaPlumeBurst | null = null;
 
   get isBound(): boolean {
-    return this.mesh != null;
+    return this.meshes.length > 0;
   }
 
   getLastStats(): WudaCoatStats {
@@ -65,21 +65,21 @@ export class WudaCoatRuntime {
   }
 
   bind(
-    mesh: THREE.SkinnedMesh,
+    meshOrMeshes: THREE.SkinnedMesh | THREE.SkinnedMesh[],
     opts: { parent: THREE.Object3D; camera?: THREE.Camera | null },
   ): { ok: true; count: number; meshName: string } | { ok: false; reason: string } {
     this.dispose();
-    if (!mesh.skeleton) {
-      return { ok: false, reason: 'no skeleton' };
+    const list = (Array.isArray(meshOrMeshes) ? meshOrMeshes : [meshOrMeshes]).filter(
+      (m) => m?.skeleton && m.geometry?.getAttribute('position'),
+    );
+    if (list.length === 0) {
+      return { ok: false, reason: 'no usable SkinnedMesh' };
     }
-    const geo = mesh.geometry;
-    if (!geo?.getAttribute('position')) {
-      return { ok: false, reason: 'no position attribute' };
-    }
-    this.mesh = mesh;
+    this.meshes = list;
     this.parent = opts.parent;
     this.camera = opts.camera ?? null;
-    return { ok: true, count: 0, meshName: mesh.name || '(unnamed)' };
+    const names = list.map((m) => m.name || '(unnamed)').join('+');
+    return { ok: true, count: 0, meshName: names };
   }
 
   setCamera(camera: THREE.Camera | null): void {
@@ -91,12 +91,17 @@ export class WudaCoatRuntime {
   }
 
   /**
-   * Rebuild bake + InstancedMesh when count/seed change or first enable.
+   * Rebuild bake + InstancedMesh when count/seed/cover meshes change or first enable.
    */
   private ensureBake(cfg: MutableSimConfig): boolean {
-    if (!this.mesh || !this.parent) return false;
+    if (this.meshes.length === 0 || !this.parent) return false;
     const count = Math.max(0, Math.floor(cfg.wudaParticleCount));
-    const key = `${count}|${cfg.wudaSeed}|${this.mesh.uuid}`;
+    const meshKey = this.meshes.map((m) => m.uuid).join(',');
+    const regionKey =
+      cfg.wudaCoverMode === 'allMeshes'
+        ? `${cfg.wudaRegionWeightHead}|${cfg.wudaRegionWeightTorso}|${cfg.wudaRegionWeightLimbRoot}|${cfg.wudaRegionWeightLimbTip}`
+        : 'off';
+    const key = `${count}|${cfg.wudaSeed}|${cfg.wudaCoverMode}|${regionKey}|${meshKey}`;
     if (key === this.bakeKey && this.instanced && this.slots.length === count) {
       return true;
     }
@@ -107,10 +112,20 @@ export class WudaCoatRuntime {
 
     if (count <= 0) return false;
 
-    const baked = bakeWudaSurfaceSamples(
-      this.mesh.geometry,
+    const regionWeights: WudaRegionWeights | null =
+      cfg.wudaCoverMode === 'allMeshes'
+        ? {
+            head: cfg.wudaRegionWeightHead,
+            torso: cfg.wudaRegionWeightTorso,
+            limbRoot: cfg.wudaRegionWeightLimbRoot,
+            limbTip: cfg.wudaRegionWeightLimbTip,
+          }
+        : null;
+    const baked = bakeWudaSurfaceSamplesForMeshes(
+      this.meshes,
       count,
       cfg.wudaSeed,
+      regionWeights ? { regionWeights } : null,
     );
     if (baked.samples.length === 0) {
       console.warn('[WudaCoat] bake produced 0 samples');
@@ -118,8 +133,13 @@ export class WudaCoatRuntime {
     }
 
     for (const sample of baked.samples) {
+      const meshIndex = Math.max(
+        0,
+        Math.min(this.meshes.length - 1, sample.meshIndex ?? 0),
+      );
       this.slots.push({
         sample,
+        meshIndex,
         state: 'stuck',
         pos: new THREE.Vector3(),
         prevPos: new THREE.Vector3(),
@@ -179,7 +199,7 @@ export class WudaCoatRuntime {
       this.lastStats = { stuck: 0, free: 0, dead: 0 };
       return;
     }
-    if (!this.mesh?.skeleton) {
+    if (this.meshes.length === 0) {
       if (this.instanced) this.instanced.visible = false;
       return;
     }
@@ -196,7 +216,12 @@ export class WudaCoatRuntime {
     if (dt <= 0) return;
 
     // TRAP-LAG: refresh bone matrices after animation/world update
-    this.mesh.skeleton.update();
+    const updatedSkeletons = new Set<THREE.Skeleton>();
+    for (const mesh of this.meshes) {
+      if (!mesh.skeleton || updatedSkeletons.has(mesh.skeleton)) continue;
+      mesh.skeleton.update();
+      updatedSkeletons.add(mesh.skeleton);
+    }
 
     const blendMat = this.instanced!.material as THREE.MeshBasicMaterial;
     blendMat.blending = cfg.wudaBlendAdditive
@@ -223,7 +248,8 @@ export class WudaCoatRuntime {
       const s = this.slots[i]!;
 
       if (s.state === 'stuck') {
-        evalSkinnedSurfacePoint(this.mesh, s.sample, _surfacePos);
+        const mesh = this.meshes[s.meshIndex] ?? this.meshes[0]!;
+        evalSkinnedSurfacePoint(mesh, s.sample, _surfacePos);
 
         // Degenerate triangle guard: NaN → skip detach this frame
         if (
@@ -304,7 +330,8 @@ export class WudaCoatRuntime {
           s.vel.set(0, 0, 0);
           s.prevVel.set(0, 0, 0);
           stuck++;
-          evalSkinnedSurfacePoint(this.mesh, s.sample, s.pos);
+          const mesh = this.meshes[s.meshIndex] ?? this.meshes[0]!;
+          evalSkinnedSurfacePoint(mesh, s.sample, s.pos);
           this.writeInstance(i, s.pos, cfg.wudaStuckSize, cfg, true);
         } else {
           dead++;
@@ -407,7 +434,7 @@ export class WudaCoatRuntime {
 
   dispose(): void {
     this.teardownInstances();
-    this.mesh = null;
+    this.meshes = [];
     this.parent = null;
   }
 }

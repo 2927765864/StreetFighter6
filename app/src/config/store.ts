@@ -107,6 +107,12 @@ export function mergeConfig(
       }
       continue;
     }
+    if (key === 'wudaCoverMode') {
+      if (value === 'largestMesh' || value === 'allMeshes') {
+        out.wudaCoverMode = value;
+      }
+      continue;
+    }
     if (typeof baseVal === 'string' && typeof value === 'string') {
       (out as Record<string, unknown>)[key] = value;
       continue;

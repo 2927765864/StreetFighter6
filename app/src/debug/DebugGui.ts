@@ -285,6 +285,21 @@ export function createDebugGui(
   wuda
     .add(cfg, 'wudaAttachMode', ['surfaceBary', 'vertexGpuBake'])
     .name('附着模式 B/C');
+  wuda
+    .add(cfg, 'wudaCoverMode', ['allMeshes', 'largestMesh'])
+    .name('覆盖范围');
+  wuda
+    .add(cfg, 'wudaRegionWeightHead', 0, 1, 0.01)
+    .name('部位·头');
+  wuda
+    .add(cfg, 'wudaRegionWeightTorso', 0, 1, 0.01)
+    .name('部位·躯干');
+  wuda
+    .add(cfg, 'wudaRegionWeightLimbRoot', 0, 1, 0.01)
+    .name('部位·四肢根部');
+  wuda
+    .add(cfg, 'wudaRegionWeightLimbTip', 0, 1, 0.01)
+    .name('部位·四肢尾部');
   wuda.add(cfg, 'wudaVertexStride', 1, 32, 1).name('C 顶点步长');
   wuda.add(cfg, 'wudaBakeAwaitReadback').name('C 同帧等待回读');
   wuda.add(cfg, 'wudaShowBakeStats').name('C 显示烘焙统计');

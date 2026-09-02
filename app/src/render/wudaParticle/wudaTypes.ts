@@ -7,6 +7,11 @@ export type WudaSurfaceSample = {
   u: number;
   v: number;
   w: number;
+  /**
+   * Index into the bound SkinnedMesh list (0 when single-mesh / largestMesh).
+   * Used by allMeshes cover mode.
+   */
+  meshIndex?: number;
 };
 
 export type WudaParticleState = 'stuck' | 'free';

@@ -21,6 +21,8 @@ const _world = new THREE.Vector3();
 
 export class WudaVertexGpuBaker {
   private sourceMesh: THREE.SkinnedMesh | null = null;
+  /** Multi-mesh cover list (same order as sample.meshIndex). */
+  private sourceMeshes: THREE.SkinnedMesh[] = [];
   /** Proxy shares source.skeleton — never dispose that skeleton (TRAP-BONE-TEX-DISPOSE). */
   private proxy: THREE.SkinnedMesh | null = null;
   private samples: WudaVertexSample[] = [];
@@ -41,7 +43,7 @@ export class WudaVertexGpuBaker {
   }
 
   get isReady(): boolean {
-    return this.proxy != null && this.samples.length > 0;
+    return this.samples.length > 0 && this.sourceMeshes.length > 0;
   }
 
   /**
@@ -49,18 +51,46 @@ export class WudaVertexGpuBaker {
    * TRAP-SHARED-SKELETON: dispose() must not call skeleton.dispose().
    */
   build(source: THREE.SkinnedMesh, samples: WudaVertexSample[]): boolean {
+    return this.buildFromMeshes([source], samples);
+  }
+
+  /**
+   * Multi-mesh build. Live tracking uses CPU applyBoneTransform per mesh;
+   * GPU proxy is only created for the single-mesh case.
+   */
+  buildFromMeshes(
+    meshes: THREE.SkinnedMesh[],
+    samples: WudaVertexSample[],
+  ): boolean {
     this.disposeProxyOnly();
-    this.sourceMesh = source;
+    const list = meshes.filter((m) => m?.skeleton && m.geometry);
+    this.sourceMeshes = list;
+    this.sourceMesh = list[0] ?? null;
     this.samples = samples.slice();
     this.frameIndex = 0;
     this.lastCount = samples.length;
 
-    if (!source.skeleton || samples.length === 0) return false;
+    if (list.length === 0 || samples.length === 0) return false;
+
+    const n = samples.length;
+    this.currWorld = new Float32Array(n * 3);
+    this.prevWorld = new Float32Array(n * 3);
+    this.localScratch = new Float32Array(n * 3);
+
+    // Multi-mesh: CPU path only (skeletons / bind matrices may differ).
+    if (list.length > 1) {
+      this.proxy = null;
+      this.currStorage = null;
+      this.computeNode = null;
+      return true;
+    }
+
+    const source = list[0]!;
+    if (!source.skeleton) return false;
 
     const attrs = extractVertexSkinAttrs(source.geometry, samples);
     if (!attrs) return false;
 
-    const n = samples.length;
     const geo = new THREE.BufferGeometry();
     geo.setAttribute(
       'position',
@@ -101,9 +131,6 @@ export class WudaVertexGpuBaker {
       storageNode.element(instanceIndex),
     ).compute(n);
 
-    this.localScratch = new Float32Array(n * 3);
-    this.currWorld = new Float32Array(n * 3);
-    this.prevWorld = new Float32Array(n * 3);
     return true;
   }
 
@@ -112,14 +139,24 @@ export class WudaVertexGpuBaker {
    * Used for tests and GPU vs CPU subset checks.
    */
   bakeCpuWorld(out: Float32Array): void {
-    const mesh = this.sourceMesh;
-    if (!mesh) return;
+    if (this.sourceMeshes.length === 0) return;
     const n = this.samples.length;
     if (out.length < n * 3) return;
-    mesh.skeleton.update();
-    const srcPos = mesh.geometry.getAttribute('position');
+    const updated = new Set<THREE.Skeleton>();
+    for (const mesh of this.sourceMeshes) {
+      if (!mesh.skeleton || updated.has(mesh.skeleton)) continue;
+      mesh.skeleton.update();
+      updated.add(mesh.skeleton);
+    }
     for (let i = 0; i < n; i++) {
-      const vi = this.samples[i]!.vertexIndex;
+      const sample = this.samples[i]!;
+      const meshIndex = Math.max(
+        0,
+        Math.min(this.sourceMeshes.length - 1, sample.meshIndex ?? 0),
+      );
+      const mesh = this.sourceMeshes[meshIndex]!;
+      const srcPos = mesh.geometry.getAttribute('position');
+      const vi = sample.vertexIndex;
       _local.fromBufferAttribute(srcPos, vi);
       mesh.applyBoneTransform(vi, _local);
       _world.copy(_local).applyMatrix4(mesh.matrixWorld);
@@ -262,6 +299,7 @@ export class WudaVertexGpuBaker {
     this.computeNode = null;
     this.samples = [];
     this.sourceMesh = null;
+    this.sourceMeshes = [];
     this.frameIndex = 0;
   }
 

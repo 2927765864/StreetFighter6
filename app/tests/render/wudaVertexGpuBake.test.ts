@@ -4,9 +4,14 @@ import { createDefaultSimConfig } from '../../src/config/constants';
 import { mergeConfig } from '../../src/config/store';
 import {
   bakeWudaVertexSamples,
+  bakeWudaVertexSamplesAcrossMeshes,
   extractVertexSkinAttrs,
 } from '../../src/render/wudaParticle/WudaVertexIndexBake';
 import { WudaVertexGpuBaker } from '../../src/render/wudaParticle/WudaVertexGpuBaker';
+import {
+  findAllSkinnedMeshes,
+  resolveWudaCoverMeshes,
+} from '../../src/render/wudaParticle/evalSkinnedSurface';
 
 function makeSkinnedPlane(): THREE.SkinnedMesh {
   const geo = new THREE.PlaneGeometry(2, 2, 1, 1);
@@ -38,12 +43,13 @@ describe('wuda C CONFIG', () => {
   it('includes scheme-C keys and defaults to surfaceBary', () => {
     const cfg = createDefaultSimConfig();
     expect(cfg.wudaAttachMode).toBe('surfaceBary');
+    expect(cfg.wudaCoverMode).toBe('allMeshes');
     expect(cfg.wudaVertexStride).toBe(1);
     expect(cfg.wudaBakeAwaitReadback).toBe(true);
     expect(cfg.wudaShowBakeStats).toBe(false);
   });
 
-  it('mergeConfig accepts only valid wudaAttachMode', () => {
+  it('mergeConfig accepts only valid wudaAttachMode / wudaCoverMode', () => {
     const base = {
       ...createDefaultSimConfig(),
       __version: 0,
@@ -53,6 +59,10 @@ describe('wuda C CONFIG', () => {
     expect(ok.wudaAttachMode).toBe('vertexGpuBake');
     const bad = mergeConfig(base, { wudaAttachMode: 'nope' });
     expect(bad.wudaAttachMode).toBe('surfaceBary');
+    const cover = mergeConfig(base, { wudaCoverMode: 'largestMesh' });
+    expect(cover.wudaCoverMode).toBe('largestMesh');
+    const coverBad = mergeConfig(base, { wudaCoverMode: 'nope' });
+    expect(coverBad.wudaCoverMode).toBe('allMeshes');
   });
 });
 
@@ -79,6 +89,45 @@ describe('bakeWudaVertexSamples', () => {
     // First samples from stride walk should be even indices while available
     expect(a.samples[0]!.vertexIndex % 2).toBe(0);
     expect(a.samples[1]!.vertexIndex % 2).toBe(0);
+  });
+
+  it('across meshes tags meshIndex and covers both', () => {
+    const a = makeSkinnedPlane();
+    const b = makeSkinnedPlane();
+    const baked = bakeWudaVertexSamplesAcrossMeshes(
+      [a.geometry, b.geometry],
+      32,
+      3,
+      1,
+    );
+    expect(baked.samples.length).toBe(32);
+    const used = new Set(baked.samples.map((s) => s.meshIndex ?? -1));
+    expect(used.has(0)).toBe(true);
+    expect(used.has(1)).toBe(true);
+    a.geometry.dispose();
+    (a.material as THREE.Material).dispose();
+    a.skeleton.dispose();
+    b.geometry.dispose();
+    (b.material as THREE.Material).dispose();
+    b.skeleton.dispose();
+  });
+
+  it('resolveWudaCoverMeshes allMeshes returns every skinned mesh', () => {
+    const root = new THREE.Group();
+    const a = makeSkinnedPlane();
+    const b = makeSkinnedPlane();
+    a.name = 'body';
+    b.name = 'head';
+    root.add(a, b);
+    expect(findAllSkinnedMeshes(root).length).toBe(2);
+    expect(resolveWudaCoverMeshes(root, 'allMeshes').length).toBe(2);
+    expect(resolveWudaCoverMeshes(root, 'largestMesh').length).toBe(1);
+    a.geometry.dispose();
+    (a.material as THREE.Material).dispose();
+    a.skeleton.dispose();
+    b.geometry.dispose();
+    (b.material as THREE.Material).dispose();
+    b.skeleton.dispose();
   });
 
   it('skips origin helper verts', () => {

@@ -37,21 +37,48 @@ export function evalSkinnedSurfacePoint(
   return out;
 }
 
-/** Pick SkinnedMesh with most vertices (plan Step 7). */
-export function findLargestSkinnedMesh(
-  root: THREE.Object3D,
-): THREE.SkinnedMesh | null {
-  let best: THREE.SkinnedMesh | null = null;
-  let bestCount = -1;
+/** All skinned meshes with usable position attributes (stable traverse order). */
+export function findAllSkinnedMeshes(root: THREE.Object3D): THREE.SkinnedMesh[] {
+  const out: THREE.SkinnedMesh[] = [];
   root.traverse((o) => {
     const sm = o as THREE.SkinnedMesh;
     if (!sm.isSkinnedMesh || !sm.skeleton || !sm.geometry) return;
     const pos = sm.geometry.getAttribute('position');
-    const n = pos?.count ?? 0;
+    if (!pos || pos.count <= 0) return;
+    out.push(sm);
+  });
+  return out;
+}
+
+/** Pick SkinnedMesh with most vertices (plan Step 7). */
+export function findLargestSkinnedMesh(
+  root: THREE.Object3D,
+): THREE.SkinnedMesh | null {
+  const all = findAllSkinnedMeshes(root);
+  let best: THREE.SkinnedMesh | null = null;
+  let bestCount = -1;
+  for (const sm of all) {
+    const n = sm.geometry.getAttribute('position')?.count ?? 0;
     if (n > bestCount) {
       bestCount = n;
       best = sm;
     }
-  });
+  }
   return best;
+}
+
+/**
+ * Resolve coat cover meshes from a model root.
+ * `allMeshes` = every SkinnedMesh (full-body area-uniform); `largestMesh` = one mesh.
+ */
+export function resolveWudaCoverMeshes(
+  root: THREE.Object3D,
+  mode: 'largestMesh' | 'allMeshes',
+): THREE.SkinnedMesh[] {
+  if (mode === 'allMeshes') {
+    const all = findAllSkinnedMeshes(root);
+    if (all.length > 0) return all;
+  }
+  const largest = findLargestSkinnedMesh(root);
+  return largest ? [largest] : [];
 }

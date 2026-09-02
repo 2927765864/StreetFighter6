@@ -15,11 +15,13 @@ import {
 } from './wudaCoatMath';
 import type { WudaCoatStats, WudaParticleState } from './wudaTypes';
 import type { WudaPlumeBurst } from './WudaPlumeBurst';
-import { bakeWudaVertexSamples } from './WudaVertexIndexBake';
+import { bakeWudaVertexSamplesForMeshes } from './WudaVertexIndexBake';
 import { WudaVertexGpuBaker } from './WudaVertexGpuBaker';
+import type { WudaRegionWeights } from './wudaBodyRegions';
 
 type Slot = {
   vertexIndex: number;
+  meshIndex: number;
   state: WudaParticleState;
   pos: THREE.Vector3;
   prevPos: THREE.Vector3;
@@ -39,7 +41,7 @@ const _camQuat = new THREE.Quaternion();
 const _tmpPos = new THREE.Vector3();
 
 export class WudaVertexCoatRuntime {
-  private mesh: THREE.SkinnedMesh | null = null;
+  private meshes: THREE.SkinnedMesh[] = [];
   private slots: Slot[] = [];
   private bakeKey = '';
   private instanced: THREE.InstancedMesh | null = null;
@@ -54,7 +56,7 @@ export class WudaVertexCoatRuntime {
   private sourceVertexCount = 0;
 
   get isBound(): boolean {
-    return this.mesh != null;
+    return this.meshes.length > 0;
   }
 
   getLastStats(): WudaCoatStats {
@@ -70,7 +72,7 @@ export class WudaVertexCoatRuntime {
   }
 
   bind(
-    mesh: THREE.SkinnedMesh,
+    meshOrMeshes: THREE.SkinnedMesh | THREE.SkinnedMesh[],
     opts: {
       parent: THREE.Object3D;
       camera?: THREE.Camera | null;
@@ -78,18 +80,24 @@ export class WudaVertexCoatRuntime {
     },
   ): { ok: true; count: number; meshName: string } | { ok: false; reason: string } {
     this.dispose();
-    if (!mesh.skeleton) return { ok: false, reason: 'no skeleton' };
-    const geo = mesh.geometry;
-    if (!geo?.getAttribute('position')) {
-      return { ok: false, reason: 'no position attribute' };
+    const list = (Array.isArray(meshOrMeshes) ? meshOrMeshes : [meshOrMeshes]).filter(
+      (m) =>
+        m?.skeleton &&
+        m.geometry?.getAttribute('position') &&
+        m.geometry.getAttribute('skinIndex') &&
+        m.geometry.getAttribute('skinWeight'),
+    );
+    if (list.length === 0) {
+      return { ok: false, reason: 'no usable skinned mesh with skin attrs' };
     }
-    if (!geo.getAttribute('skinIndex') || !geo.getAttribute('skinWeight')) {
-      return { ok: false, reason: 'no skinIndex/skinWeight' };
-    }
-    this.mesh = mesh;
+    this.meshes = list;
     this.parent = opts.parent;
     this.camera = opts.camera ?? null;
-    return { ok: true, count: 0, meshName: mesh.name || '(unnamed)' };
+    return {
+      ok: true,
+      count: 0,
+      meshName: list.map((m) => m.name || '(unnamed)').join('+'),
+    };
   }
 
   setCamera(camera: THREE.Camera | null): void {
@@ -101,10 +109,15 @@ export class WudaVertexCoatRuntime {
   }
 
   private ensureBake(cfg: MutableSimConfig): boolean {
-    if (!this.mesh || !this.parent) return false;
+    if (this.meshes.length === 0 || !this.parent) return false;
     const count = Math.max(0, Math.floor(cfg.wudaParticleCount));
     const stride = Math.max(1, Math.floor(cfg.wudaVertexStride || 1));
-    const key = `C|${count}|${cfg.wudaSeed}|${stride}|${this.mesh.uuid}`;
+    const meshKey = this.meshes.map((m) => m.uuid).join(',');
+    const regionKey =
+      cfg.wudaCoverMode === 'allMeshes'
+        ? `${cfg.wudaRegionWeightHead}|${cfg.wudaRegionWeightTorso}|${cfg.wudaRegionWeightLimbRoot}|${cfg.wudaRegionWeightLimbTip}`
+        : 'off';
+    const key = `C|${count}|${cfg.wudaSeed}|${stride}|${cfg.wudaCoverMode}|${regionKey}|${meshKey}`;
     if (
       key === this.bakeKey &&
       this.instanced &&
@@ -121,18 +134,28 @@ export class WudaVertexCoatRuntime {
 
     if (count <= 0) return false;
 
-    const baked = bakeWudaVertexSamples(
-      this.mesh.geometry,
+    const regionWeights: WudaRegionWeights | null =
+      cfg.wudaCoverMode === 'allMeshes'
+        ? {
+            head: cfg.wudaRegionWeightHead,
+            torso: cfg.wudaRegionWeightTorso,
+            limbRoot: cfg.wudaRegionWeightLimbRoot,
+            limbTip: cfg.wudaRegionWeightLimbTip,
+          }
+        : null;
+    const baked = bakeWudaVertexSamplesForMeshes(
+      this.meshes,
       count,
       cfg.wudaSeed,
       stride,
+      regionWeights,
     );
     this.sourceVertexCount = baked.sourceVertexCount;
     if (baked.samples.length === 0) {
       console.warn('[WudaVertexCoat] bake produced 0 vertex samples');
       return false;
     }
-    if (!this.baker.build(this.mesh, baked.samples)) {
+    if (!this.baker.buildFromMeshes(this.meshes, baked.samples)) {
       console.warn('[WudaVertexCoat] GPU baker build failed');
       return false;
     }
@@ -140,6 +163,7 @@ export class WudaVertexCoatRuntime {
     for (const sample of baked.samples) {
       this.slots.push({
         vertexIndex: sample.vertexIndex,
+        meshIndex: sample.meshIndex ?? 0,
         state: 'stuck',
         pos: new THREE.Vector3(),
         prevPos: new THREE.Vector3(),
@@ -197,7 +221,7 @@ export class WudaVertexCoatRuntime {
       this.lastStats = { stuck: 0, free: 0, dead: 0 };
       return;
     }
-    if (!this.mesh?.skeleton) {
+    if (this.meshes.length === 0) {
       if (this.instanced) this.instanced.visible = false;
       return;
     }
@@ -221,9 +245,6 @@ export class WudaVertexCoatRuntime {
       ? THREE.AdditiveBlending
       : THREE.NormalBlending;
 
-    // TRAP-LAG: same as scheme B — fill boneMatrices before applyBoneTransform.
-    this.mesh.skeleton.update();
-
     // Vertex emitters (scheme C attachment). Positions come from
     // applyBoneTransform on each sampled vertex + matrixWorld — same formula
     // as three.js SkinnedMesh.js and as B's triangle corners.
@@ -231,7 +252,7 @@ export class WudaVertexCoatRuntime {
     // GPU computeSkinning on a proxy that is never rendered does not receive
     // OnObjectUpdate / current boneMatrices (Discourse #34210). Readback then
     // sits at the mesh origin → particle cloud between the feet (user screenshot).
-    // Do not use that path for live tracking.
+    // Do not use that path for live tracking. Multi-mesh always uses CPU bake.
     this.baker.bakeCpuIntoCurr();
     this.lastBakeMs = 0;
     this.simulateFromWorld(this.baker.getCurrWorld(), dt, cfg, allowDetach);
@@ -453,7 +474,7 @@ export class WudaVertexCoatRuntime {
   dispose(): void {
     this.teardownInstances();
     this.baker.dispose();
-    this.mesh = null;
+    this.meshes = [];
     this.parent = null;
   }
 }

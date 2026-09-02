@@ -386,6 +386,19 @@ export type MutableSimConfig = {
   wudaEnabled: boolean;
   /** `surfaceBary` = B；`vertexGpuBake` = C */
   wudaAttachMode: 'surfaceBary' | 'vertexGpuBake';
+  /**
+   * 涂层覆盖范围：`allMeshes` = 全部蒙皮网格按表面积（B）/顶点配额（C）全身均匀；
+   * `largestMesh` = 仅最大顶点数网格（旧行为）。
+   */
+  wudaCoverMode: 'largestMesh' | 'allMeshes';
+  /**
+   * 全身模式下四部位粒子配额（相对权重，运行时归一化）。
+   * 头 / 躯干 / 四肢根部（上臂+大腿）/ 四肢尾部（前臂手+小腿脚）。
+   */
+  wudaRegionWeightHead: number;
+  wudaRegionWeightTorso: number;
+  wudaRegionWeightLimbRoot: number;
+  wudaRegionWeightLimbTip: number;
   /** C：源顶点遍历步长（≥1），用于抽稀 */
   wudaVertexStride: number;
   /** C：同帧 await GPU 回读（false 则脱落判定晚约 1 帧） */
@@ -715,6 +728,11 @@ export function createDefaultSimConfig(): MutableSimConfig {
     hitVfxPreviewLoop: false,
     wudaEnabled: false,
     wudaAttachMode: 'surfaceBary',
+    wudaCoverMode: 'allMeshes',
+    wudaRegionWeightHead: 0.1,
+    wudaRegionWeightTorso: 0.4,
+    wudaRegionWeightLimbRoot: 0.25,
+    wudaRegionWeightLimbTip: 0.25,
     wudaVertexStride: 1,
     wudaBakeAwaitReadback: true,
     wudaShowBakeStats: false,

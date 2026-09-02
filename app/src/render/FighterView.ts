@@ -63,7 +63,7 @@ import { clampPantsDeltaSec } from './pants/pantsPhysicsMath';
 import { WudaCoatRuntime } from './wudaParticle/WudaCoatRuntime';
 import { WudaVertexCoatRuntime } from './wudaParticle/WudaVertexCoatRuntime';
 import type { WudaPlumeBurst } from './wudaParticle/WudaPlumeBurst';
-import { findLargestSkinnedMesh } from './wudaParticle/evalSkinnedSurface';
+import { resolveWudaCoverMeshes } from './wudaParticle/evalSkinnedSurface';
 import { isAttackActiveHitFrame } from './wudaParticle/wudaCoatMath';
 import type { WebGPURenderer } from 'three/webgpu';
 import {
@@ -195,8 +195,10 @@ export class FighterView {
   private pants: RyuPantsPhysics | null = null;
   /** Martial-arts coat particles (B surface / C vertex GPU); after skeleton world update. */
   private wudaCoat: WudaCoatRuntime | WudaVertexCoatRuntime | null = null;
-  private wudaCoatMesh: THREE.SkinnedMesh | null = null;
+  private wudaCoatMeshes: THREE.SkinnedMesh[] = [];
+  private wudaModelRoot: THREE.Object3D | null = null;
   private wudaAttachMode: 'surfaceBary' | 'vertexGpuBake' = 'surfaceBary';
+  private wudaCoverMode: 'largestMesh' | 'allMeshes' = 'allMeshes';
   private wudaRenderer: WebGPURenderer | null = null;
   /** Optional shared plume splash on coat detach (wired from main). */
   private wudaPlumeBurst: WudaPlumeBurst | null = null;
@@ -256,7 +258,8 @@ export class FighterView {
       this.pants = null;
       this.wudaCoat?.dispose();
       this.wudaCoat = null;
-      this.wudaCoatMesh = null;
+      this.wudaCoatMeshes = [];
+      this.wudaModelRoot = null;
       this.root.remove(this.modelRoot);
       this.modelRoot = null;
     }
@@ -403,9 +406,11 @@ export class FighterView {
 
     this.wudaCoat?.dispose();
     this.wudaCoat = null;
-    this.wudaCoatMesh = findLargestSkinnedMesh(model);
+    this.wudaModelRoot = model;
+    this.wudaCoverMode = 'allMeshes';
+    this.wudaCoatMeshes = resolveWudaCoverMeshes(model, this.wudaCoverMode);
     this.wudaAttachMode = 'surfaceBary';
-    if (this.wudaCoatMesh) {
+    if (this.wudaCoatMeshes.length > 0) {
       this.bindWudaCoatForMode('surfaceBary');
     } else {
       console.warn('[FighterView] wuda coat: no SkinnedMesh on model');
@@ -952,21 +957,25 @@ export class FighterView {
   private bindWudaCoatForMode(
     mode: 'surfaceBary' | 'vertexGpuBake',
   ): void {
-    const coatMesh = this.wudaCoatMesh;
-    if (!coatMesh) return;
+    const coatMeshes = this.wudaCoatMeshes;
+    if (coatMeshes.length === 0) return;
     this.wudaCoat?.dispose();
     this.wudaAttachMode = mode;
+    const vertTotal = coatMeshes.reduce(
+      (acc, m) => acc + (m.geometry.getAttribute('position')?.count ?? 0),
+      0,
+    );
     if (mode === 'vertexGpuBake') {
       const coat = new WudaVertexCoatRuntime();
       coat.setPlumeBurst(this.wudaPlumeBurst);
-      const wc = coat.bind(coatMesh, {
+      const wc = coat.bind(coatMeshes, {
         parent: this.scene,
         renderer: this.wudaRenderer,
       });
       if (wc.ok) {
         this.wudaCoat = coat;
         console.info(
-          `[FighterView] wuda coat C (vertexGpuBake) mesh=${wc.meshName} verts=${coatMesh.geometry.getAttribute('position')?.count ?? 0}`,
+          `[FighterView] wuda coat C (vertexGpuBake) cover=${this.wudaCoverMode} meshes=${coatMeshes.length} mesh=${wc.meshName} verts=${vertTotal}`,
         );
       } else {
         console.warn(`[FighterView] wuda coat C: ${wc.reason}; falling back to B`);
@@ -976,11 +985,11 @@ export class FighterView {
     }
     const coat = new WudaCoatRuntime();
     coat.setPlumeBurst(this.wudaPlumeBurst);
-    const wc = coat.bind(coatMesh, { parent: this.scene });
+    const wc = coat.bind(coatMeshes, { parent: this.scene });
     if (wc.ok) {
       this.wudaCoat = coat;
       console.info(
-        `[FighterView] wuda coat B (surfaceBary) mesh=${wc.meshName} verts=${coatMesh.geometry.getAttribute('position')?.count ?? 0}`,
+        `[FighterView] wuda coat B (surfaceBary) cover=${this.wudaCoverMode} meshes=${coatMeshes.length} mesh=${wc.meshName} verts=${vertTotal}`,
       );
     } else {
       console.warn(`[FighterView] wuda coat B: ${wc.reason}`);
@@ -1000,7 +1009,17 @@ export class FighterView {
   ): void {
     const wantMode =
       cfg.wudaAttachMode === 'vertexGpuBake' ? 'vertexGpuBake' : 'surfaceBary';
-    if (this.wudaCoatMesh && wantMode !== this.wudaAttachMode) {
+    const wantCover =
+      cfg.wudaCoverMode === 'largestMesh' ? 'largestMesh' : 'allMeshes';
+    if (
+      this.wudaModelRoot &&
+      (wantMode !== this.wudaAttachMode || wantCover !== this.wudaCoverMode)
+    ) {
+      this.wudaCoverMode = wantCover;
+      this.wudaCoatMeshes = resolveWudaCoverMeshes(
+        this.wudaModelRoot,
+        wantCover,
+      );
       this.bindWudaCoatForMode(wantMode);
     }
     if (!this.wudaCoat?.isBound) return;
