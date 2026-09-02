@@ -61,9 +61,11 @@ import { clampBeltDeltaSec } from './belt/beltPhysicsMath';
 import { RyuPantsPhysics } from './pants/RyuPantsPhysics';
 import { clampPantsDeltaSec } from './pants/pantsPhysicsMath';
 import { WudaCoatRuntime } from './wudaParticle/WudaCoatRuntime';
+import { WudaVertexCoatRuntime } from './wudaParticle/WudaVertexCoatRuntime';
 import type { WudaPlumeBurst } from './wudaParticle/WudaPlumeBurst';
 import { findLargestSkinnedMesh } from './wudaParticle/evalSkinnedSurface';
 import { isAttackActiveHitFrame } from './wudaParticle/wudaCoatMath';
+import type { WebGPURenderer } from 'three/webgpu';
 import {
   isJumpLandBinding,
   shouldFloorClampAttackSole,
@@ -191,8 +193,11 @@ export class FighterView {
   private belt: RyuBeltPhysics | null = null;
   /** Ryu dougi pants bone-cloth; updated after mixer each frame. */
   private pants: RyuPantsPhysics | null = null;
-  /** Martial-arts coat particles (scheme B); after skeleton world update. */
-  private wudaCoat: WudaCoatRuntime | null = null;
+  /** Martial-arts coat particles (B surface / C vertex GPU); after skeleton world update. */
+  private wudaCoat: WudaCoatRuntime | WudaVertexCoatRuntime | null = null;
+  private wudaCoatMesh: THREE.SkinnedMesh | null = null;
+  private wudaAttachMode: 'surfaceBary' | 'vertexGpuBake' = 'surfaceBary';
+  private wudaRenderer: WebGPURenderer | null = null;
   /** Optional shared plume splash on coat detach (wired from main). */
   private wudaPlumeBurst: WudaPlumeBurst | null = null;
   /** Scene root — spring debug helpers must parent here (not under fighter). */
@@ -251,6 +256,7 @@ export class FighterView {
       this.pants = null;
       this.wudaCoat?.dispose();
       this.wudaCoat = null;
+      this.wudaCoatMesh = null;
       this.root.remove(this.modelRoot);
       this.modelRoot = null;
     }
@@ -396,22 +402,13 @@ export class FighterView {
     }
 
     this.wudaCoat?.dispose();
-    this.wudaCoat = new WudaCoatRuntime();
-    this.wudaCoat.setPlumeBurst(this.wudaPlumeBurst);
-    const coatMesh = findLargestSkinnedMesh(model);
-    if (coatMesh) {
-      const wc = this.wudaCoat.bind(coatMesh, { parent: this.scene });
-      if (wc.ok) {
-        console.info(
-          `[FighterView] wuda coat bound mesh=${wc.meshName} verts=${coatMesh.geometry.getAttribute('position')?.count ?? 0}`,
-        );
-      } else {
-        console.warn(`[FighterView] wuda coat: ${wc.reason}`);
-      }
+    this.wudaCoat = null;
+    this.wudaCoatMesh = findLargestSkinnedMesh(model);
+    this.wudaAttachMode = 'surfaceBary';
+    if (this.wudaCoatMesh) {
+      this.bindWudaCoatForMode('surfaceBary');
     } else {
       console.warn('[FighterView] wuda coat: no SkinnedMesh on model');
-      this.wudaCoat.dispose();
-      this.wudaCoat = null;
     }
 
     // One-shot sole align after stance pose + spring binds (not per-frame).
@@ -944,6 +941,53 @@ export class FighterView {
     this.wudaCoat?.setPlumeBurst(burst);
   }
 
+  /** Inject WebGPURenderer for scheme C computeSkinning bake. */
+  setWudaRenderer(renderer: WebGPURenderer | null): void {
+    this.wudaRenderer = renderer;
+    if (this.wudaCoat instanceof WudaVertexCoatRuntime) {
+      this.wudaCoat.setRenderer(renderer);
+    }
+  }
+
+  private bindWudaCoatForMode(
+    mode: 'surfaceBary' | 'vertexGpuBake',
+  ): void {
+    const coatMesh = this.wudaCoatMesh;
+    if (!coatMesh) return;
+    this.wudaCoat?.dispose();
+    this.wudaAttachMode = mode;
+    if (mode === 'vertexGpuBake') {
+      const coat = new WudaVertexCoatRuntime();
+      coat.setPlumeBurst(this.wudaPlumeBurst);
+      const wc = coat.bind(coatMesh, {
+        parent: this.scene,
+        renderer: this.wudaRenderer,
+      });
+      if (wc.ok) {
+        this.wudaCoat = coat;
+        console.info(
+          `[FighterView] wuda coat C (vertexGpuBake) mesh=${wc.meshName} verts=${coatMesh.geometry.getAttribute('position')?.count ?? 0}`,
+        );
+      } else {
+        console.warn(`[FighterView] wuda coat C: ${wc.reason}; falling back to B`);
+        this.bindWudaCoatForMode('surfaceBary');
+      }
+      return;
+    }
+    const coat = new WudaCoatRuntime();
+    coat.setPlumeBurst(this.wudaPlumeBurst);
+    const wc = coat.bind(coatMesh, { parent: this.scene });
+    if (wc.ok) {
+      this.wudaCoat = coat;
+      console.info(
+        `[FighterView] wuda coat B (surfaceBary) mesh=${wc.meshName} verts=${coatMesh.geometry.getAttribute('position')?.count ?? 0}`,
+      );
+    } else {
+      console.warn(`[FighterView] wuda coat B: ${wc.reason}`);
+      this.wudaCoat = null;
+    }
+  }
+
   /**
    * Surface coat: stuck tracking + detach; wall-clock dt.
    * Detach lock (optional): only attack hitbox-active frames when
@@ -954,8 +998,19 @@ export class FighterView {
     cfg: MutableSimConfig,
     wallDtSec: number,
   ): void {
+    const wantMode =
+      cfg.wudaAttachMode === 'vertexGpuBake' ? 'vertexGpuBake' : 'surfaceBary';
+    if (this.wudaCoatMesh && wantMode !== this.wudaAttachMode) {
+      this.bindWudaCoatForMode(wantMode);
+    }
     if (!this.wudaCoat?.isBound) return;
     this.wudaCoat.setPlumeBurst(this.wudaPlumeBurst);
+    if (
+      this.wudaCoat instanceof WudaVertexCoatRuntime &&
+      this.wudaRenderer
+    ) {
+      this.wudaCoat.setRenderer(this.wudaRenderer);
+    }
     if (!this.wudaCoat.hasCamera) {
       this.scene.traverse((o) => {
         if ((o as THREE.Camera).isCamera) {
@@ -965,7 +1020,7 @@ export class FighterView {
     }
     const allowDetach =
       !cfg.wudaDetachOnlyOnActiveHit || isAttackActiveHitFrame(fighter);
-    this.wudaCoat.update(wallDtSec, cfg, { allowDetach });
+    void this.wudaCoat.update(wallDtSec, cfg, { allowDetach });
   }
 
   private maybePlantAfterPose(

@@ -1,0 +1,147 @@
+import { describe, expect, it } from 'vitest';
+import * as THREE from 'three';
+import { createDefaultSimConfig } from '../../src/config/constants';
+import { mergeConfig } from '../../src/config/store';
+import {
+  bakeWudaVertexSamples,
+  extractVertexSkinAttrs,
+} from '../../src/render/wudaParticle/WudaVertexIndexBake';
+import { WudaVertexGpuBaker } from '../../src/render/wudaParticle/WudaVertexGpuBaker';
+
+function makeSkinnedPlane(): THREE.SkinnedMesh {
+  const geo = new THREE.PlaneGeometry(2, 2, 1, 1);
+  const n = geo.getAttribute('position').count;
+  const skinIndex = new Float32Array(n * 4);
+  const skinWeight = new Float32Array(n * 4);
+  for (let i = 0; i < n; i++) {
+    skinIndex[i * 4] = 0;
+    skinWeight[i * 4] = 1;
+  }
+  geo.setAttribute('skinIndex', new THREE.BufferAttribute(skinIndex, 4));
+  geo.setAttribute('skinWeight', new THREE.BufferAttribute(skinWeight, 4));
+
+  const bones = [new THREE.Bone()];
+  bones[0]!.position.set(0, 0, 0);
+  const skeleton = new THREE.Skeleton(bones);
+  const mesh = new THREE.SkinnedMesh(
+    geo,
+    new THREE.MeshBasicMaterial(),
+  );
+  mesh.add(bones[0]!);
+  mesh.bind(skeleton);
+  mesh.updateMatrixWorld(true);
+  skeleton.update();
+  return mesh;
+}
+
+describe('wuda C CONFIG', () => {
+  it('includes scheme-C keys and defaults to surfaceBary', () => {
+    const cfg = createDefaultSimConfig();
+    expect(cfg.wudaAttachMode).toBe('surfaceBary');
+    expect(cfg.wudaVertexStride).toBe(1);
+    expect(cfg.wudaBakeAwaitReadback).toBe(true);
+    expect(cfg.wudaShowBakeStats).toBe(false);
+  });
+
+  it('mergeConfig accepts only valid wudaAttachMode', () => {
+    const base = {
+      ...createDefaultSimConfig(),
+      __version: 0,
+      expandedSections: {} as never,
+    };
+    const ok = mergeConfig(base, { wudaAttachMode: 'vertexGpuBake' });
+    expect(ok.wudaAttachMode).toBe('vertexGpuBake');
+    const bad = mergeConfig(base, { wudaAttachMode: 'nope' });
+    expect(bad.wudaAttachMode).toBe('surfaceBary');
+  });
+});
+
+describe('bakeWudaVertexSamples', () => {
+  it('is seed-stable and respects stride', () => {
+    const geo = new THREE.PlaneGeometry(2, 2, 4, 4);
+    const n = geo.getAttribute('position').count;
+    const skinIndex = new Float32Array(n * 4);
+    const skinWeight = new Float32Array(n * 4);
+    for (let i = 0; i < n; i++) {
+      skinIndex[i * 4] = 0;
+      skinWeight[i * 4] = 1;
+    }
+    geo.setAttribute('skinIndex', new THREE.BufferAttribute(skinIndex, 4));
+    geo.setAttribute('skinWeight', new THREE.BufferAttribute(skinWeight, 4));
+
+    const a = bakeWudaVertexSamples(geo, 16, 7, 2);
+    const b = bakeWudaVertexSamples(geo, 16, 7, 2);
+    expect(a.samples.length).toBe(16);
+    expect(b.samples.length).toBe(16);
+    for (let i = 0; i < 16; i++) {
+      expect(a.samples[i]!.vertexIndex).toBe(b.samples[i]!.vertexIndex);
+    }
+    // First samples from stride walk should be even indices while available
+    expect(a.samples[0]!.vertexIndex % 2).toBe(0);
+    expect(a.samples[1]!.vertexIndex % 2).toBe(0);
+  });
+
+  it('skips origin helper verts', () => {
+    const geo = new THREE.BufferGeometry();
+    const pos = new Float32Array([
+      0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 2, 2,
+    ]);
+    const skinIndex = new Float32Array(5 * 4);
+    const skinWeight = new Float32Array(5 * 4);
+    for (let i = 0; i < 5; i++) {
+      skinIndex[i * 4] = 0;
+      skinWeight[i * 4] = i === 0 ? 0 : 1;
+    }
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute('skinIndex', new THREE.BufferAttribute(skinIndex, 4));
+    geo.setAttribute('skinWeight', new THREE.BufferAttribute(skinWeight, 4));
+    const baked = bakeWudaVertexSamples(geo, 4, 1, 1);
+    expect(baked.samples.every((s) => s.vertexIndex !== 0)).toBe(true);
+    geo.dispose();
+  });
+
+  it('extractVertexSkinAttrs packs N verts', () => {
+    const mesh = makeSkinnedPlane();
+    const baked = bakeWudaVertexSamples(mesh.geometry, 4, 1, 1);
+    const attrs = extractVertexSkinAttrs(mesh.geometry, baked.samples);
+    expect(attrs).not.toBeNull();
+    expect(attrs!.positions.length).toBe(4 * 3);
+    expect(attrs!.skinIndex.length).toBe(4 * 4);
+    expect(attrs!.skinWeight.length).toBe(4 * 4);
+    mesh.geometry.dispose();
+    (mesh.material as THREE.Material).dispose();
+  });
+});
+
+describe('WudaVertexGpuBaker CPU gold standard', () => {
+  it('bakeCpuWorld matches applyBoneTransform + matrixWorld', () => {
+    const mesh = makeSkinnedPlane();
+    mesh.position.set(1, 2, 3);
+    mesh.updateMatrixWorld(true);
+    mesh.skeleton.update();
+
+    const baked = bakeWudaVertexSamples(mesh.geometry, 4, 3, 1);
+    const baker = new WudaVertexGpuBaker();
+    expect(baker.build(mesh, baked.samples)).toBe(true);
+
+    const out = new Float32Array(4 * 3);
+    baker.bakeCpuWorld(out);
+
+    const expected = new THREE.Vector3();
+    const pos = mesh.geometry.getAttribute('position');
+    for (let i = 0; i < 4; i++) {
+      const vi = baked.samples[i]!.vertexIndex;
+      expected.fromBufferAttribute(pos, vi);
+      mesh.applyBoneTransform(vi, expected);
+      expected.applyMatrix4(mesh.matrixWorld);
+      expect(out[i * 3]).toBeCloseTo(expected.x, 5);
+      expect(out[i * 3 + 1]).toBeCloseTo(expected.y, 5);
+      expect(out[i * 3 + 2]).toBeCloseTo(expected.z, 5);
+    }
+
+    baker.dispose();
+    mesh.geometry.dispose();
+    (mesh.material as THREE.Material).dispose();
+    mesh.skeleton.dispose();
+  });
+});

@@ -1,6 +1,7 @@
 # AI 执行方案：武打粒子（方案 B · 薄涂层 + 速度脱落）v0
 
 > **状态**：可执行（2026-09-01）  
+> **方案 C（顶点 GPU 烘焙）**：见 `docs/plans/ai-execution-plan-wuda-particle-scheme-c-vertex-gpu-bake-v0.md`（与本 B 方案可切换，禁止未验收就删 B）  
 > **上位共识**：`docs/wuda-particle-consensus-v0.md`（🔒 已锁定；本方案不得缩水）  
 > **元共识**：`docs/consensus-v0.md` §0  
 > **调查（非权威）**：`docs/research/wuda-particle-research-2026-09-01.md`  

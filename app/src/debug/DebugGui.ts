@@ -283,6 +283,12 @@ export function createDebugGui(
   const wuda = gui.addFolder('武打粒子');
   wuda.add(cfg, 'wudaEnabled').name('启用');
   wuda
+    .add(cfg, 'wudaAttachMode', ['surfaceBary', 'vertexGpuBake'])
+    .name('附着模式 B/C');
+  wuda.add(cfg, 'wudaVertexStride', 1, 32, 1).name('C 顶点步长');
+  wuda.add(cfg, 'wudaBakeAwaitReadback').name('C 同帧等待回读');
+  wuda.add(cfg, 'wudaShowBakeStats').name('C 显示烘焙统计');
+  wuda
     .add(cfg, 'wudaDetachOnlyOnActiveHit')
     .name('仅攻击发生帧可脱落');
   wuda.add(cfg, 'wudaParticleCount', 64, 2048, 64).name('粒子数');

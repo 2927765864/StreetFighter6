@@ -494,6 +494,8 @@ async function boot(): Promise<void> {
   const p2View = new FighterView(scene, 0xd94a4a);
   p1View.setWudaPlumeBurst(wudaPlumeBurst);
   p2View.setWudaPlumeBurst(wudaPlumeBurst);
+  p1View.setWudaRenderer(renderer);
+  p2View.setWudaRenderer(renderer);
   // Prefer hips world Y so crouch animation and jump both drive follow lights.
   followOriginRef.get = (who) => {
     const f = who === 'p1' ? match.p1 : match.p2;

@@ -20,6 +20,10 @@ describe('wuda CONFIG defaults', () => {
     const cfg = createDefaultSimConfig();
     const keys = [
       'wudaEnabled',
+      'wudaAttachMode',
+      'wudaVertexStride',
+      'wudaBakeAwaitReadback',
+      'wudaShowBakeStats',
       'wudaParticleCount',
       'wudaSeed',
       'wudaDetachSpeed',

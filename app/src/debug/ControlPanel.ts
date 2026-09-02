@@ -665,6 +665,16 @@ function buildDom(): HTMLElement {
           '【表现】武打粒子',
           `
           ${rowToggle('wudaEnabled', '启用武打粒子涂层')}
+          <div class="panel-row">
+            <div class="panel-row-header"><span>附着模式</span></div>
+            <select id="sel-wudaAttachMode">
+              <option value="surfaceBary">B · 表面重心</option>
+              <option value="vertexGpuBake">C · 顶点 GPU 烘焙</option>
+            </select>
+          </div>
+          ${rowNumber('wudaVertexStride', 'C 顶点步长', 1, 32, 1)}
+          ${rowToggle('wudaBakeAwaitReadback', 'C 同帧等待回读')}
+          ${rowToggle('wudaShowBakeStats', 'C 显示烘焙统计')}
           ${rowToggle('wudaDetachOnlyOnActiveHit', '仅攻击发生帧可脱落（锁）')}
           ${rowNumber('wudaParticleCount', '粒子数', 64, 2048, 64)}
           ${rowNumber('wudaSeed', '随机种子', 0, 999999, 1)}
@@ -999,6 +1009,9 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'plantSlewPerSec', path: 'plantSlewPerSec' },
   { id: 'showFootDebug', path: 'showFootDebug' },
   { id: 'wudaEnabled', path: 'wudaEnabled' },
+  { id: 'wudaVertexStride', path: 'wudaVertexStride' },
+  { id: 'wudaBakeAwaitReadback', path: 'wudaBakeAwaitReadback' },
+  { id: 'wudaShowBakeStats', path: 'wudaShowBakeStats' },
   { id: 'wudaDetachOnlyOnActiveHit', path: 'wudaDetachOnlyOnActiveHit' },
   { id: 'wudaParticleCount', path: 'wudaParticleCount' },
   { id: 'wudaSeed', path: 'wudaSeed' },
@@ -1399,6 +1412,7 @@ export function setupControlPanel(
   bindSelect(ctx, 'sel-scrubMode', 'scrubMode');
   bindSelect(ctx, 'sel-plantMode', 'plantMode');
   bindSelect(ctx, 'sel-crossfadeAdvanceMode', 'crossfadeAdvanceMode');
+  bindSelect(ctx, 'sel-wudaAttachMode', 'wudaAttachMode');
 
   // --- Lights: accordion cards (all lights visible) ---
   const TYPE_LABEL: Record<LightType, string> = {

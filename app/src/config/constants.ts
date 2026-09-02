@@ -379,10 +379,19 @@ export type MutableSimConfig = {
   /** When true, editor「重放」keeps re-triggering after each play finishes. */
   hitVfxPreviewLoop: boolean;
   /**
-   * 武打粒子（方案 B）：蒙皮薄涂层 + 速度/急停脱落。
-   * docs/wuda-particle-consensus-v0.md · docs/plans/ai-execution-plan-wuda-particle-v0.md
+   * 武打粒子：方案 B 表面重心 / 方案 C 顶点 GPU 烘焙。
+   * docs/plans/ai-execution-plan-wuda-particle-v0.md
+   * docs/plans/ai-execution-plan-wuda-particle-scheme-c-vertex-gpu-bake-v0.md
    */
   wudaEnabled: boolean;
+  /** `surfaceBary` = B；`vertexGpuBake` = C */
+  wudaAttachMode: 'surfaceBary' | 'vertexGpuBake';
+  /** C：源顶点遍历步长（≥1），用于抽稀 */
+  wudaVertexStride: number;
+  /** C：同帧 await GPU 回读（false 则脱落判定晚约 1 帧） */
+  wudaBakeAwaitReadback: boolean;
+  /** C：输出烘焙统计 */
+  wudaShowBakeStats: boolean;
   wudaParticleCount: number;
   wudaSeed: number;
   wudaDetachSpeed: number;
@@ -705,6 +714,10 @@ export function createDefaultSimConfig(): MutableSimConfig {
     hitVfxPreviewKind: 'onHit',
     hitVfxPreviewLoop: false,
     wudaEnabled: false,
+    wudaAttachMode: 'surfaceBary',
+    wudaVertexStride: 1,
+    wudaBakeAwaitReadback: true,
+    wudaShowBakeStats: false,
     wudaParticleCount: 512,
     wudaSeed: 1,
     wudaDetachSpeed: 4.0,

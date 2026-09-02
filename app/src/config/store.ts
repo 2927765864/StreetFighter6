@@ -101,6 +101,12 @@ export function mergeConfig(
       (out as Record<string, unknown>)[key] = value;
       continue;
     }
+    if (key === 'wudaAttachMode') {
+      if (value === 'surfaceBary' || value === 'vertexGpuBake') {
+        out.wudaAttachMode = value;
+      }
+      continue;
+    }
     if (typeof baseVal === 'string' && typeof value === 'string') {
       (out as Record<string, unknown>)[key] = value;
       continue;
