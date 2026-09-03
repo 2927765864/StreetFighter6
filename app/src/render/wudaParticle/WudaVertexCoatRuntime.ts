@@ -4,7 +4,7 @@
  */
 import * as THREE from 'three/webgpu';
 import type { WebGPURenderer } from 'three/webgpu';
-import type { MutableSimConfig } from '../../config/constants';
+import type { WudaCoatCfgShim } from './wudaLayerPreset';
 import { createMulberry32 } from '../hitVfx/mulberry32';
 import {
   clampWudaDeltaSec,
@@ -170,7 +170,7 @@ export class WudaVertexCoatRuntime {
     return this.camera != null;
   }
 
-  private ensureBake(cfg: MutableSimConfig): boolean {
+  private ensureBake(cfg: WudaCoatCfgShim): boolean {
     if (this.meshes.length === 0 || !this.parent) return false;
     const count = Math.max(0, Math.floor(cfg.wudaParticleCount));
     const refillOn = !!cfg.wudaDetachInstantRefill;
@@ -287,7 +287,7 @@ export class WudaVertexCoatRuntime {
    */
   update(
     wallDtSec: number,
-    cfg: MutableSimConfig,
+    cfg: WudaCoatCfgShim,
     opts?: { allowDetach?: boolean; side?: WudaFighterSide },
   ): void {
     if (opts?.side === 'p1' || opts?.side === 'p2') this.side = opts.side;
@@ -351,7 +351,7 @@ export class WudaVertexCoatRuntime {
     this.finishCoatStats(t0, cfg);
   }
 
-  private finishCoatStats(t0: number, cfg: MutableSimConfig): void {
+  private finishCoatStats(t0: number, cfg: WudaCoatCfgShim): void {
     const coatMs =
       (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0;
     const sk = this.baker.lastSkeletonSync;
@@ -377,7 +377,7 @@ export class WudaVertexCoatRuntime {
    * Stable GPU commit: fresh pending → curr; else hold last world.
    * Never mix a same-frame CPU bake over a live GPU stream (ghost flash).
    */
-  private commitGpuStable(cfg: MutableSimConfig): void {
+  private commitGpuStable(cfg: WudaCoatCfgShim): void {
     const pending = this.pendingGpuWorld;
     const kickFrame = this.pendingGpuKickFrame;
     this.pendingGpuWorld = null;
@@ -502,7 +502,7 @@ export class WudaVertexCoatRuntime {
   private simulateFromWorld(
     world: Float32Array,
     dt: number,
-    cfg: MutableSimConfig,
+    cfg: WudaCoatCfgShim,
     allowDetach: boolean,
   ): void {
     _gravity.set(cfg.wudaGravityDirX, cfg.wudaGravityDirY, cfg.wudaGravityDirZ);
@@ -741,7 +741,7 @@ export class WudaVertexCoatRuntime {
     index: number,
     pos: THREE.Vector3,
     size: number,
-    cfg: MutableSimConfig,
+    cfg: WudaCoatCfgShim,
     stuck: boolean,
     opacityOverride?: number,
   ): void {

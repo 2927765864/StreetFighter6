@@ -29,94 +29,76 @@ import {
   resolveWudaInstanceColor,
   setWudaInstanceOpacity,
 } from '../../src/render/wudaParticle/wudaInstanceAppearance';
+import {
+  buildWudaCoatCfgShim,
+  createDefaultWudaLayerPresets,
+} from '../../src/render/wudaParticle/wudaLayerPreset';
 
 describe('wuda CONFIG defaults', () => {
-  it('includes all wuda* keys from execution plan §7', () => {
+  it('includes global wuda keys and default layer presets', () => {
     const cfg = createDefaultSimConfig();
-    const keys = [
+    const globalKeys = [
       'wudaEnabled',
       'wudaAttachMode',
       'wudaCoverMode',
       'wudaCoverMeshMinVerts',
-      'wudaP1RegionWeightHead',
-      'wudaP1RegionWeightTorso',
-      'wudaP1RegionWeightLimbRoot',
-      'wudaP1RegionWeightLimbTip',
-      'wudaP2RegionWeightHead',
-      'wudaP2RegionWeightTorso',
-      'wudaP2RegionWeightLimbRoot',
-      'wudaP2RegionWeightLimbTip',
-      'wudaVertexStride',
-      'wudaBakeAwaitReadback',
-      'wudaShowBakeStats',
-      'wudaParticleCount',
-      'wudaSeed',
-      'wudaDetachSpeed',
-      'wudaDetachAccel',
-      'wudaDetachSpeedDrop',
-      'wudaDetachSpeedDropMinPrev',
-      'wudaInheritVelScale',
-      'wudaDetachJitter',
-      'wudaSpeedToLife',
-      'wudaFreeLifetime',
-      'wudaGravityPower',
-      'wudaGravityDirX',
-      'wudaGravityDirY',
-      'wudaGravityDirZ',
-      'wudaDrag',
-      'wudaSpeedLimit',
-      'wudaMaxDeltaSec',
-      'wudaStuckSize',
-      'wudaFreeSize',
-      'wudaStuckOpacity',
-      'wudaFreeOpacity',
-      'wudaStuckColor',
-      'wudaFreeColor',
-      'wudaBlendAdditive',
-      'wudaRespawnStuck',
-      'wudaDetachInstantRefill',
-      'wudaDetachRefillDelay',
-      'wudaFreePoolCapacity',
-      'wudaShowDebug',
-      'wudaAlsoPlumeBurst',
-      'wudaDetachOnlyOnActiveHit',
-      'wudaDetachOnlyOnHitstun',
+      'wudaLayerPresets',
+      'wudaActiveLayerPresetId',
     ] as const;
-    for (const k of keys) {
+    for (const k of globalKeys) {
       expect(cfg).toHaveProperty(k);
     }
     expect(cfg.wudaEnabled).toBe(false);
+    expect(cfg.wudaAttachMode).toBe('surfaceBary');
     expect(cfg.wudaCoverMode).toBe('allMeshes');
     expect(cfg.wudaCoverMeshMinVerts).toBe(256);
-    expect(cfg.wudaP1RegionWeightHead).toBeCloseTo(0.1);
-    expect(cfg.wudaP1RegionWeightTorso).toBeCloseTo(0.4);
-    expect(cfg.wudaP1RegionWeightLimbRoot).toBeCloseTo(0.25);
-    expect(cfg.wudaP1RegionWeightLimbTip).toBeCloseTo(0.25);
-    expect(cfg.wudaP2RegionWeightHead).toBeCloseTo(0.1);
-    expect(cfg.wudaP2RegionWeightTorso).toBeCloseTo(0.4);
-    expect(cfg.wudaP2RegionWeightLimbRoot).toBeCloseTo(0.25);
-    expect(cfg.wudaP2RegionWeightLimbTip).toBeCloseTo(0.25);
-    expect(cfg.wudaStuckColor).toBe(0xa69980);
-    expect(cfg.wudaFreeColor).toBe(0xbfb399);
-    expect(cfg.wudaDetachOnlyOnActiveHit).toBe(false);
-    expect(cfg.wudaDetachOnlyOnHitstun).toBe(false);
-    expect(cfg.wudaParticleCount).toBe(512);
-    expect(cfg.wudaDetachInstantRefill).toBe(false);
-    expect(cfg.wudaDetachRefillDelay).toBeCloseTo(0.05);
-    expect(cfg.wudaFreePoolCapacity).toBe(1024);
+    expect(cfg.wudaActiveLayerPresetId).toBe('wuda_p1_default');
+    expect(cfg.wudaLayerPresets).toHaveLength(2);
+
+    const [p1, p2] = cfg.wudaLayerPresets;
+    expect(p1!.id).toBe('wuda_p1_default');
+    expect(p1!.side).toBe('p1');
+    expect(p1!.name).toBe('P1 默认');
+    expect(p2!.id).toBe('wuda_p2_default');
+    expect(p2!.side).toBe('p2');
+    expect(p2!.name).toBe('P2 默认');
+
+    for (const layer of cfg.wudaLayerPresets) {
+      expect(layer.enabled).toBe(true);
+      expect(layer.particleCount).toBe(512);
+      expect(layer.stuckColor).toBe(0xa69980);
+      expect(layer.freeColor).toBe(0xbfb399);
+      expect(layer.detachOnlyOnActiveHit).toBe(false);
+      expect(layer.detachOnlyOnHitstun).toBe(false);
+      expect(layer.detachInstantRefill).toBe(false);
+      expect(layer.detachRefillDelay).toBeCloseTo(0.05);
+      expect(layer.freePoolCapacity).toBe(1024);
+      expect(layer.regionWeightHead).toBeCloseTo(0.1);
+      expect(layer.regionWeightTorso).toBeCloseTo(0.4);
+      expect(layer.regionWeightLimbRoot).toBeCloseTo(0.25);
+      expect(layer.regionWeightLimbTip).toBeCloseTo(0.25);
+    }
+
+    const defaults = createDefaultWudaLayerPresets();
+    expect(defaults.map((d) => d.id)).toEqual([
+      'wuda_p1_default',
+      'wuda_p2_default',
+    ]);
   });
 });
 
 describe('wuda instance appearance', () => {
   it('keeps RGB independent of opacity (no fade-to-black bake)', () => {
-    const cfg = createDefaultSimConfig();
-    cfg.wudaShowDebug = false;
-    cfg.wudaStuckColor = 0xa69980;
-    cfg.wudaFreeColor = 0xbfb399;
+    const global = createDefaultSimConfig();
+    const layer = { ...global.wudaLayerPresets[0]! };
+    layer.showDebug = false;
+    layer.stuckColor = 0xa69980;
+    layer.freeColor = 0xbfb399;
+    const shim = buildWudaCoatCfgShim(global, layer);
     const stuck = new THREE.Color();
     const free = new THREE.Color();
-    resolveWudaInstanceColor(stuck, cfg, true, 0.01);
-    resolveWudaInstanceColor(free, cfg, false, 0.01);
+    resolveWudaInstanceColor(stuck, shim, true, 0.01);
+    resolveWudaInstanceColor(free, shim, false, 0.01);
     expect(stuck.getHex()).toBe(0xa69980);
     expect(free.getHex()).toBe(0xbfb399);
 

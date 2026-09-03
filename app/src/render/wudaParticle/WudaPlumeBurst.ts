@@ -5,12 +5,26 @@
  */
 import * as THREE from 'three/webgpu';
 import type { WebGPURenderer } from 'three/webgpu';
-import {
-  createDefaultSimConfig,
-  type MutableSimConfig,
-} from '../../config/constants';
 import { Manager, system, type SystemDef } from '../hitVfx/plumeApi';
 import { hexToRgb01 } from './wudaBodyRegions';
+import {
+  buildWudaCoatCfgShim,
+  createDefaultWudaLayerPreset,
+  type WudaCoatCfgShim,
+} from './wudaLayerPreset';
+
+function defaultWudaCoatShim(): WudaCoatCfgShim {
+  return buildWudaCoatCfgShim(
+    {
+      wudaEnabled: true,
+      wudaAttachMode: 'surfaceBary',
+      wudaCoverMode: 'allMeshes',
+      wudaCoverMeshMinVerts: 256,
+      timeScaleAnim: 1,
+    },
+    createDefaultWudaLayerPreset('p1'),
+  );
+}
 
 const PREFAB_ID = 'wuda_detach_burst';
 /** Cap plume systems spawned from one coat update (many particles may detach). */
@@ -36,7 +50,7 @@ const _axis = new THREE.Vector3();
 const _quat = new THREE.Quaternion();
 const _yUp = new THREE.Vector3(0, 1, 0);
 
-function buildDetachBurstDef(seed: number, cfg: MutableSimConfig): SystemDef {
+function buildDetachBurstDef(seed: number, cfg: WudaCoatCfgShim): SystemDef {
   const life = Math.max(0.15, Math.min(1.2, cfg.wudaFreeLifetime * 0.85));
   const count = 10;
   const sizeMin = Math.max(0.008, cfg.wudaFreeSize * 0.9);
@@ -95,7 +109,7 @@ function buildDetachBurstDef(seed: number, cfg: MutableSimConfig): SystemDef {
 export class WudaPlumeBurst {
   private readonly manager: Manager;
   private readonly queue: QueuedDetach[] = [];
-  private cfgRef: MutableSimConfig | null = null;
+  private cfgRef: WudaCoatCfgShim | null = null;
   private seedCounter = 0;
 
   constructor(opts: WudaPlumeBurstOpts) {
@@ -109,7 +123,7 @@ export class WudaPlumeBurst {
     // Factory so each pooled System gets its own modules (HitVfxRuntime pattern).
     this.manager.register(PREFAB_ID, () => {
       const seed = (this.seedCounter++ * 0x9e3779b9) >>> 0;
-      const cfg = this.cfgRef ?? createDefaultSimConfig();
+      const cfg = this.cfgRef ?? defaultWudaCoatShim();
       return buildDetachBurstDef(seed, cfg);
     });
   }
@@ -134,7 +148,7 @@ export class WudaPlumeBurst {
    * Spawn queued bursts (capped). Call at end of coat update when
    * cfg.wudaAlsoPlumeBurst is true.
    */
-  flush(cfg: MutableSimConfig): void {
+  flush(cfg: WudaCoatCfgShim): void {
     if (!cfg.wudaAlsoPlumeBurst) {
       this.queue.length = 0;
       return;

@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
-import { createDefaultSimConfig } from '../../src/config/constants';
 import { mergeConfig } from '../../src/config/store';
 import { createDefaultRuntimeConfig } from '../../src/config/defaults';
 import {
@@ -13,6 +12,10 @@ import {
   wudaFighterSideFromId,
 } from '../../src/render/wudaParticle/wudaBodyRegions';
 import { bakeWudaSurfaceSamplesForMeshes } from '../../src/render/wudaParticle/WudaSurfaceBake';
+import {
+  buildWudaCoatCfgShim,
+  createDefaultWudaLayerPreset,
+} from '../../src/render/wudaParticle/wudaLayerPreset';
 
 function skinnedTri(
   boneName: string,
@@ -142,23 +145,37 @@ describe('wudaBodyRegions', () => {
     }
   });
 
-  it('resolveWudaRegionWeightsForSide isolates P1 and P2', () => {
-    const cfg = createDefaultSimConfig();
-    cfg.wudaP1RegionWeightHead = 0.9;
-    cfg.wudaP1RegionWeightTorso = 0.1;
-    cfg.wudaP1RegionWeightLimbRoot = 0;
-    cfg.wudaP1RegionWeightLimbTip = 0;
-    cfg.wudaP2RegionWeightHead = 0;
-    cfg.wudaP2RegionWeightTorso = 0;
-    cfg.wudaP2RegionWeightLimbRoot = 0.2;
-    cfg.wudaP2RegionWeightLimbTip = 0.8;
-    expect(resolveWudaRegionWeightsForSide(cfg, 'p1')).toEqual({
+  it('resolveWudaRegionWeightsForSide isolates P1 and P2 via coat shim', () => {
+    const global = {
+      wudaEnabled: true,
+      wudaAttachMode: 'surfaceBary' as const,
+      wudaCoverMode: 'allMeshes' as const,
+      wudaCoverMeshMinVerts: 256,
+    };
+    const p1Layer = createDefaultWudaLayerPreset('p1', {
+      id: 'wuda_p1_default',
+    });
+    p1Layer.regionWeightHead = 0.9;
+    p1Layer.regionWeightTorso = 0.1;
+    p1Layer.regionWeightLimbRoot = 0;
+    p1Layer.regionWeightLimbTip = 0;
+    const p2Layer = createDefaultWudaLayerPreset('p2', {
+      id: 'wuda_p2_default',
+    });
+    p2Layer.regionWeightHead = 0;
+    p2Layer.regionWeightTorso = 0;
+    p2Layer.regionWeightLimbRoot = 0.2;
+    p2Layer.regionWeightLimbTip = 0.8;
+
+    const p1Shim = buildWudaCoatCfgShim(global, p1Layer);
+    const p2Shim = buildWudaCoatCfgShim(global, p2Layer);
+    expect(resolveWudaRegionWeightsForSide(p1Shim, 'p1')).toEqual({
       head: 0.9,
       torso: 0.1,
       limbRoot: 0,
       limbTip: 0,
     });
-    expect(resolveWudaRegionWeightsForSide(cfg, 'p2')).toEqual({
+    expect(resolveWudaRegionWeightsForSide(p2Shim, 'p2')).toEqual({
       head: 0,
       torso: 0,
       limbRoot: 0.2,
@@ -177,7 +194,7 @@ describe('wudaBodyRegions', () => {
     expect(rgb.b).toBeCloseTo(0.5, 2);
   });
 
-  it('mergeConfig migrates legacy shared weights and RGB floats', () => {
+  it('mergeConfig migrates legacy shared weights and RGB floats into layers', () => {
     const base = createDefaultRuntimeConfig();
     const merged = mergeConfig(base, {
       wudaRegionWeightHead: 0.55,
@@ -191,12 +208,17 @@ describe('wudaBodyRegions', () => {
       wudaFreeColorG: 0.2,
       wudaFreeColorB: 0.3,
     });
-    expect(merged.wudaP1RegionWeightHead).toBeCloseTo(0.55);
-    expect(merged.wudaP2RegionWeightHead).toBeCloseTo(0.55);
-    expect(merged.wudaP1RegionWeightTorso).toBeCloseTo(0.15);
-    expect(merged.wudaP2RegionWeightLimbTip).toBeCloseTo(0.1);
-    expect(merged.wudaStuckColor).toBe(rgb01ToHex(0.45, 0.65, 0.85));
-    expect(merged.wudaFreeColor).toBe(rgb01ToHex(0.1, 0.2, 0.3));
+    expect(merged.wudaLayerPresets).toHaveLength(2);
+    const p1 = merged.wudaLayerPresets.find((l) => l.side === 'p1')!;
+    const p2 = merged.wudaLayerPresets.find((l) => l.side === 'p2')!;
+    expect(p1.regionWeightHead).toBeCloseTo(0.55);
+    expect(p2.regionWeightHead).toBeCloseTo(0.55);
+    expect(p1.regionWeightTorso).toBeCloseTo(0.15);
+    expect(p2.regionWeightLimbTip).toBeCloseTo(0.1);
+    expect(p1.stuckColor).toBe(rgb01ToHex(0.45, 0.65, 0.85));
+    expect(p1.freeColor).toBe(rgb01ToHex(0.1, 0.2, 0.3));
+    expect(p2.stuckColor).toBe(rgb01ToHex(0.45, 0.65, 0.85));
+    expect(p2.freeColor).toBe(rgb01ToHex(0.1, 0.2, 0.3));
   });
 
   it('mergeConfig keeps explicit per-side weights over legacy shared', () => {
@@ -206,7 +228,9 @@ describe('wudaBodyRegions', () => {
       wudaP1RegionWeightHead: 0.11,
       wudaP2RegionWeightHead: 0.22,
     });
-    expect(merged.wudaP1RegionWeightHead).toBeCloseTo(0.11);
-    expect(merged.wudaP2RegionWeightHead).toBeCloseTo(0.22);
+    const p1 = merged.wudaLayerPresets.find((l) => l.side === 'p1')!;
+    const p2 = merged.wudaLayerPresets.find((l) => l.side === 'p2')!;
+    expect(p1.regionWeightHead).toBeCloseTo(0.11);
+    expect(p2.regionWeightHead).toBeCloseTo(0.22);
   });
 });

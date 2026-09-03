@@ -12,6 +12,13 @@ import {
   type HitVfxRecipe,
 } from '../render/hitVfx/hitVfxTypes';
 import { rgb01ToHex } from '../render/wudaParticle/wudaBodyRegions';
+import {
+  createDefaultWudaLayerPresets,
+  ensureWudaActiveLayerId,
+  migrateFlatWudaToLayerPresets,
+  normalizeWudaLayerPreset,
+  type WudaLayerPreset,
+} from '../render/wudaParticle/wudaLayerPreset';
 import type { RuntimeConfig } from './types';
 import { CONFIG_VERSION } from './types';
 
@@ -24,40 +31,61 @@ function asFiniteNumber(v: unknown): number | null {
 }
 
 /**
- * Migrate pre-split wuda region weights / RGB color floats into current keys.
- * Only fills a new key when incoming did not set it explicitly.
+ * Fold legacy flat wuda* keys / RGB floats into layer presets when needed.
+ * Prefer explicit `wudaLayerPresets` array when present and non-empty.
  */
 function migrateLegacyWudaFields(
   out: RuntimeConfig,
   incoming: Record<string, unknown>,
 ): void {
-  const parts = ['Head', 'Torso', 'LimbRoot', 'LimbTip'] as const;
-  for (const part of parts) {
-    const legacy = asFiniteNumber(incoming[`wudaRegionWeight${part}`]);
-    if (legacy == null) continue;
-    for (const side of ['P1', 'P2'] as const) {
-      const key = `wuda${side}RegionWeight${part}` as keyof RuntimeConfig;
-      if (asFiniteNumber(incoming[key as string]) != null) continue;
-      (out as Record<string, unknown>)[key as string] = legacy;
+  const hasLayerArray =
+    Array.isArray(incoming.wudaLayerPresets) &&
+    (incoming.wudaLayerPresets as unknown[]).length > 0;
+
+  if (!hasLayerArray) {
+    const looksFlat =
+      asFiniteNumber(incoming.wudaParticleCount) != null ||
+      asFiniteNumber(incoming.wudaStuckColor) != null ||
+      asFiniteNumber(incoming.wudaStuckColorR) != null ||
+      asFiniteNumber(incoming.wudaP1RegionWeightHead) != null ||
+      asFiniteNumber(incoming.wudaRegionWeightHead) != null ||
+      typeof incoming.wudaDetachOnlyOnActiveHit === 'boolean';
+    if (looksFlat) {
+      const migratedIncoming = { ...incoming };
+      if (asFiniteNumber(migratedIncoming.wudaStuckColor) == null) {
+        const r = asFiniteNumber(migratedIncoming.wudaStuckColorR);
+        const g = asFiniteNumber(migratedIncoming.wudaStuckColorG);
+        const b = asFiniteNumber(migratedIncoming.wudaStuckColorB);
+        if (r != null && g != null && b != null) {
+          migratedIncoming.wudaStuckColor = rgb01ToHex(r, g, b);
+        }
+      }
+      if (asFiniteNumber(migratedIncoming.wudaFreeColor) == null) {
+        const r = asFiniteNumber(migratedIncoming.wudaFreeColorR);
+        const g = asFiniteNumber(migratedIncoming.wudaFreeColorG);
+        const b = asFiniteNumber(migratedIncoming.wudaFreeColorB);
+        if (r != null && g != null && b != null) {
+          migratedIncoming.wudaFreeColor = rgb01ToHex(r, g, b);
+        }
+      }
+      out.wudaLayerPresets = migrateFlatWudaToLayerPresets(migratedIncoming);
+      out.wudaActiveLayerPresetId = ensureWudaActiveLayerId(
+        out.wudaLayerPresets,
+        typeof incoming.wudaActiveLayerPresetId === 'string'
+          ? incoming.wudaActiveLayerPresetId
+          : out.wudaLayerPresets[0]?.id ?? '',
+      );
+      return;
     }
   }
 
-  if (asFiniteNumber(incoming.wudaStuckColor) == null) {
-    const r = asFiniteNumber(incoming.wudaStuckColorR);
-    const g = asFiniteNumber(incoming.wudaStuckColorG);
-    const b = asFiniteNumber(incoming.wudaStuckColorB);
-    if (r != null && g != null && b != null) {
-      out.wudaStuckColor = rgb01ToHex(r, g, b);
-    }
+  if (!out.wudaLayerPresets?.length) {
+    out.wudaLayerPresets = createDefaultWudaLayerPresets();
   }
-  if (asFiniteNumber(incoming.wudaFreeColor) == null) {
-    const r = asFiniteNumber(incoming.wudaFreeColorR);
-    const g = asFiniteNumber(incoming.wudaFreeColorG);
-    const b = asFiniteNumber(incoming.wudaFreeColorB);
-    if (r != null && g != null && b != null) {
-      out.wudaFreeColor = rgb01ToHex(r, g, b);
-    }
-  }
+  out.wudaActiveLayerPresetId = ensureWudaActiveLayerId(
+    out.wudaLayerPresets,
+    out.wudaActiveLayerPresetId,
+  );
 }
 
 export function cloneConfig(src: RuntimeConfig): RuntimeConfig {
@@ -130,6 +158,21 @@ export function mergeConfig(
         .filter((x): x is HitVfxElementPreset => x != null);
       continue;
     }
+    if (key === 'wudaLayerPresets' && Array.isArray(value)) {
+      const normalized = value
+        .map((x, i) => normalizeWudaLayerPreset(x, i))
+        .filter((x): x is WudaLayerPreset => x != null);
+      if (normalized.length > 0) {
+        out.wudaLayerPresets = normalized;
+        out.wudaActiveLayerPresetId = ensureWudaActiveLayerId(
+          out.wudaLayerPresets,
+          typeof incoming.wudaActiveLayerPresetId === 'string'
+            ? (incoming.wudaActiveLayerPresetId as string)
+            : out.wudaActiveLayerPresetId,
+        );
+      }
+      continue;
+    }
     if (key === 'hitVfxHeightOffsets' && isPlainObject(value)) {
       out.hitVfxHeightOffsets = normalizeHeightOffsets(value);
       continue;
@@ -193,6 +236,16 @@ export function applyConfig(
     .map((p, i) => normalizeHitVfxElementPreset(p, i))
     .filter((p): p is HitVfxElementPreset => p != null);
   CONFIG.hitVfxHeightOffsets = normalizeHeightOffsets(merged.hitVfxHeightOffsets);
+  CONFIG.wudaLayerPresets = (merged.wudaLayerPresets ?? [])
+    .map((p, i) => normalizeWudaLayerPreset(p, i))
+    .filter((p): p is WudaLayerPreset => p != null);
+  if (!CONFIG.wudaLayerPresets.length) {
+    CONFIG.wudaLayerPresets = createDefaultWudaLayerPresets();
+  }
+  CONFIG.wudaActiveLayerPresetId = ensureWudaActiveLayerId(
+    CONFIG.wudaLayerPresets,
+    merged.wudaActiveLayerPresetId,
+  );
 }
 
 export function applyShippingDefaults(

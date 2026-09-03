@@ -11,6 +11,10 @@ import type {
   HitVfxRecipe,
 } from '../render/hitVfx/hitVfxTypes';
 import {
+  createDefaultWudaLayerPresets,
+  type WudaLayerPreset,
+} from '../render/wudaParticle/wudaLayerPreset';
+import {
   createDefaultLights,
   type LightDesc,
 } from './lightTypes';
@@ -380,8 +384,8 @@ export type MutableSimConfig = {
   hitVfxPreviewLoop: boolean;
   /**
    * 武打粒子：方案 B 表面重心 / 方案 C 顶点 GPU 烘焙。
-   * docs/plans/ai-execution-plan-wuda-particle-v0.md
-   * docs/plans/ai-execution-plan-wuda-particle-scheme-c-vertex-gpu-bake-v0.md
+   * 全局底层：总开关 / 附着模式 / 覆盖范围。
+   * 表现与脱落参数在 `wudaLayerPresets` 多层预设中（可叠层、分 P1/P2）。
    */
   wudaEnabled: boolean;
   /** `surfaceBary` = B；`vertexGpuBake` = C */
@@ -396,82 +400,10 @@ export type MutableSimConfig = {
    * 0 = 不过滤。若全部被滤掉则回退为最大网格。仅最大网格模式忽略此值。
    */
   wudaCoverMeshMinVerts: number;
-  /**
-   * 全身模式下四部位粒子配额（相对权重，运行时归一化）。
-   * P1 / P2 各自独立：头 / 躯干 / 四肢根部（上臂+大腿）/ 四肢尾部（前臂手+小腿脚）。
-   */
-  wudaP1RegionWeightHead: number;
-  wudaP1RegionWeightTorso: number;
-  wudaP1RegionWeightLimbRoot: number;
-  wudaP1RegionWeightLimbTip: number;
-  wudaP2RegionWeightHead: number;
-  wudaP2RegionWeightTorso: number;
-  wudaP2RegionWeightLimbRoot: number;
-  wudaP2RegionWeightLimbTip: number;
-  /** C：源顶点遍历步长（≥1），用于抽稀 */
-  wudaVertexStride: number;
-  /**
-   * C：同帧 CPU（默认 false）。
-   * false = 稳态晚 ≤1 帧的 GPU 双缓冲（过期 pending 丢弃并保持上一帧 GPU，不混 CPU）；
-   * true = 每帧 CPU 蒙皮（与角色完全同位姿，偏调试/零延迟）。
-   */
-  wudaBakeAwaitReadback: boolean;
-  /** C：输出烘焙统计 */
-  wudaShowBakeStats: boolean;
-  wudaParticleCount: number;
-  wudaSeed: number;
-  wudaDetachSpeed: number;
-  wudaDetachAccel: number;
-  wudaDetachSpeedDrop: number;
-  wudaDetachSpeedDropMinPrev: number;
-  wudaInheritVelScale: number;
-  wudaDetachJitter: number;
-  wudaSpeedToLife: number;
-  wudaFreeLifetime: number;
-  wudaGravityPower: number;
-  wudaGravityDirX: number;
-  wudaGravityDirY: number;
-  wudaGravityDirZ: number;
-  wudaDrag: number;
-  wudaSpeedLimit: number;
-  wudaMaxDeltaSec: number;
-  wudaStuckSize: number;
-  wudaFreeSize: number;
-  wudaStuckOpacity: number;
-  wudaFreeOpacity: number;
-  /** Stuck particle color as 0xRRGGBB (panel color picker). */
-  wudaStuckColor: number;
-  /** Free particle color as 0xRRGGBB (panel color picker). */
-  wudaFreeColor: number;
-  wudaBlendAdditive: boolean;
-  wudaRespawnStuck: boolean;
-  /**
-   * When true: detach spawns into a free pool and the coat slot re-sticks after
-   * `wudaDetachRefillDelay` (does not wait for free lifetime). `wudaParticleCount`
-   * then caps stuck-on-body only; simultaneous free particles use `wudaFreePoolCapacity`.
-   */
-  wudaDetachInstantRefill: boolean;
-  /** Seconds before a detached coat slot re-sticks (0 = same frame). Instant-refill only. */
-  wudaDetachRefillDelay: number;
-  /** Max simultaneous free-flight particles when instant-refill is on. */
-  wudaFreePoolCapacity: number;
-  wudaShowDebug: boolean;
-  wudaAlsoPlumeBurst: boolean;
-  /**
-   * When true: detach only while attack hitboxes exist this logic frame
-   * (`phase===attack` && `mover.currentHitBoxesLocal().length>0`).
-   * Velocity sensing still runs; this is a detach lock only.
-   * Combines with `wudaDetachOnlyOnHitstun` via OR when both are on.
-   */
-  wudaDetachOnlyOnActiveHit: boolean;
-  /**
-   * When true: detach only on hitstun **entry pulse** (impact window of a few
-   * match logic steps after applyHitstun), not the whole stun / not stun end.
-   * Pulse bypasses hitstop so the hit present can shed. Velocity sensing still
-   * runs; this is a detach lock only. OR with `wudaDetachOnlyOnActiveHit`.
-   * Gated per fighter (P1/P2 isolation).
-   */
-  wudaDetachOnlyOnHitstun: boolean;
+  /** 武打粒子叠层预设（每套归属 P1 或 P2；参数各自独立）。 */
+  wudaLayerPresets: WudaLayerPreset[];
+  /** 控制面板当前编辑的预设 id。 */
+  wudaActiveLayerPresetId: string;
 };
 
 export function createDefaultSimConfig(): MutableSimConfig {
@@ -760,50 +692,8 @@ export function createDefaultSimConfig(): MutableSimConfig {
     wudaAttachMode: 'surfaceBary',
     wudaCoverMode: 'allMeshes',
     wudaCoverMeshMinVerts: 256,
-    wudaP1RegionWeightHead: 0.1,
-    wudaP1RegionWeightTorso: 0.4,
-    wudaP1RegionWeightLimbRoot: 0.25,
-    wudaP1RegionWeightLimbTip: 0.25,
-    wudaP2RegionWeightHead: 0.1,
-    wudaP2RegionWeightTorso: 0.4,
-    wudaP2RegionWeightLimbRoot: 0.25,
-    wudaP2RegionWeightLimbTip: 0.25,
-    wudaVertexStride: 1,
-    wudaBakeAwaitReadback: false,
-    wudaShowBakeStats: false,
-    wudaParticleCount: 512,
-    wudaSeed: 1,
-    wudaDetachSpeed: 4.0,
-    wudaDetachAccel: 60,
-    wudaDetachSpeedDrop: 3.0,
-    wudaDetachSpeedDropMinPrev: 2.0,
-    wudaInheritVelScale: 1.0,
-    wudaDetachJitter: 0.15,
-    wudaSpeedToLife: 0.2,
-    wudaFreeLifetime: 0.6,
-    wudaGravityPower: 9.8,
-    wudaGravityDirX: 0,
-    wudaGravityDirY: -1,
-    wudaGravityDirZ: 0,
-    wudaDrag: 1.5,
-    wudaSpeedLimit: 12,
-    wudaMaxDeltaSec: 0.05,
-    wudaStuckSize: 0.008,
-    wudaFreeSize: 0.012,
-    wudaStuckOpacity: 0.55,
-    wudaFreeOpacity: 0.85,
-    // Dust defaults ≈ rgb(0.65,0.6,0.5) / rgb(0.75,0.7,0.6)
-    wudaStuckColor: 0xa69980,
-    wudaFreeColor: 0xbfb399,
-    wudaBlendAdditive: false,
-    wudaRespawnStuck: false,
-    wudaDetachInstantRefill: false,
-    wudaDetachRefillDelay: 0.05,
-    wudaFreePoolCapacity: 1024,
-    wudaShowDebug: false,
-    wudaAlsoPlumeBurst: false,
-    wudaDetachOnlyOnActiveHit: false,
-    wudaDetachOnlyOnHitstun: false,
+    wudaLayerPresets: createDefaultWudaLayerPresets(),
+    wudaActiveLayerPresetId: 'wuda_p1_default',
   };
 }
 

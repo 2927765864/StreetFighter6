@@ -3,7 +3,7 @@
  * docs/plans/ai-execution-plan-wuda-particle-v0.md
  */
 import * as THREE from 'three/webgpu';
-import type { MutableSimConfig } from '../../config/constants';
+import type { WudaCoatCfgShim } from './wudaLayerPreset';
 import { createMulberry32 } from '../hitVfx/mulberry32';
 import { bakeWudaSurfaceSamplesForMeshes } from './WudaSurfaceBake';
 import { evalSkinnedSurfacePoint } from './evalSkinnedSurface';
@@ -119,7 +119,7 @@ export class WudaCoatRuntime {
   /**
    * Rebuild bake + InstancedMesh when count/seed/cover meshes change or first enable.
    */
-  private ensureBake(cfg: MutableSimConfig): boolean {
+  private ensureBake(cfg: WudaCoatCfgShim): boolean {
     if (this.meshes.length === 0 || !this.parent) return false;
     const count = Math.max(0, Math.floor(cfg.wudaParticleCount));
     const refillOn = !!cfg.wudaDetachInstantRefill;
@@ -220,7 +220,7 @@ export class WudaCoatRuntime {
    */
   update(
     wallDtSec: number,
-    cfg: MutableSimConfig,
+    cfg: WudaCoatCfgShim,
     opts?: { allowDetach?: boolean; side?: WudaFighterSide },
   ): void {
     if (opts?.side === 'p1' || opts?.side === 'p2') this.side = opts.side;
@@ -513,7 +513,7 @@ export class WudaCoatRuntime {
     index: number,
     pos: THREE.Vector3,
     size: number,
-    cfg: MutableSimConfig,
+    cfg: WudaCoatCfgShim,
     stuck: boolean,
     opacityOverride?: number,
   ): void {

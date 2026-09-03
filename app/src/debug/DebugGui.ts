@@ -11,6 +11,10 @@ import {
   type AnimCatalogPack,
 } from '../data/animCatalog';
 import type { FighterView } from '../render/FighterView';
+import {
+  ensureWudaActiveLayerId,
+  getActiveWudaLayer,
+} from '../render/wudaParticle/wudaLayerPreset';
 import * as THREE from 'three/webgpu';
 
 export type GuiHooks = {
@@ -291,73 +295,113 @@ export function createDebugGui(
   wuda
     .add(cfg, 'wudaCoverMeshMinVerts', 0, 2048, 16)
     .name('全身最小顶点数');
+
+  // Edit active layer via a proxy object (full CRUD is on ControlPanel).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const layerProxy: any = {};
+  const refreshLayerProxy = () => {
+    cfg.wudaActiveLayerPresetId = ensureWudaActiveLayerId(
+      cfg.wudaLayerPresets,
+      cfg.wudaActiveLayerPresetId,
+    );
+    const layer = getActiveWudaLayer(cfg);
+    if (!layer) return;
+    for (const [k, v] of Object.entries(layer)) {
+      layerProxy[k] = v;
+    }
+  };
+  refreshLayerProxy();
+  const layerIds = () =>
+    Object.fromEntries(
+      (cfg.wudaLayerPresets ?? []).map((p) => [
+        `${p.name} [${p.side}]`,
+        p.id,
+      ]),
+    );
+  const activePick = { id: cfg.wudaActiveLayerPresetId };
   wuda
-    .add(cfg, 'wudaP1RegionWeightHead', 0, 1, 0.01)
-    .name('P1·头');
+    .add(activePick, 'id', layerIds())
+    .name('编辑预设')
+    .onChange((id: string) => {
+      cfg.wudaActiveLayerPresetId = id;
+      refreshLayerProxy();
+    });
+  wuda.add(layerProxy, 'enabled').name('启用本套').onChange(() => {
+    const layer = getActiveWudaLayer(cfg);
+    if (layer) layer.enabled = !!layerProxy.enabled;
+  });
   wuda
-    .add(cfg, 'wudaP1RegionWeightTorso', 0, 1, 0.01)
-    .name('P1·躯干');
-  wuda
-    .add(cfg, 'wudaP1RegionWeightLimbRoot', 0, 1, 0.01)
-    .name('P1·四肢根部');
-  wuda
-    .add(cfg, 'wudaP1RegionWeightLimbTip', 0, 1, 0.01)
-    .name('P1·四肢尾部');
-  wuda
-    .add(cfg, 'wudaP2RegionWeightHead', 0, 1, 0.01)
-    .name('P2·头');
-  wuda
-    .add(cfg, 'wudaP2RegionWeightTorso', 0, 1, 0.01)
-    .name('P2·躯干');
-  wuda
-    .add(cfg, 'wudaP2RegionWeightLimbRoot', 0, 1, 0.01)
-    .name('P2·四肢根部');
-  wuda
-    .add(cfg, 'wudaP2RegionWeightLimbTip', 0, 1, 0.01)
-    .name('P2·四肢尾部');
-  wuda.add(cfg, 'wudaVertexStride', 1, 32, 1).name('C 顶点步长');
-  wuda.add(cfg, 'wudaBakeAwaitReadback').name('C 同帧CPU(关=稳GPU)');
-  wuda.add(cfg, 'wudaShowBakeStats').name('C 显示烘焙统计');
-  wuda
-    .add(cfg, 'wudaDetachOnlyOnActiveHit')
-    .name('仅攻击发生帧可脱落');
-  wuda
-    .add(cfg, 'wudaDetachOnlyOnHitstun')
-    .name('仅受击瞬间可脱落');
-  wuda.add(cfg, 'wudaParticleCount', 64, 2048, 64).name('粘着粒子数');
-  wuda.add(cfg, 'wudaDetachInstantRefill').name('脱落立刻补充粘着');
-  wuda.add(cfg, 'wudaDetachRefillDelay', 0, 1, 0.01).name('补充延迟(秒)');
-  wuda.add(cfg, 'wudaFreePoolCapacity', 64, 4096, 64).name('自由粒子池容量');
-  wuda.add(cfg, 'wudaSeed', 0, 999999, 1).name('随机种子');
-  wuda.add(cfg, 'wudaDetachSpeed', 0, 20, 0.1).name('脱落速度阈值');
-  wuda.add(cfg, 'wudaDetachAccel', 0, 200, 1).name('脱落加速度阈值');
-  wuda.add(cfg, 'wudaDetachSpeedDrop', 0, 20, 0.1).name('急停速度降');
-  wuda
-    .add(cfg, 'wudaDetachSpeedDropMinPrev', 0, 20, 0.1)
-    .name('急停前速下限');
-  wuda.add(cfg, 'wudaInheritVelScale', 0, 2, 0.05).name('继承速度比');
-  wuda.add(cfg, 'wudaDetachJitter', 0, 2, 0.05).name('脱落抖动');
-  wuda.add(cfg, 'wudaSpeedToLife', 0, 1, 0.05).name('速度→寿命');
-  wuda.add(cfg, 'wudaFreeLifetime', 0.05, 3, 0.05).name('自由寿命');
-  wuda.add(cfg, 'wudaGravityPower', 0, 30, 0.1).name('重力强度');
-  wuda.add(cfg, 'wudaGravityDirX', -1, 1, 0.05).name('重力X');
-  wuda.add(cfg, 'wudaGravityDirY', -1, 1, 0.05).name('重力Y');
-  wuda.add(cfg, 'wudaGravityDirZ', -1, 1, 0.05).name('重力Z');
-  wuda.add(cfg, 'wudaDrag', 0, 15, 0.1).name('阻力');
-  wuda.add(cfg, 'wudaSpeedLimit', 0.1, 50, 0.1).name('速度上限');
-  wuda.add(cfg, 'wudaMaxDeltaSec', 0.016, 0.1, 0.001).name('dt上限');
-  wuda.add(cfg, 'wudaStuckSize', 0.001, 0.05, 0.001).name('粘着尺寸');
-  wuda.add(cfg, 'wudaFreeSize', 0.001, 0.08, 0.001).name('自由尺寸');
-  wuda.add(cfg, 'wudaStuckOpacity', 0, 1, 0.01).name('粘着不透明度');
-  wuda.add(cfg, 'wudaFreeOpacity', 0, 1, 0.01).name('自由不透明度');
-  wuda.addColor(cfg, 'wudaStuckColor').name('粘着色');
-  wuda.addColor(cfg, 'wudaFreeColor').name('自由色');
-  wuda.add(cfg, 'wudaBlendAdditive').name('加色混合');
-  wuda.add(cfg, 'wudaRespawnStuck').name('死后回到粘着(旧)');
-  wuda.add(cfg, 'wudaShowDebug').name('显示调试色');
-  wuda
-    .add(cfg, 'wudaAlsoPlumeBurst')
-    .name('脱落时再喷一撮特效粒子');
+    .add(layerProxy, 'side', ['p1', 'p2'])
+    .name('归属角色')
+    .onChange(() => {
+      const layer = getActiveWudaLayer(cfg);
+      if (layer) layer.side = layerProxy.side === 'p2' ? 'p2' : 'p1';
+    });
+  const bindLayerNum = (
+    key: string,
+    min: number,
+    max: number,
+    step: number,
+    name: string,
+  ) => {
+    wuda.add(layerProxy, key, min, max, step).name(name).onChange(() => {
+      const layer = getActiveWudaLayer(cfg);
+      if (!layer) return;
+      const v = Number(layerProxy[key]);
+      if (Number.isFinite(v)) (layer as any)[key] = v;
+    });
+  };
+  const bindLayerBool = (key: string, name: string) => {
+    wuda.add(layerProxy, key).name(name).onChange(() => {
+      const layer = getActiveWudaLayer(cfg);
+      if (layer) (layer as any)[key] = !!layerProxy[key];
+    });
+  };
+  bindLayerNum('regionWeightHead', 0, 1, 0.01, '头');
+  bindLayerNum('regionWeightTorso', 0, 1, 0.01, '躯干');
+  bindLayerNum('regionWeightLimbRoot', 0, 1, 0.01, '四肢根部');
+  bindLayerNum('regionWeightLimbTip', 0, 1, 0.01, '四肢尾部');
+  bindLayerNum('vertexStride', 1, 32, 1, 'C 顶点步长');
+  bindLayerBool('bakeAwaitReadback', 'C 同帧CPU(关=稳GPU)');
+  bindLayerBool('showBakeStats', 'C 显示烘焙统计');
+  bindLayerBool('detachOnlyOnActiveHit', '仅攻击发生帧可脱落');
+  bindLayerBool('detachOnlyOnHitstun', '仅受击瞬间可脱落');
+  bindLayerNum('particleCount', 64, 2048, 64, '粘着粒子数');
+  bindLayerBool('detachInstantRefill', '脱落立刻补充粘着');
+  bindLayerNum('detachRefillDelay', 0, 1, 0.01, '补充延迟(秒)');
+  bindLayerNum('freePoolCapacity', 64, 4096, 64, '自由粒子池容量');
+  bindLayerNum('seed', 0, 999999, 1, '随机种子');
+  bindLayerNum('detachSpeed', 0, 20, 0.1, '脱落速度阈值');
+  bindLayerNum('detachAccel', 0, 200, 1, '脱落加速度阈值');
+  bindLayerNum('detachSpeedDrop', 0, 20, 0.1, '急停速度降');
+  bindLayerNum('detachSpeedDropMinPrev', 0, 20, 0.1, '急停前速下限');
+  bindLayerNum('inheritVelScale', 0, 2, 0.05, '继承速度比');
+  bindLayerNum('detachJitter', 0, 2, 0.05, '脱落抖动');
+  bindLayerNum('speedToLife', 0, 1, 0.05, '速度→寿命');
+  bindLayerNum('freeLifetime', 0.05, 3, 0.05, '自由寿命');
+  bindLayerNum('gravityPower', 0, 30, 0.1, '重力强度');
+  bindLayerNum('gravityDirX', -1, 1, 0.05, '重力X');
+  bindLayerNum('gravityDirY', -1, 1, 0.05, '重力Y');
+  bindLayerNum('gravityDirZ', -1, 1, 0.05, '重力Z');
+  bindLayerNum('drag', 0, 15, 0.1, '阻力');
+  bindLayerNum('speedLimit', 0.1, 50, 0.1, '速度上限');
+  bindLayerNum('maxDeltaSec', 0.016, 0.1, 0.001, 'dt上限');
+  bindLayerNum('stuckSize', 0.001, 0.05, 0.001, '粘着尺寸');
+  bindLayerNum('freeSize', 0.001, 0.08, 0.001, '自由尺寸');
+  bindLayerNum('stuckOpacity', 0, 1, 0.01, '粘着不透明度');
+  bindLayerNum('freeOpacity', 0, 1, 0.01, '自由不透明度');
+  wuda.addColor(layerProxy, 'stuckColor').name('粘着色').onChange(() => {
+    const layer = getActiveWudaLayer(cfg);
+    if (layer) layer.stuckColor = Number(layerProxy.stuckColor) >>> 0;
+  });
+  wuda.addColor(layerProxy, 'freeColor').name('自由色').onChange(() => {
+    const layer = getActiveWudaLayer(cfg);
+    if (layer) layer.freeColor = Number(layerProxy.freeColor) >>> 0;
+  });
+  bindLayerBool('blendAdditive', '加色混合');
+  bindLayerBool('respawnStuck', '死后回到粘着(旧)');
+  bindLayerBool('showDebug', '显示调试色');
+  bindLayerBool('alsoPlumeBurst', '脱落时再喷一撮特效粒子');
 
   const headband = gui.addFolder('头巾物理');
   headband.add(cfg, 'headbandPhysicsEnabled').name('启用头巾物理');

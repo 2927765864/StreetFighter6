@@ -54,9 +54,12 @@ describe('wuda C CONFIG', () => {
     expect(cfg.wudaAttachMode).toBe('surfaceBary');
     expect(cfg.wudaCoverMode).toBe('allMeshes');
     expect(cfg.wudaCoverMeshMinVerts).toBe(256);
-    expect(cfg.wudaVertexStride).toBe(1);
-    expect(cfg.wudaBakeAwaitReadback).toBe(false);
-    expect(cfg.wudaShowBakeStats).toBe(false);
+    expect(cfg.wudaLayerPresets.length).toBeGreaterThanOrEqual(1);
+    for (const layer of cfg.wudaLayerPresets) {
+      expect(layer.vertexStride).toBe(1);
+      expect(layer.bakeAwaitReadback).toBe(false);
+      expect(layer.showBakeStats).toBe(false);
+    }
   });
 
   it('mergeConfig accepts only valid wudaAttachMode / wudaCoverMode', () => {

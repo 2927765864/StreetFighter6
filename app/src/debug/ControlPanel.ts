@@ -39,6 +39,14 @@ import {
   type AnimCatalogClip,
 } from '../data/animCatalog';
 import type { FighterView } from '../render/FighterView';
+import {
+  addWudaLayerPreset,
+  duplicateWudaLayerPreset,
+  ensureWudaActiveLayerId,
+  getActiveWudaLayer,
+  removeWudaLayerPreset,
+  type WudaLayerPreset,
+} from '../render/wudaParticle/wudaLayerPreset';
 import { reloadMoveFromPublic } from './DebugGui';
 
 export type ControlPanelHooks = {
@@ -680,46 +688,63 @@ function buildDom(): HTMLElement {
             </select>
           </div>
           ${rowNumber('wudaCoverMeshMinVerts', '全身最小顶点数', 0, 2048, 16)}
-          <p class="panel-hint">部位权重 · P1</p>
-          ${rowNumber('wudaP1RegionWeightHead', 'P1·头', 0, 1, 0.01)}
-          ${rowNumber('wudaP1RegionWeightTorso', 'P1·躯干', 0, 1, 0.01)}
-          ${rowNumber('wudaP1RegionWeightLimbRoot', 'P1·四肢根部', 0, 1, 0.01)}
-          ${rowNumber('wudaP1RegionWeightLimbTip', 'P1·四肢尾部', 0, 1, 0.01)}
-          <p class="panel-hint">部位权重 · P2</p>
-          ${rowNumber('wudaP2RegionWeightHead', 'P2·头', 0, 1, 0.01)}
-          ${rowNumber('wudaP2RegionWeightTorso', 'P2·躯干', 0, 1, 0.01)}
-          ${rowNumber('wudaP2RegionWeightLimbRoot', 'P2·四肢根部', 0, 1, 0.01)}
-          ${rowNumber('wudaP2RegionWeightLimbTip', 'P2·四肢尾部', 0, 1, 0.01)}
-          ${rowNumber('wudaVertexStride', 'C 顶点步长', 1, 32, 1)}
-          ${rowToggle('wudaBakeAwaitReadback', 'C 同帧CPU(关=稳GPU)')}
-          ${rowToggle('wudaShowBakeStats', 'C 显示烘焙统计')}
-          ${rowToggle('wudaDetachOnlyOnActiveHit', '仅攻击发生帧可脱落（锁）')}
-          ${rowToggle('wudaDetachOnlyOnHitstun', '仅受击瞬间可脱落（锁）')}
-          ${rowNumber('wudaParticleCount', '粘着粒子数', 64, 2048, 64)}
-          ${rowToggle('wudaDetachInstantRefill', '脱落立刻补充粘着')}
-          ${rowNumber('wudaDetachRefillDelay', '补充延迟(秒)', 0, 1, 0.01)}
-          ${rowNumber('wudaFreePoolCapacity', '自由粒子池容量', 64, 4096, 64)}
+          <p class="panel-hint">叠层预设：每套归属 P1 或 P2，参数独立；触发算法相同，可叠多层。</p>
+          <div class="panel-row">
+            <div class="panel-row-header"><span>预设列表</span></div>
+            <select id="sel-wudaLayerPreset"></select>
+          </div>
+          <div class="panel-actions-row">
+            <button type="button" id="btn-wuda-layer-add">新建</button>
+            <button type="button" id="btn-wuda-layer-dup">复制</button>
+            <button type="button" id="btn-wuda-layer-del">删除</button>
+          </div>
+          <div class="panel-row">
+            <div class="panel-row-header"><span>预设名称</span></div>
+            <input id="inp-wudaLayerName" type="text" />
+          </div>
+          ${rowToggle('wudaLayer_enabled', '启用本套预设')}
+          <div class="panel-row">
+            <div class="panel-row-header"><span>归属角色</span></div>
+            <select id="sel-wudaLayerSide">
+              <option value="p1">P1</option>
+              <option value="p2">P2</option>
+            </select>
+          </div>
+          <p class="panel-hint">部位权重（本套）</p>
+          ${rowNumber('wudaLayer_regionWeightHead', '头', 0, 1, 0.01)}
+          ${rowNumber('wudaLayer_regionWeightTorso', '躯干', 0, 1, 0.01)}
+          ${rowNumber('wudaLayer_regionWeightLimbRoot', '四肢根部', 0, 1, 0.01)}
+          ${rowNumber('wudaLayer_regionWeightLimbTip', '四肢尾部', 0, 1, 0.01)}
+          ${rowNumber('wudaLayer_vertexStride', 'C 顶点步长', 1, 32, 1)}
+          ${rowToggle('wudaLayer_bakeAwaitReadback', 'C 同帧CPU(关=稳GPU)')}
+          ${rowToggle('wudaLayer_showBakeStats', 'C 显示烘焙统计')}
+          ${rowToggle('wudaLayer_detachOnlyOnActiveHit', '仅攻击发生帧可脱落（锁）')}
+          ${rowToggle('wudaLayer_detachOnlyOnHitstun', '仅受击瞬间可脱落（锁）')}
+          ${rowNumber('wudaLayer_particleCount', '粘着粒子数', 64, 2048, 64)}
+          ${rowToggle('wudaLayer_detachInstantRefill', '脱落立刻补充粘着')}
+          ${rowNumber('wudaLayer_detachRefillDelay', '补充延迟(秒)', 0, 1, 0.01)}
+          ${rowNumber('wudaLayer_freePoolCapacity', '自由粒子池容量', 64, 4096, 64)}
           <p class="panel-hint">开「脱落立刻补充」后：粘着粒子数只限制身上同时粘着数；脱落飞出进自由池，经延迟在原附着点补回，不等自由寿命结束。</p>
-          ${rowNumber('wudaSeed', '随机种子', 0, 999999, 1)}
-          ${rowNumber('wudaDetachSpeed', '脱落速度阈值', 0, 20, 0.1)}
-          ${rowNumber('wudaDetachAccel', '脱落加速度阈值', 0, 200, 1)}
-          ${rowNumber('wudaDetachSpeedDrop', '急停速度降', 0, 20, 0.1)}
-          ${rowNumber('wudaDetachSpeedDropMinPrev', '急停前速下限', 0, 20, 0.1)}
-          ${rowNumber('wudaInheritVelScale', '继承速度比', 0, 2, 0.05)}
-          ${rowNumber('wudaDetachJitter', '脱落抖动', 0, 2, 0.05)}
-          ${rowNumber('wudaSpeedToLife', '速度→寿命', 0, 1, 0.05)}
-          ${rowNumber('wudaFreeLifetime', '自由寿命', 0.05, 3, 0.05)}
-          ${rowNumber('wudaGravityPower', '重力强度', 0, 30, 0.1)}
-          ${rowNumber('wudaGravityDirX', '重力X', -1, 1, 0.05)}
-          ${rowNumber('wudaGravityDirY', '重力Y', -1, 1, 0.05)}
-          ${rowNumber('wudaGravityDirZ', '重力Z', -1, 1, 0.05)}
-          ${rowNumber('wudaDrag', '阻力', 0, 15, 0.1)}
-          ${rowNumber('wudaSpeedLimit', '速度上限', 0.1, 50, 0.1)}
-          ${rowNumber('wudaMaxDeltaSec', 'dt上限', 0.016, 0.1, 0.001)}
-          ${rowNumber('wudaStuckSize', '粘着尺寸', 0.001, 0.05, 0.001)}
-          ${rowNumber('wudaFreeSize', '自由尺寸', 0.001, 0.08, 0.001)}
-          ${rowNumber('wudaStuckOpacity', '粘着不透明度', 0, 1, 0.01)}
-          ${rowNumber('wudaFreeOpacity', '自由不透明度', 0, 1, 0.01)}
+          ${rowNumber('wudaLayer_seed', '随机种子', 0, 999999, 1)}
+          ${rowNumber('wudaLayer_detachSpeed', '脱落速度阈值', 0, 20, 0.1)}
+          ${rowNumber('wudaLayer_detachAccel', '脱落加速度阈值', 0, 200, 1)}
+          ${rowNumber('wudaLayer_detachSpeedDrop', '急停速度降', 0, 20, 0.1)}
+          ${rowNumber('wudaLayer_detachSpeedDropMinPrev', '急停前速下限', 0, 20, 0.1)}
+          ${rowNumber('wudaLayer_inheritVelScale', '继承速度比', 0, 2, 0.05)}
+          ${rowNumber('wudaLayer_detachJitter', '脱落抖动', 0, 2, 0.05)}
+          ${rowNumber('wudaLayer_speedToLife', '速度→寿命', 0, 1, 0.05)}
+          ${rowNumber('wudaLayer_freeLifetime', '自由寿命', 0.05, 3, 0.05)}
+          ${rowNumber('wudaLayer_gravityPower', '重力强度', 0, 30, 0.1)}
+          ${rowNumber('wudaLayer_gravityDirX', '重力X', -1, 1, 0.05)}
+          ${rowNumber('wudaLayer_gravityDirY', '重力Y', -1, 1, 0.05)}
+          ${rowNumber('wudaLayer_gravityDirZ', '重力Z', -1, 1, 0.05)}
+          ${rowNumber('wudaLayer_drag', '阻力', 0, 15, 0.1)}
+          ${rowNumber('wudaLayer_speedLimit', '速度上限', 0.1, 50, 0.1)}
+          ${rowNumber('wudaLayer_maxDeltaSec', 'dt上限', 0.016, 0.1, 0.001)}
+          ${rowNumber('wudaLayer_stuckSize', '粘着尺寸', 0.001, 0.05, 0.001)}
+          ${rowNumber('wudaLayer_freeSize', '自由尺寸', 0.001, 0.08, 0.001)}
+          ${rowNumber('wudaLayer_stuckOpacity', '粘着不透明度', 0, 1, 0.01)}
+          ${rowNumber('wudaLayer_freeOpacity', '自由不透明度', 0, 1, 0.01)}
           <div class="panel-row light-color-row">
             <div class="panel-row-header"><span>粘着色</span></div>
             <input id="inp-wudaStuckColorPicker" type="color" title="粘着色" />
@@ -728,10 +753,10 @@ function buildDom(): HTMLElement {
             <div class="panel-row-header"><span>自由色</span></div>
             <input id="inp-wudaFreeColorPicker" type="color" title="自由色" />
           </div>
-          ${rowToggle('wudaBlendAdditive', '加色混合')}
-          ${rowToggle('wudaRespawnStuck', '死后回到粘着（旧模式）')}
-          ${rowToggle('wudaShowDebug', '调试色（绿=粘 / 橙=飞）')}
-          ${rowToggle('wudaAlsoPlumeBurst', '脱落时再喷一撮特效粒子')}
+          ${rowToggle('wudaLayer_blendAdditive', '加色混合')}
+          ${rowToggle('wudaLayer_respawnStuck', '死后回到粘着（旧模式）')}
+          ${rowToggle('wudaLayer_showDebug', '调试色（绿=粘 / 橙=飞）')}
+          ${rowToggle('wudaLayer_alsoPlumeBurst', '脱落时再喷一撮特效粒子')}
           `,
           'expandWuda',
         )}
@@ -1034,48 +1059,7 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'plantSlewPerSec', path: 'plantSlewPerSec' },
   { id: 'showFootDebug', path: 'showFootDebug' },
   { id: 'wudaEnabled', path: 'wudaEnabled' },
-  { id: 'wudaP1RegionWeightHead', path: 'wudaP1RegionWeightHead' },
-  { id: 'wudaP1RegionWeightTorso', path: 'wudaP1RegionWeightTorso' },
-  { id: 'wudaP1RegionWeightLimbRoot', path: 'wudaP1RegionWeightLimbRoot' },
-  { id: 'wudaP1RegionWeightLimbTip', path: 'wudaP1RegionWeightLimbTip' },
-  { id: 'wudaP2RegionWeightHead', path: 'wudaP2RegionWeightHead' },
-  { id: 'wudaP2RegionWeightTorso', path: 'wudaP2RegionWeightTorso' },
-  { id: 'wudaP2RegionWeightLimbRoot', path: 'wudaP2RegionWeightLimbRoot' },
-  { id: 'wudaP2RegionWeightLimbTip', path: 'wudaP2RegionWeightLimbTip' },
   { id: 'wudaCoverMeshMinVerts', path: 'wudaCoverMeshMinVerts' },
-  { id: 'wudaVertexStride', path: 'wudaVertexStride' },
-  { id: 'wudaBakeAwaitReadback', path: 'wudaBakeAwaitReadback' },
-  { id: 'wudaShowBakeStats', path: 'wudaShowBakeStats' },
-  { id: 'wudaDetachOnlyOnActiveHit', path: 'wudaDetachOnlyOnActiveHit' },
-  { id: 'wudaDetachOnlyOnHitstun', path: 'wudaDetachOnlyOnHitstun' },
-  { id: 'wudaParticleCount', path: 'wudaParticleCount' },
-  { id: 'wudaDetachInstantRefill', path: 'wudaDetachInstantRefill' },
-  { id: 'wudaDetachRefillDelay', path: 'wudaDetachRefillDelay' },
-  { id: 'wudaFreePoolCapacity', path: 'wudaFreePoolCapacity' },
-  { id: 'wudaSeed', path: 'wudaSeed' },
-  { id: 'wudaDetachSpeed', path: 'wudaDetachSpeed' },
-  { id: 'wudaDetachAccel', path: 'wudaDetachAccel' },
-  { id: 'wudaDetachSpeedDrop', path: 'wudaDetachSpeedDrop' },
-  { id: 'wudaDetachSpeedDropMinPrev', path: 'wudaDetachSpeedDropMinPrev' },
-  { id: 'wudaInheritVelScale', path: 'wudaInheritVelScale' },
-  { id: 'wudaDetachJitter', path: 'wudaDetachJitter' },
-  { id: 'wudaSpeedToLife', path: 'wudaSpeedToLife' },
-  { id: 'wudaFreeLifetime', path: 'wudaFreeLifetime' },
-  { id: 'wudaGravityPower', path: 'wudaGravityPower' },
-  { id: 'wudaGravityDirX', path: 'wudaGravityDirX' },
-  { id: 'wudaGravityDirY', path: 'wudaGravityDirY' },
-  { id: 'wudaGravityDirZ', path: 'wudaGravityDirZ' },
-  { id: 'wudaDrag', path: 'wudaDrag' },
-  { id: 'wudaSpeedLimit', path: 'wudaSpeedLimit' },
-  { id: 'wudaMaxDeltaSec', path: 'wudaMaxDeltaSec' },
-  { id: 'wudaStuckSize', path: 'wudaStuckSize' },
-  { id: 'wudaFreeSize', path: 'wudaFreeSize' },
-  { id: 'wudaStuckOpacity', path: 'wudaStuckOpacity' },
-  { id: 'wudaFreeOpacity', path: 'wudaFreeOpacity' },
-  { id: 'wudaBlendAdditive', path: 'wudaBlendAdditive' },
-  { id: 'wudaRespawnStuck', path: 'wudaRespawnStuck' },
-  { id: 'wudaShowDebug', path: 'wudaShowDebug' },
-  { id: 'wudaAlsoPlumeBurst', path: 'wudaAlsoPlumeBurst' },
   { id: 'headbandPhysicsEnabled', path: 'headbandPhysicsEnabled' },
   { id: 'headbandUseCenter', path: 'headbandUseCenter' },
   { id: 'headbandStiffness', path: 'headbandStiffness' },
@@ -1212,13 +1196,6 @@ const TOGGLE_IDS = new Set([
   'lightEnabled',
   'lightCastShadow',
   'wudaEnabled',
-  'wudaDetachOnlyOnActiveHit',
-  'wudaDetachOnlyOnHitstun',
-  'wudaBlendAdditive',
-  'wudaRespawnStuck',
-  'wudaDetachInstantRefill',
-  'wudaShowDebug',
-  'wudaAlsoPlumeBurst',
   'headbandPhysicsEnabled',
   'headbandUseCenter',
   'headbandShowColliders',
@@ -1448,6 +1425,203 @@ export function setupControlPanel(
   bindSelect(ctx, 'sel-crossfadeAdvanceMode', 'crossfadeAdvanceMode');
   bindSelect(ctx, 'sel-wudaAttachMode', 'wudaAttachMode');
   bindSelect(ctx, 'sel-wudaCoverMode', 'wudaCoverMode');
+
+  // --- Wuda layer presets (stacked coats per P1/P2) ---
+  const WUDA_LAYER_NUM_KEYS: Array<keyof WudaLayerPreset> = [
+    'regionWeightHead',
+    'regionWeightTorso',
+    'regionWeightLimbRoot',
+    'regionWeightLimbTip',
+    'vertexStride',
+    'particleCount',
+    'detachRefillDelay',
+    'freePoolCapacity',
+    'seed',
+    'detachSpeed',
+    'detachAccel',
+    'detachSpeedDrop',
+    'detachSpeedDropMinPrev',
+    'inheritVelScale',
+    'detachJitter',
+    'speedToLife',
+    'freeLifetime',
+    'gravityPower',
+    'gravityDirX',
+    'gravityDirY',
+    'gravityDirZ',
+    'drag',
+    'speedLimit',
+    'maxDeltaSec',
+    'stuckSize',
+    'freeSize',
+    'stuckOpacity',
+    'freeOpacity',
+  ];
+  const WUDA_LAYER_BOOL_KEYS: Array<keyof WudaLayerPreset> = [
+    'enabled',
+    'bakeAwaitReadback',
+    'showBakeStats',
+    'detachOnlyOnActiveHit',
+    'detachOnlyOnHitstun',
+    'detachInstantRefill',
+    'blendAdditive',
+    'respawnStuck',
+    'showDebug',
+    'alsoPlumeBurst',
+  ];
+
+  const wudaLayerSel = byId<HTMLSelectElement>(host, 'sel-wudaLayerPreset');
+  const wudaLayerNameInp = byId<HTMLInputElement>(host, 'inp-wudaLayerName');
+  const wudaLayerSideSel = byId<HTMLSelectElement>(host, 'sel-wudaLayerSide');
+
+  const refreshWudaLayerSelect = () => {
+    const presets = CONFIG.wudaLayerPresets ?? [];
+    CONFIG.wudaActiveLayerPresetId = ensureWudaActiveLayerId(
+      presets,
+      CONFIG.wudaActiveLayerPresetId,
+    );
+    wudaLayerSel.innerHTML = '';
+    for (const p of presets) {
+      const opt = document.createElement('option');
+      opt.value = p.id;
+      const on = p.enabled ? '' : '·关';
+      opt.textContent = `${p.name} [${p.side.toUpperCase()}]${on}`;
+      wudaLayerSel.appendChild(opt);
+    }
+    wudaLayerSel.value = CONFIG.wudaActiveLayerPresetId;
+  };
+
+  const syncWudaLayerMeta = () => {
+    const layer = getActiveWudaLayer(CONFIG);
+    if (!layer) return;
+    if (document.activeElement !== wudaLayerNameInp) {
+      wudaLayerNameInp.value = layer.name;
+    }
+    wudaLayerSideSel.value = layer.side;
+  };
+
+  const bindWudaLayerNumber = (key: keyof WudaLayerPreset) => {
+    const id = `wudaLayer_${String(key)}`;
+    const input = byId<HTMLInputElement>(host, `inp-${id}`);
+    const valEl = host.querySelector(`#${CSS.escape(`val-${id}`)}`);
+    const sync = () => {
+      const layer = getActiveWudaLayer(CONFIG);
+      if (!layer) return;
+      const v = Number(layer[key]);
+      if (document.activeElement !== input) input.value = String(v);
+      if (valEl) valEl.textContent = String(v);
+    };
+    const write = () => {
+      const layer = getActiveWudaLayer(CONFIG);
+      if (!layer) return;
+      let v = Number(input.value);
+      if (!Number.isFinite(v)) return;
+      if (input.min !== '') v = Math.max(Number(input.min), v);
+      if (input.max !== '') v = Math.min(Number(input.max), v);
+      (layer as Record<string, unknown>)[key as string] = v;
+      if (valEl) valEl.textContent = String(v);
+      notify(`wudaLayerPresets.${layer.id}.${String(key)}`, v, CONFIG);
+    };
+    input.addEventListener('input', write);
+    input.addEventListener('change', write);
+    syncers.push(sync);
+    sync();
+  };
+
+  const bindWudaLayerToggle = (key: keyof WudaLayerPreset) => {
+    const id = `wudaLayer_${String(key)}`;
+    const input = byId<HTMLInputElement>(host, `inp-${id}`);
+    const valEl = host.querySelector(`#${CSS.escape(`val-${id}`)}`);
+    const sync = () => {
+      const layer = getActiveWudaLayer(CONFIG);
+      if (!layer) return;
+      const v = Boolean(layer[key]);
+      input.checked = v;
+      if (valEl) valEl.textContent = v ? '开' : '关';
+    };
+    input.addEventListener('change', () => {
+      const layer = getActiveWudaLayer(CONFIG);
+      if (!layer) return;
+      const v = input.checked;
+      (layer as Record<string, unknown>)[key as string] = v;
+      if (valEl) valEl.textContent = v ? '开' : '关';
+      notify(`wudaLayerPresets.${layer.id}.${String(key)}`, v, CONFIG);
+      refreshWudaLayerSelect();
+    });
+    syncers.push(sync);
+    sync();
+  };
+
+  for (const k of WUDA_LAYER_NUM_KEYS) bindWudaLayerNumber(k);
+  for (const k of WUDA_LAYER_BOOL_KEYS) bindWudaLayerToggle(k);
+
+  wudaLayerSel.addEventListener('change', () => {
+    CONFIG.wudaActiveLayerPresetId = wudaLayerSel.value;
+    notify('wudaActiveLayerPresetId', CONFIG.wudaActiveLayerPresetId, CONFIG);
+    for (const s of syncers) s();
+  });
+  wudaLayerNameInp.addEventListener('change', () => {
+    const layer = getActiveWudaLayer(CONFIG);
+    if (!layer) return;
+    layer.name = wudaLayerNameInp.value.trim() || layer.name;
+    notify(`wudaLayerPresets.${layer.id}.name`, layer.name, CONFIG);
+    refreshWudaLayerSelect();
+  });
+  wudaLayerSideSel.addEventListener('change', () => {
+    const layer = getActiveWudaLayer(CONFIG);
+    if (!layer) return;
+    layer.side = wudaLayerSideSel.value === 'p2' ? 'p2' : 'p1';
+    notify(`wudaLayerPresets.${layer.id}.side`, layer.side, CONFIG);
+    refreshWudaLayerSelect();
+  });
+  byId<HTMLButtonElement>(host, 'btn-wuda-layer-add').addEventListener(
+    'click',
+    () => {
+      const layer = addWudaLayerPreset(CONFIG.wudaLayerPresets, 'p1');
+      CONFIG.wudaActiveLayerPresetId = layer.id;
+      notify('wudaLayerPresets', CONFIG.wudaLayerPresets, CONFIG);
+      refreshWudaLayerSelect();
+      for (const s of syncers) s();
+    },
+  );
+  byId<HTMLButtonElement>(host, 'btn-wuda-layer-dup').addEventListener(
+    'click',
+    () => {
+      const copy = duplicateWudaLayerPreset(
+        CONFIG.wudaLayerPresets,
+        CONFIG.wudaActiveLayerPresetId,
+      );
+      if (!copy) return;
+      CONFIG.wudaActiveLayerPresetId = copy.id;
+      notify('wudaLayerPresets', CONFIG.wudaLayerPresets, CONFIG);
+      refreshWudaLayerSelect();
+      for (const s of syncers) s();
+    },
+  );
+  byId<HTMLButtonElement>(host, 'btn-wuda-layer-del').addEventListener(
+    'click',
+    () => {
+      if ((CONFIG.wudaLayerPresets?.length ?? 0) <= 1) {
+        setFlash('至少保留一套武打粒子预设');
+        return;
+      }
+      const id = CONFIG.wudaActiveLayerPresetId;
+      if (!removeWudaLayerPreset(CONFIG.wudaLayerPresets, id)) return;
+      CONFIG.wudaActiveLayerPresetId = ensureWudaActiveLayerId(
+        CONFIG.wudaLayerPresets,
+        '',
+      );
+      notify('wudaLayerPresets', CONFIG.wudaLayerPresets, CONFIG);
+      refreshWudaLayerSelect();
+      for (const s of syncers) s();
+    },
+  );
+  syncers.push(() => {
+    refreshWudaLayerSelect();
+    syncWudaLayerMeta();
+  });
+  refreshWudaLayerSelect();
+  syncWudaLayerMeta();
 
   // --- Lights: accordion cards (all lights visible) ---
   const TYPE_LABEL: Record<LightType, string> = {
@@ -2084,11 +2258,12 @@ export function setupControlPanel(
     if (document.activeElement !== fogColorPicker) {
       fogColorPicker.value = hexToColorInput(CONFIG.fogColor);
     }
-    if (document.activeElement !== wudaStuckColorPicker) {
-      wudaStuckColorPicker.value = hexToColorInput(CONFIG.wudaStuckColor);
+    const wudaLayer = getActiveWudaLayer(CONFIG);
+    if (wudaLayer && document.activeElement !== wudaStuckColorPicker) {
+      wudaStuckColorPicker.value = hexToColorInput(wudaLayer.stuckColor);
     }
-    if (document.activeElement !== wudaFreeColorPicker) {
-      wudaFreeColorPicker.value = hexToColorInput(CONFIG.wudaFreeColor);
+    if (wudaLayer && document.activeElement !== wudaFreeColorPicker) {
+      wudaFreeColorPicker.value = hexToColorInput(wudaLayer.freeColor);
     }
   };
   bgColorPicker.addEventListener('input', () => {
@@ -2100,12 +2275,16 @@ export function setupControlPanel(
     notify('fogColor', CONFIG.fogColor, CONFIG);
   });
   wudaStuckColorPicker.addEventListener('input', () => {
-    CONFIG.wudaStuckColor = colorInputToHex(wudaStuckColorPicker.value);
-    notify('wudaStuckColor', CONFIG.wudaStuckColor, CONFIG);
+    const layer = getActiveWudaLayer(CONFIG);
+    if (!layer) return;
+    layer.stuckColor = colorInputToHex(wudaStuckColorPicker.value);
+    notify(`wudaLayerPresets.${layer.id}.stuckColor`, layer.stuckColor, CONFIG);
   });
   wudaFreeColorPicker.addEventListener('input', () => {
-    CONFIG.wudaFreeColor = colorInputToHex(wudaFreeColorPicker.value);
-    notify('wudaFreeColor', CONFIG.wudaFreeColor, CONFIG);
+    const layer = getActiveWudaLayer(CONFIG);
+    if (!layer) return;
+    layer.freeColor = colorInputToHex(wudaFreeColorPicker.value);
+    notify(`wudaLayerPresets.${layer.id}.freeColor`, layer.freeColor, CONFIG);
   });
 
   gizmoModeSel.addEventListener('change', () => {

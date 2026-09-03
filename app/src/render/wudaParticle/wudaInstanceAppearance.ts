@@ -8,7 +8,7 @@
 import * as THREE from 'three/webgpu';
 import { MeshBasicNodeMaterial } from 'three/webgpu';
 import { instancedDynamicBufferAttribute } from 'three/tsl';
-import type { MutableSimConfig } from '../../config/constants';
+import type { WudaCoatCfgShim } from './wudaLayerPreset';
 
 export type WudaInstanceAppearance = {
   material: MeshBasicNodeMaterial;
@@ -42,7 +42,7 @@ export function createWudaInstanceAppearance(
 /** Resolve display RGB without baking opacity into the color. */
 export function resolveWudaInstanceColor(
   out: THREE.Color,
-  cfg: MutableSimConfig,
+  cfg: WudaCoatCfgShim,
   stuck: boolean,
   size: number,
 ): void {

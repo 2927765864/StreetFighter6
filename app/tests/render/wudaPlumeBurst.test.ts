@@ -11,7 +11,10 @@ const MAX_BURSTS_PER_FLUSH = 8;
 describe('wudaAlsoPlumeBurst policy', () => {
   it('defaults off so coat works without splash', () => {
     const cfg = createDefaultSimConfig();
-    expect(cfg.wudaAlsoPlumeBurst).toBe(false);
+    expect(cfg.wudaLayerPresets.length).toBeGreaterThanOrEqual(1);
+    for (const layer of cfg.wudaLayerPresets) {
+      expect(layer.alsoPlumeBurst).toBe(false);
+    }
   });
 
   it('caps bursts per flush so mass detach cannot spawn unbounded systems', () => {
