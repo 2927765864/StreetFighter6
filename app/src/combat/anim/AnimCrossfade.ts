@@ -101,6 +101,8 @@ export function categorizeBinding(bindingKey: string): ClipCategory {
   }
 
   if (
+    id.startsWith('dmg_') ||
+    id.startsWith('kd_') ||
     id.includes('hitstun') ||
     id.includes('blockstun') ||
     id.includes('hit_') ||

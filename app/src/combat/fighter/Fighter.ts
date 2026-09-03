@@ -80,6 +80,11 @@ export class Fighter {
   stunTimer = 0;
   /** Frames passed to last applyHitstun (for view scrub). */
   stunDuration = 0;
+  /**
+   * Wuda「仅受击瞬间」: remaining match logic steps (incl. hitstop) that may
+   * open detach. Set in applyHitstun; ticked down once per MatchSim.step.
+   */
+  hitstunDetachPulseFrames = 0;
   kdPhase: KnockdownPhase = 'none';
   kdTimer = 0;
   knockdownFrames = 0;
@@ -1244,6 +1249,15 @@ export class Fighter {
     }
   }
 
+  /** Match steps (incl. hitstop) to allow wuda impact detach after hitstun entry. */
+  static readonly HITSTUN_DETACH_PULSE_FRAMES = 3;
+
+  tickHitstunDetachPulse(): void {
+    if (this.hitstunDetachPulseFrames > 0) {
+      this.hitstunDetachPulseFrames -= 1;
+    }
+  }
+
   applyHitstun(
     frames: number,
     damage: number,
@@ -1258,6 +1272,7 @@ export class Fighter {
     this.phase = 'hitstun';
     this.stunTimer = frames;
     this.stunDuration = frames;
+    this.hitstunDetachPulseFrames = Fighter.HITSTUN_DETACH_PULSE_FRAMES;
     this.hp = Math.max(0, this.hp - damage);
     this.mover.move = null;
     this.clipId = opts?.reactClipId ?? 'dmg_hl_st';
@@ -1473,6 +1488,7 @@ export class Fighter {
       this.stunTimer -= 1;
       if (this.stunTimer <= 0) {
         this.stunTimer = 0;
+        this.hitstunDetachPulseFrames = 0;
         if (this.phase === 'blockstun' && this.holdGuardLoopClipId) {
           const rest = this.holdGuardLoopClipId;
           const crouchHold = rest === 'crouch' || rest.includes('crouch');

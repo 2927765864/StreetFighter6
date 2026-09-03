@@ -393,12 +393,16 @@ export type MutableSimConfig = {
   wudaCoverMode: 'largestMesh' | 'allMeshes';
   /**
    * 全身模式下四部位粒子配额（相对权重，运行时归一化）。
-   * 头 / 躯干 / 四肢根部（上臂+大腿）/ 四肢尾部（前臂手+小腿脚）。
+   * P1 / P2 各自独立：头 / 躯干 / 四肢根部（上臂+大腿）/ 四肢尾部（前臂手+小腿脚）。
    */
-  wudaRegionWeightHead: number;
-  wudaRegionWeightTorso: number;
-  wudaRegionWeightLimbRoot: number;
-  wudaRegionWeightLimbTip: number;
+  wudaP1RegionWeightHead: number;
+  wudaP1RegionWeightTorso: number;
+  wudaP1RegionWeightLimbRoot: number;
+  wudaP1RegionWeightLimbTip: number;
+  wudaP2RegionWeightHead: number;
+  wudaP2RegionWeightTorso: number;
+  wudaP2RegionWeightLimbRoot: number;
+  wudaP2RegionWeightLimbTip: number;
   /** C：源顶点遍历步长（≥1），用于抽稀 */
   wudaVertexStride: number;
   /** C：同帧 await GPU 回读（false 则脱落判定晚约 1 帧） */
@@ -426,12 +430,10 @@ export type MutableSimConfig = {
   wudaFreeSize: number;
   wudaStuckOpacity: number;
   wudaFreeOpacity: number;
-  wudaStuckColorR: number;
-  wudaStuckColorG: number;
-  wudaStuckColorB: number;
-  wudaFreeColorR: number;
-  wudaFreeColorG: number;
-  wudaFreeColorB: number;
+  /** Stuck particle color as 0xRRGGBB (panel color picker). */
+  wudaStuckColor: number;
+  /** Free particle color as 0xRRGGBB (panel color picker). */
+  wudaFreeColor: number;
   wudaBlendAdditive: boolean;
   wudaRespawnStuck: boolean;
   wudaShowDebug: boolean;
@@ -440,8 +442,17 @@ export type MutableSimConfig = {
    * When true: detach only while attack hitboxes exist this logic frame
    * (`phase===attack` && `mover.currentHitBoxesLocal().length>0`).
    * Velocity sensing still runs; this is a detach lock only.
+   * Combines with `wudaDetachOnlyOnHitstun` via OR when both are on.
    */
   wudaDetachOnlyOnActiveHit: boolean;
+  /**
+   * When true: detach only on hitstun **entry pulse** (impact window of a few
+   * match logic steps after applyHitstun), not the whole stun / not stun end.
+   * Pulse bypasses hitstop so the hit present can shed. Velocity sensing still
+   * runs; this is a detach lock only. OR with `wudaDetachOnlyOnActiveHit`.
+   * Gated per fighter (P1/P2 isolation).
+   */
+  wudaDetachOnlyOnHitstun: boolean;
 };
 
 export function createDefaultSimConfig(): MutableSimConfig {
@@ -729,10 +740,14 @@ export function createDefaultSimConfig(): MutableSimConfig {
     wudaEnabled: false,
     wudaAttachMode: 'surfaceBary',
     wudaCoverMode: 'allMeshes',
-    wudaRegionWeightHead: 0.1,
-    wudaRegionWeightTorso: 0.4,
-    wudaRegionWeightLimbRoot: 0.25,
-    wudaRegionWeightLimbTip: 0.25,
+    wudaP1RegionWeightHead: 0.1,
+    wudaP1RegionWeightTorso: 0.4,
+    wudaP1RegionWeightLimbRoot: 0.25,
+    wudaP1RegionWeightLimbTip: 0.25,
+    wudaP2RegionWeightHead: 0.1,
+    wudaP2RegionWeightTorso: 0.4,
+    wudaP2RegionWeightLimbRoot: 0.25,
+    wudaP2RegionWeightLimbTip: 0.25,
     wudaVertexStride: 1,
     wudaBakeAwaitReadback: true,
     wudaShowBakeStats: false,
@@ -757,17 +772,15 @@ export function createDefaultSimConfig(): MutableSimConfig {
     wudaFreeSize: 0.012,
     wudaStuckOpacity: 0.55,
     wudaFreeOpacity: 0.85,
-    wudaStuckColorR: 0.65,
-    wudaStuckColorG: 0.6,
-    wudaStuckColorB: 0.5,
-    wudaFreeColorR: 0.75,
-    wudaFreeColorG: 0.7,
-    wudaFreeColorB: 0.6,
+    // Dust defaults ≈ rgb(0.65,0.6,0.5) / rgb(0.75,0.7,0.6)
+    wudaStuckColor: 0xa69980,
+    wudaFreeColor: 0xbfb399,
     wudaBlendAdditive: false,
     wudaRespawnStuck: false,
     wudaShowDebug: false,
     wudaAlsoPlumeBurst: false,
     wudaDetachOnlyOnActiveHit: false,
+    wudaDetachOnlyOnHitstun: false,
   };
 }
 

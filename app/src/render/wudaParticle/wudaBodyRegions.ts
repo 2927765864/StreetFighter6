@@ -21,6 +21,60 @@ export const DEFAULT_WUDA_REGION_WEIGHTS: WudaRegionWeights = {
   limbTip: 0.25,
 };
 
+export type WudaFighterSide = 'p1' | 'p2';
+
+/** Per-fighter region weights from CONFIG (P1/P2 isolated). */
+export function resolveWudaRegionWeightsForSide(
+  cfg: {
+    wudaP1RegionWeightHead: number;
+    wudaP1RegionWeightTorso: number;
+    wudaP1RegionWeightLimbRoot: number;
+    wudaP1RegionWeightLimbTip: number;
+    wudaP2RegionWeightHead: number;
+    wudaP2RegionWeightTorso: number;
+    wudaP2RegionWeightLimbRoot: number;
+    wudaP2RegionWeightLimbTip: number;
+  },
+  side: WudaFighterSide,
+): WudaRegionWeights {
+  if (side === 'p2') {
+    return {
+      head: cfg.wudaP2RegionWeightHead,
+      torso: cfg.wudaP2RegionWeightTorso,
+      limbRoot: cfg.wudaP2RegionWeightLimbRoot,
+      limbTip: cfg.wudaP2RegionWeightLimbTip,
+    };
+  }
+  return {
+    head: cfg.wudaP1RegionWeightHead,
+    torso: cfg.wudaP1RegionWeightTorso,
+    limbRoot: cfg.wudaP1RegionWeightLimbRoot,
+    limbTip: cfg.wudaP1RegionWeightLimbTip,
+  };
+}
+
+export function wudaFighterSideFromId(id: string): WudaFighterSide {
+  return id === 'p2' ? 'p2' : 'p1';
+}
+
+/** Pack 0–1 RGB channels into 0xRRGGBB. */
+export function rgb01ToHex(r: number, g: number, b: number): number {
+  const R = Math.round(Math.min(1, Math.max(0, r)) * 255);
+  const G = Math.round(Math.min(1, Math.max(0, g)) * 255);
+  const B = Math.round(Math.min(1, Math.max(0, b)) * 255);
+  return ((R << 16) | (G << 8) | B) >>> 0;
+}
+
+/** Unpack 0xRRGGBB into 0–1 RGB channels. */
+export function hexToRgb01(hex: number): { r: number; g: number; b: number } {
+  const h = hex >>> 0;
+  return {
+    r: ((h >> 16) & 0xff) / 255,
+    g: ((h >> 8) & 0xff) / 255,
+    b: (h & 0xff) / 255,
+  };
+}
+
 /** Classify a skeleton bone name into one of four coat regions. */
 export function classifyBoneName(name: string): WudaBodyRegion {
   const n = name || '';
@@ -108,7 +162,7 @@ export function allocateRegionCounts(
   for (const r of usable) wSum += Math.max(0, weights[r] ?? 0);
   if (wSum <= 0) {
     const even = 1 / usable.length;
-    for (const r of usable) wSum += even;
+    for (let i = 0; i < usable.length; i++) wSum += even;
   }
 
   type Entry = { region: WudaBodyRegion; exact: number; n: number };

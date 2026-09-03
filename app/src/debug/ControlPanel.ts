@@ -679,14 +679,21 @@ function buildDom(): HTMLElement {
               <option value="largestMesh">仅最大网格（旧）</option>
             </select>
           </div>
-          ${rowNumber('wudaRegionWeightHead', '部位·头 权重', 0, 1, 0.01)}
-          ${rowNumber('wudaRegionWeightTorso', '部位·躯干 权重', 0, 1, 0.01)}
-          ${rowNumber('wudaRegionWeightLimbRoot', '部位·四肢根部 权重', 0, 1, 0.01)}
-          ${rowNumber('wudaRegionWeightLimbTip', '部位·四肢尾部 权重', 0, 1, 0.01)}
+          <p class="panel-hint">部位权重 · P1</p>
+          ${rowNumber('wudaP1RegionWeightHead', 'P1·头', 0, 1, 0.01)}
+          ${rowNumber('wudaP1RegionWeightTorso', 'P1·躯干', 0, 1, 0.01)}
+          ${rowNumber('wudaP1RegionWeightLimbRoot', 'P1·四肢根部', 0, 1, 0.01)}
+          ${rowNumber('wudaP1RegionWeightLimbTip', 'P1·四肢尾部', 0, 1, 0.01)}
+          <p class="panel-hint">部位权重 · P2</p>
+          ${rowNumber('wudaP2RegionWeightHead', 'P2·头', 0, 1, 0.01)}
+          ${rowNumber('wudaP2RegionWeightTorso', 'P2·躯干', 0, 1, 0.01)}
+          ${rowNumber('wudaP2RegionWeightLimbRoot', 'P2·四肢根部', 0, 1, 0.01)}
+          ${rowNumber('wudaP2RegionWeightLimbTip', 'P2·四肢尾部', 0, 1, 0.01)}
           ${rowNumber('wudaVertexStride', 'C 顶点步长', 1, 32, 1)}
           ${rowToggle('wudaBakeAwaitReadback', 'C 同帧等待回读')}
           ${rowToggle('wudaShowBakeStats', 'C 显示烘焙统计')}
           ${rowToggle('wudaDetachOnlyOnActiveHit', '仅攻击发生帧可脱落（锁）')}
+          ${rowToggle('wudaDetachOnlyOnHitstun', '仅受击瞬间可脱落（锁）')}
           ${rowNumber('wudaParticleCount', '粒子数', 64, 2048, 64)}
           ${rowNumber('wudaSeed', '随机种子', 0, 999999, 1)}
           ${rowNumber('wudaDetachSpeed', '脱落速度阈值', 0, 20, 0.1)}
@@ -708,12 +715,14 @@ function buildDom(): HTMLElement {
           ${rowNumber('wudaFreeSize', '自由尺寸', 0.001, 0.08, 0.001)}
           ${rowNumber('wudaStuckOpacity', '粘着不透明度', 0, 1, 0.01)}
           ${rowNumber('wudaFreeOpacity', '自由不透明度', 0, 1, 0.01)}
-          ${rowNumber('wudaStuckColorR', '粘着色R', 0, 1, 0.01)}
-          ${rowNumber('wudaStuckColorG', '粘着色G', 0, 1, 0.01)}
-          ${rowNumber('wudaStuckColorB', '粘着色B', 0, 1, 0.01)}
-          ${rowNumber('wudaFreeColorR', '自由色R', 0, 1, 0.01)}
-          ${rowNumber('wudaFreeColorG', '自由色G', 0, 1, 0.01)}
-          ${rowNumber('wudaFreeColorB', '自由色B', 0, 1, 0.01)}
+          <div class="panel-row light-color-row">
+            <div class="panel-row-header"><span>粘着色</span></div>
+            <input id="inp-wudaStuckColorPicker" type="color" title="粘着色" />
+          </div>
+          <div class="panel-row light-color-row">
+            <div class="panel-row-header"><span>自由色</span></div>
+            <input id="inp-wudaFreeColorPicker" type="color" title="自由色" />
+          </div>
           ${rowToggle('wudaBlendAdditive', '加色混合')}
           ${rowToggle('wudaRespawnStuck', '死后回到粘着')}
           ${rowToggle('wudaShowDebug', '调试色（绿=粘 / 橙=飞）')}
@@ -1020,14 +1029,19 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'plantSlewPerSec', path: 'plantSlewPerSec' },
   { id: 'showFootDebug', path: 'showFootDebug' },
   { id: 'wudaEnabled', path: 'wudaEnabled' },
-  { id: 'wudaRegionWeightHead', path: 'wudaRegionWeightHead' },
-  { id: 'wudaRegionWeightTorso', path: 'wudaRegionWeightTorso' },
-  { id: 'wudaRegionWeightLimbRoot', path: 'wudaRegionWeightLimbRoot' },
-  { id: 'wudaRegionWeightLimbTip', path: 'wudaRegionWeightLimbTip' },
+  { id: 'wudaP1RegionWeightHead', path: 'wudaP1RegionWeightHead' },
+  { id: 'wudaP1RegionWeightTorso', path: 'wudaP1RegionWeightTorso' },
+  { id: 'wudaP1RegionWeightLimbRoot', path: 'wudaP1RegionWeightLimbRoot' },
+  { id: 'wudaP1RegionWeightLimbTip', path: 'wudaP1RegionWeightLimbTip' },
+  { id: 'wudaP2RegionWeightHead', path: 'wudaP2RegionWeightHead' },
+  { id: 'wudaP2RegionWeightTorso', path: 'wudaP2RegionWeightTorso' },
+  { id: 'wudaP2RegionWeightLimbRoot', path: 'wudaP2RegionWeightLimbRoot' },
+  { id: 'wudaP2RegionWeightLimbTip', path: 'wudaP2RegionWeightLimbTip' },
   { id: 'wudaVertexStride', path: 'wudaVertexStride' },
   { id: 'wudaBakeAwaitReadback', path: 'wudaBakeAwaitReadback' },
   { id: 'wudaShowBakeStats', path: 'wudaShowBakeStats' },
   { id: 'wudaDetachOnlyOnActiveHit', path: 'wudaDetachOnlyOnActiveHit' },
+  { id: 'wudaDetachOnlyOnHitstun', path: 'wudaDetachOnlyOnHitstun' },
   { id: 'wudaParticleCount', path: 'wudaParticleCount' },
   { id: 'wudaSeed', path: 'wudaSeed' },
   { id: 'wudaDetachSpeed', path: 'wudaDetachSpeed' },
@@ -1049,12 +1063,6 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'wudaFreeSize', path: 'wudaFreeSize' },
   { id: 'wudaStuckOpacity', path: 'wudaStuckOpacity' },
   { id: 'wudaFreeOpacity', path: 'wudaFreeOpacity' },
-  { id: 'wudaStuckColorR', path: 'wudaStuckColorR' },
-  { id: 'wudaStuckColorG', path: 'wudaStuckColorG' },
-  { id: 'wudaStuckColorB', path: 'wudaStuckColorB' },
-  { id: 'wudaFreeColorR', path: 'wudaFreeColorR' },
-  { id: 'wudaFreeColorG', path: 'wudaFreeColorG' },
-  { id: 'wudaFreeColorB', path: 'wudaFreeColorB' },
   { id: 'wudaBlendAdditive', path: 'wudaBlendAdditive' },
   { id: 'wudaRespawnStuck', path: 'wudaRespawnStuck' },
   { id: 'wudaShowDebug', path: 'wudaShowDebug' },
@@ -1196,6 +1204,7 @@ const TOGGLE_IDS = new Set([
   'lightCastShadow',
   'wudaEnabled',
   'wudaDetachOnlyOnActiveHit',
+  'wudaDetachOnlyOnHitstun',
   'wudaBlendAdditive',
   'wudaRespawnStuck',
   'wudaShowDebug',
@@ -1454,6 +1463,14 @@ export function setupControlPanel(
   const gizmoModeSel = byId<HTMLSelectElement>(host, 'sel-lightGizmoMode');
   const bgColorPicker = byId<HTMLInputElement>(host, 'inp-bgColorPicker');
   const fogColorPicker = byId<HTMLInputElement>(host, 'inp-fogColorPicker');
+  const wudaStuckColorPicker = byId<HTMLInputElement>(
+    host,
+    'inp-wudaStuckColorPicker',
+  );
+  const wudaFreeColorPicker = byId<HTMLInputElement>(
+    host,
+    'inp-wudaFreeColorPicker',
+  );
 
   const findLight = (id: string) => CONFIG.lights.find((l) => l.id === id);
 
@@ -2057,6 +2074,12 @@ export function setupControlPanel(
     if (document.activeElement !== fogColorPicker) {
       fogColorPicker.value = hexToColorInput(CONFIG.fogColor);
     }
+    if (document.activeElement !== wudaStuckColorPicker) {
+      wudaStuckColorPicker.value = hexToColorInput(CONFIG.wudaStuckColor);
+    }
+    if (document.activeElement !== wudaFreeColorPicker) {
+      wudaFreeColorPicker.value = hexToColorInput(CONFIG.wudaFreeColor);
+    }
   };
   bgColorPicker.addEventListener('input', () => {
     CONFIG.bgColor = colorInputToHex(bgColorPicker.value);
@@ -2065,6 +2088,14 @@ export function setupControlPanel(
   fogColorPicker.addEventListener('input', () => {
     CONFIG.fogColor = colorInputToHex(fogColorPicker.value);
     notify('fogColor', CONFIG.fogColor, CONFIG);
+  });
+  wudaStuckColorPicker.addEventListener('input', () => {
+    CONFIG.wudaStuckColor = colorInputToHex(wudaStuckColorPicker.value);
+    notify('wudaStuckColor', CONFIG.wudaStuckColor, CONFIG);
+  });
+  wudaFreeColorPicker.addEventListener('input', () => {
+    CONFIG.wudaFreeColor = colorInputToHex(wudaFreeColorPicker.value);
+    notify('wudaFreeColor', CONFIG.wudaFreeColor, CONFIG);
   });
 
   gizmoModeSel.addEventListener('change', () => {

@@ -289,23 +289,38 @@ export function createDebugGui(
     .add(cfg, 'wudaCoverMode', ['allMeshes', 'largestMesh'])
     .name('覆盖范围');
   wuda
-    .add(cfg, 'wudaRegionWeightHead', 0, 1, 0.01)
-    .name('部位·头');
+    .add(cfg, 'wudaP1RegionWeightHead', 0, 1, 0.01)
+    .name('P1·头');
   wuda
-    .add(cfg, 'wudaRegionWeightTorso', 0, 1, 0.01)
-    .name('部位·躯干');
+    .add(cfg, 'wudaP1RegionWeightTorso', 0, 1, 0.01)
+    .name('P1·躯干');
   wuda
-    .add(cfg, 'wudaRegionWeightLimbRoot', 0, 1, 0.01)
-    .name('部位·四肢根部');
+    .add(cfg, 'wudaP1RegionWeightLimbRoot', 0, 1, 0.01)
+    .name('P1·四肢根部');
   wuda
-    .add(cfg, 'wudaRegionWeightLimbTip', 0, 1, 0.01)
-    .name('部位·四肢尾部');
+    .add(cfg, 'wudaP1RegionWeightLimbTip', 0, 1, 0.01)
+    .name('P1·四肢尾部');
+  wuda
+    .add(cfg, 'wudaP2RegionWeightHead', 0, 1, 0.01)
+    .name('P2·头');
+  wuda
+    .add(cfg, 'wudaP2RegionWeightTorso', 0, 1, 0.01)
+    .name('P2·躯干');
+  wuda
+    .add(cfg, 'wudaP2RegionWeightLimbRoot', 0, 1, 0.01)
+    .name('P2·四肢根部');
+  wuda
+    .add(cfg, 'wudaP2RegionWeightLimbTip', 0, 1, 0.01)
+    .name('P2·四肢尾部');
   wuda.add(cfg, 'wudaVertexStride', 1, 32, 1).name('C 顶点步长');
   wuda.add(cfg, 'wudaBakeAwaitReadback').name('C 同帧等待回读');
   wuda.add(cfg, 'wudaShowBakeStats').name('C 显示烘焙统计');
   wuda
     .add(cfg, 'wudaDetachOnlyOnActiveHit')
     .name('仅攻击发生帧可脱落');
+  wuda
+    .add(cfg, 'wudaDetachOnlyOnHitstun')
+    .name('仅受击瞬间可脱落');
   wuda.add(cfg, 'wudaParticleCount', 64, 2048, 64).name('粒子数');
   wuda.add(cfg, 'wudaSeed', 0, 999999, 1).name('随机种子');
   wuda.add(cfg, 'wudaDetachSpeed', 0, 20, 0.1).name('脱落速度阈值');
@@ -329,12 +344,8 @@ export function createDebugGui(
   wuda.add(cfg, 'wudaFreeSize', 0.001, 0.08, 0.001).name('自由尺寸');
   wuda.add(cfg, 'wudaStuckOpacity', 0, 1, 0.01).name('粘着不透明度');
   wuda.add(cfg, 'wudaFreeOpacity', 0, 1, 0.01).name('自由不透明度');
-  wuda.add(cfg, 'wudaStuckColorR', 0, 1, 0.01).name('粘着色R');
-  wuda.add(cfg, 'wudaStuckColorG', 0, 1, 0.01).name('粘着色G');
-  wuda.add(cfg, 'wudaStuckColorB', 0, 1, 0.01).name('粘着色B');
-  wuda.add(cfg, 'wudaFreeColorR', 0, 1, 0.01).name('自由色R');
-  wuda.add(cfg, 'wudaFreeColorG', 0, 1, 0.01).name('自由色G');
-  wuda.add(cfg, 'wudaFreeColorB', 0, 1, 0.01).name('自由色B');
+  wuda.addColor(cfg, 'wudaStuckColor').name('粘着色');
+  wuda.addColor(cfg, 'wudaFreeColor').name('自由色');
   wuda.add(cfg, 'wudaBlendAdditive').name('加色混合');
   wuda.add(cfg, 'wudaRespawnStuck').name('死后回到粘着');
   wuda.add(cfg, 'wudaShowDebug').name('显示调试色');

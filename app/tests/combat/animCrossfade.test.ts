@@ -26,6 +26,9 @@ describe('AnimCrossfade §3.11', () => {
     expect(categorizeBinding('crouch::crouch_to_stand')).toBe('stance');
     expect(categorizeBinding('crouch::main')).toBe('loco');
     expect(categorizeBinding('hitstun::main')).toBe('hit');
+    expect(categorizeBinding('dmg_hl_st::main')).toBe('hit');
+    expect(categorizeBinding('dmg_hh_lt::main')).toBe('hit');
+    expect(categorizeBinding('kd_sweep::main')).toBe('hit');
     expect(categorizeBinding('grd_hl_st::main')).toBe('guard');
     expect(categorizeBinding('block_stand_loop::loop')).toBe('guard');
     expect(categorizeBinding('block_crouch_loop::loop')).toBe('guard');
@@ -83,6 +86,9 @@ describe('AnimCrossfade §3.11', () => {
     expect(resolveCrossfadeSec('idle::main', 'dash_fwd::main', d)).toBe(0);
     expect(resolveCrossfadeSec('dash_fwd::main', 'idle::main', d)).toBe(0.1);
     expect(resolveCrossfadeSec('idle::main', 'hitstun::main', d)).toBe(0);
+    // dmg_* must hard-cut like hitstun — not soft-blend as mis-tagged attack
+    expect(resolveCrossfadeSec('dmg_hl_st::main', 'idle::main', d)).toBe(0);
+    expect(resolveCrossfadeSec('idle::main', 'dmg_hl_st::main', d)).toBe(0);
   });
 
   it('land → crouch_to_stand can sol; land → idle/attack hard cut', () => {

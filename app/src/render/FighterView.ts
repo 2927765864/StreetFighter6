@@ -64,7 +64,8 @@ import { WudaCoatRuntime } from './wudaParticle/WudaCoatRuntime';
 import { WudaVertexCoatRuntime } from './wudaParticle/WudaVertexCoatRuntime';
 import type { WudaPlumeBurst } from './wudaParticle/WudaPlumeBurst';
 import { resolveWudaCoverMeshes } from './wudaParticle/evalSkinnedSurface';
-import { isAttackActiveHitFrame } from './wudaParticle/wudaCoatMath';
+import { wudaFighterSideFromId } from './wudaParticle/wudaBodyRegions';
+import { resolveWudaAllowDetach } from './wudaParticle/wudaCoatMath';
 import type { WebGPURenderer } from 'three/webgpu';
 import {
   isJumpLandBinding,
@@ -202,6 +203,8 @@ export class FighterView {
   private wudaRenderer: WebGPURenderer | null = null;
   /** Optional shared plume splash on coat detach (wired from main). */
   private wudaPlumeBurst: WudaPlumeBurst | null = null;
+  /** Latched from syncFromLogic — hitstop must not open detach gates. */
+  private wudaInHitstop = false;
   /** Scene root — spring debug helpers must parent here (not under fighter). */
   private readonly scene: THREE.Scene;
 
@@ -946,7 +949,7 @@ export class FighterView {
     this.wudaCoat?.setPlumeBurst(burst);
   }
 
-  /** Inject WebGPURenderer for scheme C computeSkinning bake. */
+  /** Inject WebGPURenderer for scheme C per-mesh GPU skin batches. */
   setWudaRenderer(renderer: WebGPURenderer | null): void {
     this.wudaRenderer = renderer;
     if (this.wudaCoat instanceof WudaVertexCoatRuntime) {
@@ -999,8 +1002,10 @@ export class FighterView {
 
   /**
    * Surface coat: stuck tracking + detach; wall-clock dt.
-   * Detach lock (optional): only attack hitbox-active frames when
-   * cfg.wudaDetachOnlyOnActiveHit — velocity sensing still runs.
+   * Optional detach locks (per this fighter only — P1/P2 isolated):
+   * - wudaDetachOnlyOnActiveHit → attack hitbox-active frames
+   * - wudaDetachOnlyOnHitstun → hitstun entry pulse (impact), bypasses hitstop
+   * Both on → OR. Hitstop otherwise blocks new detach. Velocity sensing still runs.
    */
   private updateWudaCoat(
     fighter: Fighter,
@@ -1037,9 +1042,11 @@ export class FighterView {
         }
       });
     }
-    const allowDetach =
-      !cfg.wudaDetachOnlyOnActiveHit || isAttackActiveHitFrame(fighter);
-    void this.wudaCoat.update(wallDtSec, cfg, { allowDetach });
+    const allowDetach = resolveWudaAllowDetach(cfg, fighter, {
+      inHitstop: this.wudaInHitstop,
+    });
+    const side = wudaFighterSideFromId(fighter.id);
+    void this.wudaCoat.update(wallDtSec, cfg, { allowDetach, side });
   }
 
   private maybePlantAfterPose(
@@ -1789,6 +1796,7 @@ export class FighterView {
     const hitstopTicks = Math.max(0, opts?.hitstopPresentTicks ?? 0);
     const hitstopRate = clampHitstopAnimRate(cfg.hitstopAnimRate);
     const inHitstop = opts?.inHitstop === true || hitstopTicks > 0;
+    this.wudaInHitstop = inHitstop;
     if (!this.previewMode) {
       if (hitstopTicks > 0 && hitstopRate > 0) {
         this.hitstopPresentOffsetSec += hitstopPresentDtSec(

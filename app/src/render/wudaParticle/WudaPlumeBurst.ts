@@ -10,6 +10,7 @@ import {
   type MutableSimConfig,
 } from '../../config/constants';
 import { Manager, system, type SystemDef } from '../hitVfx/plumeApi';
+import { hexToRgb01 } from './wudaBodyRegions';
 
 const PREFAB_ID = 'wuda_detach_burst';
 /** Cap plume systems spawned from one coat update (many particles may detach). */
@@ -43,15 +44,12 @@ function buildDetachBurstDef(seed: number, cfg: MutableSimConfig): SystemDef {
   const speedMin = 0.6;
   const speedMax = Math.max(speedMin + 0.2, Math.min(4, cfg.wudaSpeedLimit * 0.35));
   const g = -Math.abs(cfg.wudaGravityPower);
-  const c0: [number, number, number] = [
-    cfg.wudaFreeColorR,
-    cfg.wudaFreeColorG,
-    cfg.wudaFreeColorB,
-  ];
+  const freeRgb = hexToRgb01(cfg.wudaFreeColor);
+  const c0: [number, number, number] = [freeRgb.r, freeRgb.g, freeRgb.b];
   const c1: [number, number, number] = [
-    Math.min(1, cfg.wudaFreeColorR * 1.15),
-    Math.min(1, cfg.wudaFreeColorG * 1.15),
-    Math.min(1, cfg.wudaFreeColorB * 1.1),
+    Math.min(1, freeRgb.r * 1.15),
+    Math.min(1, freeRgb.g * 1.15),
+    Math.min(1, freeRgb.b * 1.1),
   ];
   const blending = cfg.wudaBlendAdditive ? 'additive' : 'alpha';
 

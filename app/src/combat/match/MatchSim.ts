@@ -737,6 +737,9 @@ export class MatchSim {
   step(): void {
     this.logicFrame += 1;
     this.skipP1Advance = false;
+    // Once per match step (incl. hitstop): age wuda hitstun impact pulse.
+    this.p1.tickHitstunDetachPulse();
+    this.p2.tickHitstunDetachPulse();
 
     // Commands use logical facing from last frame / already-separated boxes.
     this.commitLogicalFacing();

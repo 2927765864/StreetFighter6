@@ -11,11 +11,53 @@ import {
   type HitVfxElementPreset,
   type HitVfxRecipe,
 } from '../render/hitVfx/hitVfxTypes';
+import { rgb01ToHex } from '../render/wudaParticle/wudaBodyRegions';
 import type { RuntimeConfig } from './types';
 import { CONFIG_VERSION } from './types';
 
 function isPlainObject(v: unknown): v is Record<string, unknown> {
   return !!v && typeof v === 'object' && !Array.isArray(v);
+}
+
+function asFiniteNumber(v: unknown): number | null {
+  return typeof v === 'number' && Number.isFinite(v) ? v : null;
+}
+
+/**
+ * Migrate pre-split wuda region weights / RGB color floats into current keys.
+ * Only fills a new key when incoming did not set it explicitly.
+ */
+function migrateLegacyWudaFields(
+  out: RuntimeConfig,
+  incoming: Record<string, unknown>,
+): void {
+  const parts = ['Head', 'Torso', 'LimbRoot', 'LimbTip'] as const;
+  for (const part of parts) {
+    const legacy = asFiniteNumber(incoming[`wudaRegionWeight${part}`]);
+    if (legacy == null) continue;
+    for (const side of ['P1', 'P2'] as const) {
+      const key = `wuda${side}RegionWeight${part}` as keyof RuntimeConfig;
+      if (asFiniteNumber(incoming[key as string]) != null) continue;
+      (out as Record<string, unknown>)[key as string] = legacy;
+    }
+  }
+
+  if (asFiniteNumber(incoming.wudaStuckColor) == null) {
+    const r = asFiniteNumber(incoming.wudaStuckColorR);
+    const g = asFiniteNumber(incoming.wudaStuckColorG);
+    const b = asFiniteNumber(incoming.wudaStuckColorB);
+    if (r != null && g != null && b != null) {
+      out.wudaStuckColor = rgb01ToHex(r, g, b);
+    }
+  }
+  if (asFiniteNumber(incoming.wudaFreeColor) == null) {
+    const r = asFiniteNumber(incoming.wudaFreeColorR);
+    const g = asFiniteNumber(incoming.wudaFreeColorG);
+    const b = asFiniteNumber(incoming.wudaFreeColorB);
+    if (r != null && g != null && b != null) {
+      out.wudaFreeColor = rgb01ToHex(r, g, b);
+    }
+  }
 }
 
 export function cloneConfig(src: RuntimeConfig): RuntimeConfig {
@@ -119,6 +161,8 @@ export function mergeConfig(
     }
     // Unknown extra keys ignored (forward-compat)
   }
+
+  migrateLegacyWudaFields(out, incoming);
 
   out.__version = CONFIG_VERSION;
   return out;

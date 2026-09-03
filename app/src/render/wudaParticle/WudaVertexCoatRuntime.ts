@@ -17,7 +17,11 @@ import type { WudaCoatStats, WudaParticleState } from './wudaTypes';
 import type { WudaPlumeBurst } from './WudaPlumeBurst';
 import { bakeWudaVertexSamplesForMeshes } from './WudaVertexIndexBake';
 import { WudaVertexGpuBaker } from './WudaVertexGpuBaker';
-import type { WudaRegionWeights } from './wudaBodyRegions';
+import {
+  resolveWudaRegionWeightsForSide,
+  type WudaFighterSide,
+  type WudaRegionWeights,
+} from './wudaBodyRegions';
 
 type Slot = {
   vertexIndex: number;
@@ -49,11 +53,20 @@ export class WudaVertexCoatRuntime {
   private camera: THREE.Camera | null = null;
   private baker = new WudaVertexGpuBaker();
   private lastStats: WudaCoatStats = { stuck: 0, free: 0, dead: 0 };
+  private side: WudaFighterSide = 'p1';
   private dummy = new THREE.Object3D();
   private readonly _color = new THREE.Color();
   private plumeBurst: WudaPlumeBurst | null = null;
   private lastBakeMs = 0;
   private sourceVertexCount = 0;
+  private renderer: WebGPURenderer | null = null;
+  /** In-flight async GPU bake (fills pendingGpuWorld; never blocks simulate). */
+  private bakeInFlight: Promise<void> | null = null;
+  /** Completed GPU world for *next* simulate; copied out of baker.gpuOut. */
+  private pendingGpuWorld: Float32Array | null = null;
+  private gpuValidated = false;
+  private lastStatsLogMs = 0;
+  private degradedLogged = false;
 
   get isBound(): boolean {
     return this.meshes.length > 0;
@@ -67,8 +80,8 @@ export class WudaVertexCoatRuntime {
     this.plumeBurst = burst;
   }
 
-  setRenderer(_renderer: WebGPURenderer | null): void {
-    // GPU computeSkinning path is not used for live tracking (feet-dump).
+  setRenderer(renderer: WebGPURenderer | null): void {
+    this.renderer = renderer;
   }
 
   bind(
@@ -93,6 +106,7 @@ export class WudaVertexCoatRuntime {
     this.meshes = list;
     this.parent = opts.parent;
     this.camera = opts.camera ?? null;
+    if (opts.renderer) this.renderer = opts.renderer;
     return {
       ok: true,
       count: 0,
@@ -113,11 +127,14 @@ export class WudaVertexCoatRuntime {
     const count = Math.max(0, Math.floor(cfg.wudaParticleCount));
     const stride = Math.max(1, Math.floor(cfg.wudaVertexStride || 1));
     const meshKey = this.meshes.map((m) => m.uuid).join(',');
-    const regionKey =
+    const regionWeights: WudaRegionWeights | null =
       cfg.wudaCoverMode === 'allMeshes'
-        ? `${cfg.wudaRegionWeightHead}|${cfg.wudaRegionWeightTorso}|${cfg.wudaRegionWeightLimbRoot}|${cfg.wudaRegionWeightLimbTip}`
-        : 'off';
-    const key = `C|${count}|${cfg.wudaSeed}|${stride}|${cfg.wudaCoverMode}|${regionKey}|${meshKey}`;
+        ? resolveWudaRegionWeightsForSide(cfg, this.side)
+        : null;
+    const regionKey = regionWeights
+      ? `${regionWeights.head}|${regionWeights.torso}|${regionWeights.limbRoot}|${regionWeights.limbTip}`
+      : 'off';
+    const key = `C|${count}|${cfg.wudaSeed}|${stride}|${cfg.wudaCoverMode}|${this.side}|${regionKey}|${meshKey}`;
     if (
       key === this.bakeKey &&
       this.instanced &&
@@ -131,18 +148,12 @@ export class WudaVertexCoatRuntime {
     this.baker.dispose();
     this.slots = [];
     this.bakeKey = key;
+    this.degradedLogged = false;
+    this.bakeInFlight = null;
+    this.pendingGpuWorld = null;
+    this.gpuValidated = false;
 
     if (count <= 0) return false;
-
-    const regionWeights: WudaRegionWeights | null =
-      cfg.wudaCoverMode === 'allMeshes'
-        ? {
-            head: cfg.wudaRegionWeightHead,
-            torso: cfg.wudaRegionWeightTorso,
-            limbRoot: cfg.wudaRegionWeightLimbRoot,
-            limbTip: cfg.wudaRegionWeightLimbTip,
-          }
-        : null;
     const baked = bakeWudaVertexSamplesForMeshes(
       this.meshes,
       count,
@@ -207,14 +218,20 @@ export class WudaVertexCoatRuntime {
   }
 
   /**
-   * May return a Promise when GPU bake awaits readback.
-   * Caller should `void` the result (FighterView).
+   * Sync update — safe to `void` from FighterView.
+   *
+   * Stuck tracking must have a **fresh** world every frame. FighterView does not
+   * await Promises, so we never block simulate on GPU readback. Pattern:
+   *   1) consume last completed GPU pending (validated) OR CPU bake this frame
+   *   2) simulate detach/flight
+   *   3) kick async GPU bake for the *next* frame
    */
   update(
     wallDtSec: number,
     cfg: MutableSimConfig,
-    opts?: { allowDetach?: boolean },
-  ): void | Promise<void> {
+    opts?: { allowDetach?: boolean; side?: WudaFighterSide },
+  ): void {
+    if (opts?.side === 'p1' || opts?.side === 'p2') this.side = opts.side;
     const allowDetach = opts?.allowDetach !== false;
     if (!cfg.wudaEnabled) {
       if (this.instanced) this.instanced.visible = false;
@@ -245,17 +262,103 @@ export class WudaVertexCoatRuntime {
       ? THREE.AdditiveBlending
       : THREE.NormalBlending;
 
-    // Vertex emitters (scheme C attachment). Positions come from
-    // applyBoneTransform on each sampled vertex + matrixWorld — same formula
-    // as three.js SkinnedMesh.js and as B's triangle corners.
-    //
-    // GPU computeSkinning on a proxy that is never rendered does not receive
-    // OnObjectUpdate / current boneMatrices (Discourse #34210). Readback then
-    // sits at the mesh origin → particle cloud between the feet (user screenshot).
-    // Do not use that path for live tracking. Multi-mesh always uses CPU bake.
-    this.baker.bakeCpuIntoCurr();
-    this.lastBakeMs = 0;
+    this.commitWorldForSimulate(cfg);
+    this.lastBakeMs = this.baker.lastBakeMs;
     this.simulateFromWorld(this.baker.getCurrWorld(), dt, cfg, allowDetach);
+    this.kickGpuBakeForNextFrame();
+  }
+
+  /**
+   * Prefer validated GPU pending from the previous kick; otherwise CPU.
+   * Never reuses a stale currWorld across frames without a fresh bake.
+   * GPU accuracy is validated **inside bakeGpu** against a same-pose CPU snap
+   * (comparing last-frame GPU to this-frame CPU falsely reported ~2m errors).
+   */
+  private commitWorldForSimulate(cfg: MutableSimConfig): void {
+    const pending = this.pendingGpuWorld;
+    this.pendingGpuWorld = null;
+
+    if (pending && this.baker.hasGpu) {
+      if (this.baker.gpuWorldLooksDegenerate(pending)) {
+        this.fallbackCpuDegraded('degenerate GPU pending');
+        return;
+      }
+      if (!this.gpuValidated) {
+        this.gpuValidated = true;
+        // Always log once — success was previously gated on wudaShowBakeStats and
+        // looked identical to "silent CPU" in the console.
+        const s = this.baker.lastSamePoseStats;
+        console.info(
+          `[WudaVertexCoat] GPU live enabled (p95=${s.p95.toFixed(4)}m max=${s.max.toFixed(4)}m mean=${s.mean.toFixed(4)}m batches=${this.baker.gpuBatchCount})`,
+        );
+      }
+      this.baker.commitWorldFrom(pending, 'gpu');
+      this.lastBakeMs = this.baker.lastBakeMs;
+      return;
+    }
+
+    this.baker.bakeCpuIntoCurr();
+  }
+
+  private kickGpuBakeForNextFrame(): void {
+    const renderer = this.renderer;
+    if (
+      !renderer ||
+      !this.baker.hasGpu ||
+      this.baker.gpuBatchCount <= 0 ||
+      this.bakeInFlight
+    ) {
+      return;
+    }
+    this.bakeInFlight = this.baker
+      .bakeGpu(renderer)
+      .then((result) => {
+        if (!this.baker.hasGpu) return;
+        const { world, samePoseStats } = result;
+        // Dual gate: typical verts tight, worst-case still coat-usable.
+        if (!WudaVertexGpuBaker.gpuSamePoseAcceptable(samePoseStats)) {
+          this.fallbackCpuDegraded(
+            `GPU≠CPU same-pose (p95=${samePoseStats.p95.toFixed(3)}m max=${samePoseStats.max.toFixed(3)}m mean=${samePoseStats.mean.toFixed(3)}m)`,
+            false,
+          );
+          return;
+        }
+        if (this.baker.gpuWorldLooksDegenerate(world)) {
+          this.fallbackCpuDegraded('degenerate world after GPU bake', false);
+          return;
+        }
+        if (
+          !this.pendingGpuWorld ||
+          this.pendingGpuWorld.length !== world.length
+        ) {
+          this.pendingGpuWorld = new Float32Array(world.length);
+        }
+        this.pendingGpuWorld.set(world);
+      })
+      .catch((err: unknown) => {
+        this.fallbackCpuDegraded(
+          err instanceof Error ? err.message : 'GPU bake threw',
+          false,
+        );
+      })
+      .finally(() => {
+        this.bakeInFlight = null;
+      });
+  }
+
+  private fallbackCpuDegraded(reason: string, bakeNow = true): void {
+    this.baker.markGpuDegraded();
+    this.pendingGpuWorld = null;
+    if (bakeNow) {
+      this.baker.bakeCpuIntoCurr();
+      this.lastBakeMs = this.baker.lastBakeMs;
+    }
+    if (!this.degradedLogged) {
+      this.degradedLogged = true;
+      console.warn(
+        `[WudaVertexCoat] C-DEGRADED → CPU skinning (${reason}); batches=${this.baker.gpuBatchCount}`,
+      );
+    }
   }
 
   private simulateFromWorld(
@@ -407,9 +510,14 @@ export class WudaVertexCoatRuntime {
     this.lastStats = { stuck, free, dead };
 
     if (cfg.wudaShowBakeStats) {
-      console.info(
-        `[WudaVertexCoat] mode=C N=${this.slots.length} srcVerts=${this.sourceVertexCount} stride=${cfg.wudaVertexStride} bakeMs=${this.lastBakeMs.toFixed(2)} stuck=${stuck} free=${free} dead=${dead}`,
-      );
+      const now =
+        typeof performance !== 'undefined' ? performance.now() : Date.now();
+      if (now - this.lastStatsLogMs > 500) {
+        this.lastStatsLogMs = now;
+        console.info(
+          `[WudaVertexCoat] mode=C path=${this.baker.lastBakePath} batches=${this.baker.gpuBatchCount} degraded=${this.baker.isGpuDegraded} N=${this.slots.length} srcVerts=${this.sourceVertexCount} stride=${cfg.wudaVertexStride} bakeMs=${this.lastBakeMs.toFixed(2)} stuck=${stuck} free=${free} dead=${dead}`,
+        );
+      }
     }
 
     if (cfg.wudaAlsoPlumeBurst && this.plumeBurst) {
@@ -445,17 +553,9 @@ export class WudaVertexCoatRuntime {
     } else if (cfg.wudaShowDebug && !stuck && size > 0) {
       this._color.setRGB(0.95 * op, 0.35 * op, 0.15 * op);
     } else if (stuck) {
-      this._color.setRGB(
-        cfg.wudaStuckColorR * op,
-        cfg.wudaStuckColorG * op,
-        cfg.wudaStuckColorB * op,
-      );
+      this._color.setHex(cfg.wudaStuckColor & 0xffffff).multiplyScalar(op);
     } else {
-      this._color.setRGB(
-        cfg.wudaFreeColorR * op,
-        cfg.wudaFreeColorG * op,
-        cfg.wudaFreeColorB * op,
-      );
+      this._color.setHex(cfg.wudaFreeColor & 0xffffff).multiplyScalar(op);
     }
     this.instanced.setColorAt(index, this._color);
   }
@@ -476,5 +576,8 @@ export class WudaVertexCoatRuntime {
     this.baker.dispose();
     this.meshes = [];
     this.parent = null;
+    this.bakeInFlight = null;
+    this.pendingGpuWorld = null;
+    this.gpuValidated = false;
   }
 }

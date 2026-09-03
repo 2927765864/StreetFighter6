@@ -12,6 +12,9 @@ import {
   freeLifetimeFromSpeed,
   integrateFreeParticle,
   isAttackActiveHitFrame,
+  isHitstunDetachPulse,
+  isHitstunFrame,
+  resolveWudaAllowDetach,
   shouldDetach,
   shouldDetachWithLock,
 } from '../../src/render/wudaParticle/wudaCoatMath';
@@ -23,10 +26,14 @@ describe('wuda CONFIG defaults', () => {
       'wudaEnabled',
       'wudaAttachMode',
       'wudaCoverMode',
-      'wudaRegionWeightHead',
-      'wudaRegionWeightTorso',
-      'wudaRegionWeightLimbRoot',
-      'wudaRegionWeightLimbTip',
+      'wudaP1RegionWeightHead',
+      'wudaP1RegionWeightTorso',
+      'wudaP1RegionWeightLimbRoot',
+      'wudaP1RegionWeightLimbTip',
+      'wudaP2RegionWeightHead',
+      'wudaP2RegionWeightTorso',
+      'wudaP2RegionWeightLimbRoot',
+      'wudaP2RegionWeightLimbTip',
       'wudaVertexStride',
       'wudaBakeAwaitReadback',
       'wudaShowBakeStats',
@@ -51,28 +58,32 @@ describe('wuda CONFIG defaults', () => {
       'wudaFreeSize',
       'wudaStuckOpacity',
       'wudaFreeOpacity',
-      'wudaStuckColorR',
-      'wudaStuckColorG',
-      'wudaStuckColorB',
-      'wudaFreeColorR',
-      'wudaFreeColorG',
-      'wudaFreeColorB',
+      'wudaStuckColor',
+      'wudaFreeColor',
       'wudaBlendAdditive',
       'wudaRespawnStuck',
       'wudaShowDebug',
       'wudaAlsoPlumeBurst',
       'wudaDetachOnlyOnActiveHit',
+      'wudaDetachOnlyOnHitstun',
     ] as const;
     for (const k of keys) {
       expect(cfg).toHaveProperty(k);
     }
     expect(cfg.wudaEnabled).toBe(false);
     expect(cfg.wudaCoverMode).toBe('allMeshes');
-    expect(cfg.wudaRegionWeightHead).toBeCloseTo(0.1);
-    expect(cfg.wudaRegionWeightTorso).toBeCloseTo(0.4);
-    expect(cfg.wudaRegionWeightLimbRoot).toBeCloseTo(0.25);
-    expect(cfg.wudaRegionWeightLimbTip).toBeCloseTo(0.25);
+    expect(cfg.wudaP1RegionWeightHead).toBeCloseTo(0.1);
+    expect(cfg.wudaP1RegionWeightTorso).toBeCloseTo(0.4);
+    expect(cfg.wudaP1RegionWeightLimbRoot).toBeCloseTo(0.25);
+    expect(cfg.wudaP1RegionWeightLimbTip).toBeCloseTo(0.25);
+    expect(cfg.wudaP2RegionWeightHead).toBeCloseTo(0.1);
+    expect(cfg.wudaP2RegionWeightTorso).toBeCloseTo(0.4);
+    expect(cfg.wudaP2RegionWeightLimbRoot).toBeCloseTo(0.25);
+    expect(cfg.wudaP2RegionWeightLimbTip).toBeCloseTo(0.25);
+    expect(cfg.wudaStuckColor).toBe(0xa69980);
+    expect(cfg.wudaFreeColor).toBe(0xbfb399);
     expect(cfg.wudaDetachOnlyOnActiveHit).toBe(false);
+    expect(cfg.wudaDetachOnlyOnHitstun).toBe(false);
     expect(cfg.wudaParticleCount).toBe(512);
   });
 });
@@ -224,5 +235,130 @@ describe('wudaCoatMath', () => {
         mover: { currentHitBoxesLocal: () => [{ x: 0 }] },
       }),
     ).toBe(true);
+  });
+
+  it('isHitstunFrame is phase===hitstun with optional stunTimer', () => {
+    expect(isHitstunFrame({ phase: 'hitstun' })).toBe(true);
+    expect(isHitstunFrame({ phase: 'hitstun', stunTimer: 3 })).toBe(true);
+    expect(isHitstunFrame({ phase: 'hitstun', stunTimer: 0 })).toBe(false);
+    expect(isHitstunFrame({ phase: 'blockstun' })).toBe(false);
+    expect(isHitstunFrame({ phase: 'knockdown' })).toBe(false);
+    expect(isHitstunFrame({ phase: 'idle' })).toBe(false);
+  });
+
+  it('isHitstunDetachPulse follows remaining pulse frames', () => {
+    expect(isHitstunDetachPulse({ hitstunDetachPulseFrames: 3 })).toBe(true);
+    expect(isHitstunDetachPulse({ hitstunDetachPulseFrames: 0 })).toBe(false);
+    expect(isHitstunDetachPulse({})).toBe(false);
+  });
+
+  it('resolveWudaAllowDetach ORs locks; hitstun lock is entry pulse only', () => {
+    const idle = {
+      phase: 'idle',
+      stunTimer: 0,
+      hitstunDetachPulseFrames: 0,
+      mover: { currentHitBoxesLocal: () => [] as unknown[] },
+    };
+    const attackActive = {
+      phase: 'attack',
+      stunTimer: 0,
+      hitstunDetachPulseFrames: 0,
+      mover: { currentHitBoxesLocal: () => [{ x: 0 }] },
+    };
+    const hitstunMid = {
+      phase: 'hitstun',
+      stunTimer: 8,
+      hitstunDetachPulseFrames: 0,
+      mover: { currentHitBoxesLocal: () => [] as unknown[] },
+    };
+    const hitstunPulse = {
+      phase: 'hitstun',
+      stunTimer: 14,
+      hitstunDetachPulseFrames: 3,
+      mover: { currentHitBoxesLocal: () => [] as unknown[] },
+    };
+
+    const neither = {
+      wudaDetachOnlyOnActiveHit: false,
+      wudaDetachOnlyOnHitstun: false,
+    };
+    const attackOnly = {
+      wudaDetachOnlyOnActiveHit: true,
+      wudaDetachOnlyOnHitstun: false,
+    };
+    const hitstunOnly = {
+      wudaDetachOnlyOnActiveHit: false,
+      wudaDetachOnlyOnHitstun: true,
+    };
+    const bothOn = {
+      wudaDetachOnlyOnActiveHit: true,
+      wudaDetachOnlyOnHitstun: true,
+    };
+
+    expect(resolveWudaAllowDetach(neither, idle)).toBe(true);
+
+    expect(resolveWudaAllowDetach(attackOnly, attackActive)).toBe(true);
+    expect(resolveWudaAllowDetach(attackOnly, hitstunPulse)).toBe(false);
+    expect(resolveWudaAllowDetach(attackOnly, idle)).toBe(false);
+
+    // Hitstun lock: pulse yes, mid-stun / idle no
+    expect(resolveWudaAllowDetach(hitstunOnly, hitstunPulse)).toBe(true);
+    expect(resolveWudaAllowDetach(hitstunOnly, hitstunMid)).toBe(false);
+    expect(resolveWudaAllowDetach(hitstunOnly, attackActive)).toBe(false);
+
+    // Both → OR
+    expect(resolveWudaAllowDetach(bothOn, attackActive)).toBe(true);
+    expect(resolveWudaAllowDetach(bothOn, hitstunPulse)).toBe(true);
+    expect(resolveWudaAllowDetach(bothOn, hitstunMid)).toBe(false);
+    expect(resolveWudaAllowDetach(bothOn, idle)).toBe(false);
+  });
+
+  it('hitstun entry pulse bypasses hitstop; otherwise hitstop blocks', () => {
+    const hitstunPulse = {
+      phase: 'hitstun',
+      stunTimer: 10,
+      hitstunDetachPulseFrames: 2,
+      mover: { currentHitBoxesLocal: () => [] as unknown[] },
+    };
+    const hitstunMid = {
+      phase: 'hitstun',
+      stunTimer: 10,
+      hitstunDetachPulseFrames: 0,
+      mover: { currentHitBoxesLocal: () => [] as unknown[] },
+    };
+    const attackActive = {
+      phase: 'attack',
+      stunTimer: 0,
+      hitstunDetachPulseFrames: 0,
+      mover: { currentHitBoxesLocal: () => [{ x: 0 }] },
+    };
+    const hitstunOnly = {
+      wudaDetachOnlyOnActiveHit: false,
+      wudaDetachOnlyOnHitstun: true,
+    };
+    const bothOn = {
+      wudaDetachOnlyOnActiveHit: true,
+      wudaDetachOnlyOnHitstun: true,
+    };
+    const neither = {
+      wudaDetachOnlyOnActiveHit: false,
+      wudaDetachOnlyOnHitstun: false,
+    };
+
+    // Impact present is already in hitstop — pulse must still open the gate
+    expect(
+      resolveWudaAllowDetach(hitstunOnly, hitstunPulse, { inHitstop: true }),
+    ).toBe(true);
+    // After pulse, mid-stun + hitstop stays closed
+    expect(
+      resolveWudaAllowDetach(hitstunOnly, hitstunMid, { inHitstop: true }),
+    ).toBe(false);
+    expect(
+      resolveWudaAllowDetach(bothOn, attackActive, { inHitstop: true }),
+    ).toBe(false);
+    expect(resolveWudaAllowDetach(neither, hitstunMid)).toBe(true);
+    expect(
+      resolveWudaAllowDetach(neither, hitstunMid, { inHitstop: true }),
+    ).toBe(false);
   });
 });

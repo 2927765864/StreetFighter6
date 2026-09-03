@@ -7,7 +7,11 @@ import type { MutableSimConfig } from '../../config/constants';
 import { createMulberry32 } from '../hitVfx/mulberry32';
 import { bakeWudaSurfaceSamplesForMeshes } from './WudaSurfaceBake';
 import { evalSkinnedSurfacePoint } from './evalSkinnedSurface';
-import type { WudaRegionWeights } from './wudaBodyRegions';
+import {
+  resolveWudaRegionWeightsForSide,
+  type WudaFighterSide,
+  type WudaRegionWeights,
+} from './wudaBodyRegions';
 import {
   clampWudaDeltaSec,
   computeSurfaceVelocity,
@@ -47,6 +51,7 @@ export class WudaCoatRuntime {
   private parent: THREE.Object3D | null = null;
   private camera: THREE.Camera | null = null;
   private lastStats: WudaCoatStats = { stuck: 0, free: 0, dead: 0 };
+  private side: WudaFighterSide = 'p1';
   private dummy = new THREE.Object3D();
   private readonly _color = new THREE.Color();
   private plumeBurst: WudaPlumeBurst | null = null;
@@ -97,11 +102,14 @@ export class WudaCoatRuntime {
     if (this.meshes.length === 0 || !this.parent) return false;
     const count = Math.max(0, Math.floor(cfg.wudaParticleCount));
     const meshKey = this.meshes.map((m) => m.uuid).join(',');
-    const regionKey =
+    const regionWeights: WudaRegionWeights | null =
       cfg.wudaCoverMode === 'allMeshes'
-        ? `${cfg.wudaRegionWeightHead}|${cfg.wudaRegionWeightTorso}|${cfg.wudaRegionWeightLimbRoot}|${cfg.wudaRegionWeightLimbTip}`
-        : 'off';
-    const key = `${count}|${cfg.wudaSeed}|${cfg.wudaCoverMode}|${regionKey}|${meshKey}`;
+        ? resolveWudaRegionWeightsForSide(cfg, this.side)
+        : null;
+    const regionKey = regionWeights
+      ? `${regionWeights.head}|${regionWeights.torso}|${regionWeights.limbRoot}|${regionWeights.limbTip}`
+      : 'off';
+    const key = `${count}|${cfg.wudaSeed}|${cfg.wudaCoverMode}|${this.side}|${regionKey}|${meshKey}`;
     if (key === this.bakeKey && this.instanced && this.slots.length === count) {
       return true;
     }
@@ -111,16 +119,6 @@ export class WudaCoatRuntime {
     this.bakeKey = key;
 
     if (count <= 0) return false;
-
-    const regionWeights: WudaRegionWeights | null =
-      cfg.wudaCoverMode === 'allMeshes'
-        ? {
-            head: cfg.wudaRegionWeightHead,
-            torso: cfg.wudaRegionWeightTorso,
-            limbRoot: cfg.wudaRegionWeightLimbRoot,
-            limbTip: cfg.wudaRegionWeightLimbTip,
-          }
-        : null;
     const baked = bakeWudaSurfaceSamplesForMeshes(
       this.meshes,
       count,
@@ -186,13 +184,15 @@ export class WudaCoatRuntime {
 
   /**
    * @param opts.allowDetach when false, velocity still updates but stuck→free is locked
-   *   (used by wudaDetachOnlyOnActiveHit outside attack hitbox frames).
+   *   (used by detach timing locks: attack active-hit / hitstun, per fighter).
+   * @param opts.side which fighter this coat belongs to (region-weight isolation).
    */
   update(
     wallDtSec: number,
     cfg: MutableSimConfig,
-    opts?: { allowDetach?: boolean },
+    opts?: { allowDetach?: boolean; side?: WudaFighterSide },
   ): void {
+    if (opts?.side === 'p1' || opts?.side === 'p2') this.side = opts.side;
     const allowDetach = opts?.allowDetach !== false;
     if (!cfg.wudaEnabled) {
       if (this.instanced) this.instanced.visible = false;
@@ -406,17 +406,9 @@ export class WudaCoatRuntime {
     } else if (cfg.wudaShowDebug && !stuck && size > 0) {
       this._color.setRGB(0.95 * op, 0.35 * op, 0.15 * op);
     } else if (stuck) {
-      this._color.setRGB(
-        cfg.wudaStuckColorR * op,
-        cfg.wudaStuckColorG * op,
-        cfg.wudaStuckColorB * op,
-      );
+      this._color.setHex(cfg.wudaStuckColor & 0xffffff).multiplyScalar(op);
     } else {
-      this._color.setRGB(
-        cfg.wudaFreeColorR * op,
-        cfg.wudaFreeColorG * op,
-        cfg.wudaFreeColorB * op,
-      );
+      this._color.setHex(cfg.wudaFreeColor & 0xffffff).multiplyScalar(op);
     }
     this.instanced.setColorAt(index, this._color);
   }

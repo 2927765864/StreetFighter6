@@ -172,6 +172,8 @@ describe('WudaVertexGpuBaker CPU gold standard', () => {
     const baked = bakeWudaVertexSamples(mesh.geometry, 4, 3, 1);
     const baker = new WudaVertexGpuBaker();
     expect(baker.build(mesh, baked.samples)).toBe(true);
+    expect(baker.gpuBatchCount).toBe(1);
+    expect(baker.hasGpu).toBe(true);
 
     const out = new Float32Array(4 * 3);
     baker.bakeCpuWorld(out);
@@ -187,6 +189,137 @@ describe('WudaVertexGpuBaker CPU gold standard', () => {
       expect(out[i * 3 + 1]).toBeCloseTo(expected.y, 5);
       expect(out[i * 3 + 2]).toBeCloseTo(expected.z, 5);
     }
+
+    baker.dispose();
+    mesh.geometry.dispose();
+    (mesh.material as THREE.Material).dispose();
+    mesh.skeleton.dispose();
+  });
+
+  it('multi-mesh bakeCpuWorld respects meshIndex + per-mesh matrixWorld', () => {
+    const a = makeSkinnedPlane();
+    const b = makeSkinnedPlane();
+    a.position.set(0, 0, 0);
+    b.position.set(5, 1, -2);
+    a.updateMatrixWorld(true);
+    b.updateMatrixWorld(true);
+    a.skeleton.update();
+    b.skeleton.update();
+
+    const baked = bakeWudaVertexSamplesAcrossMeshes(
+      [a.geometry, b.geometry],
+      16,
+      5,
+      1,
+    );
+    const baker = new WudaVertexGpuBaker();
+    expect(baker.buildFromMeshes([a, b], baked.samples)).toBe(true);
+    expect(baker.gpuBatchCount).toBe(2);
+    expect(baker.hasGpu).toBe(true);
+
+    const out = new Float32Array(baked.samples.length * 3);
+    baker.bakeCpuWorld(out);
+
+    const expected = new THREE.Vector3();
+    const meshes = [a, b];
+    for (let i = 0; i < baked.samples.length; i++) {
+      const sample = baked.samples[i]!;
+      const mesh = meshes[sample.meshIndex ?? 0]!;
+      const pos = mesh.geometry.getAttribute('position');
+      expected.fromBufferAttribute(pos, sample.vertexIndex);
+      mesh.applyBoneTransform(sample.vertexIndex, expected);
+      expected.applyMatrix4(mesh.matrixWorld);
+      expect(out[i * 3]).toBeCloseTo(expected.x, 5);
+      expect(out[i * 3 + 1]).toBeCloseTo(expected.y, 5);
+      expect(out[i * 3 + 2]).toBeCloseTo(expected.z, 5);
+    }
+
+    const skelA = a.skeleton;
+    baker.dispose();
+    expect(skelA.bones.length).toBeGreaterThan(0);
+    a.geometry.dispose();
+    (a.material as THREE.Material).dispose();
+    a.skeleton.dispose();
+    b.geometry.dispose();
+    (b.material as THREE.Material).dispose();
+    b.skeleton.dispose();
+  });
+
+  it('gpuWorldLooksDegenerate detects origin pile and accepts healthy span', () => {
+    const mesh = makeSkinnedPlane();
+    mesh.position.set(0, 0, 0);
+    mesh.updateMatrixWorld(true);
+    const baked = bakeWudaVertexSamples(mesh.geometry, 4, 1, 1);
+    const baker = new WudaVertexGpuBaker();
+    baker.build(mesh, baked.samples);
+
+    const piled = new Float32Array(4 * 3); // all near mesh origin
+    expect(baker.gpuWorldLooksDegenerate(piled)).toBe(true);
+
+    const healthy = new Float32Array([
+      0, -1, 0, 0, 0, 0, 0, 0.5, 0, 0, 1.2, 0,
+    ]);
+    expect(baker.gpuWorldLooksDegenerate(healthy)).toBe(false);
+
+    baker.markGpuDegraded();
+    expect(baker.hasGpu).toBe(false);
+    expect(baker.isGpuDegraded).toBe(true);
+
+    baker.dispose();
+    mesh.geometry.dispose();
+    (mesh.material as THREE.Material).dispose();
+    mesh.skeleton.dispose();
+  });
+
+  it('gpuSamePoseAcceptable uses p95/max dual gate', () => {
+    expect(
+      WudaVertexGpuBaker.gpuSamePoseAcceptable({
+        max: 0.146,
+        p95: 0.04,
+        mean: 0.02,
+        count: 48,
+      }),
+    ).toBe(true);
+    expect(
+      WudaVertexGpuBaker.gpuSamePoseAcceptable({
+        max: 0.146,
+        p95: 0.09,
+        mean: 0.05,
+        count: 48,
+      }),
+    ).toBe(false);
+    expect(
+      WudaVertexGpuBaker.gpuSamePoseAcceptable({
+        max: 0.3,
+        p95: 0.04,
+        mean: 0.02,
+        count: 48,
+      }),
+    ).toBe(false);
+  });
+
+  it('commitWorldFrom + maxWorldError agree with CPU gold', () => {
+    const mesh = makeSkinnedPlane();
+    mesh.position.set(0, 1, 0);
+    mesh.updateMatrixWorld(true);
+    mesh.skeleton.update();
+    const baked = bakeWudaVertexSamples(mesh.geometry, 4, 2, 1);
+    const baker = new WudaVertexGpuBaker();
+    baker.build(mesh, baked.samples);
+
+    const gold = new Float32Array(4 * 3);
+    baker.bakeCpuWorld(gold);
+    expect(baker.maxWorldError(gold, gold, 4)).toBeLessThan(1e-5);
+    expect(baker.maxWorldErrorVsCpu(gold, 4)).toBeLessThan(1e-5);
+
+    const bad = new Float32Array(gold);
+    bad[1] += 1; // lift first sample 1m
+    expect(baker.maxWorldError(bad, gold, 4)).toBeGreaterThan(0.5);
+
+    baker.commitWorldFrom(gold, 'gpu');
+    expect(baker.lastBakePath).toBe('gpu');
+    expect(baker.hasBakedFrame).toBe(true);
+    expect(baker.getCurrWorld()[0]).toBeCloseTo(gold[0]!, 5);
 
     baker.dispose();
     mesh.geometry.dispose();

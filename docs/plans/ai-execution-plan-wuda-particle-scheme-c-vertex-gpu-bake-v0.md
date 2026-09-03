@@ -1,6 +1,6 @@
 # AI 执行方案：武打粒子方案 C（顶点发射点 · GPU 烘焙）v0
 
-> **状态**：可执行（2026-09-02）  
+> **状态**：可执行（2026-09-02） · **Live GPU + 全身多网格分批已落地**（显式 bone buffer TSL skin；`gpuWorldLooksDegenerate` 失败时 **C-DEGRADED** CPU fallback；默认附着仍为 B）  
 > **相对旧版**：旧版 = 方案 B（三角面重心钉点 + CPU `applyBoneTransform`），见 `docs/plans/ai-execution-plan-wuda-particle-v0.md`  
 > **本方案**：方案 C —— **顶点当发射点**；每帧把变形后的顶点世界坐标 **GPU 烘焙进缓冲**；粒子从缓冲采样；速度用双缓冲差分  
 > **执行者**：AI 代理  
