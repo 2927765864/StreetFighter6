@@ -2092,6 +2092,8 @@ export class FighterView {
     }
 
     // Hitstun / knockdown: scrub to logic elapsed; LoopOnce+clamp (plan E7/E8).
+    // Hard-cut while in stun/KD (§3.11: impact feedback). Leave→idle/crouch/walk
+    // soft-blends via the idle/walk branches + resolveCrossfadeSec(hit→move).
     if (fighter.phase === 'hitstun' || fighter.phase === 'knockdown') {
       const restart = fighter.clipRestartSeq !== this.lastClipRestartSeq;
       this.lastClipRestartSeq = fighter.clipRestartSeq;

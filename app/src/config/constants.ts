@@ -206,8 +206,8 @@ export type MutableSimConfig = {
   /** Wall-clock seconds for walk/idle role crossfade (0 = hard cut). §3.11 loco. */
   locoBlendSec: number;
   /**
-   * Attack residual (or attack clip) → walk/idle dual-advance blend (§3.11).
-   * Must not apply during attack lock (callers pass 0 there).
+   * Dual-advance blend into walk/idle (§3.11): attack residual, guard leave,
+   * and hitstun reaction → idle/crouch/walk. Not during attack lock or into-hit.
    */
   residualToMoveBlendSec: number;
   /**

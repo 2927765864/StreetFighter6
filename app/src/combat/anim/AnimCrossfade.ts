@@ -133,8 +133,14 @@ export function resolveCrossfadeSec(
   const from = categorizeBinding(fromKey);
   const to = categorizeBinding(toKey);
 
-  // 受击等：通常不溶
-  if (from === 'hit' || to === 'hit') return 0;
+  // 进受击：硬切（打上瞬间 / 连段再打上）
+  if (to === 'hit') return 0;
+  // 受击 → 待机 / 蹲 / 走：硬直已结束，可溶（§3.11.2）
+  if (from === 'hit' && isMoveLike(to)) {
+    return Math.max(0, d.residualToMoveSec);
+  }
+  // 受击 → 其它（攻/跳/冲/倒地衔接等）：硬切
+  if (from === 'hit') return 0;
 
   // 格挡（§3.11.2 2026-08-19）：打上硬切；出硬直进 loop / 蹲回站 可溶
   if (from === 'guard' || to === 'guard') {

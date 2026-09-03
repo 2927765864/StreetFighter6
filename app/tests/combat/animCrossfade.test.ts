@@ -86,9 +86,16 @@ describe('AnimCrossfade §3.11', () => {
     expect(resolveCrossfadeSec('idle::main', 'dash_fwd::main', d)).toBe(0);
     expect(resolveCrossfadeSec('dash_fwd::main', 'idle::main', d)).toBe(0.1);
     expect(resolveCrossfadeSec('idle::main', 'hitstun::main', d)).toBe(0);
-    // dmg_* must hard-cut like hitstun — not soft-blend as mis-tagged attack
-    expect(resolveCrossfadeSec('dmg_hl_st::main', 'idle::main', d)).toBe(0);
+    // into dmg_* hard-cut; leave stun → idle/crouch/walk dissolves (§3.11.2)
     expect(resolveCrossfadeSec('idle::main', 'dmg_hl_st::main', d)).toBe(0);
+    expect(resolveCrossfadeSec('dmg_hl_st::main', 'idle::main', d)).toBe(0.1);
+    expect(resolveCrossfadeSec('dmg_hh_lt::main', 'crouch::main', d)).toBe(0.1);
+    expect(resolveCrossfadeSec('hitstun_light::main', 'walk_fwd::loop', d)).toBe(
+      0.1,
+    );
+    // hit → attack / jump still hard
+    expect(resolveCrossfadeSec('dmg_hl_st::main', 'ryu_5lp::main', d)).toBe(0);
+    expect(resolveCrossfadeSec('dmg_hl_st::main', 'jump_f::prejump', d)).toBe(0);
   });
 
   it('land → crouch_to_stand can sol; land → idle/attack hard cut', () => {

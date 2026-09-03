@@ -14,11 +14,12 @@
 | `block_crouch_loop` ↔ `block_stand_loop` | 溶 | `residualToStanceSec` |
 | 格挡 loop → idle/crouch/走 | 溶 | `residualToMoveSec` |
 | idle/crouch → 格挡 loop（人偶待机防姿） | 溶 | `locoSec` |
-| 受击 `hitstun_*` | 仍不溶 | 硬切 |
+| 任意 → 受击 `dmg_*` / `hitstun*` | 不溶 | 硬切 |
+| 受击 → idle/crouch/走（硬直结束） | 溶 | `residualToMoveSec`（§3.11.2 · 2026-09-03） |
 
 ## 代码
 
 1. `AnimCrossfade.ts`：`categorizeBinding` 把 `grd_*` / `block_*` 标成 `guard`；`resolveCrossfadeSec` 实现上表。  
-2. `FighterView.ts`：`hitstun` 仍整段硬切；`blockstun` 反应片硬切且 **不** 每帧清掉「即将离开硬直」之外的策略——离开硬直走 idle 分支的 `fadePolicy`。idle 解析 action 必须用 `fighter.animRole`（loop 片不是 `main`）。  
+2. `FighterView.ts`：`hitstun` **硬直内**仍硬切 scrub；离开硬直走 idle/crouch/walk 分支的 `fadePolicy`（受击→待机可溶）。`blockstun` 反应片硬切；离开硬直同理。idle 解析 action 必须用 `fighter.animRole`（loop 片不是 `main`）。  
 3. 单测：`animCrossfade.test.ts` 覆盖上表。  
-4. 共识 §3.11.2 补三行格挡，不另开机制。
+4. 共识 §3.11.2 格挡与受击出硬直溶图，不另开机制。

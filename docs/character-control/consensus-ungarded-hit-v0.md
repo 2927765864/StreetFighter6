@@ -62,7 +62,8 @@
 - 晃：`DMG_{高度}{轻重}_ST` 正面片；高低字母与格挡 `guardToAnimHeight` **同一函数**；轻重与 `guardStrength` / 命中 hitstop 分档同一套（`resolveGuardStrength`，命中用 `hitstopOnHit`）。  
 - 左右 `LT/RT` 本阶段不选。  
 - 扫倒：磁盘 `DMG_ASHIBARAI_*`；躺地 `BAS_DN_*_Loop`；普通起 `BAS_DN_STD_*`；后跳起 `BAS_TECH_BR_*`。只用 **非 Light** 族（2HK 重脚）。  
-- 吹飞 `BLOW_*`、撞墙、气绝、SPIN **不接**。
+- 吹飞 `BLOW_*`、撞墙、气绝、SPIN **不接**。  
+- **表现溶图**（`consensus-design-v0.md` §3.11）：进受击反应片 **硬切**；硬直结束回待机 / 蹲 / 走 **可溶**（`residualToMoveSec`），不侵占硬直。
 
 ---
 
