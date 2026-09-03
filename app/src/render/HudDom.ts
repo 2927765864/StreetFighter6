@@ -9,6 +9,7 @@ export class HudDom {
     this.el = document.createElement('pre');
     this.el.id = 'h2-hud';
     Object.assign(this.el.style, {
+      display: 'none',
       position: 'fixed',
       left: '8px',
       top: '8px',

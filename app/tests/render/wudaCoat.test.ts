@@ -18,6 +18,13 @@ import {
   shouldDetach,
   shouldDetachWithLock,
 } from '../../src/render/wudaParticle/wudaCoatMath';
+import {
+  advanceRefillTimer,
+  createWudaFreePool,
+  resolveWudaInstanceCapacity,
+  spawnWudaFreeParticle,
+  stepWudaFreePool,
+} from '../../src/render/wudaParticle/wudaFreePool';
 
 describe('wuda CONFIG defaults', () => {
   it('includes all wuda* keys from execution plan §7', () => {
@@ -63,6 +70,9 @@ describe('wuda CONFIG defaults', () => {
       'wudaFreeColor',
       'wudaBlendAdditive',
       'wudaRespawnStuck',
+      'wudaDetachInstantRefill',
+      'wudaDetachRefillDelay',
+      'wudaFreePoolCapacity',
       'wudaShowDebug',
       'wudaAlsoPlumeBurst',
       'wudaDetachOnlyOnActiveHit',
@@ -87,6 +97,9 @@ describe('wuda CONFIG defaults', () => {
     expect(cfg.wudaDetachOnlyOnActiveHit).toBe(false);
     expect(cfg.wudaDetachOnlyOnHitstun).toBe(false);
     expect(cfg.wudaParticleCount).toBe(512);
+    expect(cfg.wudaDetachInstantRefill).toBe(false);
+    expect(cfg.wudaDetachRefillDelay).toBeCloseTo(0.05);
+    expect(cfg.wudaFreePoolCapacity).toBe(1024);
   });
 });
 
@@ -362,5 +375,45 @@ describe('wudaCoatMath', () => {
     expect(
       resolveWudaAllowDetach(neither, hitstunMid, { inHitstop: true }),
     ).toBe(false);
+  });
+});
+
+describe('wudaFreePool', () => {
+  it('resolves instance capacity with refill off/on', () => {
+    expect(resolveWudaInstanceCapacity(512, false, 1024)).toBe(512);
+    expect(resolveWudaInstanceCapacity(512, true, 1024)).toBe(1536);
+    expect(resolveWudaInstanceCapacity(512, true, 0)).toBe(512);
+  });
+
+  it('spawns into inactive slots then replaces shortest life when full', () => {
+    const pool = createWudaFreePool(2);
+    const a = new THREE.Vector3(1, 0, 0);
+    const b = new THREE.Vector3(0, 1, 0);
+    const c = new THREE.Vector3(0, 0, 1);
+    const v = new THREE.Vector3(0, 2, 0);
+    expect(spawnWudaFreeParticle(pool, a, v, 1.0)).toBe(0);
+    expect(spawnWudaFreeParticle(pool, b, v, 0.2)).toBe(1);
+    expect(spawnWudaFreeParticle(pool, c, v, 0.9)).toBe(1);
+    expect(pool[1]!.pos.z).toBeCloseTo(1);
+    expect(pool[1]!.life).toBeCloseTo(0.9);
+  });
+
+  it('steps free pool and expires life', () => {
+    const pool = createWudaFreePool(1);
+    spawnWudaFreeParticle(
+      pool,
+      new THREE.Vector3(),
+      new THREE.Vector3(0, 1, 0),
+      0.03,
+    );
+    const g = new THREE.Vector3(0, -1, 0);
+    const active = stepWudaFreePool(pool, 0.05, g, 0, 0, 100);
+    expect(active).toBe(0);
+    expect(pool[0]!.active).toBe(false);
+  });
+
+  it('advanceRefillTimer clamps at zero', () => {
+    expect(advanceRefillTimer(0.05, 0.02)).toBeCloseTo(0.03);
+    expect(advanceRefillTimer(0.01, 0.05)).toBe(0);
   });
 });

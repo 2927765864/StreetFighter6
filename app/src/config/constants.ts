@@ -445,6 +445,16 @@ export type MutableSimConfig = {
   wudaFreeColor: number;
   wudaBlendAdditive: boolean;
   wudaRespawnStuck: boolean;
+  /**
+   * When true: detach spawns into a free pool and the coat slot re-sticks after
+   * `wudaDetachRefillDelay` (does not wait for free lifetime). `wudaParticleCount`
+   * then caps stuck-on-body only; simultaneous free particles use `wudaFreePoolCapacity`.
+   */
+  wudaDetachInstantRefill: boolean;
+  /** Seconds before a detached coat slot re-sticks (0 = same frame). Instant-refill only. */
+  wudaDetachRefillDelay: number;
+  /** Max simultaneous free-flight particles when instant-refill is on. */
+  wudaFreePoolCapacity: number;
   wudaShowDebug: boolean;
   wudaAlsoPlumeBurst: boolean;
   /**
@@ -787,6 +797,9 @@ export function createDefaultSimConfig(): MutableSimConfig {
     wudaFreeColor: 0xbfb399,
     wudaBlendAdditive: false,
     wudaRespawnStuck: false,
+    wudaDetachInstantRefill: false,
+    wudaDetachRefillDelay: 0.05,
+    wudaFreePoolCapacity: 1024,
     wudaShowDebug: false,
     wudaAlsoPlumeBurst: false,
     wudaDetachOnlyOnActiveHit: false,

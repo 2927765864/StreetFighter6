@@ -324,7 +324,10 @@ export function createDebugGui(
   wuda
     .add(cfg, 'wudaDetachOnlyOnHitstun')
     .name('仅受击瞬间可脱落');
-  wuda.add(cfg, 'wudaParticleCount', 64, 2048, 64).name('粒子数');
+  wuda.add(cfg, 'wudaParticleCount', 64, 2048, 64).name('粘着粒子数');
+  wuda.add(cfg, 'wudaDetachInstantRefill').name('脱落立刻补充粘着');
+  wuda.add(cfg, 'wudaDetachRefillDelay', 0, 1, 0.01).name('补充延迟(秒)');
+  wuda.add(cfg, 'wudaFreePoolCapacity', 64, 4096, 64).name('自由粒子池容量');
   wuda.add(cfg, 'wudaSeed', 0, 999999, 1).name('随机种子');
   wuda.add(cfg, 'wudaDetachSpeed', 0, 20, 0.1).name('脱落速度阈值');
   wuda.add(cfg, 'wudaDetachAccel', 0, 200, 1).name('脱落加速度阈值');
@@ -350,7 +353,7 @@ export function createDebugGui(
   wuda.addColor(cfg, 'wudaStuckColor').name('粘着色');
   wuda.addColor(cfg, 'wudaFreeColor').name('自由色');
   wuda.add(cfg, 'wudaBlendAdditive').name('加色混合');
-  wuda.add(cfg, 'wudaRespawnStuck').name('死后回到粘着');
+  wuda.add(cfg, 'wudaRespawnStuck').name('死后回到粘着(旧)');
   wuda.add(cfg, 'wudaShowDebug').name('显示调试色');
   wuda
     .add(cfg, 'wudaAlsoPlumeBurst')

@@ -14,12 +14,14 @@ export type WudaSurfaceSample = {
   meshIndex?: number;
 };
 
-export type WudaParticleState = 'stuck' | 'free';
+export type WudaParticleState = 'stuck' | 'free' | 'refilling';
 
 export type WudaCoatStats = {
   stuck: number;
   free: number;
   dead: number;
+  /** Coat slots waiting to re-stick after detach (instant-refill mode). */
+  refilling?: number;
   /** Bound cover meshes (1 for largestMesh, many for allMeshes). */
   meshCount?: number;
   /** Actual skeleton.update() calls after coalescing. */

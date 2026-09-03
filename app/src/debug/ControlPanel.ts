@@ -695,7 +695,11 @@ function buildDom(): HTMLElement {
           ${rowToggle('wudaShowBakeStats', 'C 显示烘焙统计')}
           ${rowToggle('wudaDetachOnlyOnActiveHit', '仅攻击发生帧可脱落（锁）')}
           ${rowToggle('wudaDetachOnlyOnHitstun', '仅受击瞬间可脱落（锁）')}
-          ${rowNumber('wudaParticleCount', '粒子数', 64, 2048, 64)}
+          ${rowNumber('wudaParticleCount', '粘着粒子数', 64, 2048, 64)}
+          ${rowToggle('wudaDetachInstantRefill', '脱落立刻补充粘着')}
+          ${rowNumber('wudaDetachRefillDelay', '补充延迟(秒)', 0, 1, 0.01)}
+          ${rowNumber('wudaFreePoolCapacity', '自由粒子池容量', 64, 4096, 64)}
+          <p class="panel-hint">开「脱落立刻补充」后：粘着粒子数只限制身上同时粘着数；脱落飞出进自由池，经延迟在原附着点补回，不等自由寿命结束。</p>
           ${rowNumber('wudaSeed', '随机种子', 0, 999999, 1)}
           ${rowNumber('wudaDetachSpeed', '脱落速度阈值', 0, 20, 0.1)}
           ${rowNumber('wudaDetachAccel', '脱落加速度阈值', 0, 200, 1)}
@@ -725,7 +729,7 @@ function buildDom(): HTMLElement {
             <input id="inp-wudaFreeColorPicker" type="color" title="自由色" />
           </div>
           ${rowToggle('wudaBlendAdditive', '加色混合')}
-          ${rowToggle('wudaRespawnStuck', '死后回到粘着')}
+          ${rowToggle('wudaRespawnStuck', '死后回到粘着（旧模式）')}
           ${rowToggle('wudaShowDebug', '调试色（绿=粘 / 橙=飞）')}
           ${rowToggle('wudaAlsoPlumeBurst', '脱落时再喷一撮特效粒子')}
           `,
@@ -1045,6 +1049,9 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'wudaDetachOnlyOnActiveHit', path: 'wudaDetachOnlyOnActiveHit' },
   { id: 'wudaDetachOnlyOnHitstun', path: 'wudaDetachOnlyOnHitstun' },
   { id: 'wudaParticleCount', path: 'wudaParticleCount' },
+  { id: 'wudaDetachInstantRefill', path: 'wudaDetachInstantRefill' },
+  { id: 'wudaDetachRefillDelay', path: 'wudaDetachRefillDelay' },
+  { id: 'wudaFreePoolCapacity', path: 'wudaFreePoolCapacity' },
   { id: 'wudaSeed', path: 'wudaSeed' },
   { id: 'wudaDetachSpeed', path: 'wudaDetachSpeed' },
   { id: 'wudaDetachAccel', path: 'wudaDetachAccel' },
@@ -1209,6 +1216,7 @@ const TOGGLE_IDS = new Set([
   'wudaDetachOnlyOnHitstun',
   'wudaBlendAdditive',
   'wudaRespawnStuck',
+  'wudaDetachInstantRefill',
   'wudaShowDebug',
   'wudaAlsoPlumeBurst',
   'headbandPhysicsEnabled',

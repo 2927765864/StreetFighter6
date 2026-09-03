@@ -22,6 +22,14 @@ import {
 import type { WudaCoatStats, WudaParticleState, WudaSurfaceSample } from './wudaTypes';
 import type { WudaPlumeBurst } from './WudaPlumeBurst';
 import { syncSkinnedMeshBoneMatrices } from './wudaSkeletonSync';
+import {
+  advanceRefillTimer,
+  createWudaFreePool,
+  resolveWudaInstanceCapacity,
+  spawnWudaFreeParticle,
+  stepWudaFreePool,
+  type WudaFreePoolParticle,
+} from './wudaFreePool';
 
 type Slot = {
   sample: WudaSurfaceSample;
@@ -33,11 +41,14 @@ type Slot = {
   prevVel: THREE.Vector3;
   life: number;
   prevValid: boolean;
+  /** Countdown (sec) while state==='refilling'. */
+  refillIn: number;
 };
 
 const _surfacePos = new THREE.Vector3();
 const _vel = new THREE.Vector3();
 const _accel = new THREE.Vector3();
+const _flyVel = new THREE.Vector3();
 const _gravity = new THREE.Vector3();
 const _mat = new THREE.Matrix4();
 const _quat = new THREE.Quaternion();
@@ -47,11 +58,12 @@ const _camQuat = new THREE.Quaternion();
 export class WudaCoatRuntime {
   private meshes: THREE.SkinnedMesh[] = [];
   private slots: Slot[] = [];
+  private freePool: WudaFreePoolParticle[] = [];
   private bakeKey = '';
   private instanced: THREE.InstancedMesh | null = null;
   private parent: THREE.Object3D | null = null;
   private camera: THREE.Camera | null = null;
-  private lastStats: WudaCoatStats = { stuck: 0, free: 0, dead: 0 };
+  private lastStats: WudaCoatStats = { stuck: 0, free: 0, dead: 0, refilling: 0 };
   private side: WudaFighterSide = 'p1';
   private dummy = new THREE.Object3D();
   private readonly _color = new THREE.Color();
@@ -103,6 +115,9 @@ export class WudaCoatRuntime {
   private ensureBake(cfg: MutableSimConfig): boolean {
     if (this.meshes.length === 0 || !this.parent) return false;
     const count = Math.max(0, Math.floor(cfg.wudaParticleCount));
+    const refillOn = !!cfg.wudaDetachInstantRefill;
+    const freeCap = Math.max(0, Math.floor(cfg.wudaFreePoolCapacity));
+    const instanceCap = resolveWudaInstanceCapacity(count, refillOn, freeCap);
     const meshKey = this.meshes.map((m) => m.uuid).join(',');
     const regionWeights: WudaRegionWeights | null =
       cfg.wudaCoverMode === 'allMeshes'
@@ -111,13 +126,20 @@ export class WudaCoatRuntime {
     const regionKey = regionWeights
       ? `${regionWeights.head}|${regionWeights.torso}|${regionWeights.limbRoot}|${regionWeights.limbTip}`
       : 'off';
-    const key = `${count}|${cfg.wudaSeed}|${cfg.wudaCoverMode}|${this.side}|${regionKey}|${meshKey}`;
-    if (key === this.bakeKey && this.instanced && this.slots.length === count) {
+    const key = `${count}|${cfg.wudaSeed}|${cfg.wudaCoverMode}|${this.side}|${regionKey}|${meshKey}|refill=${refillOn ? 1 : 0}|free=${freeCap}`;
+    if (
+      key === this.bakeKey &&
+      this.instanced &&
+      this.slots.length === count &&
+      this.freePool.length === (refillOn ? freeCap : 0) &&
+      this.instanced.count === instanceCap
+    ) {
       return true;
     }
 
     this.teardownInstances();
     this.slots = [];
+    this.freePool = [];
     this.bakeKey = key;
 
     if (count <= 0) return false;
@@ -147,8 +169,10 @@ export class WudaCoatRuntime {
         prevVel: new THREE.Vector3(),
         life: 0,
         prevValid: false,
+        refillIn: 0,
       });
     }
+    this.freePool = refillOn ? createWudaFreePool(freeCap) : [];
 
     const geo = new THREE.PlaneGeometry(1, 1);
     const mat = new THREE.MeshBasicMaterial({
@@ -161,17 +185,17 @@ export class WudaCoatRuntime {
         : THREE.NormalBlending,
       side: THREE.DoubleSide,
     });
-    this.instanced = new THREE.InstancedMesh(geo, mat, this.slots.length);
+    this.instanced = new THREE.InstancedMesh(geo, mat, instanceCap);
     this.instanced.frustumCulled = false;
-    this.instanced.count = this.slots.length;
+    this.instanced.count = instanceCap;
     this.instanced.name = 'WudaCoatInstances';
     this.instanced.instanceColor = new THREE.InstancedBufferAttribute(
-      new Float32Array(this.slots.length * 3),
+      new Float32Array(instanceCap * 3),
       3,
     );
     // Hide until first update fills matrices
     _mat.makeScale(0, 0, 0);
-    for (let i = 0; i < this.slots.length; i++) {
+    for (let i = 0; i < instanceCap; i++) {
       this.instanced.setMatrixAt(i, _mat);
       this.instanced.setColorAt(i, this._color.setRGB(1, 1, 1));
     }
@@ -198,7 +222,7 @@ export class WudaCoatRuntime {
     const allowDetach = opts?.allowDetach !== false;
     if (!cfg.wudaEnabled) {
       if (this.instanced) this.instanced.visible = false;
-      this.lastStats = { stuck: 0, free: 0, dead: 0 };
+      this.lastStats = { stuck: 0, free: 0, dead: 0, refilling: 0 };
       return;
     }
     if (this.meshes.length === 0) {
@@ -240,13 +264,41 @@ export class WudaCoatRuntime {
     else _gravity.set(0, -1, 0);
 
     const rng = createMulberry32((cfg.wudaSeed ^ (this.slots.length * 2654435761)) >>> 0);
+    const refillOn = !!cfg.wudaDetachInstantRefill;
+    const refillDelay = Math.max(0, cfg.wudaDetachRefillDelay);
 
     let stuck = 0;
     let free = 0;
     let dead = 0;
+    let refilling = 0;
+
+    // Step existing free-pool particles before new detach spawns (spawn frame matches legacy: no integrate yet).
+    stepWudaFreePool(
+      this.freePool,
+      dt,
+      _gravity,
+      cfg.wudaGravityPower,
+      cfg.wudaDrag,
+      cfg.wudaSpeedLimit,
+    );
 
     for (let i = 0; i < this.slots.length; i++) {
       const s = this.slots[i]!;
+
+      if (s.state === 'refilling') {
+        s.refillIn = advanceRefillTimer(s.refillIn, dt);
+        if (s.refillIn > 0) {
+          refilling++;
+          this.writeInstance(i, s.pos, 0, cfg, true);
+          continue;
+        }
+        s.state = 'stuck';
+        s.prevValid = false;
+        s.vel.set(0, 0, 0);
+        s.prevVel.set(0, 0, 0);
+        s.life = 0;
+        // fall through into stuck path this frame
+      }
 
       if (s.state === 'stuck') {
         const mesh = this.meshes[s.meshIndex] ?? this.meshes[0]!;
@@ -299,23 +351,47 @@ export class WudaCoatRuntime {
         s.vel.copy(_vel);
 
         if (detach) {
-          s.state = 'free';
-          s.vel.multiplyScalar(cfg.wudaInheritVelScale);
+          _flyVel.copy(s.vel).multiplyScalar(cfg.wudaInheritVelScale);
           if (cfg.wudaDetachJitter > 0) {
-            s.vel.x += (rng.next() * 2 - 1) * cfg.wudaDetachJitter;
-            s.vel.y += (rng.next() * 2 - 1) * cfg.wudaDetachJitter;
-            s.vel.z += (rng.next() * 2 - 1) * cfg.wudaDetachJitter;
+            _flyVel.x += (rng.next() * 2 - 1) * cfg.wudaDetachJitter;
+            _flyVel.y += (rng.next() * 2 - 1) * cfg.wudaDetachJitter;
+            _flyVel.z += (rng.next() * 2 - 1) * cfg.wudaDetachJitter;
           }
-          s.life = freeLifetimeFromSpeed(
+          const life = freeLifetimeFromSpeed(
             cfg.wudaFreeLifetime,
             speed,
             cfg.wudaSpeedToLife,
           );
           if (cfg.wudaAlsoPlumeBurst && this.plumeBurst) {
-            this.plumeBurst.queueDetach(s.pos, s.vel);
+            this.plumeBurst.queueDetach(s.pos, _flyVel);
           }
-          free++;
-          this.writeInstance(i, s.pos, cfg.wudaFreeSize, cfg, false);
+
+          if (refillOn) {
+            spawnWudaFreeParticle(this.freePool, s.pos, _flyVel, life);
+            if (refillDelay <= 0) {
+              s.state = 'stuck';
+              s.prevValid = false;
+              s.vel.set(0, 0, 0);
+              s.prevVel.set(0, 0, 0);
+              s.life = 0;
+              stuck++;
+              this.writeInstance(i, s.pos, cfg.wudaStuckSize, cfg, true);
+            } else {
+              s.state = 'refilling';
+              s.refillIn = refillDelay;
+              s.vel.set(0, 0, 0);
+              s.prevVel.set(0, 0, 0);
+              s.life = 0;
+              refilling++;
+              this.writeInstance(i, s.pos, 0, cfg, true);
+            }
+          } else {
+            s.state = 'free';
+            s.vel.copy(_flyVel);
+            s.life = life;
+            free++;
+            this.writeInstance(i, s.pos, cfg.wudaFreeSize, cfg, false);
+          }
         } else {
           stuck++;
           this.writeInstance(i, s.pos, cfg.wudaStuckSize, cfg, true);
@@ -323,7 +399,7 @@ export class WudaCoatRuntime {
         continue;
       }
 
-      // Free flight
+      // Legacy free flight on coat slot (instant-refill off)
       if (s.life <= 0) {
         if (cfg.wudaRespawnStuck) {
           s.state = 'stuck';
@@ -364,6 +440,30 @@ export class WudaCoatRuntime {
       );
     }
 
+    // Count free-pool actives after possible same-frame spawns; write instances.
+    const coatCount = this.slots.length;
+    for (let fi = 0; fi < this.freePool.length; fi++) {
+      const p = this.freePool[fi]!;
+      const instIdx = coatCount + fi;
+      if (!p.active) {
+        this.writeInstance(instIdx, p.pos, 0, cfg, false);
+        continue;
+      }
+      free++;
+      const lifeT = Math.max(
+        0,
+        Math.min(1, p.life / Math.max(1e-4, cfg.wudaFreeLifetime)),
+      );
+      this.writeInstance(
+        instIdx,
+        p.pos,
+        cfg.wudaFreeSize * (0.35 + 0.65 * lifeT),
+        cfg,
+        false,
+        cfg.wudaFreeOpacity * lifeT,
+      );
+    }
+
     this.instanced!.instanceMatrix.needsUpdate = true;
     if (this.instanced!.instanceColor) {
       this.instanced!.instanceColor.needsUpdate = true;
@@ -378,6 +478,7 @@ export class WudaCoatRuntime {
       stuck,
       free,
       dead,
+      refilling,
       meshCount: skSync.meshCount,
       skeletonUpdates: skSync.updates,
       skeletonCopies: skSync.copies,
@@ -390,7 +491,7 @@ export class WudaCoatRuntime {
       if (now - this.lastStatsLogMs > 500) {
         this.lastStatsLogMs = now;
         console.info(
-          `[WudaCoat] mode=B meshes=${skSync.meshCount} skObj=${skSync.skeletonObjects} skUpd=${skSync.updates} skCopy=${skSync.copies} groups=${skSync.groups} N=${this.slots.length} coatMs=${coatMs.toFixed(2)} stuck=${stuck} free=${free} dead=${dead}`,
+          `[WudaCoat] mode=B meshes=${skSync.meshCount} skObj=${skSync.skeletonObjects} skUpd=${skSync.updates} skCopy=${skSync.copies} groups=${skSync.groups} N=${this.slots.length} freePool=${this.freePool.length} coatMs=${coatMs.toFixed(2)} stuck=${stuck} free=${free} refill=${refilling} dead=${dead}`,
         );
       }
     }
@@ -443,6 +544,7 @@ export class WudaCoatRuntime {
       this.instanced = null;
     }
     this.slots = [];
+    this.freePool = [];
     this.bakeKey = '';
   }
 
