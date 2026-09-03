@@ -392,6 +392,11 @@ export type MutableSimConfig = {
    */
   wudaCoverMode: 'largestMesh' | 'allMeshes';
   /**
+   * 全身覆盖时丢掉顶点数低于此值的碎网格（泪滴/装饰等）。
+   * 0 = 不过滤。若全部被滤掉则回退为最大网格。仅最大网格模式忽略此值。
+   */
+  wudaCoverMeshMinVerts: number;
+  /**
    * 全身模式下四部位粒子配额（相对权重，运行时归一化）。
    * P1 / P2 各自独立：头 / 躯干 / 四肢根部（上臂+大腿）/ 四肢尾部（前臂手+小腿脚）。
    */
@@ -405,7 +410,11 @@ export type MutableSimConfig = {
   wudaP2RegionWeightLimbTip: number;
   /** C：源顶点遍历步长（≥1），用于抽稀 */
   wudaVertexStride: number;
-  /** C：同帧 await GPU 回读（false 则脱落判定晚约 1 帧） */
+  /**
+   * C：同帧 CPU（默认 false）。
+   * false = 稳态晚 ≤1 帧的 GPU 双缓冲（过期 pending 丢弃并保持上一帧 GPU，不混 CPU）；
+   * true = 每帧 CPU 蒙皮（与角色完全同位姿，偏调试/零延迟）。
+   */
   wudaBakeAwaitReadback: boolean;
   /** C：输出烘焙统计 */
   wudaShowBakeStats: boolean;
@@ -740,6 +749,7 @@ export function createDefaultSimConfig(): MutableSimConfig {
     wudaEnabled: false,
     wudaAttachMode: 'surfaceBary',
     wudaCoverMode: 'allMeshes',
+    wudaCoverMeshMinVerts: 256,
     wudaP1RegionWeightHead: 0.1,
     wudaP1RegionWeightTorso: 0.4,
     wudaP1RegionWeightLimbRoot: 0.25,
@@ -749,7 +759,7 @@ export function createDefaultSimConfig(): MutableSimConfig {
     wudaP2RegionWeightLimbRoot: 0.25,
     wudaP2RegionWeightLimbTip: 0.25,
     wudaVertexStride: 1,
-    wudaBakeAwaitReadback: true,
+    wudaBakeAwaitReadback: false,
     wudaShowBakeStats: false,
     wudaParticleCount: 512,
     wudaSeed: 1,

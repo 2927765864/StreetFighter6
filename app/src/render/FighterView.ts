@@ -200,6 +200,8 @@ export class FighterView {
   private wudaModelRoot: THREE.Object3D | null = null;
   private wudaAttachMode: 'surfaceBary' | 'vertexGpuBake' = 'surfaceBary';
   private wudaCoverMode: 'largestMesh' | 'allMeshes' = 'allMeshes';
+  /** Last applied allMeshes min-verts filter (−1 = unset). */
+  private wudaCoverMeshMinVerts = -1;
   private wudaRenderer: WebGPURenderer | null = null;
   /** Optional shared plume splash on coat detach (wired from main). */
   private wudaPlumeBurst: WudaPlumeBurst | null = null;
@@ -411,7 +413,10 @@ export class FighterView {
     this.wudaCoat = null;
     this.wudaModelRoot = model;
     this.wudaCoverMode = 'allMeshes';
-    this.wudaCoatMeshes = resolveWudaCoverMeshes(model, this.wudaCoverMode);
+    this.wudaCoverMeshMinVerts = 256;
+    this.wudaCoatMeshes = resolveWudaCoverMeshes(model, this.wudaCoverMode, {
+      minVerts: this.wudaCoverMeshMinVerts,
+    });
     this.wudaAttachMode = 'surfaceBary';
     if (this.wudaCoatMeshes.length > 0) {
       this.bindWudaCoatForMode('surfaceBary');
@@ -978,7 +983,7 @@ export class FighterView {
       if (wc.ok) {
         this.wudaCoat = coat;
         console.info(
-          `[FighterView] wuda coat C (vertexGpuBake) cover=${this.wudaCoverMode} meshes=${coatMeshes.length} mesh=${wc.meshName} verts=${vertTotal}`,
+          `[FighterView] wuda coat C (vertexGpuBake) cover=${this.wudaCoverMode} minVerts=${this.wudaCoverMeshMinVerts} meshes=${coatMeshes.length} mesh=${wc.meshName} verts=${vertTotal}`,
         );
       } else {
         console.warn(`[FighterView] wuda coat C: ${wc.reason}; falling back to B`);
@@ -992,7 +997,7 @@ export class FighterView {
     if (wc.ok) {
       this.wudaCoat = coat;
       console.info(
-        `[FighterView] wuda coat B (surfaceBary) cover=${this.wudaCoverMode} meshes=${coatMeshes.length} mesh=${wc.meshName} verts=${vertTotal}`,
+        `[FighterView] wuda coat B (surfaceBary) cover=${this.wudaCoverMode} minVerts=${this.wudaCoverMeshMinVerts} meshes=${coatMeshes.length} mesh=${wc.meshName} verts=${vertTotal}`,
       );
     } else {
       console.warn(`[FighterView] wuda coat B: ${wc.reason}`);
@@ -1016,14 +1021,22 @@ export class FighterView {
       cfg.wudaAttachMode === 'vertexGpuBake' ? 'vertexGpuBake' : 'surfaceBary';
     const wantCover =
       cfg.wudaCoverMode === 'largestMesh' ? 'largestMesh' : 'allMeshes';
+    const wantMinVerts = Math.max(
+      0,
+      Math.floor(cfg.wudaCoverMeshMinVerts ?? 0),
+    );
     if (
       this.wudaModelRoot &&
-      (wantMode !== this.wudaAttachMode || wantCover !== this.wudaCoverMode)
+      (wantMode !== this.wudaAttachMode ||
+        wantCover !== this.wudaCoverMode ||
+        wantMinVerts !== this.wudaCoverMeshMinVerts)
     ) {
       this.wudaCoverMode = wantCover;
+      this.wudaCoverMeshMinVerts = wantMinVerts;
       this.wudaCoatMeshes = resolveWudaCoverMeshes(
         this.wudaModelRoot,
         wantCover,
+        { minVerts: wantCover === 'allMeshes' ? wantMinVerts : 0 },
       );
       this.bindWudaCoatForMode(wantMode);
     }

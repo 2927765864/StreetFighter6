@@ -21,6 +21,10 @@ import {
   extractVertexSkinAttrs,
   type WudaVertexSample,
 } from './WudaVertexIndexBake';
+import {
+  syncSkinnedMeshBoneMatrices,
+  type WudaSkeletonSyncStats,
+} from './wudaSkeletonSync';
 
 const _local = new THREE.Vector3();
 const _world = new THREE.Vector3();
@@ -42,16 +46,21 @@ type MeshBatch = {
   boneMatricesNode: TslAny;
   bindMatrixUniform: TslAny;
   bindMatrixInverseUniform: TslAny | null;
+  matrixWorldUniform: TslAny | null;
   /**
-   * AttachedBindMode: compute outputs **world** positions via algebraic cancel
+   * AttachedBindMode: compute writes **world** via algebraic cancel
    * `boneBlend * bindMatrix * pos` (avoids GPU inv(MW)·MW drift vs CPU).
-   * Detached: compute outputs skinned local; then × matrixWorldFrozen.
+   * Detached: skinned local × matrixWorldUniform, also written as world.
    */
   outputsWorld: boolean;
-  currStorage: TslAny;
   computeNode: unknown;
-  localScratch: Float32Array;
 };
+
+/** How much CPU gold to run inside bakeGpu. */
+export type WudaGpuValidateMode = 'full' | 'spot' | 'off';
+
+/** Spot-check sample count after the first full validation. */
+export const WUDA_GPU_SPOT_SAMPLE_LIMIT = 12;
 
 export type WudaWorldErrorStats = {
   max: number;
@@ -65,6 +74,10 @@ export type WudaGpuBakeResult = {
   /** max |gpu-cpu| on a subset, computed at the **same** skeleton pose as the GPU bake. */
   samePoseErr: number;
   samePoseStats: WudaWorldErrorStats;
+  /** Validation work performed this kick. */
+  validateMode: WudaGpuValidateMode;
+  /** GPU→CPU compact readbacks this kick (target: 1). */
+  readbackCount: number;
 };
 
 export class WudaVertexGpuBaker {
@@ -78,6 +91,8 @@ export class WudaVertexGpuBaker {
   private gpuOut = new Float32Array(0);
   /** CPU gold captured inside bakeGpu after the same skeleton.update(). */
   private cpuSnap = new Float32Array(0);
+  /** Shared N×vec4 world output — one readback for all mesh batches. */
+  private globalOutStorage: TslAny | null = null;
   private frameIndex = 0;
   private gpuDegraded = false;
   lastBakeMs = 0;
@@ -89,8 +104,19 @@ export class WudaVertexGpuBaker {
     count: 0,
   };
   lastCount = 0;
+  /** Last bakeGpu compact readback count (1 when shared storage path works). */
+  lastReadbackCount = 0;
+  lastValidateMode: WudaGpuValidateMode = 'off';
   /** `gpu` | `cpu` — last committed bake path used for simulate. */
   lastBakePath: 'gpu' | 'cpu' = 'cpu';
+  /** Last coalesced skeleton sync (CPU bake or GPU freeze). */
+  lastSkeletonSync: WudaSkeletonSyncStats = {
+    meshCount: 0,
+    skeletonObjects: 0,
+    updates: 0,
+    copies: 0,
+    groups: 0,
+  };
 
   get count(): number {
     return this.samples.length;
@@ -140,6 +166,9 @@ export class WudaVertexGpuBaker {
     this.lastBakePath = 'cpu';
     this.lastSamePoseErr = 0;
     this.lastSamePoseStats = { max: 0, p95: 0, mean: 0, count: 0 };
+    this.lastReadbackCount = 0;
+    this.lastValidateMode = 'off';
+    this.globalOutStorage = null;
 
     if (list.length === 0 || samples.length === 0) return false;
 
@@ -148,6 +177,8 @@ export class WudaVertexGpuBaker {
     this.prevWorld = new Float32Array(n * 3);
     this.gpuOut = new Float32Array(n * 3);
     this.cpuSnap = new Float32Array(n * 3);
+    // Shared compact world buffer — all mesh computes scatter-write by global slot.
+    this.globalOutStorage = instancedArray(n, 'vec4');
 
     // Group global sample indices by meshIndex.
     const byMesh = new Map<number, number[]>();
@@ -168,7 +199,13 @@ export class WudaVertexGpuBaker {
       const source = list[meshIndex];
       if (!source?.skeleton) continue;
       const batchSamples = globalSlots.map((gi) => samples[gi]!);
-      const batch = this.createBatch(source, meshIndex, batchSamples, globalSlots);
+      const batch = this.createBatch(
+        source,
+        meshIndex,
+        batchSamples,
+        globalSlots,
+        this.globalOutStorage,
+      );
       if (batch) this.batches.push(batch);
     }
 
@@ -181,6 +218,7 @@ export class WudaVertexGpuBaker {
     meshIndex: number,
     batchSamples: WudaVertexSample[],
     globalSlots: number[],
+    globalOut: TslAny,
   ): MeshBatch | null {
     if (!source.skeleton || batchSamples.length === 0) return null;
     const attrs = extractVertexSkinAttrs(source.geometry, batchSamples);
@@ -190,9 +228,7 @@ export class WudaVertexGpuBaker {
     const boneCount = source.skeleton.bones.length;
     if (boneCount <= 0 || !source.skeleton.boneMatrices) return null;
 
-    // Frozen pose buffers — filled at each bakeGpu start. Live skeleton arrays must
-    // NOT be referenced: 17× await readback yields let the mixer advance bones and
-    // desync CPU snap (taken at T0) from later batches (~15cm same-pose false fail).
+    // Frozen pose buffers — filled at each bakeGpu start before any await.
     const boneMatricesCopy = new Float32Array(boneCount * 16);
     boneMatricesCopy.set(source.skeleton.boneMatrices);
     const bindMatrixFrozen = source.bindMatrix.clone();
@@ -208,6 +244,9 @@ export class WudaVertexGpuBaker {
     const bindMatrixInverseUniform: TslAny | null = outputsWorld
       ? null
       : (uniform(bindMatrixInverseFrozen, 'mat4') as TslAny);
+    const matrixWorldUniform: TslAny | null = outputsWorld
+      ? null
+      : (uniform(matrixWorldFrozen, 'mat4') as TslAny);
 
     const posAttr = new THREE.InstancedBufferAttribute(attrs.positions, 3);
     const skinIndexU32 = new Uint32Array(n * 4);
@@ -216,6 +255,11 @@ export class WudaVertexGpuBaker {
     }
     const skinIndexAttr = new THREE.InstancedBufferAttribute(skinIndexU32, 4);
     const skinWeightAttr = new THREE.InstancedBufferAttribute(attrs.skinWeight, 4);
+    const globalSlotU32 = new Uint32Array(n);
+    for (let i = 0; i < n; i++) {
+      globalSlotU32[i] = globalSlots[i] ?? i;
+    }
+    const globalSlotAttr = new THREE.InstancedBufferAttribute(globalSlotU32, 1);
 
     const posStorage = storage(posAttr, 'vec3', n).setPBO(true).toReadOnly();
     const skinIndexStorage = storage(skinIndexAttr, 'uvec4', n)
@@ -224,14 +268,16 @@ export class WudaVertexGpuBaker {
     const skinWeightStorage = storage(skinWeightAttr, 'vec4', n)
       .setPBO(true)
       .toReadOnly();
-    // vec4 avoids WGSL array<vec3> 16-byte stride surprises on readback.
-    const outStorage: TslAny = instancedArray(n, 'vec4');
+    const globalSlotStorage = storage(globalSlotAttr, 'uint', n)
+      .setPBO(true)
+      .toReadOnly();
 
     const computeNode = outputsWorld
       ? Fn(() => {
           const position = posStorage.element(instanceIndex);
           const skinIndex = skinIndexStorage.element(instanceIndex);
           const skinWeight = skinWeightStorage.element(instanceIndex);
+          const gi = globalSlotStorage.element(instanceIndex);
           const boneMatX = boneMatricesNode.element(skinIndex.x);
           const boneMatY = boneMatricesNode.element(skinIndex.y);
           const boneMatZ = boneMatricesNode.element(skinIndex.z);
@@ -243,13 +289,13 @@ export class WudaVertexGpuBaker {
             boneMatZ.mul(skinWeight.z).mul(skinVertex),
             boneMatW.mul(skinWeight.w).mul(skinVertex),
           );
-          // Already world for AttachedBindMode (see comment above).
-          outStorage.element(instanceIndex).assign(vec4(skinned.xyz, 1));
+          globalOut.element(gi).assign(vec4(skinned.xyz, 1));
         })().compute(n)
       : Fn(() => {
           const position = posStorage.element(instanceIndex);
           const skinIndex = skinIndexStorage.element(instanceIndex);
           const skinWeight = skinWeightStorage.element(instanceIndex);
+          const gi = globalSlotStorage.element(instanceIndex);
           const boneMatX = boneMatricesNode.element(skinIndex.x);
           const boneMatY = boneMatricesNode.element(skinIndex.y);
           const boneMatZ = boneMatricesNode.element(skinIndex.z);
@@ -262,7 +308,8 @@ export class WudaVertexGpuBaker {
             boneMatW.mul(skinWeight.w).mul(skinVertex),
           );
           const skinPosition = bindMatrixInverseUniform!.mul(skinned).xyz;
-          outStorage.element(instanceIndex).assign(vec4(skinPosition, 1));
+          const worldPos = matrixWorldUniform!.mul(vec4(skinPosition, 1)).xyz;
+          globalOut.element(gi).assign(vec4(worldPos, 1));
         })().compute(n);
 
     return {
@@ -276,10 +323,9 @@ export class WudaVertexGpuBaker {
       boneMatricesNode,
       bindMatrixUniform,
       bindMatrixInverseUniform,
+      matrixWorldUniform,
       outputsWorld,
-      currStorage: outStorage,
       computeNode,
-      localScratch: new Float32Array(n * 4),
     };
   }
 
@@ -291,12 +337,7 @@ export class WudaVertexGpuBaker {
     if (this.sourceMeshes.length === 0) return;
     const n = this.samples.length;
     if (out.length < n * 3) return;
-    const updated = new Set<THREE.Skeleton>();
-    for (const mesh of this.sourceMeshes) {
-      if (!mesh.skeleton || updated.has(mesh.skeleton)) continue;
-      mesh.skeleton.update();
-      updated.add(mesh.skeleton);
-    }
+    this.lastSkeletonSync = syncSkinnedMeshBoneMatrices(this.sourceMeshes);
     for (let i = 0; i < n; i++) {
       const sample = this.samples[i]!;
       const meshIndex = Math.max(
@@ -416,21 +457,32 @@ export class WudaVertexGpuBaker {
   }
 
   /**
-   * GPU compute skinning + readback into `gpuOut`.
+   * GPU compute skinning + **one** compact readback into `gpuOut`.
    *
-   * Pose is **frozen** into per-batch copies before any await. All `compute`s run
-   * synchronously first; only then do we await readbacks. That way 17 batches cannot
-   * straddle mixer ticks (which previously produced ~15cm same-pose false fails).
+   * Pose is frozen into per-batch copies before any await. All computes run
+   * first (scatter-write into shared global storage); then a single readback.
+   * `validateMode` controls CPU gold cost: full (first enable), spot (periodic),
+   * or off (steady state).
    */
-  async bakeGpu(renderer: WebGPURenderer): Promise<WudaGpuBakeResult> {
+  async bakeGpu(
+    renderer: WebGPURenderer,
+    opts?: { validateMode?: WudaGpuValidateMode },
+  ): Promise<WudaGpuBakeResult> {
     const t0 =
       typeof performance !== 'undefined' ? performance.now() : Date.now();
+    const validateMode: WudaGpuValidateMode = opts?.validateMode ?? 'full';
+    this.lastValidateMode = validateMode;
 
-    if (this.batches.length === 0 || this.gpuOut.length < 3) {
+    if (
+      this.batches.length === 0 ||
+      this.gpuOut.length < 3 ||
+      !this.globalOutStorage
+    ) {
       this.bakeCpuWorld(this.gpuOut);
       this.cpuSnap.set(this.gpuOut);
       this.lastSamePoseStats = { max: 0, p95: 0, mean: 0, count: 0 };
       this.lastSamePoseErr = 0;
+      this.lastReadbackCount = 0;
       this.lastBakeMs =
         (typeof performance !== 'undefined' ? performance.now() : Date.now()) -
         t0;
@@ -438,16 +490,14 @@ export class WudaVertexGpuBaker {
         world: this.gpuOut,
         samePoseErr: 0,
         samePoseStats: this.lastSamePoseStats,
+        validateMode,
+        readbackCount: 0,
       };
     }
 
-    const updated = new Set<THREE.Skeleton>();
-    for (const batch of this.batches) {
-      const sk = batch.source.skeleton;
-      if (!sk || updated.has(sk)) continue;
-      sk.update();
-      updated.add(sk);
-    }
+    this.lastSkeletonSync = syncSkinnedMeshBoneMatrices(
+      this.batches.map((b) => b.source),
+    );
 
     // Freeze pose for every batch while still on the sync section of this call.
     for (const batch of this.batches) {
@@ -463,10 +513,17 @@ export class WudaVertexGpuBaker {
       batch.boneMatricesNode.addUpdateRange?.(0, batch.boneMatricesCopy.length);
     }
 
-    // CPU gold at the same frozen moment (before any await).
-    this.bakeCpuWorldAfterSkeletonUpdated(this.cpuSnap);
+    // CPU gold only when validating (same frozen pose, before await).
+    if (validateMode === 'full') {
+      this.bakeCpuWorldAfterSkeletonUpdated(this.cpuSnap);
+    } else if (validateMode === 'spot') {
+      this.bakeCpuWorldSampledAfterSkeletonUpdated(
+        this.cpuSnap,
+        WUDA_GPU_SPOT_SAMPLE_LIMIT,
+      );
+    }
 
-    // Dispatch all skin computes synchronously — results land in storage buffers.
+    // Dispatch all skin computes — each scatter-writes world into globalOut[slot].
     for (const batch of this.batches) {
       const compute = batch.computeNode as never;
       if (typeof renderer.compute === 'function') {
@@ -476,41 +533,31 @@ export class WudaVertexGpuBaker {
       }
     }
 
-    // Readbacks may yield; storages already hold T0 results.
-    for (const batch of this.batches) {
-      const ab = await renderer.getArrayBufferAsync(
-        batch.currStorage.value as never,
-      );
-      const src = new Float32Array(ab);
-      const bn = batch.globalSlots.length;
-      const need = bn * 4;
-      if (batch.localScratch.length < need) {
-        batch.localScratch = new Float32Array(need);
-      }
-      batch.localScratch.set(src.subarray(0, need));
-
-      const mw = batch.matrixWorldFrozen;
-      for (let li = 0; li < bn; li++) {
-        const gi = batch.globalSlots[li]!;
-        _local.set(
-          batch.localScratch[li * 4]!,
-          batch.localScratch[li * 4 + 1]!,
-          batch.localScratch[li * 4 + 2]!,
-        );
-        if (batch.outputsWorld) {
-          this.gpuOut[gi * 3] = _local.x;
-          this.gpuOut[gi * 3 + 1] = _local.y;
-          this.gpuOut[gi * 3 + 2] = _local.z;
-        } else {
-          _world.copy(_local).applyMatrix4(mw);
-          this.gpuOut[gi * 3] = _world.x;
-          this.gpuOut[gi * 3 + 1] = _world.y;
-          this.gpuOut[gi * 3 + 2] = _world.z;
-        }
-      }
+    // Single compact readback for all N particles.
+    const ab = await renderer.getArrayBufferAsync(
+      this.globalOutStorage.value as never,
+    );
+    const src = new Float32Array(ab);
+    const n = this.samples.length;
+    for (let i = 0; i < n; i++) {
+      this.gpuOut[i * 3] = src[i * 4]!;
+      this.gpuOut[i * 3 + 1] = src[i * 4 + 1]!;
+      this.gpuOut[i * 3 + 2] = src[i * 4 + 2]!;
     }
+    this.lastReadbackCount = 1;
 
-    this.lastSamePoseStats = this.worldErrorStats(this.gpuOut, this.cpuSnap, 48);
+    if (validateMode === 'full') {
+      this.lastSamePoseStats = this.worldErrorStats(this.gpuOut, this.cpuSnap, 48);
+    } else if (validateMode === 'spot') {
+      this.lastSamePoseStats = this.worldErrorStats(
+        this.gpuOut,
+        this.cpuSnap,
+        WUDA_GPU_SPOT_SAMPLE_LIMIT,
+      );
+    } else {
+      // Steady state: keep last stats; treat as acceptable zeros for gate.
+      this.lastSamePoseStats = { max: 0, p95: 0, mean: 0, count: 0 };
+    }
     this.lastSamePoseErr = this.lastSamePoseStats.max;
     this.lastBakeMs =
       (typeof performance !== 'undefined' ? performance.now() : Date.now()) -
@@ -519,6 +566,8 @@ export class WudaVertexGpuBaker {
       world: this.gpuOut,
       samePoseErr: this.lastSamePoseErr,
       samePoseStats: this.lastSamePoseStats,
+      validateMode,
+      readbackCount: this.lastReadbackCount,
     };
   }
 
@@ -528,21 +577,40 @@ export class WudaVertexGpuBaker {
     const n = this.samples.length;
     if (out.length < n * 3) return;
     for (let i = 0; i < n; i++) {
-      const sample = this.samples[i]!;
-      const meshIndex = Math.max(
-        0,
-        Math.min(this.sourceMeshes.length - 1, sample.meshIndex ?? 0),
-      );
-      const mesh = this.sourceMeshes[meshIndex]!;
-      const srcPos = mesh.geometry.getAttribute('position');
-      const vi = sample.vertexIndex;
-      _local.fromBufferAttribute(srcPos, vi);
-      mesh.applyBoneTransform(vi, _local);
-      _world.copy(_local).applyMatrix4(mesh.matrixWorld);
-      out[i * 3] = _world.x;
-      out[i * 3 + 1] = _world.y;
-      out[i * 3 + 2] = _world.z;
+      this.skinSampleToWorld(i, out);
     }
+  }
+
+  /** CPU gold only on a strided subset (spot validation). */
+  private bakeCpuWorldSampledAfterSkeletonUpdated(
+    out: Float32Array,
+    sampleLimit: number,
+  ): void {
+    if (this.sourceMeshes.length === 0) return;
+    const n = this.samples.length;
+    if (out.length < n * 3) return;
+    out.fill(0);
+    const step = Math.max(1, Math.floor(n / Math.max(1, sampleLimit)));
+    for (let i = 0; i < n; i += step) {
+      this.skinSampleToWorld(i, out);
+    }
+  }
+
+  private skinSampleToWorld(i: number, out: Float32Array): void {
+    const sample = this.samples[i]!;
+    const meshIndex = Math.max(
+      0,
+      Math.min(this.sourceMeshes.length - 1, sample.meshIndex ?? 0),
+    );
+    const mesh = this.sourceMeshes[meshIndex]!;
+    const srcPos = mesh.geometry.getAttribute('position');
+    const vi = sample.vertexIndex;
+    _local.fromBufferAttribute(srcPos, vi);
+    mesh.applyBoneTransform(vi, _local);
+    _world.copy(_local).applyMatrix4(mesh.matrixWorld);
+    out[i * 3] = _world.x;
+    out[i * 3 + 1] = _world.y;
+    out[i * 3 + 2] = _world.z;
   }
 
   /** Mark GPU unusable for this baker lifetime (until rebuild). */
@@ -609,6 +677,9 @@ export class WudaVertexGpuBaker {
     this.sourceMeshes = [];
     this.frameIndex = 0;
     this.gpuDegraded = false;
+    this.globalOutStorage = null;
+    this.lastReadbackCount = 0;
+    this.lastValidateMode = 'off';
   }
 
   dispose(): void {

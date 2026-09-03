@@ -679,6 +679,7 @@ function buildDom(): HTMLElement {
               <option value="largestMesh">仅最大网格（旧）</option>
             </select>
           </div>
+          ${rowNumber('wudaCoverMeshMinVerts', '全身最小顶点数', 0, 2048, 16)}
           <p class="panel-hint">部位权重 · P1</p>
           ${rowNumber('wudaP1RegionWeightHead', 'P1·头', 0, 1, 0.01)}
           ${rowNumber('wudaP1RegionWeightTorso', 'P1·躯干', 0, 1, 0.01)}
@@ -690,7 +691,7 @@ function buildDom(): HTMLElement {
           ${rowNumber('wudaP2RegionWeightLimbRoot', 'P2·四肢根部', 0, 1, 0.01)}
           ${rowNumber('wudaP2RegionWeightLimbTip', 'P2·四肢尾部', 0, 1, 0.01)}
           ${rowNumber('wudaVertexStride', 'C 顶点步长', 1, 32, 1)}
-          ${rowToggle('wudaBakeAwaitReadback', 'C 同帧等待回读')}
+          ${rowToggle('wudaBakeAwaitReadback', 'C 同帧CPU(关=稳GPU)')}
           ${rowToggle('wudaShowBakeStats', 'C 显示烘焙统计')}
           ${rowToggle('wudaDetachOnlyOnActiveHit', '仅攻击发生帧可脱落（锁）')}
           ${rowToggle('wudaDetachOnlyOnHitstun', '仅受击瞬间可脱落（锁）')}
@@ -1037,6 +1038,7 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'wudaP2RegionWeightTorso', path: 'wudaP2RegionWeightTorso' },
   { id: 'wudaP2RegionWeightLimbRoot', path: 'wudaP2RegionWeightLimbRoot' },
   { id: 'wudaP2RegionWeightLimbTip', path: 'wudaP2RegionWeightLimbTip' },
+  { id: 'wudaCoverMeshMinVerts', path: 'wudaCoverMeshMinVerts' },
   { id: 'wudaVertexStride', path: 'wudaVertexStride' },
   { id: 'wudaBakeAwaitReadback', path: 'wudaBakeAwaitReadback' },
   { id: 'wudaShowBakeStats', path: 'wudaShowBakeStats' },

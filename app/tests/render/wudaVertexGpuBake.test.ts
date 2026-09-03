@@ -7,10 +7,19 @@ import {
   bakeWudaVertexSamplesAcrossMeshes,
   extractVertexSkinAttrs,
 } from '../../src/render/wudaParticle/WudaVertexIndexBake';
-import { WudaVertexGpuBaker } from '../../src/render/wudaParticle/WudaVertexGpuBaker';
 import {
+  WudaVertexGpuBaker,
+  WUDA_GPU_SPOT_SAMPLE_LIMIT,
+} from '../../src/render/wudaParticle/WudaVertexGpuBaker';
+import {
+  isWudaGpuPendingFresh,
+  WUDA_GPU_PENDING_MAX_AGE_FRAMES,
+} from '../../src/render/wudaParticle/WudaVertexCoatRuntime';
+import {
+  filterSkinnedMeshesByMinVerts,
   findAllSkinnedMeshes,
   resolveWudaCoverMeshes,
+  skinnedMeshVertexCount,
 } from '../../src/render/wudaParticle/evalSkinnedSurface';
 
 function makeSkinnedPlane(): THREE.SkinnedMesh {
@@ -44,8 +53,9 @@ describe('wuda C CONFIG', () => {
     const cfg = createDefaultSimConfig();
     expect(cfg.wudaAttachMode).toBe('surfaceBary');
     expect(cfg.wudaCoverMode).toBe('allMeshes');
+    expect(cfg.wudaCoverMeshMinVerts).toBe(256);
     expect(cfg.wudaVertexStride).toBe(1);
-    expect(cfg.wudaBakeAwaitReadback).toBe(true);
+    expect(cfg.wudaBakeAwaitReadback).toBe(false);
     expect(cfg.wudaShowBakeStats).toBe(false);
   });
 
@@ -128,6 +138,55 @@ describe('bakeWudaVertexSamples', () => {
     b.geometry.dispose();
     (b.material as THREE.Material).dispose();
     b.skeleton.dispose();
+  });
+
+  it('allMeshes minVerts drops tiny meshes but never returns empty', () => {
+    const root = new THREE.Group();
+    // PlaneGeometry(2,2,1,1) → 4 verts; denser plane → more verts.
+    const tiny = makeSkinnedPlane(); // 4 verts
+    const bigGeo = new THREE.PlaneGeometry(2, 2, 20, 20);
+    const n = bigGeo.getAttribute('position').count;
+    expect(n).toBeGreaterThan(256);
+    const skinIndex = new Float32Array(n * 4);
+    const skinWeight = new Float32Array(n * 4);
+    for (let i = 0; i < n; i++) {
+      skinIndex[i * 4] = 0;
+      skinWeight[i * 4] = 1;
+    }
+    bigGeo.setAttribute('skinIndex', new THREE.BufferAttribute(skinIndex, 4));
+    bigGeo.setAttribute('skinWeight', new THREE.BufferAttribute(skinWeight, 4));
+    const bone = new THREE.Bone();
+    const big = new THREE.SkinnedMesh(
+      bigGeo,
+      new THREE.MeshBasicMaterial(),
+    );
+    big.add(bone);
+    big.bind(new THREE.Skeleton([bone]));
+    big.updateMatrixWorld(true);
+    tiny.name = 'tear';
+    big.name = 'body';
+    root.add(tiny, big);
+
+    expect(skinnedMeshVertexCount(tiny)).toBeLessThan(256);
+    expect(skinnedMeshVertexCount(big)).toBeGreaterThanOrEqual(256);
+
+    const filtered = resolveWudaCoverMeshes(root, 'allMeshes', {
+      minVerts: 256,
+    });
+    expect(filtered.length).toBe(1);
+    expect(filtered[0]!.name).toBe('body');
+
+    // Everything below threshold → keep largest only.
+    const allTiny = filterSkinnedMeshesByMinVerts([tiny], 256);
+    expect(allTiny.length).toBe(1);
+    expect(allTiny[0]).toBe(tiny);
+
+    tiny.geometry.dispose();
+    (tiny.material as THREE.Material).dispose();
+    tiny.skeleton.dispose();
+    big.geometry.dispose();
+    (big.material as THREE.Material).dispose();
+    big.skeleton.dispose();
   });
 
   it('skips origin helper verts', () => {
@@ -296,6 +355,30 @@ describe('WudaVertexGpuBaker CPU gold standard', () => {
         count: 48,
       }),
     ).toBe(false);
+  });
+
+  it('isWudaGpuPendingFresh rejects multi-frame-late GPU ghosts', () => {
+    expect(WUDA_GPU_PENDING_MAX_AGE_FRAMES).toBe(1);
+    // Kick on frame 10, consume on 11 → intended 1-frame lag, OK.
+    expect(isWudaGpuPendingFresh(11, 10)).toBe(true);
+    // Same-frame completion (await path / very fast readback).
+    expect(isWudaGpuPendingFresh(10, 10)).toBe(true);
+    // Full-body batches often finish 2+ frames later → ghost if applied.
+    expect(isWudaGpuPendingFresh(12, 10)).toBe(false);
+    expect(isWudaGpuPendingFresh(20, 10)).toBe(false);
+    expect(isWudaGpuPendingFresh(5, -1)).toBe(false);
+  });
+
+  it('exposes spot validate limit and accepts zero stats for validate=off gate', () => {
+    expect(WUDA_GPU_SPOT_SAMPLE_LIMIT).toBeGreaterThan(0);
+    expect(
+      WudaVertexGpuBaker.gpuSamePoseAcceptable({
+        max: 0,
+        p95: 0,
+        mean: 0,
+        count: 0,
+      }),
+    ).toBe(true);
   });
 
   it('commitWorldFrom + maxWorldError agree with CPU gold', () => {

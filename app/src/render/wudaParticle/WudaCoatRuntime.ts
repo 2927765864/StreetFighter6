@@ -21,6 +21,7 @@ import {
 } from './wudaCoatMath';
 import type { WudaCoatStats, WudaParticleState, WudaSurfaceSample } from './wudaTypes';
 import type { WudaPlumeBurst } from './WudaPlumeBurst';
+import { syncSkinnedMeshBoneMatrices } from './wudaSkeletonSync';
 
 type Slot = {
   sample: WudaSurfaceSample;
@@ -55,6 +56,7 @@ export class WudaCoatRuntime {
   private dummy = new THREE.Object3D();
   private readonly _color = new THREE.Color();
   private plumeBurst: WudaPlumeBurst | null = null;
+  private lastStatsLogMs = 0;
 
   get isBound(): boolean {
     return this.meshes.length > 0;
@@ -215,13 +217,12 @@ export class WudaCoatRuntime {
     );
     if (dt <= 0) return;
 
-    // TRAP-LAG: refresh bone matrices after animation/world update
-    const updatedSkeletons = new Set<THREE.Skeleton>();
-    for (const mesh of this.meshes) {
-      if (!mesh.skeleton || updatedSkeletons.has(mesh.skeleton)) continue;
-      mesh.skeleton.update();
-      updatedSkeletons.add(mesh.skeleton);
-    }
+    const t0 =
+      typeof performance !== 'undefined' ? performance.now() : Date.now();
+
+    // TRAP-LAG: refresh bone matrices after animation/world update.
+    // Coalesce when multiple Skeleton objects share the same bone chain.
+    const skSync = syncSkinnedMeshBoneMatrices(this.meshes);
 
     const blendMat = this.instanced!.material as THREE.MeshBasicMaterial;
     blendMat.blending = cfg.wudaBlendAdditive
@@ -371,7 +372,28 @@ export class WudaCoatRuntime {
     opacityMat.opacity = 1;
     opacityMat.transparent = true;
     this.instanced!.visible = true;
-    this.lastStats = { stuck, free, dead };
+    const coatMs =
+      (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0;
+    this.lastStats = {
+      stuck,
+      free,
+      dead,
+      meshCount: skSync.meshCount,
+      skeletonUpdates: skSync.updates,
+      skeletonCopies: skSync.copies,
+      coatMs,
+    };
+
+    if (cfg.wudaShowBakeStats) {
+      const now =
+        typeof performance !== 'undefined' ? performance.now() : Date.now();
+      if (now - this.lastStatsLogMs > 500) {
+        this.lastStatsLogMs = now;
+        console.info(
+          `[WudaCoat] mode=B meshes=${skSync.meshCount} skObj=${skSync.skeletonObjects} skUpd=${skSync.updates} skCopy=${skSync.copies} groups=${skSync.groups} N=${this.slots.length} coatMs=${coatMs.toFixed(2)} stuck=${stuck} free=${free} dead=${dead}`,
+        );
+      }
+    }
 
     if (cfg.wudaAlsoPlumeBurst && this.plumeBurst) {
       this.plumeBurst.flush(cfg);

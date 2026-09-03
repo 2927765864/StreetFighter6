@@ -26,6 +26,7 @@ describe('wuda CONFIG defaults', () => {
       'wudaEnabled',
       'wudaAttachMode',
       'wudaCoverMode',
+      'wudaCoverMeshMinVerts',
       'wudaP1RegionWeightHead',
       'wudaP1RegionWeightTorso',
       'wudaP1RegionWeightLimbRoot',
@@ -72,6 +73,7 @@ describe('wuda CONFIG defaults', () => {
     }
     expect(cfg.wudaEnabled).toBe(false);
     expect(cfg.wudaCoverMode).toBe('allMeshes');
+    expect(cfg.wudaCoverMeshMinVerts).toBe(256);
     expect(cfg.wudaP1RegionWeightHead).toBeCloseTo(0.1);
     expect(cfg.wudaP1RegionWeightTorso).toBeCloseTo(0.4);
     expect(cfg.wudaP1RegionWeightLimbRoot).toBeCloseTo(0.25);

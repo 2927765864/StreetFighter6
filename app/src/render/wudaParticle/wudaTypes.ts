@@ -20,4 +20,12 @@ export type WudaCoatStats = {
   stuck: number;
   free: number;
   dead: number;
+  /** Bound cover meshes (1 for largestMesh, many for allMeshes). */
+  meshCount?: number;
+  /** Actual skeleton.update() calls after coalescing. */
+  skeletonUpdates?: number;
+  /** Secondary boneMatrices copies from a primary update. */
+  skeletonCopies?: number;
+  /** Coat update wall time this frame (ms). */
+  coatMs?: number;
 };

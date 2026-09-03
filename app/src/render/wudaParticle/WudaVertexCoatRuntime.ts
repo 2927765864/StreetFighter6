@@ -16,12 +16,18 @@ import {
 import type { WudaCoatStats, WudaParticleState } from './wudaTypes';
 import type { WudaPlumeBurst } from './WudaPlumeBurst';
 import { bakeWudaVertexSamplesForMeshes } from './WudaVertexIndexBake';
-import { WudaVertexGpuBaker } from './WudaVertexGpuBaker';
+import {
+  WudaVertexGpuBaker,
+  type WudaGpuValidateMode,
+} from './WudaVertexGpuBaker';
 import {
   resolveWudaRegionWeightsForSide,
   type WudaFighterSide,
   type WudaRegionWeights,
 } from './wudaBodyRegions';
+
+/** After first full GPU validate, spot-check every N simulate frames. */
+const WUDA_GPU_SPOT_VALIDATE_INTERVAL = 30;
 
 type Slot = {
   vertexIndex: number;
@@ -44,6 +50,22 @@ const _scale = new THREE.Vector3();
 const _camQuat = new THREE.Quaternion();
 const _tmpPos = new THREE.Vector3();
 
+/**
+ * Async GPU pending is only safe for the intended 1-frame lag.
+ * Older results are discarded; the stable GPU path **holds** the last GPU
+ * world instead of mixing in a fresh CPU bake (which caused ghost flashes).
+ */
+export const WUDA_GPU_PENDING_MAX_AGE_FRAMES = 1;
+
+/** True when a bake kicked at `kickFrame` is still usable on `simFrame`. */
+export function isWudaGpuPendingFresh(
+  simFrame: number,
+  kickFrame: number,
+  maxAge = WUDA_GPU_PENDING_MAX_AGE_FRAMES,
+): boolean {
+  return kickFrame >= 0 && simFrame - kickFrame <= maxAge;
+}
+
 export class WudaVertexCoatRuntime {
   private meshes: THREE.SkinnedMesh[] = [];
   private slots: Slot[] = [];
@@ -64,9 +86,16 @@ export class WudaVertexCoatRuntime {
   private bakeInFlight: Promise<void> | null = null;
   /** Completed GPU world for *next* simulate; copied out of baker.gpuOut. */
   private pendingGpuWorld: Float32Array | null = null;
+  /** `simFrame` when the in-flight/pending bake was kicked (pose freeze time). */
+  private pendingGpuKickFrame = -1;
+  /** Monotonic simulate frame counter for pending age checks. */
+  private simFrame = 0;
   private gpuValidated = false;
+  /** True after the first successful GPU commit — hold stream, never mix CPU. */
+  private gpuStreamActive = false;
   private lastStatsLogMs = 0;
   private degradedLogged = false;
+  private stalePendingDiscardCount = 0;
 
   get isBound(): boolean {
     return this.meshes.length > 0;
@@ -151,7 +180,11 @@ export class WudaVertexCoatRuntime {
     this.degradedLogged = false;
     this.bakeInFlight = null;
     this.pendingGpuWorld = null;
+    this.pendingGpuKickFrame = -1;
+    this.simFrame = 0;
+    this.stalePendingDiscardCount = 0;
     this.gpuValidated = false;
+    this.gpuStreamActive = false;
 
     if (count <= 0) return false;
     const baked = bakeWudaVertexSamplesForMeshes(
@@ -220,11 +253,12 @@ export class WudaVertexCoatRuntime {
   /**
    * Sync update — safe to `void` from FighterView.
    *
-   * Stuck tracking must have a **fresh** world every frame. FighterView does not
-   * await Promises, so we never block simulate on GPU readback. Pattern:
-   *   1) consume last completed GPU pending (validated) OR CPU bake this frame
-   *   2) simulate detach/flight
-   *   3) kick async GPU bake for the *next* frame
+   * Default (`wudaBakeAwaitReadback === false`): stable **1-frame-late GPU**
+   * dual-buffer. Fresh pending is committed; missing/stale pending **holds**
+   * the last GPU world (no CPU mix → no ghost flash). CPU only for bootstrap
+   * or C-DEGRADED.
+   *
+   * `wudaBakeAwaitReadback === true`: same-frame CPU every frame (opt-in).
    */
   update(
     wallDtSec: number,
@@ -254,6 +288,10 @@ export class WudaVertexCoatRuntime {
     );
     if (dt <= 0) return;
 
+    this.simFrame++;
+    const t0 =
+      typeof performance !== 'undefined' ? performance.now() : Date.now();
+
     if (this.camera) this.camera.getWorldQuaternion(_camQuat);
     else _camQuat.identity();
 
@@ -262,42 +300,105 @@ export class WudaVertexCoatRuntime {
       ? THREE.AdditiveBlending
       : THREE.NormalBlending;
 
-    this.commitWorldForSimulate(cfg);
+    // Opt-in same-frame CPU (no GPU simulate).
+    if (cfg.wudaBakeAwaitReadback === true) {
+      this.pendingGpuWorld = null;
+      this.pendingGpuKickFrame = -1;
+      this.baker.bakeCpuIntoCurr();
+      this.lastBakeMs = this.baker.lastBakeMs;
+      this.simulateFromWorld(this.baker.getCurrWorld(), dt, cfg, allowDetach);
+      this.finishCoatStats(t0, cfg);
+      return;
+    }
+
+    if (!this.baker.hasGpu) {
+      this.baker.bakeCpuIntoCurr();
+      this.lastBakeMs = this.baker.lastBakeMs;
+      this.simulateFromWorld(this.baker.getCurrWorld(), dt, cfg, allowDetach);
+      this.finishCoatStats(t0, cfg);
+      return;
+    }
+
+    this.commitGpuStable(cfg);
     this.lastBakeMs = this.baker.lastBakeMs;
     this.simulateFromWorld(this.baker.getCurrWorld(), dt, cfg, allowDetach);
     this.kickGpuBakeForNextFrame();
+    this.finishCoatStats(t0, cfg);
+  }
+
+  private finishCoatStats(t0: number, cfg: MutableSimConfig): void {
+    const coatMs =
+      (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0;
+    const sk = this.baker.lastSkeletonSync;
+    this.lastStats = {
+      ...this.lastStats,
+      meshCount: sk.meshCount || this.meshes.length,
+      skeletonUpdates: sk.updates,
+      skeletonCopies: sk.copies,
+      coatMs,
+    };
+    if (!cfg.wudaShowBakeStats) return;
+    const now =
+      typeof performance !== 'undefined' ? performance.now() : Date.now();
+    if (now - this.lastStatsLogMs > 500) {
+      this.lastStatsLogMs = now;
+      console.info(
+        `[WudaVertexCoat] mode=C path=${this.baker.lastBakePath} meshes=${this.lastStats.meshCount} batches=${this.baker.gpuBatchCount} readbacks=${this.baker.lastReadbackCount} validate=${this.baker.lastValidateMode} skObj=${sk.skeletonObjects} skUpd=${sk.updates} skCopy=${sk.copies} groups=${sk.groups} degraded=${this.baker.isGpuDegraded} N=${this.slots.length} srcVerts=${this.sourceVertexCount} stride=${cfg.wudaVertexStride} bakeMs=${this.lastBakeMs.toFixed(2)} coatMs=${coatMs.toFixed(2)} staleDrop=${this.stalePendingDiscardCount} stuck=${this.lastStats.stuck} free=${this.lastStats.free} dead=${this.lastStats.dead}`,
+      );
+    }
   }
 
   /**
-   * Prefer validated GPU pending from the previous kick; otherwise CPU.
-   * Never reuses a stale currWorld across frames without a fresh bake.
-   * GPU accuracy is validated **inside bakeGpu** against a same-pose CPU snap
-   * (comparing last-frame GPU to this-frame CPU falsely reported ~2m errors).
+   * Stable GPU commit: fresh pending → curr; else hold last world.
+   * Never mix a same-frame CPU bake over a live GPU stream (ghost flash).
    */
-  private commitWorldForSimulate(cfg: MutableSimConfig): void {
+  private commitGpuStable(cfg: MutableSimConfig): void {
     const pending = this.pendingGpuWorld;
+    const kickFrame = this.pendingGpuKickFrame;
     this.pendingGpuWorld = null;
+    this.pendingGpuKickFrame = -1;
 
     if (pending && this.baker.hasGpu) {
+      if (!isWudaGpuPendingFresh(this.simFrame, kickFrame)) {
+        this.stalePendingDiscardCount++;
+        if (cfg.wudaShowBakeStats) {
+          const age = kickFrame >= 0 ? this.simFrame - kickFrame : -1;
+          console.info(
+            `[WudaVertexCoat] discard stale GPU pending age=${age} frames (hold; discarded=${this.stalePendingDiscardCount})`,
+          );
+        }
+        if (this.gpuStreamActive || this.baker.hasBakedFrame) return;
+        this.baker.bakeCpuIntoCurr();
+        return;
+      }
       if (this.baker.gpuWorldLooksDegenerate(pending)) {
         this.fallbackCpuDegraded('degenerate GPU pending');
         return;
       }
       if (!this.gpuValidated) {
         this.gpuValidated = true;
-        // Always log once — success was previously gated on wudaShowBakeStats and
-        // looked identical to "silent CPU" in the console.
         const s = this.baker.lastSamePoseStats;
         console.info(
-          `[WudaVertexCoat] GPU live enabled (p95=${s.p95.toFixed(4)}m max=${s.max.toFixed(4)}m mean=${s.mean.toFixed(4)}m batches=${this.baker.gpuBatchCount})`,
+          `[WudaVertexCoat] GPU live enabled (p95=${s.p95.toFixed(4)}m max=${s.max.toFixed(4)}m mean=${s.mean.toFixed(4)}m batches=${this.baker.gpuBatchCount} readbacks=${this.baker.lastReadbackCount})`,
         );
       }
       this.baker.commitWorldFrom(pending, 'gpu');
+      this.gpuStreamActive = true;
       this.lastBakeMs = this.baker.lastBakeMs;
       return;
     }
 
+    // No pending: hold stream (GPU or CPU bootstrap), avoid per-frame CPU remix.
+    if (this.gpuStreamActive || this.baker.hasBakedFrame) {
+      return;
+    }
     this.baker.bakeCpuIntoCurr();
+  }
+
+  private nextValidateMode(): WudaGpuValidateMode {
+    if (!this.gpuValidated) return 'full';
+    if (this.simFrame % WUDA_GPU_SPOT_VALIDATE_INTERVAL === 0) return 'spot';
+    return 'off';
   }
 
   private kickGpuBakeForNextFrame(): void {
@@ -310,21 +411,29 @@ export class WudaVertexCoatRuntime {
     ) {
       return;
     }
+    const kickFrame = this.simFrame;
+    const validateMode = this.nextValidateMode();
     this.bakeInFlight = this.baker
-      .bakeGpu(renderer)
+      .bakeGpu(renderer, { validateMode })
       .then((result) => {
         if (!this.baker.hasGpu) return;
-        const { world, samePoseStats } = result;
-        // Dual gate: typical verts tight, worst-case still coat-usable.
-        if (!WudaVertexGpuBaker.gpuSamePoseAcceptable(samePoseStats)) {
-          this.fallbackCpuDegraded(
-            `GPU≠CPU same-pose (p95=${samePoseStats.p95.toFixed(3)}m max=${samePoseStats.max.toFixed(3)}m mean=${samePoseStats.mean.toFixed(3)}m)`,
-            false,
-          );
-          return;
+        const { world, samePoseStats, validateMode: mode } = result;
+        // Skip gate when validation was intentionally off (steady state).
+        if (mode !== 'off') {
+          if (!WudaVertexGpuBaker.gpuSamePoseAcceptable(samePoseStats)) {
+            this.fallbackCpuDegraded(
+              `GPU≠CPU same-pose (p95=${samePoseStats.p95.toFixed(3)}m max=${samePoseStats.max.toFixed(3)}m mean=${samePoseStats.mean.toFixed(3)}m mode=${mode})`,
+              false,
+            );
+            return;
+          }
         }
         if (this.baker.gpuWorldLooksDegenerate(world)) {
           this.fallbackCpuDegraded('degenerate world after GPU bake', false);
+          return;
+        }
+        if (!isWudaGpuPendingFresh(this.simFrame, kickFrame)) {
+          this.stalePendingDiscardCount++;
           return;
         }
         if (
@@ -334,6 +443,7 @@ export class WudaVertexCoatRuntime {
           this.pendingGpuWorld = new Float32Array(world.length);
         }
         this.pendingGpuWorld.set(world);
+        this.pendingGpuKickFrame = kickFrame;
       })
       .catch((err: unknown) => {
         this.fallbackCpuDegraded(
@@ -349,6 +459,9 @@ export class WudaVertexCoatRuntime {
   private fallbackCpuDegraded(reason: string, bakeNow = true): void {
     this.baker.markGpuDegraded();
     this.pendingGpuWorld = null;
+    this.pendingGpuKickFrame = -1;
+    this.gpuStreamActive = false;
+    this.gpuValidated = false;
     if (bakeNow) {
       this.baker.bakeCpuIntoCurr();
       this.lastBakeMs = this.baker.lastBakeMs;
@@ -507,18 +620,12 @@ export class WudaVertexCoatRuntime {
     opacityMat.opacity = 1;
     opacityMat.transparent = true;
     this.instanced!.visible = true;
-    this.lastStats = { stuck, free, dead };
-
-    if (cfg.wudaShowBakeStats) {
-      const now =
-        typeof performance !== 'undefined' ? performance.now() : Date.now();
-      if (now - this.lastStatsLogMs > 500) {
-        this.lastStatsLogMs = now;
-        console.info(
-          `[WudaVertexCoat] mode=C path=${this.baker.lastBakePath} batches=${this.baker.gpuBatchCount} degraded=${this.baker.isGpuDegraded} N=${this.slots.length} srcVerts=${this.sourceVertexCount} stride=${cfg.wudaVertexStride} bakeMs=${this.lastBakeMs.toFixed(2)} stuck=${stuck} free=${free} dead=${dead}`,
-        );
-      }
-    }
+    this.lastStats = {
+      ...this.lastStats,
+      stuck,
+      free,
+      dead,
+    };
 
     if (cfg.wudaAlsoPlumeBurst && this.plumeBurst) {
       this.plumeBurst.flush(cfg);
@@ -578,6 +685,10 @@ export class WudaVertexCoatRuntime {
     this.parent = null;
     this.bakeInFlight = null;
     this.pendingGpuWorld = null;
+    this.pendingGpuKickFrame = -1;
+    this.simFrame = 0;
+    this.stalePendingDiscardCount = 0;
     this.gpuValidated = false;
+    this.gpuStreamActive = false;
   }
 }

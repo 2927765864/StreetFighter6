@@ -37,6 +37,11 @@ export function evalSkinnedSurfacePoint(
   return out;
 }
 
+/** Position attribute vertex count (0 if missing). */
+export function skinnedMeshVertexCount(mesh: THREE.SkinnedMesh): number {
+  return mesh.geometry.getAttribute('position')?.count ?? 0;
+}
+
 /** All skinned meshes with usable position attributes (stable traverse order). */
 export function findAllSkinnedMeshes(root: THREE.Object3D): THREE.SkinnedMesh[] {
   const out: THREE.SkinnedMesh[] = [];
@@ -58,7 +63,7 @@ export function findLargestSkinnedMesh(
   let best: THREE.SkinnedMesh | null = null;
   let bestCount = -1;
   for (const sm of all) {
-    const n = sm.geometry.getAttribute('position')?.count ?? 0;
+    const n = skinnedMeshVertexCount(sm);
     if (n > bestCount) {
       bestCount = n;
       best = sm;
@@ -67,17 +72,55 @@ export function findLargestSkinnedMesh(
   return best;
 }
 
+export type WudaCoverResolveOpts = {
+  /**
+   * Drop cover meshes with fewer than this many vertices (allMeshes only).
+   * 0 = no filter. If everything would be dropped, keep the single largest mesh.
+   */
+  minVerts?: number;
+};
+
+/**
+ * Keep meshes with vertexCount >= minVerts. Never returns empty when `meshes`
+ * was non-empty — falls back to the largest mesh.
+ */
+export function filterSkinnedMeshesByMinVerts(
+  meshes: readonly THREE.SkinnedMesh[],
+  minVerts: number,
+): THREE.SkinnedMesh[] {
+  if (meshes.length === 0) return [];
+  const min = Math.max(0, Math.floor(minVerts));
+  if (min <= 0) return meshes.slice();
+  const kept = meshes.filter((m) => skinnedMeshVertexCount(m) >= min);
+  if (kept.length > 0) return kept;
+  let best = meshes[0]!;
+  let bestCount = skinnedMeshVertexCount(best);
+  for (let i = 1; i < meshes.length; i++) {
+    const m = meshes[i]!;
+    const n = skinnedMeshVertexCount(m);
+    if (n > bestCount) {
+      best = m;
+      bestCount = n;
+    }
+  }
+  return [best];
+}
+
 /**
  * Resolve coat cover meshes from a model root.
- * `allMeshes` = every SkinnedMesh (full-body area-uniform); `largestMesh` = one mesh.
+ * `allMeshes` = every SkinnedMesh (optional minVerts filter);
+ * `largestMesh` = one mesh (minVerts ignored).
  */
 export function resolveWudaCoverMeshes(
   root: THREE.Object3D,
   mode: 'largestMesh' | 'allMeshes',
+  opts?: WudaCoverResolveOpts | null,
 ): THREE.SkinnedMesh[] {
   if (mode === 'allMeshes') {
     const all = findAllSkinnedMeshes(root);
-    if (all.length > 0) return all;
+    if (all.length > 0) {
+      return filterSkinnedMeshesByMinVerts(all, opts?.minVerts ?? 0);
+    }
   }
   const largest = findLargestSkinnedMesh(root);
   return largest ? [largest] : [];

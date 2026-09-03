@@ -289,6 +289,9 @@ export function createDebugGui(
     .add(cfg, 'wudaCoverMode', ['allMeshes', 'largestMesh'])
     .name('覆盖范围');
   wuda
+    .add(cfg, 'wudaCoverMeshMinVerts', 0, 2048, 16)
+    .name('全身最小顶点数');
+  wuda
     .add(cfg, 'wudaP1RegionWeightHead', 0, 1, 0.01)
     .name('P1·头');
   wuda
@@ -313,7 +316,7 @@ export function createDebugGui(
     .add(cfg, 'wudaP2RegionWeightLimbTip', 0, 1, 0.01)
     .name('P2·四肢尾部');
   wuda.add(cfg, 'wudaVertexStride', 1, 32, 1).name('C 顶点步长');
-  wuda.add(cfg, 'wudaBakeAwaitReadback').name('C 同帧等待回读');
+  wuda.add(cfg, 'wudaBakeAwaitReadback').name('C 同帧CPU(关=稳GPU)');
   wuda.add(cfg, 'wudaShowBakeStats').name('C 显示烘焙统计');
   wuda
     .add(cfg, 'wudaDetachOnlyOnActiveHit')
