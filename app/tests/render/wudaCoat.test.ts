@@ -25,6 +25,10 @@ import {
   spawnWudaFreeParticle,
   stepWudaFreePool,
 } from '../../src/render/wudaParticle/wudaFreePool';
+import {
+  resolveWudaInstanceColor,
+  setWudaInstanceOpacity,
+} from '../../src/render/wudaParticle/wudaInstanceAppearance';
 
 describe('wuda CONFIG defaults', () => {
   it('includes all wuda* keys from execution plan §7', () => {
@@ -100,6 +104,27 @@ describe('wuda CONFIG defaults', () => {
     expect(cfg.wudaDetachInstantRefill).toBe(false);
     expect(cfg.wudaDetachRefillDelay).toBeCloseTo(0.05);
     expect(cfg.wudaFreePoolCapacity).toBe(1024);
+  });
+});
+
+describe('wuda instance appearance', () => {
+  it('keeps RGB independent of opacity (no fade-to-black bake)', () => {
+    const cfg = createDefaultSimConfig();
+    cfg.wudaShowDebug = false;
+    cfg.wudaStuckColor = 0xa69980;
+    cfg.wudaFreeColor = 0xbfb399;
+    const stuck = new THREE.Color();
+    const free = new THREE.Color();
+    resolveWudaInstanceColor(stuck, cfg, true, 0.01);
+    resolveWudaInstanceColor(free, cfg, false, 0.01);
+    expect(stuck.getHex()).toBe(0xa69980);
+    expect(free.getHex()).toBe(0xbfb399);
+
+    const attr = new THREE.InstancedBufferAttribute(new Float32Array(2), 1);
+    setWudaInstanceOpacity(attr, 0, 0);
+    setWudaInstanceOpacity(attr, 1, 0.55);
+    expect(attr.getX(0)).toBe(0);
+    expect(attr.getX(1)).toBeCloseTo(0.55);
   });
 });
 

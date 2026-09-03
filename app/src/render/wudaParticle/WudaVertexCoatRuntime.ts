@@ -33,6 +33,12 @@ import {
   stepWudaFreePool,
   type WudaFreePoolParticle,
 } from './wudaFreePool';
+import {
+  createWudaInstanceAppearance,
+  resolveWudaInstanceColor,
+  setWudaInstanceOpacity,
+} from './wudaInstanceAppearance';
+import type { MeshBasicNodeMaterial } from 'three/webgpu';
 
 /** After first full GPU validate, spot-check every N simulate frames. */
 const WUDA_GPU_SPOT_VALIDATE_INTERVAL = 30;
@@ -83,6 +89,7 @@ export class WudaVertexCoatRuntime {
   private freePool: WudaFreePoolParticle[] = [];
   private bakeKey = '';
   private instanced: THREE.InstancedMesh | null = null;
+  private opacityAttr: THREE.InstancedBufferAttribute | null = null;
   private parent: THREE.Object3D | null = null;
   private camera: THREE.Camera | null = null;
   private baker = new WudaVertexGpuBaker();
@@ -239,17 +246,13 @@ export class WudaVertexCoatRuntime {
     this.freePool = refillOn ? createWudaFreePool(freeCap) : [];
 
     const geo = new THREE.PlaneGeometry(1, 1);
-    const mat = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
-      transparent: true,
-      depthWrite: false,
-      depthTest: true,
-      blending: cfg.wudaBlendAdditive
-        ? THREE.AdditiveBlending
-        : THREE.NormalBlending,
-      side: THREE.DoubleSide,
-    });
-    this.instanced = new THREE.InstancedMesh(geo, mat, instanceCap);
+    const appearance = createWudaInstanceAppearance(
+      geo,
+      instanceCap,
+      !!cfg.wudaBlendAdditive,
+    );
+    this.opacityAttr = appearance.opacityAttr;
+    this.instanced = new THREE.InstancedMesh(geo, appearance.material, instanceCap);
     this.instanced.frustumCulled = false;
     this.instanced.count = instanceCap;
     this.instanced.name = 'WudaVertexCoatInstances';
@@ -261,11 +264,13 @@ export class WudaVertexCoatRuntime {
     for (let i = 0; i < instanceCap; i++) {
       this.instanced.setMatrixAt(i, _mat);
       this.instanced.setColorAt(i, this._color.setRGB(1, 1, 1));
+      setWudaInstanceOpacity(this.opacityAttr, i, 0);
     }
     this.instanced.instanceMatrix.needsUpdate = true;
     if (this.instanced.instanceColor) {
       this.instanced.instanceColor.needsUpdate = true;
     }
+    this.opacityAttr.needsUpdate = true;
     this.parent.add(this.instanced);
     return true;
   }
@@ -315,7 +320,7 @@ export class WudaVertexCoatRuntime {
     if (this.camera) this.camera.getWorldQuaternion(_camQuat);
     else _camQuat.identity();
 
-    const blendMat = this.instanced!.material as THREE.MeshBasicMaterial;
+    const blendMat = this.instanced!.material as MeshBasicNodeMaterial;
     blendMat.blending = cfg.wudaBlendAdditive
       ? THREE.AdditiveBlending
       : THREE.NormalBlending;
@@ -712,7 +717,8 @@ export class WudaVertexCoatRuntime {
     if (this.instanced!.instanceColor) {
       this.instanced!.instanceColor.needsUpdate = true;
     }
-    const opacityMat = this.instanced!.material as THREE.MeshBasicMaterial;
+    if (this.opacityAttr) this.opacityAttr.needsUpdate = true;
+    const opacityMat = this.instanced!.material as MeshBasicNodeMaterial;
     opacityMat.opacity = 1;
     opacityMat.transparent = true;
     this.instanced!.visible = true;
@@ -739,7 +745,7 @@ export class WudaVertexCoatRuntime {
     stuck: boolean,
     opacityOverride?: number,
   ): void {
-    if (!this.instanced) return;
+    if (!this.instanced || !this.opacityAttr) return;
     const sx = Math.max(0, size);
     _scale.set(sx, sx, sx);
     _quat.copy(_camQuat);
@@ -750,18 +756,13 @@ export class WudaVertexCoatRuntime {
     this.instanced.setMatrixAt(index, this.dummy.matrix);
 
     const op =
-      opacityOverride ??
-      (stuck ? cfg.wudaStuckOpacity : cfg.wudaFreeOpacity);
-    if (cfg.wudaShowDebug && stuck) {
-      this._color.setRGB(0.2 * op, 0.85 * op, 0.3 * op);
-    } else if (cfg.wudaShowDebug && !stuck && size > 0) {
-      this._color.setRGB(0.95 * op, 0.35 * op, 0.15 * op);
-    } else if (stuck) {
-      this._color.setHex(cfg.wudaStuckColor & 0xffffff).multiplyScalar(op);
-    } else {
-      this._color.setHex(cfg.wudaFreeColor & 0xffffff).multiplyScalar(op);
-    }
+      sx <= 0
+        ? 0
+        : (opacityOverride ??
+          (stuck ? cfg.wudaStuckOpacity : cfg.wudaFreeOpacity));
+    resolveWudaInstanceColor(this._color, cfg, stuck, sx);
     this.instanced.setColorAt(index, this._color);
+    setWudaInstanceOpacity(this.opacityAttr, index, op);
   }
 
   private teardownInstances(): void {
@@ -771,6 +772,7 @@ export class WudaVertexCoatRuntime {
       (this.instanced.material as THREE.Material).dispose();
       this.instanced = null;
     }
+    this.opacityAttr = null;
     this.slots = [];
     this.freePool = [];
     this.bakeKey = '';
