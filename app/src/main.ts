@@ -22,6 +22,8 @@ import {
   CameraRig,
 } from './render/CameraRig';
 import { ScreenShakeFx } from './render/ScreenShakeFx';
+import { resolveCmosShakePresetId } from './config/cmosShake';
+import { resolveGuardStrength } from './combat/systems/GuardPolicy';
 import {
   applyEnvironment,
   applyLightTransformsFromConfig,
@@ -267,10 +269,12 @@ async function boot(): Promise<void> {
   const screenShake = new ScreenShakeFx();
   match.opts.onHitVfx = (ev) => {
     hitVfxDirector.onMatchContact(ev);
-    const id =
-      ev.kind === 'onHit'
-        ? cfg.cmosShake.presetOnHit
-        : cfg.cmosShake.presetOnBlock;
+    const strength = resolveGuardStrength({
+      guardStrength: ev.guardStrength,
+      hitstopOnBlock:
+        ev.kind === 'onBlock' ? ev.hitstopOnBlock : ev.hitstopOnHit,
+    });
+    const id = resolveCmosShakePresetId(cfg.cmosShake, ev.kind, strength);
     if (id) screenShake.play(id);
   };
 

@@ -1,0 +1,23 @@
+E4 wide short impact smoke — compare-loop prompts (iter1→iter3)
+
+GLOBAL
+- ONLY a wide short grey-white translucent steam puff
+- fat/short along punch axis; whole mass translates left→right
+- not a ring, not a thin long streak, not flash, not sparks, not character
+- solid #FF00FF magenta background
+
+ITER1 (failed: 3D cotton cumulus / comet tail)
+Isolate ONLY the wide short impact smoke puff... bulky steam block...
+crop05 became a comet with a leftward tail.
+
+ITER2 (shape: flatter 2D slab)
+Keep torn light-grey fighting-game VFX steam: a flat short slab, taller than long,
+ragged edges, semi-transparent, NOT 3D cotton, NOT a round explosion.
+crop03 usable (wide-short oval). crop01 grew a handle. crop08 failed (wall + text).
+
+ITER3 (phase morph + deterministic pack)
+Birth: denser, slightly left of center.
+Shift: whole mass clearly right, more broken.
+Faint: farther right, paler remnant.
+Pack 14 frames @30fps, 7×2, fixed 256 cell: translate centroid + fade.
+Avoid bbox-fill (that would hide translation, same bug as E3 iter3).

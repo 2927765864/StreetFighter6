@@ -269,8 +269,12 @@ export function createDebugGui(
   shake
     .add(cfg.cmosShake, 'strengthToVelocity', 0.5, 80, 0.5)
     .name('强度灵敏度↑更猛');
-  shake.add(cfg.cmosShake, 'presetOnHit').name('命中预设 id');
-  shake.add(cfg.cmosShake, 'presetOnBlock').name('防御预设 id');
+  shake.add(cfg.cmosShake.presetOnHitByStrength, 'S').name('轻命中→S_impact');
+  shake.add(cfg.cmosShake.presetOnHitByStrength, 'M').name('中命中→M_impact');
+  shake.add(cfg.cmosShake.presetOnHitByStrength, 'L').name('重命中→L_impact');
+  shake.add(cfg.cmosShake.presetOnBlockByStrength, 'S').name('轻防御预设');
+  shake.add(cfg.cmosShake.presetOnBlockByStrength, 'M').name('中防御预设');
+  shake.add(cfg.cmosShake.presetOnBlockByStrength, 'L').name('重防御预设');
 
   const light = gui.addFolder('打光');
   light.add(cfg, 'lightHelpersVisible').name('显示灯光辅助');

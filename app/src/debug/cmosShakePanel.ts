@@ -69,13 +69,31 @@ export function cmosShakeSectionHtml(): string {
               ${paramLabel('跟随游戏倍速', '开=卡帧/慢放时震动也变慢；关=墙钟感（推荐，命中停顿仍能感到冲击）', 'val-cmosShakeUseGameSpeed')}
               <input id="inp-cmosShakeUseGameSpeed" type="checkbox" />
             </div>
+            <p class="panel-hint" style="font-weight:600;margin-top:6px">按轻/中/重自动选预设</p>
+            <p class="panel-hint">招式强度 L→S、M→M、H→L。默认 S_impact / M_impact / L_impact；空=该档不震。</p>
             <div class="panel-row">
-              ${paramLabel('命中时播放预设', '未格挡命中自动 play 的预设 id；空=不自动震', 'val-cmosPresetOnHit')}
-              <input id="inp-cmosPresetOnHit" type="text" spellcheck="false" placeholder="例如 impact" />
+              ${paramLabel('轻攻击命中 (S)', '轻拳/轻脚命中时 play 的预设 id', 'val-cmosPresetOnHitS')}
+              <input id="inp-cmosPresetOnHitS" type="text" spellcheck="false" placeholder="S_impact" />
             </div>
             <div class="panel-row">
-              ${paramLabel('防御时播放预设', '格挡命中自动 play 的预设 id；空=不自动震', 'val-cmosPresetOnBlock')}
-              <input id="inp-cmosPresetOnBlock" type="text" spellcheck="false" placeholder="例如 tap" />
+              ${paramLabel('中攻击命中 (M)', '中拳/中脚命中时 play 的预设 id', 'val-cmosPresetOnHitM')}
+              <input id="inp-cmosPresetOnHitM" type="text" spellcheck="false" placeholder="M_impact" />
+            </div>
+            <div class="panel-row">
+              ${paramLabel('重攻击命中 (L)', '重拳/重脚命中时 play 的预设 id', 'val-cmosPresetOnHitL')}
+              <input id="inp-cmosPresetOnHitL" type="text" spellcheck="false" placeholder="L_impact" />
+            </div>
+            <div class="panel-row">
+              ${paramLabel('轻攻击防御 (S)', '轻攻击被格挡时 play 的预设 id', 'val-cmosPresetOnBlockS')}
+              <input id="inp-cmosPresetOnBlockS" type="text" spellcheck="false" placeholder="S_impact" />
+            </div>
+            <div class="panel-row">
+              ${paramLabel('中攻击防御 (M)', '中攻击被格挡时 play 的预设 id', 'val-cmosPresetOnBlockM')}
+              <input id="inp-cmosPresetOnBlockM" type="text" spellcheck="false" placeholder="M_impact" />
+            </div>
+            <div class="panel-row">
+              ${paramLabel('重攻击防御 (L)', '重攻击被格挡时 play 的预设 id', 'val-cmosPresetOnBlockL')}
+              <input id="inp-cmosPresetOnBlockL" type="text" spellcheck="false" placeholder="L_impact" />
             </div>
 
             <p class="panel-hint" style="font-weight:600;margin-top:8px">震动效果预设</p>
@@ -380,8 +398,24 @@ export function bindCmosShakePanel(opts: {
     syncers.push(sync);
     sync();
   };
-  bindText('inp-cmosPresetOnHit', 'cmosShake.presetOnHit', 'val-cmosPresetOnHit');
-  bindText('inp-cmosPresetOnBlock', 'cmosShake.presetOnBlock', 'val-cmosPresetOnBlock');
+  bindText('inp-cmosPresetOnHitS', 'cmosShake.presetOnHitByStrength.S', 'val-cmosPresetOnHitS');
+  bindText('inp-cmosPresetOnHitM', 'cmosShake.presetOnHitByStrength.M', 'val-cmosPresetOnHitM');
+  bindText('inp-cmosPresetOnHitL', 'cmosShake.presetOnHitByStrength.L', 'val-cmosPresetOnHitL');
+  bindText(
+    'inp-cmosPresetOnBlockS',
+    'cmosShake.presetOnBlockByStrength.S',
+    'val-cmosPresetOnBlockS',
+  );
+  bindText(
+    'inp-cmosPresetOnBlockM',
+    'cmosShake.presetOnBlockByStrength.M',
+    'val-cmosPresetOnBlockM',
+  );
+  bindText(
+    'inp-cmosPresetOnBlockL',
+    'cmosShake.presetOnBlockByStrength.L',
+    'val-cmosPresetOnBlockL',
+  );
 
   bindToggle(
     'inp-cmosDebugDirRandom',

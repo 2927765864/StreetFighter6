@@ -94,13 +94,78 @@ export type CmosShakeConfig = {
   settleVelPx: number;
   settleAngleRad: number;
   settleAngVel: number;
-  /** Preset id played on unblocked hit. Empty = none. */
-  presetOnHit: string;
-  /** Preset id played on blocked hit. Empty = none. */
-  presetOnBlock: string;
+  /**
+   * 命中震动按轻/中/重（S/M/L）选预设 id。
+   * 对应招式 guardStrength L→S、M→M、H→L。空字符串=该档不震。
+   */
+  presetOnHitByStrength: CmosShakeStrengthPresets;
+  /** 防御震动按轻/中/重（S/M/L）。 */
+  presetOnBlockByStrength: CmosShakeStrengthPresets;
   presets: Record<string, CmosShakeEffectPreset>;
   debugImpulse: CmosDebugImpulse;
 };
+
+/** 面板/存档用：S=轻、M=中、L=重（与预设 id `S_impact` 等一致）。 */
+export type CmosShakeStrengthBand = 'S' | 'M' | 'L';
+
+export type CmosShakeStrengthPresets = {
+  S: string;
+  M: string;
+  L: string;
+};
+
+/** Capcom 招式强度 L/M/H → 震动档 S/M/L。 */
+export function guardStrengthToShakeBand(
+  strength: 'L' | 'M' | 'H',
+): CmosShakeStrengthBand {
+  if (strength === 'L') return 'S';
+  if (strength === 'H') return 'L';
+  return 'M';
+}
+
+export function createDefaultStrengthPresets(
+  kind: 'hit' | 'block',
+): CmosShakeStrengthPresets {
+  if (kind === 'block') {
+    return { S: 'S_impact', M: 'M_impact', L: 'L_impact' };
+  }
+  return { S: 'S_impact', M: 'M_impact', L: 'L_impact' };
+}
+
+export function normalizeStrengthPresets(
+  raw: unknown,
+  fallback: CmosShakeStrengthPresets,
+  /** 旧档单一 presetOnHit / presetOnBlock 兜底到三档。 */
+  legacySingle?: unknown,
+): CmosShakeStrengthPresets {
+  const legacy =
+    typeof legacySingle === 'string' && legacySingle.length > 0
+      ? legacySingle
+      : null;
+  const src =
+    raw && typeof raw === 'object' && !Array.isArray(raw)
+      ? (raw as Record<string, unknown>)
+      : {};
+  const pick = (band: CmosShakeStrengthBand): string => {
+    const v = src[band];
+    if (typeof v === 'string') return v;
+    if (legacy != null) return legacy;
+    return fallback[band];
+  };
+  return { S: pick('S'), M: pick('M'), L: pick('L') };
+}
+
+export function resolveCmosShakePresetId(
+  cfg: Pick<CmosShakeConfig, 'presetOnHitByStrength' | 'presetOnBlockByStrength'>,
+  kind: 'onHit' | 'onBlock',
+  guardStrength: 'L' | 'M' | 'H',
+): string {
+  const band = guardStrengthToShakeBand(guardStrength);
+  const table =
+    kind === 'onHit' ? cfg.presetOnHitByStrength : cfg.presetOnBlockByStrength;
+  const id = table?.[band];
+  return typeof id === 'string' ? id : '';
+}
 
 const CMOS_SHAKE_MODES = new Set<CmosShakePresetMode>([
   'impulse',
@@ -298,6 +363,11 @@ export function mergeCmosShakePresets(
     if (!raw || typeof raw !== 'object') continue;
     out[id] = normalizeCmosShakeEffectPreset(id, raw, base[id]);
   }
+  // 旧存档缺轻中重冲击预设时补上，避免映射到空 id。
+  const factory = createDefaultCmosShakePresets();
+  for (const id of ['S_impact', 'M_impact', 'L_impact'] as const) {
+    if (!out[id] && factory[id]) out[id] = factory[id]!;
+  }
   return out;
 }
 
@@ -324,6 +394,25 @@ export function createDefaultCmosShakePresets(): Record<
   return {
     tap: impulsePreset('轻点', { strength: 0.12, spin: 0 }),
     tick: impulsePreset('轻击', { strength: 0.22, spin: 0.015 }),
+    /** 轻攻击命中（对应招式强度 L） */
+    S_impact: impulsePreset('轻攻击冲击', {
+      strength: 0.22,
+      spin: 0.02,
+      posKick: 0.006,
+    }),
+    /** 中攻击命中（对应招式强度 M） */
+    M_impact: impulsePreset('中攻击冲击', {
+      strength: 0.4,
+      spin: 0.05,
+      posKick: 0.012,
+    }),
+    /** 重攻击命中（对应招式强度 H） */
+    L_impact: impulsePreset('重攻击冲击', {
+      strength: 0.7,
+      spin: 0.09,
+      posKick: 0.022,
+      angleKickDeg: 0.15,
+    }),
     impact: impulsePreset('主冲击', { strength: 0.4, spin: 0.05 }),
     heavy: impulsePreset('重击', {
       strength: 0.7,
@@ -445,8 +534,8 @@ export function createDefaultCmosShakeConfig(): CmosShakeConfig {
     settleVelPx: 0.02,
     settleAngleRad: 0.0005,
     settleAngVel: 0.01,
-    presetOnHit: 'impact',
-    presetOnBlock: 'tap',
+    presetOnHitByStrength: createDefaultStrengthPresets('hit'),
+    presetOnBlockByStrength: createDefaultStrengthPresets('block'),
     presets: createDefaultCmosShakePresets(),
     debugImpulse: {
       dirAngleDeg: 90,
@@ -463,6 +552,8 @@ export function createDefaultCmosShakeConfig(): CmosShakeConfig {
 export function cloneCmosShakeConfig(src: CmosShakeConfig): CmosShakeConfig {
   return {
     ...src,
+    presetOnHitByStrength: { ...src.presetOnHitByStrength },
+    presetOnBlockByStrength: { ...src.presetOnBlockByStrength },
     presets: cloneCmosShakePresets(src.presets),
     debugImpulse: { ...src.debugImpulse },
   };
@@ -480,8 +571,6 @@ export function mergeCmosShakeConfig(
     typeof v === 'number' && Number.isFinite(v) ? v : fb;
   const bool = (v: unknown, fb: boolean): boolean =>
     typeof v === 'boolean' ? v : fb;
-  const str = (v: unknown, fb: string): string =>
-    typeof v === 'string' ? v : fb;
 
   return {
     enabled: bool(incoming.enabled, base.enabled),
@@ -510,8 +599,17 @@ export function mergeCmosShakeConfig(
     settleVelPx: num(incoming.settleVelPx, base.settleVelPx),
     settleAngleRad: num(incoming.settleAngleRad, base.settleAngleRad),
     settleAngVel: num(incoming.settleAngVel, base.settleAngVel),
-    presetOnHit: str(incoming.presetOnHit, base.presetOnHit),
-    presetOnBlock: str(incoming.presetOnBlock, base.presetOnBlock),
+    presetOnHitByStrength: normalizeStrengthPresets(
+      incoming.presetOnHitByStrength,
+      base.presetOnHitByStrength,
+      // 旧档单一字段 → 三档同 id
+      (incoming as { presetOnHit?: unknown }).presetOnHit,
+    ),
+    presetOnBlockByStrength: normalizeStrengthPresets(
+      incoming.presetOnBlockByStrength,
+      base.presetOnBlockByStrength,
+      (incoming as { presetOnBlock?: unknown }).presetOnBlock,
+    ),
     presets: mergeCmosShakePresets(
       base.presets,
       incoming.presets as

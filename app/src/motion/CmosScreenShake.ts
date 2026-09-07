@@ -28,6 +28,9 @@ export type CmosShakePresetId = string;
 export const CMOS_SHAKE_BUILTIN_IDS = [
   'tap',
   'tick',
+  'S_impact',
+  'M_impact',
+  'L_impact',
   'impact',
   'heavy',
   'error',

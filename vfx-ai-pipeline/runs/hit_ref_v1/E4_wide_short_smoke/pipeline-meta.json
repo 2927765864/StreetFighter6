@@ -1,0 +1,10 @@
+{
+  "element": "E4_wide_short_smoke",
+  "iter": "iter3_translate_pack",
+  "frames": 14,
+  "fps": 30,
+  "grid": "7x2",
+  "cell": 256,
+  "motion": "whole-mass translate L->R + fade; slight spread then shrink remnant",
+  "look": "wide short grey-white steam slab"
+}
