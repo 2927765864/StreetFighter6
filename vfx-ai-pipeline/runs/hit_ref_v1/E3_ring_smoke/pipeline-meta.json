@@ -1,0 +1,10 @@
+{
+  "element": "E3_ring_smoke",
+  "iter": "iter5_irregular_wrap",
+  "frames": 14,
+  "fps": 30,
+  "grid": "7x2",
+  "cell": 256,
+  "motion": "monotonic expand+fade kept",
+  "look": "C-wrap / horseshoe / broken clumps, not circle scale"
+}

@@ -37,6 +37,10 @@ import { parseRyuMovement } from '../../data/loadRyuMovement';
 import { buildFrontHeavyDashDx } from '../loco/DashProfile';
 import { resolvePush } from '../systems/PushResolve';
 import {
+  computeStageLogicWalls,
+  constrainFighterPair,
+} from '../../render/CameraRig';
+import {
   distributePushback,
   resolveBlockOnHit,
 } from '../systems/BlockResolve';
@@ -126,8 +130,25 @@ export type MatchSimOptions = {
   blockstunOverride: number;
   /** 0 = no chip on block path; 1 = full damage on hit path */
   damageScale: number;
+  /** Symmetric stage width (logic). Contours clamp to ±width/2. */
+  stageWidth: number;
+  /** @deprecated Derived from stageWidth; kept for older call sites. */
   stageMinX: number;
+  /** @deprecated Derived from stageWidth; kept for older call sites. */
   stageMaxX: number;
+  worldScale: number;
+  cameraZ: number;
+  cameraY: number;
+  cameraLookY: number;
+  cameraFov: number;
+  cameraZoomEnabled: boolean;
+  cameraZMax: number;
+  cameraNdcPad: number;
+  cameraCharHalfExtent: number;
+  /** Absolute screen/board edge → origin (logic). */
+  cameraEdgeMargin: number;
+  /** Presentation aspect used for authoritative camera walls. */
+  cameraAspect: number;
   /**
    * Strike contact VFX hook (hit or successful block).
    * Wired from main → HitVfxDirector; optional so tests need not provide it.
@@ -205,8 +226,20 @@ const DEFAULT_OPTS: MatchSimOptions = {
   blockPushEasePower: 3,
   blockstunOverride: -1,
   damageScale: 1,
+  stageWidth: 9,
   stageMinX: -4.5,
   stageMaxX: 4.5,
+  worldScale: 1,
+  cameraZ: 11,
+  cameraY: 1.55,
+  cameraLookY: 1.1,
+  cameraFov: 40,
+  cameraZoomEnabled: true,
+  cameraZMax: 16,
+  cameraNdcPad: 0.08,
+  cameraCharHalfExtent: 0.35,
+  cameraEdgeMargin: 0.55,
+  cameraAspect: 16 / 9,
 };
 
 export type MatchSnapshot = {
@@ -323,6 +356,11 @@ export class MatchSim {
 
   constructor(move5lp: MoveDefinition, catalog?: MoveCatalog, opts?: Partial<MatchSimOptions>) {
     this.opts = { ...DEFAULT_OPTS, ...opts };
+    if (opts?.stageWidth == null && (opts?.stageMinX != null || opts?.stageMaxX != null)) {
+      this.opts.stageWidth = this.opts.stageMaxX - this.opts.stageMinX;
+    }
+    this.opts.stageMinX = -this.opts.stageWidth * 0.5;
+    this.opts.stageMaxX = this.opts.stageWidth * 0.5;
     this.ensureDashDxTables();
     this.move5lp = cloneMove(move5lp);
     this.catalog = catalog ?? MoveCatalog.fromMoves([this.move5lp]);
@@ -349,6 +387,44 @@ export class MatchSim {
     this.debugProbe.catalogCount = this.catalog.size;
     this.debugProbe.forceP2Guard = this.opts.forceP2Guard;
     this.debugProbe.dummyGuardPolicy = this.dummy.guardPolicy;
+  }
+
+  /** Stage contour walls for fighter origins (logic units). */
+  stageLogicWalls(): { minX: number; maxX: number } {
+    return computeStageLogicWalls({
+      stageWidth: this.opts.stageWidth,
+      edgeMargin: this.opts.cameraEdgeMargin,
+    });
+  }
+
+  private cameraPairInput(): {
+    p1x: number;
+    p2x: number;
+    worldScale: number;
+    cameraY: number;
+    cameraZ: number;
+    cameraLookY: number;
+    cameraFov: number;
+    aspect: number;
+    zoomEnabled: boolean;
+    zMax: number;
+    stageWidth: number;
+    edgeMargin: number;
+  } {
+    return {
+      p1x: this.p1.x,
+      p2x: this.p2.x,
+      worldScale: this.opts.worldScale,
+      cameraY: this.opts.cameraY,
+      cameraZ: this.opts.cameraZ,
+      cameraLookY: this.opts.cameraLookY,
+      cameraFov: this.opts.cameraFov,
+      aspect: this.opts.cameraAspect,
+      zoomEnabled: this.opts.cameraZoomEnabled,
+      zMax: this.opts.cameraZMax,
+      stageWidth: this.opts.stageWidth,
+      edgeMargin: this.opts.cameraEdgeMargin,
+    };
   }
 
   /** Rebuild front-heavy |dx| tables from frames × avg speed (= distance). */
@@ -836,6 +912,8 @@ export class MatchSim {
     }
 
     // --- §4.4 order: displace → push → hit → advance ---
+    const prevP1x = this.p1.x;
+    const prevP2x = this.p2.x;
 
     // 4a. Walk displacement (after residual cleared by applyPostureOrWalkIntent)
     if (pendingWalk) {
@@ -869,11 +947,27 @@ export class MatchSim {
       this.p2.applyBlockPushDisplacement();
     }
 
-    // 5. Push resolve
-    const pushRes = resolvePush(this.p1, this.p2, {
-      minX: this.opts.stageMinX,
-      maxX: this.opts.stageMaxX,
-    }, { enabled: this.opts.enablePushResolve });
+    // 5. Push resolve against stage contours only (not sliding camera walls).
+    const stageWalls = this.stageLogicWalls();
+    const pushRes = resolvePush(this.p1, this.p2, stageWalls, {
+      enabled: this.opts.enablePushResolve,
+    });
+    if (!this.opts.enablePushResolve) {
+      if (this.p1.x < stageWalls.minX) this.p1.x = stageWalls.minX;
+      if (this.p1.x > stageWalls.maxX) this.p1.x = stageWalls.maxX;
+      if (this.p2.x < stageWalls.minX) this.p2.x = stageWalls.minX;
+      if (this.p2.x > stageWalls.maxX) this.p2.x = stageWalls.maxX;
+    }
+    // Camera soft-wall: cap pair span at zMax; only the mover is pulled back.
+    const pair = constrainFighterPair(
+      this.p1.x,
+      this.p2.x,
+      prevP1x,
+      prevP2x,
+      this.cameraPairInput(),
+    );
+    this.p1.x = pair.p1x;
+    this.p2.x = pair.p2x;
     this.debugProbe.pushOverlapX = pushRes.maxOverlapX;
 
     this.commitLogicalFacing();

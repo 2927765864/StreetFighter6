@@ -1,7 +1,10 @@
 /**
- * Side-view fight camera. Formulas from
- * docs/plans/ai-execution-plan-scene-camera-lighting-v0.md §5.
- * Does not mutate fighter logic positions.
+ * Side-view fight camera.
+ * - One logic-unit edge margin from absolute screen/board edge → fighter origin.
+ * - Zoom stays at zMin until that margin would be violated, then pulls back to zMax
+ *   (never past the Z that would show beyond stage edges).
+ * - Stage width clamps the *frame* (frustum at look plane), not merely camX.
+ * - Pair span is capped without sliding a shared wall (no idle-partner drag).
  */
 
 export const HURT_HALF_WIDTH = 0.35;
@@ -20,11 +23,17 @@ export type FightCameraInput = {
   cameraFov: number;
   aspect: number;
   zoomEnabled: boolean;
-  zoomSepK: number;
   zMax: number;
-  ndcPad: number;
-  /** Stance hurt half-extent in logic units. Default 0.35 (full w 0.7). */
-  hurtHalfWidth?: number;
+  /**
+   * Full stage width in logic units (symmetric about 0).
+   * Absolute camera frame edges cannot cross ±width/2.
+   */
+  stageWidth: number;
+  /**
+   * Logic distance from absolute screen/board edge to fighter origin.
+   * Same value for board-edge and screen soft-wall.
+   */
+  edgeMargin: number;
 };
 
 export type FightCameraPose = {
@@ -40,13 +49,16 @@ export type FightCameraFrame = {
   minE: number;
   maxE: number;
   mid: number;
-  pad: number;
+  /** World-unit margin from absolute frame edge to origin. */
+  edgeMarginW: number;
   fov: number;
   aspect: number;
   zMin: number;
   zMax: number;
-  /** Zoom formula only; fit-to-span may still push Z out. */
+  /** Preferred Z before fit-to-span / stage fill. */
   backZBase: number;
+  /** World half-width of stage (±stageWidth/2 * worldScale). */
+  stageHalfW: number;
 };
 
 export type CameraFollowOpts = {
@@ -56,6 +68,11 @@ export type CameraFollowOpts = {
   dt: number;
   /** World-unit X deadzone. 0 = none. */
   deadzone: number;
+};
+
+export type LogicWalls = {
+  minX: number;
+  maxX: number;
 };
 
 export function midXWorld(p1x: number, p2x: number, worldScale: number): number {
@@ -76,56 +93,83 @@ export function visibleHalfWidth(
   return Math.max(1e-6, backZ * Math.tan(fovRad / 2) * Math.max(aspect, 1e-6));
 }
 
+/** Max back-Z whose frustum half-width equals `stageHalfW` (no past-stage pixels). */
+export function stageFillBackZ(
+  stageHalfW: number,
+  fovDeg: number,
+  aspect: number,
+): number {
+  const fovRad = (fovDeg * Math.PI) / 180;
+  const denom = Math.tan(fovRad / 2) * Math.max(aspect, 1e-6);
+  return Math.max(0.1, stageHalfW / Math.max(denom, 1e-6));
+}
+
 export function fightCameraFrame(input: FightCameraInput): FightCameraFrame {
   const ws = input.worldScale;
-  const halfHurt = (input.hurtHalfWidth ?? HURT_HALF_WIDTH) * ws;
   const mid = midXWorld(input.p1x, input.p2x, ws);
-  const sep = sepWorld(input.p1x, input.p2x, ws);
-  const zMin = Math.max(0.1, input.cameraZ);
-  const zMax = Math.max(zMin, input.zMax);
-  const backZBase = input.zoomEnabled
-    ? Math.min(zMax, Math.max(zMin, zMin + input.zoomSepK * sep))
-    : zMin;
-  const edges = [
-    input.p1x * ws - halfHurt,
-    input.p1x * ws + halfHurt,
-    input.p2x * ws - halfHurt,
-    input.p2x * ws + halfHurt,
-  ];
+  const stageHalfW = Math.max(0, input.stageWidth * 0.5) * ws;
+  const fillZ = stageFillBackZ(stageHalfW, input.cameraFov, input.aspect);
+  const zMin = Math.min(Math.max(0.1, input.cameraZ), fillZ);
+  const zMax = Math.min(Math.max(zMin, input.zMax), fillZ);
+  const edgeMarginW = Math.max(0, input.edgeMargin) * ws;
+  // Fit / walls are measured from fighter origins to absolute frame edges.
+  const origins = [input.p1x * ws, input.p2x * ws];
   return {
-    minE: Math.min(...edges),
-    maxE: Math.max(...edges),
+    minE: Math.min(...origins),
+    maxE: Math.max(...origins),
     mid,
-    pad: Math.min(0.49, Math.max(0, input.ndcPad)),
+    edgeMarginW,
     fov: input.cameraFov,
     aspect: Math.max(input.aspect, 1e-6),
     zMin,
     zMax,
-    backZBase,
+    backZBase: zMin,
+    stageHalfW,
   };
 }
 
+/** Z needed so both origins stay ≥ edgeMargin inside absolute frame edges. */
 export function neededBackZ(frame: FightCameraFrame): number {
-  const fitFactor = 2 * (1 - frame.pad);
+  const neededHalf = (frame.maxE - frame.minE) * 0.5 + frame.edgeMarginW;
   const fovRad = (frame.fov * Math.PI) / 180;
   const tanHalf = Math.tan(fovRad / 2);
-  const neededHalf = (frame.maxE - frame.minE) / Math.max(fitFactor, 1e-6);
   return neededHalf / Math.max(tanHalf * frame.aspect, 1e-6);
 }
 
-export function fittedBackZ(frame: FightCameraFrame): number {
+/**
+ * Margin-triggered zoom: stay at zMin while the pair fits with edgeMargin;
+ * pull back only as far as needed, capped by zMax (and stage fill).
+ */
+export function fittedBackZ(frame: FightCameraFrame, zoomEnabled: boolean): number {
+  if (!zoomEnabled) return frame.backZBase;
   const need = neededBackZ(frame);
-  return need > frame.backZBase ? Math.min(frame.zMax, need) : frame.backZBase;
+  return need > frame.backZBase
+    ? Math.min(frame.zMax, need)
+    : frame.backZBase;
 }
 
+/** camX range so both origins stay inside absolute edges inset by edgeMargin. */
 export function camXLimits(
   backZ: number,
   frame: FightCameraFrame,
 ): { lo: number; hi: number } {
   const halfW = visibleHalfWidth(backZ, frame.fov, frame.aspect);
+  const inner = halfW - frame.edgeMarginW;
   return {
-    lo: frame.maxE - (1 - frame.pad) * halfW,
-    hi: frame.minE - (-1 + frame.pad) * halfW,
+    lo: frame.maxE - inner,
+    hi: frame.minE + inner,
+  };
+}
+
+/** camX range so the absolute frame edges stay inside ±stageHalfW. */
+export function stageCamXLimits(
+  backZ: number,
+  frame: FightCameraFrame,
+): { lo: number; hi: number } {
+  const halfW = visibleHalfWidth(backZ, frame.fov, frame.aspect);
+  return {
+    lo: -frame.stageHalfW + halfW,
+    hi: frame.stageHalfW - halfW,
   };
 }
 
@@ -134,14 +178,20 @@ export function clampCamX(
   backZ: number,
   frame: FightCameraFrame,
 ): number {
-  const { lo, hi } = camXLimits(backZ, frame);
+  const stage = stageCamXLimits(backZ, frame);
+  if (stage.lo > stage.hi) {
+    return 0;
+  }
+  const fighter = camXLimits(backZ, frame);
+  const lo = Math.max(fighter.lo, stage.lo);
+  const hi = Math.min(fighter.hi, stage.hi);
   if (lo <= hi) return Math.min(hi, Math.max(lo, camX));
-  return (frame.minE + frame.maxE) * 0.5;
+  return Math.min(stage.hi, Math.max(stage.lo, frame.mid));
 }
 
 export function computeFightCamera(input: FightCameraInput): FightCameraPose {
   const frame = fightCameraFrame(input);
-  const backZ = fittedBackZ(frame);
+  const backZ = fittedBackZ(frame, input.zoomEnabled);
   const camX = clampCamX(frame.mid, backZ, frame);
   return {
     camX,
@@ -151,6 +201,95 @@ export function computeFightCamera(input: FightCameraInput): FightCameraPose {
     lookY: input.cameraLookY,
     lookZ: 0,
   };
+}
+
+/**
+ * Stage origin walls: same absolute-edge − edgeMargin rule as screen soft walls.
+ */
+export function computeStageLogicWalls(input: {
+  stageWidth: number;
+  edgeMargin: number;
+}): LogicWalls {
+  const margin = Math.max(0, input.edgeMargin);
+  const stageHalf = Math.max(0, input.stageWidth * 0.5);
+  return {
+    minX: -stageHalf + margin,
+    maxX: stageHalf - margin,
+  };
+}
+
+/**
+ * Max origin separation at zMax with edgeMargin (also capped by stage walls).
+ */
+export function maxOriginSeparation(input: FightCameraInput): number {
+  const ws = Math.max(1e-6, input.worldScale);
+  const margin = Math.max(0, input.edgeMargin);
+  const frame = fightCameraFrame(input);
+  const halfW = visibleHalfWidth(frame.zMax, frame.fov, frame.aspect);
+  const camSep = 2 * (halfW / ws - margin);
+  const stage = computeStageLogicWalls(input);
+  const stageSep = Math.max(0, stage.maxX - stage.minX);
+  return Math.max(0, Math.min(camSep, stageSep));
+}
+
+/**
+ * After displacement: stage-clamp both, then if the pair is wider than the
+ * camera can show at zMax, pull back only the fighter who moved more.
+ */
+export function constrainFighterPair(
+  p1x: number,
+  p2x: number,
+  prevP1x: number,
+  prevP2x: number,
+  input: FightCameraInput,
+): { p1x: number; p2x: number } {
+  const stage = computeStageLogicWalls(input);
+  const clamp = (x: number) => Math.min(stage.maxX, Math.max(stage.minX, x));
+  let a = clamp(p1x);
+  let b = clamp(p2x);
+
+  const maxSep = maxOriginSeparation({ ...input, p1x: a, p2x: b });
+  const sep = Math.abs(a - b);
+  if (sep > maxSep + 1e-9) {
+    const d1 = Math.abs(a - prevP1x);
+    const d2 = Math.abs(b - prevP2x);
+    if (d1 > d2 + 1e-9) {
+      a = b + Math.sign(a - b || 1) * maxSep;
+    } else if (d2 > d1 + 1e-9) {
+      b = a + Math.sign(b - a || 1) * maxSep;
+    } else {
+      const mid = (a + b) * 0.5;
+      const half = maxSep * 0.5;
+      if (a <= b) {
+        a = mid - half;
+        b = mid + half;
+      } else {
+        b = mid - half;
+        a = mid + half;
+      }
+    }
+    a = clamp(a);
+    b = clamp(b);
+    const sep2 = Math.abs(a - b);
+    if (sep2 > maxSep + 1e-9) {
+      const mid = (a + b) * 0.5;
+      const half = maxSep * 0.5;
+      if (a <= b) {
+        a = clamp(mid - half);
+        b = clamp(mid + half);
+      } else {
+        b = clamp(mid - half);
+        a = clamp(mid + half);
+      }
+    }
+  }
+
+  return { p1x: a, p2x: b };
+}
+
+/** @deprecated Prefer computeStageLogicWalls / constrainFighterPair. */
+export function computeFighterLogicWalls(input: FightCameraInput): LogicWalls {
+  return computeStageLogicWalls(input);
 }
 
 export function followAlpha(lerp: number, dt: number): number {
@@ -176,13 +315,13 @@ export function deadzoneFollowX(
   return shownX;
 }
 
-/** Pull displayed X (and Z if needed) so both hurt spans stay inside ndcPad. */
+/** Pull displayed X (and Z if needed) so origins keep edgeMargin + stage. */
 export function constrainDisplayedPose(
   shown: FightCameraPose,
   input: FightCameraInput,
 ): FightCameraPose {
   const frame = fightCameraFrame(input);
-  const camZ = Math.max(shown.camZ, fittedBackZ(frame));
+  const camZ = Math.max(shown.camZ, fittedBackZ(frame, input.zoomEnabled));
   const camX = clampCamX(shown.camX, camZ, frame);
   return {
     camX,

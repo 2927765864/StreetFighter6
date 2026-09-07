@@ -4,11 +4,18 @@ import {
   HURT_HALF_WIDTH,
   camXLimits,
   computeFightCamera,
+  computeStageLogicWalls,
+  constrainFighterPair,
   deadzoneFollowX,
   fightCameraFrame,
+  fittedBackZ,
   followAlpha,
+  maxOriginSeparation,
   midXWorld,
   sepWorld,
+  stageCamXLimits,
+  stageFillBackZ,
+  visibleHalfWidth,
 } from '../../src/render/CameraRig';
 
 const base = {
@@ -21,9 +28,9 @@ const base = {
   cameraFov: 40,
   aspect: 16 / 9,
   zoomEnabled: false,
-  zoomSepK: 0.35,
   zMax: 16,
-  ndcPad: 0.08,
+  stageWidth: 20,
+  edgeMargin: 0.55,
 };
 
 describe('computeFightCamera', () => {
@@ -60,7 +67,7 @@ describe('computeFightCamera', () => {
       base,
       { ...base, p1x: -4.5, p2x: -3.5 },
       { ...base, p1x: 3, p2x: 4.5, worldScale: 2 },
-      { ...base, zoomEnabled: true, zoomSepK: 1 },
+      { ...base, zoomEnabled: true },
     ];
     for (const s of samples) {
       const p = computeFightCamera(s);
@@ -68,7 +75,7 @@ describe('computeFightCamera', () => {
     }
   });
 
-  it('hurt half-width default is 0.35', () => {
+  it('hurt half-width default constant remains 0.35', () => {
     expect(HURT_HALF_WIDTH).toBe(0.35);
   });
 
@@ -77,6 +84,165 @@ describe('computeFightCamera', () => {
     computeFightCamera(input);
     expect(input.p1x).toBe(-1);
     expect(input.p2x).toBe(1);
+  });
+});
+
+describe('margin-triggered zoom', () => {
+  it('keeps zMin while pair fits with edgeMargin', () => {
+    const frame = fightCameraFrame({
+      ...base,
+      zoomEnabled: true,
+      cameraZ: 8,
+      p1x: -0.5,
+      p2x: 0.5,
+    });
+    expect(fittedBackZ(frame, true)).toBeCloseTo(8);
+  });
+
+  it('pulls back when span no longer fits at zMin', () => {
+    const tight = {
+      ...base,
+      zoomEnabled: true,
+      cameraZ: 4,
+      zMax: 20,
+      edgeMargin: 0.55,
+      p1x: -3,
+      p2x: 3,
+      stageWidth: 40,
+    };
+    const p = computeFightCamera(tight);
+    expect(p.camZ).toBeGreaterThan(4);
+    expect(p.camZ).toBeLessThanOrEqual(20);
+  });
+
+  it('never exceeds stage-fill Z (frame cannot show past board)', () => {
+    const stageWidth = 8;
+    const fill = stageFillBackZ(
+      stageWidth * 0.5,
+      base.cameraFov,
+      base.aspect,
+    );
+    const p = computeFightCamera({
+      ...base,
+      zoomEnabled: true,
+      cameraZ: 2,
+      zMax: 100,
+      stageWidth,
+      edgeMargin: 0.2,
+      p1x: -3,
+      p2x: 3,
+    });
+    expect(p.camZ).toBeLessThanOrEqual(fill + 1e-9);
+    const halfW = visibleHalfWidth(p.camZ, base.cameraFov, base.aspect);
+    expect(p.camX - halfW).toBeGreaterThanOrEqual(-stageWidth * 0.5 - 1e-6);
+    expect(p.camX + halfW).toBeLessThanOrEqual(stageWidth * 0.5 + 1e-6);
+  });
+});
+
+describe('stage frame clamp', () => {
+  it('pins camX so absolute frame edges stay inside stage', () => {
+    const input = {
+      ...base,
+      zoomEnabled: false,
+      cameraZ: 5,
+      stageWidth: 10,
+      p1x: -3,
+      p2x: -2,
+    };
+    const p = computeFightCamera(input);
+    const halfW = visibleHalfWidth(p.camZ, input.cameraFov, input.aspect);
+    expect(p.camX - halfW).toBeGreaterThanOrEqual(-5 - 1e-6);
+    expect(p.camX + halfW).toBeLessThanOrEqual(5 + 1e-6);
+  });
+
+  it('allows one-sided corner (frame left edge on stage, right follows)', () => {
+    const input = {
+      ...base,
+      zoomEnabled: false,
+      cameraZ: 5,
+      stageWidth: 12,
+      p1x: -5.5,
+      p2x: -4.5,
+    };
+    const p = computeFightCamera(input);
+    const frame = fightCameraFrame(input);
+    const stage = stageCamXLimits(p.camZ, frame);
+    expect(p.camX).toBeGreaterThanOrEqual(stage.lo - 1e-9);
+    expect(p.camX).toBeLessThanOrEqual(stage.hi + 1e-9);
+  });
+});
+
+describe('constrainFighterPair', () => {
+  it('does not drag an idle partner when the walker exceeds max sep', () => {
+    const input = {
+      ...base,
+      stageWidth: 40,
+      cameraZ: 4,
+      zMax: 4,
+      zoomEnabled: true,
+      edgeMargin: 0.55,
+      p1x: -1,
+      p2x: 1,
+    };
+    const maxSep = maxOriginSeparation(input);
+    const idle = 0;
+    const walkerPrev = maxSep;
+    const walkerTried = maxSep + 1.25;
+    const out = constrainFighterPair(
+      walkerTried,
+      idle,
+      walkerPrev,
+      idle,
+      { ...input, p1x: walkerTried, p2x: idle },
+    );
+    expect(out.p2x).toBeCloseTo(idle, 6);
+    expect(out.p1x).toBeCloseTo(maxSep, 5);
+    expect(Math.abs(out.p1x - out.p2x)).toBeLessThanOrEqual(maxSep + 1e-6);
+  });
+
+  it('stage-clamps without moving the other fighter', () => {
+    const margin = 0.55;
+    const input = {
+      ...base,
+      stageWidth: 9,
+      edgeMargin: margin,
+      cameraZ: 8,
+      zMax: 16,
+      zoomEnabled: true,
+      p1x: 0,
+      p2x: 0,
+    };
+    const out = constrainFighterPair(10, 0, 4, 0, input);
+    expect(out.p2x).toBeCloseTo(0, 6);
+    expect(out.p1x).toBeCloseTo(4.5 - margin, 5);
+  });
+
+  it('board-edge and screen soft-wall use the same edgeMargin', () => {
+    const stageWidth = 9;
+    const stageHalf = stageWidth * 0.5;
+    const margin = 0.7;
+    const stage = computeStageLogicWalls({ stageWidth, edgeMargin: margin });
+    expect(stage.maxX).toBeCloseTo(stageHalf - margin, 6);
+
+    const fillZ = stageFillBackZ(stageHalf, base.cameraFov, base.aspect);
+    const input = {
+      ...base,
+      stageWidth,
+      edgeMargin: margin,
+      cameraZ: fillZ,
+      zMax: fillZ,
+      zoomEnabled: true,
+      p1x: -stage.maxX,
+      p2x: stage.maxX,
+    };
+    const maxSep = maxOriginSeparation(input);
+    expect(maxSep).toBeCloseTo(stage.maxX - stage.minX, 5);
+
+    const halfW = visibleHalfWidth(fillZ, base.cameraFov, base.aspect);
+    expect(halfW).toBeCloseTo(stageHalf, 5);
+    // Soft-wall origin limit from absolute edge == board origin limit.
+    const softOriginMax = halfW - margin;
+    expect(softOriginMax).toBeCloseTo(stage.maxX, 5);
   });
 });
 
@@ -157,8 +323,15 @@ describe('CameraRig.update', () => {
     expect(shown.camX).toBeCloseTo(0);
   });
 
-  it('edge clamp pulls displayed X so fighters stay in pad', () => {
-    const tight = { ...base, cameraZ: 4, p1x: -0.4, p2x: 0.4 };
+  it('edge clamp pulls displayed X so fighters keep edgeMargin', () => {
+    const tight = {
+      ...base,
+      cameraZ: 4,
+      p1x: -0.4,
+      p2x: 0.4,
+      stageWidth: 40,
+      edgeMargin: 0.2,
+    };
     const jumped = { ...tight, p1x: 2.2, p2x: 3.2 };
     const rig = new CameraRig();
     rig.update(tight, { lerp: 0.08, dt: 1 / 60, deadzone: 0 });
@@ -168,7 +341,6 @@ describe('CameraRig.update', () => {
     expect(shown.camX).toBeGreaterThanOrEqual(lo - 1e-9);
     expect(shown.camX).toBeLessThanOrEqual(hi + 1e-9);
     expect(shown.lookX).toBe(shown.camX);
-    // Unconstrained follow would still be near 0; clamp must have jumped.
     expect(shown.camX).toBeCloseTo(lo, 5);
   });
 });

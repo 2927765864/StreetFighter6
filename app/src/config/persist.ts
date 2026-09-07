@@ -59,11 +59,67 @@ export function migrateSavedCameraFollow(
   return parsed;
 }
 
+/** Derive symmetric stageWidth from legacy stageMinX/MaxX when missing. */
+export function migrateSavedStageWidth(
+  parsed: Record<string, unknown>,
+): Record<string, unknown> {
+  if (typeof parsed.stageWidth === 'number' && Number.isFinite(parsed.stageWidth)) {
+    const w = Math.max(0.5, parsed.stageWidth);
+    return {
+      ...parsed,
+      stageWidth: w,
+      stageMinX: -w * 0.5,
+      stageMaxX: w * 0.5,
+    };
+  }
+  const minX = parsed.stageMinX;
+  const maxX = parsed.stageMaxX;
+  if (typeof minX === 'number' && typeof maxX === 'number') {
+    const w = Math.max(0.5, maxX - minX);
+    return {
+      ...parsed,
+      stageWidth: w,
+      stageMinX: -w * 0.5,
+      stageMaxX: w * 0.5,
+    };
+  }
+  return parsed;
+}
+
+/**
+ * Fold legacy ndcPad + charHalfExtent into one logic-unit edge margin.
+ * Approximate board look: halfExtent + ndcPad * (stageWidth/2).
+ */
+export function migrateSavedCameraEdgeMargin(
+  parsed: Record<string, unknown>,
+): Record<string, unknown> {
+  if (
+    typeof parsed.cameraEdgeMargin === 'number' &&
+    Number.isFinite(parsed.cameraEdgeMargin)
+  ) {
+    return parsed;
+  }
+  const half =
+    typeof parsed.cameraCharHalfExtent === 'number'
+      ? parsed.cameraCharHalfExtent
+      : 0.35;
+  const pad =
+    typeof parsed.cameraNdcPad === 'number' ? parsed.cameraNdcPad : 0;
+  const stageW =
+    typeof parsed.stageWidth === 'number' ? parsed.stageWidth : 9;
+  const margin = Math.max(0, half + pad * (stageW * 0.5));
+  return { ...parsed, cameraEdgeMargin: margin };
+}
+
 /** Camera follow migrate then flat lights → lights[]. */
 export function migrateSavedConfig(
   parsed: Record<string, unknown>,
 ): Record<string, unknown> {
-  return migrateFlatLightsToList(migrateSavedCameraFollow(parsed));
+  return migrateFlatLightsToList(
+    migrateSavedCameraEdgeMargin(
+      migrateSavedStageWidth(migrateSavedCameraFollow(parsed)),
+    ),
+  );
 }
 
 function backupLocal(raw: string, oldVersion: unknown): void {

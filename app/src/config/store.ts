@@ -19,6 +19,11 @@ import {
   normalizeWudaLayerPreset,
   type WudaLayerPreset,
 } from '../render/wudaParticle/wudaLayerPreset';
+import {
+  cloneCmosShakeConfig,
+  createDefaultCmosShakeConfig,
+  mergeCmosShakeConfig,
+} from './cmosShake';
 import type { RuntimeConfig } from './types';
 import { CONFIG_VERSION } from './types';
 
@@ -177,6 +182,13 @@ export function mergeConfig(
       out.hitVfxHeightOffsets = normalizeHeightOffsets(value);
       continue;
     }
+    if (key === 'cmosShake' && isPlainObject(value)) {
+      out.cmosShake = mergeCmosShakeConfig(
+        out.cmosShake ?? createDefaultCmosShakeConfig(),
+        value,
+      );
+      continue;
+    }
     const baseVal = (out as Record<string, unknown>)[key];
     if (typeof baseVal === 'number' && typeof value === 'number' && Number.isFinite(value)) {
       (out as Record<string, unknown>)[key] = value;
@@ -245,6 +257,9 @@ export function applyConfig(
   CONFIG.wudaActiveLayerPresetId = ensureWudaActiveLayerId(
     CONFIG.wudaLayerPresets,
     merged.wudaActiveLayerPresetId,
+  );
+  CONFIG.cmosShake = cloneCmosShakeConfig(
+    merged.cmosShake ?? createDefaultCmosShakeConfig(),
   );
 }
 

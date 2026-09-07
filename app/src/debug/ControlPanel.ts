@@ -48,6 +48,7 @@ import {
   type WudaLayerPreset,
 } from '../render/wudaParticle/wudaLayerPreset';
 import { reloadMoveFromPublic } from './DebugGui';
+import { bindCmosShakePanel, cmosShakeSectionHtml } from './cmosShakePanel';
 
 export type ControlPanelHooks = {
   paused: boolean;
@@ -423,8 +424,6 @@ function buildDom(): HTMLElement {
           ${rowToggle('applySelfMovement', '启用攻击 Place 位移')}
           ${rowNumber('selfMovementScale', 'selfMovementScale', 0, 3, 0.05)}
           ${rowNumber('mmdkUnitScale', 'mmdkUnitScale', 0.001, 2, 0.001)}
-          ${rowNumber('stageMinX', '舞台 minX', -10, 0, 0.1)}
-          ${rowNumber('stageMaxX', '舞台 maxX', 0, 10, 0.1)}
           `,
           'expandGuardPush',
         )}
@@ -505,14 +504,14 @@ function buildDom(): HTMLElement {
           'camera',
           '【摄影机】平时对打镜头',
           `
-          ${rowNumber('cameraZ', '相机距离 Z', 1, 30, 0.1)}
+          ${rowNumber('stageWidth', '板边宽度', 2, 30, 0.1)}
+          ${rowNumber('cameraEdgeMargin', '边缘距离 (原点→画面/板边)', 0, 3, 0.01)}
+          ${rowNumber('cameraZ', '最近距离 (最大焦距)', 1, 30, 0.1)}
+          ${rowNumber('cameraZMax', '最远距离 (最小焦距)', 1, 40, 0.1)}
           ${rowNumber('cameraY', '相机高度 Y', 0, 5, 0.05)}
           ${rowNumber('cameraLookY', '看点高度', 0, 3, 0.05)}
           ${rowNumber('cameraFov', '视野 FOV', 20, 70, 0.5)}
-          ${rowToggle('cameraZoomEnabled', '开启间距变焦')}
-          ${rowNumber('cameraZoomSepK', '变焦系数', 0, 3, 0.01)}
-          ${rowNumber('cameraZMax', '变焦最远', 1, 40, 0.1)}
-          ${rowNumber('cameraNdcPad', '画面边距', 0, 0.3, 0.01)}
+          ${rowToggle('cameraZoomEnabled', '开启贴边变焦')}
           ${rowNumber('cameraLerp', '镜头跟随平滑', 0, 1, 0.01)}
           ${rowNumber('cameraFollowDeadzone', '镜头跟随死区', 0, 2, 0.01)}
           ${rowNumber('cameraNear', '近裁', 0.01, 1, 0.01)}
@@ -521,6 +520,8 @@ function buildDom(): HTMLElement {
           'expandCamera',
         )}
       </details>
+
+      ${cmosShakeSectionHtml()}
 
       <details class="panel-group" data-cat="打光">
         <summary>打光</summary>
@@ -979,8 +980,7 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'applySelfMovement', path: 'applySelfMovement' },
   { id: 'selfMovementScale', path: 'selfMovementScale' },
   { id: 'mmdkUnitScale', path: 'mmdkUnitScale' },
-  { id: 'stageMinX', path: 'stageMinX' },
-  { id: 'stageMaxX', path: 'stageMaxX' },
+
   { id: 'walkSpeed', path: 'walkSpeed' },
   { id: 'walkBackSpeed', path: 'walkBackSpeed' },
   { id: 'walkFirstFrameScale', path: 'walkFirstFrameScale' },
@@ -1013,14 +1013,14 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'worldScale', path: 'worldScale' },
   { id: 'modelScale', path: 'modelScale' },
   { id: 'modelYOffset', path: 'modelYOffset' },
+  { id: 'stageWidth', path: 'stageWidth' },
+  { id: 'cameraEdgeMargin', path: 'cameraEdgeMargin' },
   { id: 'cameraZ', path: 'cameraZ' },
   { id: 'cameraY', path: 'cameraY' },
   { id: 'cameraLookY', path: 'cameraLookY' },
   { id: 'cameraFov', path: 'cameraFov' },
   { id: 'cameraZoomEnabled', path: 'cameraZoomEnabled' },
-  { id: 'cameraZoomSepK', path: 'cameraZoomSepK' },
   { id: 'cameraZMax', path: 'cameraZMax' },
-  { id: 'cameraNdcPad', path: 'cameraNdcPad' },
   { id: 'cameraLerp', path: 'cameraLerp' },
   { id: 'cameraFollowDeadzone', path: 'cameraFollowDeadzone' },
   { id: 'cameraNear', path: 'cameraNear' },
@@ -1246,15 +1246,11 @@ export function setupControlPanel(
     }
   };
 
+  // Keys that do not feed MatchSim. Camera Z/FOV/zoom/stageWidth/
+  // cameraEdgeMargin DO — they drive logic limits — so omitted here.
   const PURE_VIEW_KEYS = new Set([
-    'cameraZ',
     'cameraY',
     'cameraLookY',
-    'cameraFov',
-    'cameraZoomEnabled',
-    'cameraZoomSepK',
-    'cameraZMax',
-    'cameraNdcPad',
     'cameraLerp',
     'cameraFollowDeadzone',
     'cameraNear',
@@ -1377,6 +1373,7 @@ export function setupControlPanel(
     ['expandRenderBoxes', 'renderBoxes', 'sect-renderBoxes'],
     ['expandCamera', 'camera', 'sect-camera'],
     ['expandLighting', 'lighting', 'sect-lighting'],
+    // cmosShake expand bound in bindCmosShakePanel
     ['expandHitVfx', 'hitVfx', 'sect-hitVfx'],
     ['expandAnimDrive', 'animDrive', 'sect-animDrive'],
     ['expandAnimTest', 'animTest', 'sect-animTest'],
@@ -1425,6 +1422,18 @@ export function setupControlPanel(
   bindSelect(ctx, 'sel-crossfadeAdvanceMode', 'crossfadeAdvanceMode');
   bindSelect(ctx, 'sel-wudaAttachMode', 'wudaAttachMode');
   bindSelect(ctx, 'sel-wudaCoverMode', 'wudaCoverMode');
+
+  bindCmosShakePanel({
+    root: host,
+    syncers,
+    onChange: notify,
+    setFlash,
+    bindNumber: (inputId, path, valueId) => bindNumber(ctx, inputId, path, valueId),
+    bindToggle: (inputId, path, labels, valueId) =>
+      bindToggle(ctx, inputId, path, labels ?? ['关', '开'], valueId),
+    bindSectionExpand: (inputId, valueId, sectionKey, bodyId) =>
+      bindSectionExpand(ctx, inputId, valueId, sectionKey, bodyId),
+  });
 
   // --- Wuda layer presets (stacked coats per P1/P2) ---
   const WUDA_LAYER_NUM_KEYS: Array<keyof WudaLayerPreset> = [

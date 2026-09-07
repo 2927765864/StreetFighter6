@@ -1,0 +1,19 @@
+E3 ring smoke — compare-loop prompts (iter1→iter3)
+
+GLOBAL
+- ONLY grey-white translucent volumetric steam ring/wrap
+- hollow center, fixed impact anchor, radius grows, walls thin
+- not flash, sparks, translating puff, long streak, character
+- solid #FF00FF magenta background
+
+ITER1 (failed: too circular)
+Isolate ONLY light grey-white translucent volumetric smoke as a tight irregular RING...
+
+ITER2 (shape fix)
+Keep ONLY the grey-white steam that wraps the defender's head and shoulders.
+C-shaped wrap, denser at crown and right shoulder, broken lower left.
+NOT a closed even doughnut, NOT a wreath, NOT a perfect circle.
+
+ITER3 (phase morph from good anchors)
+Same family, expand radius, thin walls, keep hollow center and bottom gap.
+Late: faint upper arc remnant, no line art, no character.

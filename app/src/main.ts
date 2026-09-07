@@ -21,6 +21,7 @@ import {
   applyFightCamera,
   CameraRig,
 } from './render/CameraRig';
+import { ScreenShakeFx } from './render/ScreenShakeFx';
 import {
   applyEnvironment,
   applyLightTransformsFromConfig,
@@ -263,7 +264,15 @@ async function boot(): Promise<void> {
     },
   });
   const hitVfxDirector = new HitVfxDirector(hitVfxRuntime);
-  match.opts.onHitVfx = (ev) => hitVfxDirector.onMatchContact(ev);
+  const screenShake = new ScreenShakeFx();
+  match.opts.onHitVfx = (ev) => {
+    hitVfxDirector.onMatchContact(ev);
+    const id =
+      ev.kind === 'onHit'
+        ? cfg.cmosShake.presetOnHit
+        : cfg.cmosShake.presetOnBlock;
+    if (id) screenShake.play(id);
+  };
 
   // Wuda coat detach splash: same overlay scene as hit VFX (composites above fighters).
   const wudaPlumeBurst = new WudaPlumeBurst({
@@ -800,6 +809,10 @@ async function boot(): Promise<void> {
   };
   const panelApi = setupControlPanel(match, clock, hooks, {
     onChange: (key) => {
+      if (typeof key === 'string' && key.startsWith('action:cmosShake:')) {
+        screenShake.handleAction(key);
+        return;
+      }
       if (
         key === '*' ||
         key === 'stageFitWidth' ||
@@ -885,6 +898,14 @@ async function boot(): Promise<void> {
     grid.visible = cfg.showDebugGrid;
     axes.visible = cfg.showAxes;
 
+    const fullWPre = window.innerWidth;
+    const fullHPre = window.innerHeight;
+    const viewWPre =
+      hooks.boxEditActive && boxEditView.w > 0 ? boxEditView.w : fullWPre;
+    const viewHPre =
+      hooks.boxEditActive && boxEditView.h > 0 ? boxEditView.h : fullHPre;
+    match.opts.cameraAspect = viewWPre / Math.max(viewHPre, 1);
+
     let logicSteps = 0;
     if (hooks.boxEditActive && boxEditor) {
       layoutFightCanvasForBoxEdit();
@@ -944,9 +965,9 @@ async function boot(): Promise<void> {
         cameraFov: cfg.cameraFov,
         aspect: viewAspect,
         zoomEnabled: cfg.cameraZoomEnabled,
-        zoomSepK: cfg.cameraZoomSepK,
         zMax: cfg.cameraZMax,
-        ndcPad: cfg.cameraNdcPad,
+        stageWidth: cfg.stageWidth,
+        edgeMargin: cfg.cameraEdgeMargin,
       },
       {
         lerp: cfg.cameraLerp,
@@ -976,6 +997,12 @@ async function boot(): Promise<void> {
         far: cfg.cameraFar,
         aspect: viewAspect,
       });
+    }
+
+    // CMOS screen shake: wall-clock by default; absolute write after fight camera.
+    screenShake.step(presentDt, cfg.timeScaleAnim);
+    if (!cfg.lightOrbitMode || hooks.boxEditActive) {
+      screenShake.applyToCamera(camera);
     }
 
     // Free-run + dual-advance clip time use presentLogicSteps/60 (authored 60Hz).

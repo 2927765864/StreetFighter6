@@ -1,0 +1,14 @@
+{
+  "element": "E1_core_flash",
+  "iter": 4,
+  "grid": [
+    5,
+    2
+  ],
+  "frames": 10,
+  "fps": 30,
+  "method": "morph from iso_03 master only, no mixed layers",
+  "shared_scale": 0.31096045197740113,
+  "cell": 256,
+  "anchor": "center"
+}

@@ -15,6 +15,10 @@ import {
   type WudaLayerPreset,
 } from '../render/wudaParticle/wudaLayerPreset';
 import {
+  createDefaultCmosShakeConfig,
+  type CmosShakeConfig,
+} from './cmosShake';
+import {
   createDefaultLights,
   type LightDesc,
 } from './lightTypes';
@@ -58,14 +62,34 @@ export type MutableSimConfig = {
   cameraLookY: number;
   cameraFov: number;
   cameraZoomEnabled: boolean;
+  /**
+   * @deprecated Unused — zoom is margin-triggered. Kept for save compat.
+   */
   cameraZoomSepK: number;
   cameraZMax: number;
+  /**
+   * @deprecated Merged into cameraEdgeMargin. Kept for save migration.
+   */
   cameraNdcPad: number;
   cameraLerp: number;
   /** World-unit X deadzone for delayed follow. 0 = none. */
   cameraFollowDeadzone: number;
   cameraNear: number;
   cameraFar: number;
+  /**
+   * Symmetric stage width in logic units. Absolute camera frame edges
+   * cannot cross ±stageWidth/2.
+   */
+  stageWidth: number;
+  /**
+   * @deprecated Merged into cameraEdgeMargin. Kept for save migration.
+   */
+  cameraCharHalfExtent: number;
+  /**
+   * Logic distance from absolute screen/board edge to fighter origin.
+   * Single knob for both board-edge and screen soft-wall spacing.
+   */
+  cameraEdgeMargin: number;
   stageFitWidth: number;
   stageOriginX: number;
   stageOriginZ: number;
@@ -127,7 +151,13 @@ export type MutableSimConfig = {
   blockstunOverride: number;
   damageScale: number;
   mmdkUnitScale: number;
+  /**
+   * @deprecated Prefer stageWidth. Migrated on load; still synced for old UI.
+   */
   stageMinX: number;
+  /**
+   * @deprecated Prefer stageWidth. Migrated on load; still synced for old UI.
+   */
   stageMaxX: number;
   actionBufferStandard: number;
   actionBufferDash: number;
@@ -404,6 +434,11 @@ export type MutableSimConfig = {
   wudaLayerPresets: WudaLayerPreset[];
   /** 控制面板当前编辑的预设 id。 */
   wudaActiveLayerPresetId: string;
+  /**
+   * CMOS 屏幕震动（三轴弹簧 + 速度冲量）。
+   * 偏移单位：世界单位；输出写到 fight camera 视平面。
+   */
+  cmosShake: CmosShakeConfig;
 };
 
 export function createDefaultSimConfig(): MutableSimConfig {
@@ -425,7 +460,7 @@ export function createDefaultSimConfig(): MutableSimConfig {
     cameraY: 1.55,
     cameraLookY: 1.1,
     cameraFov: 40,
-    cameraZoomEnabled: false,
+    cameraZoomEnabled: true,
     cameraZoomSepK: 0.35,
     cameraZMax: 16,
     cameraNdcPad: 0.08,
@@ -433,6 +468,9 @@ export function createDefaultSimConfig(): MutableSimConfig {
     cameraFollowDeadzone: 0.2,
     cameraNear: 0.05,
     cameraFar: 500,
+    stageWidth: 9,
+    cameraCharHalfExtent: 0.35,
+    cameraEdgeMargin: 0.55,
     stageFitWidth: 18,
     stageOriginX: 0,
     stageOriginZ: 0,
@@ -694,6 +732,7 @@ export function createDefaultSimConfig(): MutableSimConfig {
     wudaCoverMeshMinVerts: 256,
     wudaLayerPresets: createDefaultWudaLayerPresets(),
     wudaActiveLayerPresetId: 'wuda_p1_default',
+    cmosShake: createDefaultCmosShakeConfig(),
   };
 }
 
@@ -769,8 +808,20 @@ export function applyConfigToMatchOpts(cfg: MutableSimConfig) {
     blockPushEasePower: cfg.blockPushEasePower,
     blockstunOverride: cfg.blockstunOverride,
     damageScale: cfg.damageScale,
-    stageMinX: cfg.stageMinX,
-    stageMaxX: cfg.stageMaxX,
+    stageWidth: cfg.stageWidth,
+    stageMinX: -cfg.stageWidth * 0.5,
+    stageMaxX: cfg.stageWidth * 0.5,
+    worldScale: cfg.worldScale,
+    cameraZ: cfg.cameraZ,
+    cameraY: cfg.cameraY,
+    cameraLookY: cfg.cameraLookY,
+    cameraFov: cfg.cameraFov,
+    cameraZoomEnabled: cfg.cameraZoomEnabled,
+    cameraZMax: cfg.cameraZMax,
+    cameraNdcPad: cfg.cameraNdcPad,
+    cameraCharHalfExtent: cfg.cameraCharHalfExtent,
+    cameraEdgeMargin: cfg.cameraEdgeMargin,
+    cameraAspect: 16 / 9,
   };
 }
 
@@ -788,7 +839,12 @@ export function syncMatchOpts(
   },
   cfg: MutableSimConfig,
 ): void {
+  // Keep legacy min/max mirrors in sync with the symmetric width.
+  cfg.stageMinX = -cfg.stageWidth * 0.5;
+  cfg.stageMaxX = cfg.stageWidth * 0.5;
+  const aspect = match.opts.cameraAspect;
   Object.assign(match.opts, applyConfigToMatchOpts(cfg));
+  match.opts.cameraAspect = aspect;
   match.history.setCapacity(cfg.motionHistoryCapacity);
   match.ensureDashDxTables?.();
   match.dummy?.setUnguardedStance?.(cfg.dummyUnguardedStance);

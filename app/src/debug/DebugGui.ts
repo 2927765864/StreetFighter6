@@ -237,19 +237,40 @@ export function createDebugGui(
   render.add(cfg, 'showAxes').name('显示坐标轴');
   render.add(cfg, 'timeScaleAnim', 0, 2, 0.05).name('动画时间倍率');
 
+  const syncCameraOpts = () => syncMatchOpts(match, cfg);
   const camera = gui.addFolder('摄影机');
-  camera.add(cfg, 'cameraZ', 1, 30, 0.1).name('相机距离 Z');
+  camera.add(cfg, 'stageWidth', 2, 30, 0.1).name('板边宽度').onChange(syncCameraOpts);
+  camera
+    .add(cfg, 'cameraEdgeMargin', 0, 3, 0.01)
+    .name('边缘距离')
+    .onChange(syncCameraOpts);
+  camera.add(cfg, 'cameraZ', 1, 30, 0.1).name('最近距离').onChange(syncCameraOpts);
+  camera.add(cfg, 'cameraZMax', 1, 40, 0.1).name('最远距离').onChange(syncCameraOpts);
   camera.add(cfg, 'cameraY', 0, 5, 0.05).name('相机高度 Y');
   camera.add(cfg, 'cameraLookY', 0, 3, 0.05).name('看点高度');
-  camera.add(cfg, 'cameraFov', 20, 70, 0.5).name('视野 FOV');
-  camera.add(cfg, 'cameraZoomEnabled').name('开启间距变焦');
-  camera.add(cfg, 'cameraZoomSepK', 0, 3, 0.01).name('变焦系数');
-  camera.add(cfg, 'cameraZMax', 1, 40, 0.1).name('变焦最远');
-  camera.add(cfg, 'cameraNdcPad', 0, 0.3, 0.01).name('画面边距');
+  camera.add(cfg, 'cameraFov', 20, 70, 0.5).name('视野 FOV').onChange(syncCameraOpts);
+  camera.add(cfg, 'cameraZoomEnabled').name('开启贴边变焦').onChange(syncCameraOpts);
   camera.add(cfg, 'cameraLerp', 0, 1, 0.01).name('镜头跟随平滑');
   camera.add(cfg, 'cameraFollowDeadzone', 0, 2, 0.01).name('镜头跟随死区');
   camera.add(cfg, 'cameraNear', 0.01, 1, 0.01).name('近裁');
   camera.add(cfg, 'cameraFar', 50, 2000, 10).name('远裁');
+
+  const shake = gui.addFolder('屏幕震动');
+  shake.add(cfg.cmosShake, 'enabled').name('启用震动');
+  shake.add(cfg.cmosShake, 'intensity', 0, 1, 0.01).name('全局强度↑更猛');
+  shake.add(cfg.cmosShake, 'useGameSpeed').name('跟随游戏倍速');
+  shake.add(cfg.cmosShake, 'angularFreq', 4, 40, 0.5).name('平移频率↑更脆');
+  shake.add(cfg.cmosShake, 'dampingRatio', 0.2, 1.5, 0.02).name('平移阻尼↑少过冲');
+  shake.add(cfg.cmosShake, 'rotAngularFreq', 4, 40, 0.5).name('旋转频率↑更快回');
+  shake.add(cfg.cmosShake, 'rotDampingRatio', 0.2, 1.5, 0.02).name('旋转阻尼↑少扭晃');
+  shake.add(cfg.cmosShake, 'maxOffsetX', 0, 2, 0.01).name('水平最大偏移↑');
+  shake.add(cfg.cmosShake, 'maxOffsetY', 0, 2, 0.01).name('垂直最大偏移↑');
+  shake.add(cfg.cmosShake, 'maxAngleDeg', 0, 5, 0.1).name('最大转角↑更斜');
+  shake
+    .add(cfg.cmosShake, 'strengthToVelocity', 0.5, 80, 0.5)
+    .name('强度灵敏度↑更猛');
+  shake.add(cfg.cmosShake, 'presetOnHit').name('命中预设 id');
+  shake.add(cfg.cmosShake, 'presetOnBlock').name('防御预设 id');
 
   const light = gui.addFolder('打光');
   light.add(cfg, 'lightHelpersVisible').name('显示灯光辅助');
@@ -665,15 +686,6 @@ export function createDebugGui(
     .add(cfg, 'mmdkUnitScale', 0.001, 2, 0.001)
     .name('mmdkUnitScale')
     .onChange(syncOpts);
-  guardFolder
-    .add(cfg, 'stageMinX', -10, 0, 0.1)
-    .name('舞台minX')
-    .onChange(syncOpts);
-  guardFolder
-    .add(cfg, 'stageMaxX', 0, 10, 0.1)
-    .name('舞台maxX')
-    .onChange(syncOpts);
-
   const boxesFolder = gui.addFolder('框显示');
   boxesFolder.add(cfg, 'showHitboxes').name('显示 Hit');
   boxesFolder.add(cfg, 'showHurtboxes').name('显示 Hurt');

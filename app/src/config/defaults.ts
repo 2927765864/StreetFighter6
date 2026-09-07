@@ -12,6 +12,7 @@ export function defaultExpandedSections(): ExpandedSections {
     locomotion: true,
     renderBoxes: true,
     camera: true,
+    cmosShake: true,
     lighting: true,
     animDrive: false,
     commandProbe: false,

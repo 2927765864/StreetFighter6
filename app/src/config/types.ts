@@ -13,6 +13,7 @@ export type ExpandedSections = {
   locomotion: boolean;
   renderBoxes: boolean;
   camera: boolean;
+  cmosShake: boolean;
   lighting: boolean;
   animDrive: boolean;
   commandProbe: boolean;
