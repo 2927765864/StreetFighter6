@@ -198,6 +198,17 @@ export function mergeConfig(
       (out as Record<string, unknown>)[key] = value;
       continue;
     }
+    if (key === 'hitVfxFlipbookSize' && typeof value === 'number' && Number.isFinite(value)) {
+      out.hitVfxFlipbookSize =
+        value > 20 ? Math.min(6, Math.max(0.4, value / 200)) : Math.min(8, Math.max(0.2, value));
+      continue;
+    }
+    if (key === 'hitVfxPlayMode') {
+      if (value === 'procedural3d' || value === 'flipbook2d') {
+        out.hitVfxPlayMode = value;
+      }
+      continue;
+    }
     if (key === 'wudaAttachMode') {
       if (value === 'surfaceBary' || value === 'vertexGpuBake') {
         out.wudaAttachMode = value;

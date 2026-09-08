@@ -24,6 +24,7 @@ export default defineConfig({
         path.resolve(__dirname, '../private/interim'),
         path.resolve(__dirname, '../private/assets'),
         path.resolve(__dirname, '../private/runtime'),
+        path.resolve(__dirname, '../vfx-ai-pipeline'),
       ],
     },
   },

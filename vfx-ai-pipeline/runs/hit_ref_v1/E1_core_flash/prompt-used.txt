@@ -1,12 +1,20 @@
-iter5 E1 core flash
+iter8 E1 — knockback RIGHT + dissolve (not retract)
 
-Hard constraints from HANDOFF-E1-generation-lessons.md:
-- 10 frames aligned to reference frames 1-10 @30fps
-- only core flash; no smoke/sparks/debris/sweat/fighter
-- cleanliness of iter3 iso_03 is a checklist, NOT a shape master
-- sequential morph from a clean peak seed (iso_01), not clone-all
+User correction:
+- iter7 displacement was reversed. There is NO pull-back toward the fist.
+- "向后" = opponent knockback = along punch (left→right on this clip).
+- Dissipation should feel like dissolving, not uniform shrink / retracting tongues.
 
-Peak isolate (crop_01 only, magenta):
-Isolate ONLY the core impact flash: large horizontal torn burst, layered white-hot core, orange-yellow ragged edges, stacked flame strips pointing right. Flat solid magenta. No fighter, smoke, sparks, debris.
+Motion:
+- Birth at contact, tongues already pointing right.
+- Whole burst is carried slightly RIGHT with the hit (drift_px +x).
+- Do not recede left. Do not bbox-center.
 
-Then image_edit the previous flash: stir strips on plateau; shrink/dim monotonically after frame 4.
+Dissolve (deterministic on peak seed):
+- Keep tongue family; fade additively (alpha).
+- Edges dissolve first (noise + edge band).
+- Light energy smear to the RIGHT.
+- Remaining pixels stay hot gold/white, not muddy grey.
+- Frame 6 holds frame 5.
+
+drift_px: [0, 8, 14, 22, 30, 30, 40, 50, 60, 70]

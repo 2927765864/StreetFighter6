@@ -1,0 +1,38 @@
+E5 narrow long impact smoke — compare-loop prompts (iter1→iter4)
+
+GLOBAL
+- ONLY a narrow long grey-white translucent steam streak along the punch axis
+- whole band translates / leading edge travels farther than E4
+- not a ring, not a fat short cloud, not flash, not sparks, not character
+- solid #FF00FF magenta background
+
+ITER1 (isolate from full frames)
+f03/f05: comet needle / missile — discard except as warning.
+f10: too solid paint-stroke diagonal.
+f11: wispy horizontal ribbon — keep as texture family.
+
+ITER2 (morph f11)
+Shorter denser → jellyfish puff. Stretch → needle+cloud. Pale → plastic ribbons. f08 isolate mixed ring+blade. All discarded.
+
+ITER3 (fresh gen + even-out f11)
+Cigar object, 3D cumulus comet, brush stroke. Discarded.
+
+ITER4 (crop wall smear then isolate)
+crop_wall_f10: torn elongated wall smear — KEEP (late/mid).
+crop_wall_f08: blotchy, muddy — unused in pack.
+crop_tongue_f03: denser steam tongue — KEEP (early, mixed toward f10).
+
+PACK
+14 frames @30fps, 7×2, cell 256.
+Left edge slow (16→42), right edge fast (112→240), height kept narrow (~44→60px).
+Morph tongue→wall smear; alpha holds then fades.
+Despill remaining pixels to grey-white steam.
+
+ITER5 (thin tongue + broken wall, not scaled smear)
+Tight crops: flash-right tongue (f02/f04); wall remnant (f09/f10/f12).
+f02 isolate → graphic dart, discarded.
+f04 isolate → KEEP wispy rightward tongue (then thinner variant).
+f10b isolate → KEEP disconnected wall fragments.
+f12 isolate → KEEP faint remnant.
+Breaking f10 master into holes → paint blobs, discarded.
+Pack 14: frames 0–4 tongue_f04 (short→longer); 5–7 blend tongue→fragments; 8–10 wall_f10b; 11–13 wall_f12. Soft chroma so wisps survive.

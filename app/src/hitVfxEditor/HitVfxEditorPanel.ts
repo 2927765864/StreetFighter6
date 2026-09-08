@@ -69,6 +69,7 @@ export type HitVfxEditorPanelHooks = {
     params: VolumeSmokeParams,
     elementId: string,
   ) => void;
+  onEditorModeChange?: (mode: 'procedural3d' | 'flipbook2d') => void;
 };
 
 export type HitVfxEditorPanelApi = {
@@ -218,6 +219,11 @@ export function setupHitVfxEditorPanel(
     <header id="hvfx-topbar" class="hvfx-pe">
       <a class="hvfx-back" href="/">← 回训练场</a>
       <h1 class="hvfx-title">打击特效编辑</h1>
+      <div class="hvfx-top-sep"></div>
+      <div id="hvfx-mode-toggle" class="hvfx-pe" role="tablist" aria-label="编辑模式">
+        <button type="button" data-editor-mode="procedural3d" class="is-active">3D 程序化</button>
+        <button type="button" data-editor-mode="flipbook2d">2D 序列帧</button>
+      </div>
       <div class="hvfx-top-sep"></div>
       <label class="hvfx-top-field">实战未格挡
         <select id="hvfx-active-hit"></select>
@@ -1394,6 +1400,7 @@ export function setupHitVfxEditorPanel(
   const refresh = () => {
     fillActiveRecipeSelects();
     syncToolbarFromConfig();
+    if (app.classList.contains('hvfx-mode-2d')) return;
     renderTree();
     renderInspector();
   };
@@ -1779,6 +1786,17 @@ export function setupHitVfxEditorPanel(
       selectionKind = 'recipe';
     }
   }
+
+  app.querySelectorAll<HTMLButtonElement>('[data-editor-mode]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const mode = btn.dataset.editorMode as 'procedural3d' | 'flipbook2d';
+      app.querySelectorAll('[data-editor-mode]').forEach((b) => {
+        b.classList.toggle('is-active', (b as HTMLElement).dataset.editorMode === mode);
+      });
+      hooks.onEditorModeChange?.(mode);
+      if (mode === 'procedural3d') refresh();
+    });
+  });
 
   refresh();
 

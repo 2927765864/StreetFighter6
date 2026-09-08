@@ -70,7 +70,14 @@ import { AnimClipLibrary } from './render/AnimClipLibrary';
 import { loadFighterMeshFromUrl } from './render/loadFighterMesh';
 import { HitVfxRuntime } from './render/hitVfx/HitVfxRuntime';
 import { WudaPlumeBurst } from './render/wudaParticle/WudaPlumeBurst';
-import { HitVfxDirector } from './render/hitVfx/HitVfxDirector';
+import {
+  HitVfxDirector,
+  matchEventToTriggerArgs,
+  type HitVfxMatchEvent,
+} from './render/hitVfx/HitVfxDirector';
+import { Flipbook2DCombat } from './hitVfxEditor/flipbook2d/Flipbook2DCombat';
+import { classifyAttackLimbKind } from './render/hitVfx/attackLimb';
+import type { HitVfxTriggerArgs } from './render/hitVfx/hitVfxTypes';
 
 // Mesh-only skinned Ryu; combat clips from private/assets/ryu/anims via map
 import stageUrl from '@interim/SF6 Training Stage/SF6 Training Stage.glb?url';
@@ -267,8 +274,36 @@ async function boot(): Promise<void> {
   });
   const hitVfxDirector = new HitVfxDirector(hitVfxRuntime);
   const screenShake = new ScreenShakeFx();
+  const flipbookCombat = new Flipbook2DCombat(hitVfxScene, camera);
+  /** Contact fires in logic before pose; spawn after FighterView.sync. */
+  const pendingHitVfx: HitVfxMatchEvent[] = [];
+  const limbScratch = new THREE.Vector3();
+
+  const applyLimbLock = (
+    ev: HitVfxMatchEvent,
+  ): { args: HitVfxTriggerArgs; follow: () => THREE.Vector3 | null } => {
+    const args = matchEventToTriggerArgs(ev);
+    const kind = classifyAttackLimbKind(ev.moveId ?? '', ev.hitGroup ?? 0);
+    const facing = ev.attackerFacing ?? 1;
+    const sample = (): THREE.Vector3 | null => {
+      if (p1View.sampleAttackLimbWorld(kind, facing, limbScratch)) {
+        return limbScratch;
+      }
+      return null;
+    };
+    const pos = sample();
+    if (pos) {
+      args.x = pos.x;
+      args.y = pos.y;
+      args.z = pos.z;
+      args.facing = facing >= 0 ? 1 : -1;
+      args.axis = [-facing, 0, 0];
+    }
+    return { args, follow: sample };
+  };
+
   match.opts.onHitVfx = (ev) => {
-    hitVfxDirector.onMatchContact(ev);
+    pendingHitVfx.push(ev);
     const strength = resolveGuardStrength({
       guardStrength: ev.guardStrength,
       hitstopOnBlock:
@@ -844,9 +879,14 @@ async function boot(): Promise<void> {
         if (
           key === '*' ||
           key === 'hitVfxRecipes' ||
-          key === 'hitVfxSparkLightPoolSize'
+          key === 'hitVfxSparkLightPoolSize' ||
+          key === 'hitVfxPlayMode'
         ) {
           hitVfxRuntime.invalidatePrefabs();
+        }
+        if (key === 'hitVfxPlayMode') {
+          if (cfg.hitVfxPlayMode !== 'flipbook2d') flipbookCombat.clear();
+          else flipbookCombat.reloadRecipe();
         }
         syncHitVfxFromConfig();
       }
@@ -1008,6 +1048,7 @@ async function boot(): Promise<void> {
     if (!cfg.lightOrbitMode || hooks.boxEditActive) {
       screenShake.applyToCamera(camera);
     }
+    flipbookCombat.setCamera(camera);
 
     // Free-run + dual-advance clip time use presentLogicSteps/60 (authored 60Hz).
     // Present dt drives blend *weight* windows and cloth physics.
@@ -1032,6 +1073,19 @@ async function boot(): Promise<void> {
         inHitstop,
       });
     }
+
+    if (pendingHitVfx.length > 0) {
+      for (const ev of pendingHitVfx) {
+        const { args, follow } = applyLimbLock(ev);
+        if (cfg.hitVfxPlayMode === 'flipbook2d') {
+          flipbookCombat.trigger(args, follow);
+        } else {
+          hitVfxDirector.previewTrigger(args);
+        }
+      }
+      pendingHitVfx.length = 0;
+    }
+    flipbookCombat.tick(presentDt, match.hitstopTimer > 0);
 
     pantsHealthReporter.tick(collectPantsHealth(), cfg);
 

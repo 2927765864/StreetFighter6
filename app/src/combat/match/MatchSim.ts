@@ -164,6 +164,9 @@ export type MatchSimOptions = {
     guardStrength?: string | null;
     hitAnim?: string | null;
     guardAnim?: string | null;
+    moveId?: string;
+    hitGroup?: number;
+    attackerFacing?: number;
   }) => void;
 };
 
@@ -1054,6 +1057,9 @@ export class MatchSim {
             hitstopOnBlock: mv.hitstopOnBlock,
             guardStrength: mv.guardStrength,
             guardAnim: guardAnimForHit(mv.guardAnim, pendingGroup),
+            moveId: mv.id,
+            hitGroup: pendingGroup,
+            attackerFacing: this.p1.facing,
           });
         } else {
           const hr = resolveHitOnHit(mv, {
@@ -1119,6 +1125,9 @@ export class MatchSim {
             hitstopOnHit: mv.hitstopOnHit,
             guardStrength: mv.guardStrength,
             hitAnim: hitAnimForHit(mv.hitAnim, pendingGroup),
+            moveId: mv.id,
+            hitGroup: pendingGroup,
+            attackerFacing: this.p1.facing,
           });
         }
       }

@@ -1,14 +1,49 @@
 {
   "element": "E1_core_flash",
-  "iter": 4,
+  "iter": 8,
   "grid": [
     5,
     2
   ],
   "frames": 10,
   "fps": 30,
-  "method": "morph from iso_03 master only, no mixed layers",
-  "shared_scale": 0.31096045197740113,
+  "method": "RIGHT knockback carry + additive edge-dissolve (no retract)",
+  "drift_px": [
+    0,
+    8,
+    14,
+    22,
+    30,
+    30,
+    40,
+    50,
+    60,
+    70
+  ],
+  "dissolve": [
+    0.0,
+    0.03,
+    0.06,
+    0.18,
+    0.32,
+    0.32,
+    0.48,
+    0.64,
+    0.78,
+    0.9
+  ],
+  "opacity": [
+    1.0,
+    0.98,
+    0.96,
+    0.82,
+    0.66,
+    0.66,
+    0.48,
+    0.34,
+    0.22,
+    0.12
+  ],
   "cell": 256,
-  "anchor": "center"
+  "anchor": "left origin + rightward travel"
 }

@@ -412,6 +412,10 @@ export type MutableSimConfig = {
   hitVfxPreviewKind: 'onHit' | 'onBlock';
   /** When true, editor「重放」keeps re-triggering after each play finishes. */
   hitVfxPreviewLoop: boolean;
+  /** Training-field contact FX: procedural 3D vs 2D flipbook sheets. */
+  hitVfxPlayMode: 'procedural3d' | 'flipbook2d';
+  /** World-space width of the 2D flipbook at the hit point (meters). */
+  hitVfxFlipbookSize: number;
   /**
    * 武打粒子：方案 B 表面重心 / 方案 C 顶点 GPU 烘焙。
    * 全局底层：总开关 / 附着模式 / 覆盖范围。
@@ -726,6 +730,8 @@ export function createDefaultSimConfig(): MutableSimConfig {
     hitVfxPreviewStrength: 'M',
     hitVfxPreviewKind: 'onHit',
     hitVfxPreviewLoop: false,
+    hitVfxPlayMode: 'procedural3d',
+    hitVfxFlipbookSize: 1.8,
     wudaEnabled: false,
     wudaAttachMode: 'surfaceBary',
     wudaCoverMode: 'allMeshes',

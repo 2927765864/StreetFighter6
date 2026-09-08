@@ -1,10 +1,10 @@
 {
   "element": "E4_wide_short_smoke",
-  "iter": "iter3_translate_pack",
+  "iter": "iter5_back_fan",
   "frames": 14,
   "fps": 30,
   "grid": "7x2",
   "cell": 256,
-  "motion": "whole-mass translate L->R + fade; slight spread then shrink remnant",
-  "look": "wide short grey-white steam slab"
+  "motion": "slight rightward drift; mass fans backward (left edge slow, right edge faster); not radial burst",
+  "look": "wispy wide-short steam slab"
 }

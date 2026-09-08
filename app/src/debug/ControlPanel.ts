@@ -587,6 +587,14 @@ function buildDom(): HTMLElement {
             <a id="link-hitVfxEditor" class="btn-primary" href="/hit-vfx.html" style="display:inline-block;padding:6px 10px;text-decoration:none;color:inherit;border:1px solid rgba(255,255,255,0.2);border-radius:6px;background:rgba(60,100,180,0.4)">打开特效编辑页</a>
           </div>
           ${rowToggle('hitVfxEnabled', '训练场启用打击特效')}
+          <div class="panel-row">
+            <div class="panel-row-header"><span>命中特效模式</span></div>
+            <select id="sel-hitVfxPlayMode">
+              <option value="procedural3d">3D 程序化</option>
+              <option value="flipbook2d">2D 序列帧</option>
+            </select>
+          </div>
+          ${rowNumber('hitVfxFlipbookSize', '2D 特效世界尺寸', 0.2, 8, 0.05)}
           ${rowToggle('hitVfxFollowHitstop', '顿帧时冻结特效')}
           ${rowToggle('hitVfxDebug', '显示击中点标记')}
           ${rowNumber('hitVfxMaxConcurrent', '并发实例上限', 1, 16, 1)}
@@ -1165,6 +1173,7 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'hitVfxFollowHitstop', path: 'hitVfxFollowHitstop' },
   { id: 'hitVfxDebug', path: 'hitVfxDebug' },
   { id: 'hitVfxMaxConcurrent', path: 'hitVfxMaxConcurrent' },
+  { id: 'hitVfxFlipbookSize', path: 'hitVfxFlipbookSize' },
 ];
 
 const TOGGLE_IDS = new Set([
@@ -1422,6 +1431,7 @@ export function setupControlPanel(
   bindSelect(ctx, 'sel-crossfadeAdvanceMode', 'crossfadeAdvanceMode');
   bindSelect(ctx, 'sel-wudaAttachMode', 'wudaAttachMode');
   bindSelect(ctx, 'sel-wudaCoverMode', 'wudaCoverMode');
+  bindSelect(ctx, 'sel-hitVfxPlayMode', 'hitVfxPlayMode');
 
   bindCmosShakePanel({
     root: host,

@@ -180,12 +180,10 @@ export class HitVfxRuntime {
       : ephemeralSeed();
     const rng = createMulberry32(seed);
 
-    const off = this.cfg.hitVfxHeightOffsets[args.height] ??
-      this.cfg.hitVfxHeightOffsets.m;
-    const worldPos = new THREE.Vector3(
-      args.x,
-      this.cfg.modelYOffset + off.y,
-      off.z * (args.facing >= 0 ? 1 : -1),
+    const worldPos = worldPosFromTrigger(
+      args,
+      this.cfg.hitVfxHeightOffsets,
+      this.cfg.modelYOffset,
     );
 
     if (this.debugMarker) {
@@ -465,12 +463,10 @@ export class HitVfxRuntime {
 
     this.volumeSmoke.clearElement(elementId);
 
-    const off = this.cfg.hitVfxHeightOffsets[args.height] ??
-      this.cfg.hitVfxHeightOffsets.m;
-    const worldPos = new THREE.Vector3(
-      args.x,
-      this.cfg.modelYOffset + off.y,
-      off.z * (args.facing >= 0 ? 1 : -1),
+    const worldPos = worldPosFromTrigger(
+      args,
+      this.cfg.hitVfxHeightOffsets,
+      this.cfg.modelYOffset,
     );
     const punchAxis =
       args.axis != null
@@ -523,6 +519,9 @@ export function worldPosFromTrigger(
   heightOffsets: HitVfxHeightOffset,
   modelYOffset: number,
 ): THREE.Vector3 {
+  if (args.y != null) {
+    return new THREE.Vector3(args.x, args.y, args.z ?? 0);
+  }
   const off = heightOffsets[args.height as HitVfxHeight] ?? heightOffsets.m;
   return new THREE.Vector3(
     args.x,

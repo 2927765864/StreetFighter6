@@ -1,8 +1,8 @@
-E4 wide short impact smoke — compare-loop prompts (iter1→iter3)
+E4 wide short impact smoke — compare-loop prompts (iter1→iter4)
 
 GLOBAL
 - ONLY a wide short grey-white translucent steam puff
-- fat/short along punch axis; whole mass translates left→right
+- fat/short along punch axis; diverges then vanishes (iter4; iter3 translate rejected)
 - not a ring, not a thin long streak, not flash, not sparks, not character
 - solid #FF00FF magenta background
 
@@ -20,4 +20,17 @@ Birth: denser, slightly left of center.
 Shift: whole mass clearly right, more broken.
 Faint: farther right, paler remnant.
 Pack 14 frames @30fps, 7×2, fixed 256 cell: translate centroid + fade.
-Avoid bbox-fill (that would hide translation, same bug as E3 iter3).
+USER REJECTED: motion is slide+fade; reference diverges then vanishes.
+
+ITER4 (diverge then disappear)
+Birth: wispy translucent steam, WIDE SHORT slab, torn curls (e_birth_wide).
+Mid: same family larger, curls reach out, gaps open (i_breakup).
+Late: fragments pulling apart, pale, about to vanish (g_break).
+Pack: centroid FIXED at cell center; footprint grows; alpha falls.
+NOT a rigid translate. NOT a hollow ring. NOT a long streak.
+Video gen unavailable (ZDR); diverge via scale + breakup textures.
+
+ITER5 (slight back drift + fan backward, not radial)
+Tried directional prompts (dense left, wisps right): became tentacles / jellyfish / comet. Discarded.
+Pack: left edge 40→78 (slight 往后), right edge 158→250 (fan), height 70→92 (not omnidirectional).
+Textures: e_birth_wide → i_breakup → f_pale_slab. Fade out.

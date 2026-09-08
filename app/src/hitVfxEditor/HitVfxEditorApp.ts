@@ -9,6 +9,8 @@ import { HitVfxRuntime } from '../render/hitVfx/HitVfxRuntime';
 import { HitVfxDirector } from '../render/hitVfx/HitVfxDirector';
 import { HitVfxPreviewDummy } from '../render/hitVfx/HitVfxPreviewDummy';
 import { setupHitVfxEditorPanel } from './HitVfxEditorPanel';
+import { Flipbook2DApp } from './flipbook2d/Flipbook2DApp';
+import { Flipbook2DCombat } from './flipbook2d/Flipbook2DCombat';
 
 import stageUrl from '@interim/SF6 Training Stage/SF6 Training Stage.glb?url';
 
@@ -167,7 +169,9 @@ export async function bootHitVfxEditor(): Promise<void> {
 
   const syncRuntime = (): void => {
     hitVfxRuntime.applyConfig(runtimeSlice());
-    dummy.setVisible(CONFIG.hitVfxPreviewDummyVisible);
+    dummy.setVisible(
+      CONFIG.hitVfxPreviewDummyVisible && flipbook?.isActive() !== true,
+    );
     refreshLighting();
   };
 
@@ -202,6 +206,8 @@ export async function bootHitVfxEditor(): Promise<void> {
     loopPlaying = false;
     sawActiveWhileLooping = false;
   };
+
+  let flipbook: Flipbook2DApp | null = null;
 
   setupHitVfxEditorPanel({
     replay: () => {
@@ -274,6 +280,19 @@ export async function bootHitVfxEditor(): Promise<void> {
       }
       syncRuntime();
     },
+    onEditorModeChange: (mode) => {
+      const twoD = mode === 'flipbook2d';
+      if (twoD) {
+        stopLoop();
+        hitVfxRuntime.invalidatePrefabs();
+        dummy.setVisible(false);
+      }
+      flipbook?.setActive(twoD);
+      if (!twoD) {
+        dummy.setVisible(CONFIG.hitVfxPreviewDummyVisible);
+        firePreview();
+      }
+    },
     onVolumeSmokeParamsChanged: (params, elementId) => {
       const recipe =
         CONFIG.hitVfxRecipes.find(
@@ -295,6 +314,24 @@ export async function bootHitVfxEditor(): Promise<void> {
   const slot =
     document.getElementById('hvfx-canvas-slot') ?? document.body;
   slot.appendChild(host);
+  const flipbookWorld = new Flipbook2DCombat(hitVfxScene, camera);
+  const appRoot = document.getElementById('hvfx-app');
+  if (appRoot) {
+    flipbook = new Flipbook2DApp({
+      appRoot,
+      canvasSlot: slot,
+      treeBody: document.getElementById('hvfx-tree-body')!,
+      inspectorBody: document.getElementById('hvfx-inspector-body')!,
+      viewportPane: document.getElementById('hvfx-viewport-pane')!,
+      world: {
+        combat: flipbookWorld,
+        glCanvas: renderer.domElement,
+        setOrbitEnabled: (on) => {
+          orbit.enabled = on;
+        },
+      },
+    });
+  }
   const fit = () => sizeRendererToSlot(renderer, camera, slot);
   fit();
   const ro = new ResizeObserver(() => fit());
@@ -306,11 +343,17 @@ export async function bootHitVfxEditor(): Promise<void> {
     const wallDt = (now - last) / 1000;
     last = now;
     orbit.update();
-    const steps = CONFIG.hitVfxStepFrames;
-    if (steps > 0) CONFIG.hitVfxStepFrames = 0;
-    hitVfxRuntime.tick(wallDt, false, () => steps);
+    const twoD = flipbook?.isActive() === true;
+    if (twoD) {
+      flipbookWorld.setCamera(camera);
+      flipbook?.syncWorld();
+    } else {
+      const steps = CONFIG.hitVfxStepFrames;
+      if (steps > 0) CONFIG.hitVfxStepFrames = 0;
+      hitVfxRuntime.tick(wallDt, false, () => steps);
+    }
 
-    if (loopPlaying && CONFIG.hitVfxPreviewLoop) {
+    if (!twoD && loopPlaying && CONFIG.hitVfxPreviewLoop) {
       const n = hitVfxRuntime.getActiveCount();
       if (n > 0) {
         sawActiveWhileLooping = true;

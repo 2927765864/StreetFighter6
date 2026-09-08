@@ -23,6 +23,11 @@ export type HitVfxMatchEvent = {
   guardStrength?: string | null;
   hitAnim?: string | null;
   guardAnim?: string | null;
+  /** Attacker move id (punch vs kick). */
+  moveId?: string;
+  /** 0-based contact index for target combos. */
+  hitGroup?: number;
+  attackerFacing?: number;
 };
 
 function toVfxStrength(s: GuardStrength): HitVfxStrength {
@@ -30,37 +35,39 @@ function toVfxStrength(s: GuardStrength): HitVfxStrength {
   return 'M';
 }
 
+export function matchEventToTriggerArgs(
+  ev: HitVfxMatchEvent,
+): HitVfxTriggerArgs {
+  const strength = toVfxStrength(
+    resolveGuardStrength({
+      guardStrength: ev.guardStrength,
+      hitstopOnBlock:
+        ev.kind === 'onBlock' ? ev.hitstopOnBlock : ev.hitstopOnHit,
+    }),
+  );
+
+  const rawH = hitToAnimHeight(
+    ev.guardLevel as 'high' | 'mid' | 'low',
+    ev.defenderCrouching,
+    ev.kind === 'onHit' ? ev.hitAnim : ev.guardAnim,
+  );
+  const height: HitVfxHeight =
+    rawH === 'h' || rawH === 'm' || rawH === 'l' ? rawH : 'l';
+
+  return {
+    kind: ev.kind,
+    strength,
+    height,
+    x: ev.defenderX,
+    facing: ev.defenderFacing,
+  };
+}
+
 export class HitVfxDirector {
   constructor(private readonly runtime: HitVfxRuntime) {}
 
   onMatchContact(ev: HitVfxMatchEvent): void {
-    const strength = toVfxStrength(
-      resolveGuardStrength({
-        guardStrength: ev.guardStrength,
-        hitstopOnBlock:
-          ev.kind === 'onBlock' ? ev.hitstopOnBlock : ev.hitstopOnHit,
-      }),
-    );
-
-    const rawH = hitToAnimHeight(
-      ev.guardLevel as 'high' | 'mid' | 'low',
-      ev.defenderCrouching,
-      ev.kind === 'onHit' ? ev.hitAnim : ev.guardAnim,
-    );
-    // Map crouch letters c/d → l for VFX sockets (plan height set is h/m/l).
-    const height: HitVfxHeight =
-      rawH === 'h' || rawH === 'm' || rawH === 'l'
-        ? rawH
-        : 'l';
-
-    const args: HitVfxTriggerArgs = {
-      kind: ev.kind,
-      strength,
-      height,
-      x: ev.defenderX,
-      facing: ev.defenderFacing,
-    };
-    this.runtime.trigger(args);
+    this.runtime.trigger(matchEventToTriggerArgs(ev));
   }
 
   /** Preview-panel one-shot. */

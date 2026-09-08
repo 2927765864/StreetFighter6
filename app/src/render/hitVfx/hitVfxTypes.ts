@@ -345,8 +345,15 @@ export type HitVfxTriggerArgs = {
   kind: HitVfxTriggerKind;
   strength: HitVfxStrength;
   height: HitVfxHeight;
-  /** World X of defender root. */
+  /** World X (defender root, or attacker limb when y/z set). */
   x: number;
+  /**
+   * Optional world Y of the spawn. When set, heightOffsets are skipped
+   * (fist/foot lock).
+   */
+  y?: number;
+  /** Optional world Z of the spawn (with `y`). */
+  z?: number;
   /** World facing of defender (+1 / -1). */
   facing: number;
   /** Optional world punch axis (unit). Default (-facing, 0, 0). */

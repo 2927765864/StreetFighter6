@@ -77,6 +77,7 @@ import {
   shouldResetGroundOffset,
   shouldSnapSoleOnLand,
 } from './plantPolicy';
+import { pickAttackLimbSide } from './hitVfx/attackLimb';
 import {
   FIGHTER_DISPLAY_Z,
   FIGHTER_RENDER_ORDER_BACK,
@@ -711,26 +712,86 @@ export class FighterView {
     return phase === 'prejump' || phase === 'airborne';
   }
 
-  private findFootBone(side: 'L' | 'R'): THREE.Bone | null {
+  private findNamedLimbBone(
+    exact: string[],
+    nameOk: (n: string) => boolean,
+  ): THREE.Bone | null {
     if (!this.modelRoot) return null;
-    const names =
-      side === 'L'
-        ? ['L_Foot', 'LeftFoot', 'Foot_L', 'l_foot']
-        : ['R_Foot', 'RightFoot', 'Foot_R', 'r_foot'];
     let found: THREE.Bone | null = null;
     this.modelRoot.traverse((o) => {
       const b = o as THREE.Bone;
       if (!b.isBone || found) return;
-      if (names.some((n) => b.name === n || b.name.endsWith(n))) found = b;
-      if (
-        !found &&
-        ((side === 'L' && /L_?Foot/i.test(b.name)) ||
-          (side === 'R' && /R_?Foot/i.test(b.name)))
-      ) {
-        found = b;
-      }
+      const n = b.name;
+      if (exact.includes(n)) found = b;
+      else if (nameOk(n)) found = b;
     });
     return found;
+  }
+
+  private findHandBone(side: 'L' | 'R'): THREE.Bone | null {
+    return this.findNamedLimbBone(
+      side === 'L'
+        ? ['L_Hand', 'LeftHand', 'Hand_L', 'l_hand']
+        : ['R_Hand', 'RightHand', 'Hand_R', 'r_hand'],
+      (n) =>
+        side === 'L'
+          ? /^(L_|Left)?Hand$/i.test(n)
+          : /^(R_|Right)?Hand$/i.test(n),
+    );
+  }
+
+  private boneWorld(bone: THREE.Bone | null, out: THREE.Vector3): boolean {
+    if (!bone) return false;
+    bone.getWorldPosition(out);
+    return true;
+  }
+
+  /**
+   * World position of the striking fist or foot after the current pose.
+   * Kind is punch vs kick; side is the more-extended L/R limb.
+   */
+  sampleAttackLimbWorld(
+    kind: 'hand' | 'foot',
+    facing: number,
+    out: THREE.Vector3,
+  ): boolean {
+    this.root.updateMatrixWorld(true);
+    const left =
+      kind === 'hand' ? this.findHandBone('L') : this.findFootBone('L');
+    const right =
+      kind === 'hand' ? this.findHandBone('R') : this.findFootBone('R');
+    const hips = this.findHipsBone();
+    const lp = new THREE.Vector3();
+    const rp = new THREE.Vector3();
+    const hp = new THREE.Vector3();
+    const hasL = this.boneWorld(left, lp);
+    const hasR = this.boneWorld(right, rp);
+    if (!hasL && !hasR) return false;
+    if (hasL && !hasR) {
+      out.copy(lp);
+      return true;
+    }
+    if (hasR && !hasL) {
+      out.copy(rp);
+      return true;
+    }
+    if (!hips) this.root.getWorldPosition(hp);
+    else hips.getWorldPosition(hp);
+    const side = pickAttackLimbSide(facing, lp, rp, hp, kind);
+    out.copy(side === 'R' ? rp : lp);
+    return true;
+  }
+
+  private findFootBone(side: 'L' | 'R'): THREE.Bone | null {
+    return this.findNamedLimbBone(
+      side === 'L'
+        ? ['L_Foot', 'LeftFoot', 'Foot_L', 'l_foot']
+        : ['R_Foot', 'RightFoot', 'Foot_R', 'r_foot'],
+      (n) =>
+        side === 'L'
+          ? /^(L_|Left)?Foot$/i.test(n)
+          : /^(R_|Right)?Foot$/i.test(n),
+    );
   }
 
   private findHipsBone(): THREE.Bone | null {
