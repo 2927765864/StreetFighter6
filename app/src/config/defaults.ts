@@ -23,6 +23,8 @@ export function defaultExpandedSections(): ExpandedSections {
     belt: true,
     pants: true,
     hitVfx: true,
+    hitShockwave: true,
+    hitGlow: true,
     extendedSim: false,
     extendedLoco: false,
     extendedAnim: false,

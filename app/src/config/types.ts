@@ -24,6 +24,8 @@ export type ExpandedSections = {
   belt: boolean;
   pants: boolean;
   hitVfx: boolean;
+  hitShockwave: boolean;
+  hitGlow: boolean;
   extendedSim: boolean;
   extendedLoco: boolean;
   extendedAnim: boolean;

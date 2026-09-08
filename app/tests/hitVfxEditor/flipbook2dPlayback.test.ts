@@ -1,4 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import {
+  flipbookFacingScaleX,
+  layerLocalOffset,
+} from '../../src/hitVfxEditor/flipbook2d/Flipbook2DCombat';
 import { sourceFrameAt, type FlipbookLayer } from '../../src/hitVfxEditor/flipbook2d/types';
 
 const layer = (over: Partial<FlipbookLayer> = {}): FlipbookLayer => ({
@@ -32,5 +36,20 @@ describe('sourceFrameAt', () => {
     expect(sourceFrameAt(layer({ enabled: false }), 2, 10)).toBeNull();
     expect(sourceFrameAt(layer({ duration: 14 }), 12, 10)).toBeNull();
     expect(sourceFrameAt(layer({ duration: 14 }), 10, 14)).toBe(9);
+  });
+});
+
+describe('flipbook facing / layer offset', () => {
+  it('keeps authored orientation for both facings (matches editor)', () => {
+    expect(flipbookFacingScaleX(-1)).toBe(1);
+    expect(flipbookFacingScaleX(1)).toBe(1);
+    expect(flipbookFacingScaleX(0)).toBe(1);
+  });
+
+  it('maps authored CSS-pixel offsets into local billboard space', () => {
+    const p = layerLocalOffset({ offsetX: 192, offsetY: 96, z: 3 }, 1.8);
+    expect(p.x).toBeCloseTo(0.9, 5);
+    expect(p.y).toBeCloseTo(-0.45, 5);
+    expect(p.z).toBeCloseTo(0.006, 5);
   });
 });

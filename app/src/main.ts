@@ -22,8 +22,19 @@ import {
   CameraRig,
 } from './render/CameraRig';
 import { ScreenShakeFx } from './render/ScreenShakeFx';
+import {
+  HitShockwaveFx,
+  hitShockwaveParamsFromConfig,
+  type HitShockwaveStrength,
+} from './render/HitShockwaveFx';
+import {
+  HitGlowFx,
+  hitGlowParamsFromConfig,
+  type HitGlowStrength,
+} from './render/HitGlowFx';
 import { resolveCmosShakePresetId } from './config/cmosShake';
 import { resolveGuardStrength } from './combat/systems/GuardPolicy';
+import { worldPosFromTrigger } from './render/hitVfx/HitVfxRuntime';
 import {
   applyEnvironment,
   applyLightTransformsFromConfig,
@@ -274,32 +285,31 @@ async function boot(): Promise<void> {
   });
   const hitVfxDirector = new HitVfxDirector(hitVfxRuntime);
   const screenShake = new ScreenShakeFx();
+  const hitShockwave = new HitShockwaveFx();
+  hitShockwave.applyParams(hitShockwaveParamsFromConfig(cfg));
+  const hitGlow = new HitGlowFx();
+  hitGlow.applyParams(hitGlowParamsFromConfig(cfg));
   const flipbookCombat = new Flipbook2DCombat(hitVfxScene, camera);
   /** Contact fires in logic before pose; spawn after FighterView.sync. */
   const pendingHitVfx: HitVfxMatchEvent[] = [];
   const limbScratch = new THREE.Vector3();
 
-  const applyLimbLock = (
-    ev: HitVfxMatchEvent,
-  ): { args: HitVfxTriggerArgs; follow: () => THREE.Vector3 | null } => {
+  /**
+   * Snap spawn to the striking fist/foot at contact, then leave the FX at that
+   * world point (do not keep parenting to the limb as the attack recovers).
+   */
+  const applyLimbLock = (ev: HitVfxMatchEvent): HitVfxTriggerArgs => {
     const args = matchEventToTriggerArgs(ev);
     const kind = classifyAttackLimbKind(ev.moveId ?? '', ev.hitGroup ?? 0);
     const facing = ev.attackerFacing ?? 1;
-    const sample = (): THREE.Vector3 | null => {
-      if (p1View.sampleAttackLimbWorld(kind, facing, limbScratch)) {
-        return limbScratch;
-      }
-      return null;
-    };
-    const pos = sample();
-    if (pos) {
-      args.x = pos.x;
-      args.y = pos.y;
-      args.z = pos.z;
+    if (p1View.sampleAttackLimbWorld(kind, facing, limbScratch)) {
+      args.x = limbScratch.x;
+      args.y = limbScratch.y;
+      args.z = limbScratch.z;
       args.facing = facing >= 0 ? 1 : -1;
       args.axis = [-facing, 0, 0];
     }
-    return { args, follow: sample };
+    return args;
   };
 
   match.opts.onHitVfx = (ev) => {
@@ -845,12 +855,26 @@ async function boot(): Promise<void> {
     stopPantsRecord: () =>
       pantsHealthReporter.stopRecording(collectPantsHealth(), CONFIG),
     isPantsRecording: () => pantsHealthReporter.isRecording,
+    testHitShockwave: (strength: 'L' | 'M' | 'H') => {
+      hitShockwave.applyParams(hitShockwaveParamsFromConfig(CONFIG));
+      hitShockwave.triggerScreen(0.5, 0.45, strength);
+    },
+    testHitGlow: (strength: 'L' | 'M' | 'H') => {
+      hitGlow.applyParams(hitGlowParamsFromConfig(CONFIG));
+      hitGlow.triggerScreen(0.5, 0.45, strength);
+    },
   };
   const panelApi = setupControlPanel(match, clock, hooks, {
     onChange: (key) => {
       if (typeof key === 'string' && key.startsWith('action:cmosShake:')) {
         screenShake.handleAction(key);
         return;
+      }
+      if (typeof key === 'string' && key.startsWith('hitShockwave')) {
+        hitShockwave.applyParams(hitShockwaveParamsFromConfig(CONFIG));
+      }
+      if (typeof key === 'string' && key.startsWith('hitGlow')) {
+        hitGlow.applyParams(hitGlowParamsFromConfig(CONFIG));
       }
       if (
         key === '*' ||
@@ -1076,15 +1100,42 @@ async function boot(): Promise<void> {
 
     if (pendingHitVfx.length > 0) {
       for (const ev of pendingHitVfx) {
-        const { args, follow } = applyLimbLock(ev);
+        const args = applyLimbLock(ev);
         if (cfg.hitVfxPlayMode === 'flipbook2d') {
-          flipbookCombat.trigger(args, follow);
+          flipbookCombat.trigger(args);
         } else {
           hitVfxDirector.previewTrigger(args);
+        }
+        // Screen shockwave: same fixed world anchor as 2D flipbook (contact limb pose).
+        if (ev.kind === 'onHit') {
+          const world = worldPosFromTrigger(
+            args,
+            cfg.hitVfxHeightOffsets,
+            cfg.modelYOffset,
+          );
+          const strength = args.strength as HitShockwaveStrength;
+          hitShockwave.triggerWorld(
+            world.x,
+            world.y,
+            world.z,
+            camera,
+            strength,
+          );
+          hitGlow.triggerWorld(
+            world.x,
+            world.y,
+            world.z,
+            camera,
+            strength as HitGlowStrength,
+          );
         }
       }
       pendingHitVfx.length = 0;
     }
+    hitShockwave.applyParams(hitShockwaveParamsFromConfig(cfg));
+    hitShockwave.step(presentDt, camera);
+    hitGlow.applyParams(hitGlowParamsFromConfig(cfg));
+    hitGlow.step(presentDt, camera);
     flipbookCombat.tick(presentDt, match.hitstopTimer > 0);
 
     pantsHealthReporter.tick(collectPantsHealth(), cfg);
@@ -1172,6 +1223,11 @@ async function boot(): Promise<void> {
       renderer.setScissorTest(false);
       renderer.setViewport(0, 0, viewW, viewH);
       await renderFightDisplayLayers(camera, true);
+      // Distort the main view after all fight + VFX layers are in the color buffer.
+      // Reproject with the same camera used for this draw so the ring stays on the limb.
+      await hitShockwave.apply(renderer, camera);
+      // Additive glow on top of (possibly warped) buffer — peak flash stays readable.
+      await hitGlow.apply(renderer, camera);
 
       if (!cfg.lightOrbitMode || hooks.boxEditActive) return;
 

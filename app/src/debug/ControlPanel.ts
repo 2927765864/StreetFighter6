@@ -66,6 +66,10 @@ export type ControlPanelHooks = {
   startPantsRecord?: () => void;
   stopPantsRecord?: () => void | Promise<void>;
   isPantsRecording?: () => boolean;
+  /** Fire a center-screen hit shockwave for tuning (strength L/M/H). */
+  testHitShockwave?: (strength: 'L' | 'M' | 'H') => void;
+  /** Fire a center-screen hit glow for tuning (strength L/M/H). */
+  testHitGlow?: (strength: 'L' | 'M' | 'H') => void;
 };
 
 export type HitVfxPanelHooks = {
@@ -608,6 +612,62 @@ function buildDom(): HTMLElement {
           </div>
           `,
           'expandHitVfx',
+        )}
+        ${sectionShell(
+          'hitShockwave',
+          '【命中冲击波】屏幕水波扭曲',
+          `
+          <p class="panel-hint">从打中点往外扩一圈，只扭曲画面、不发光。定格时继续播。仅真正打中触发（挡住不触发）。</p>
+          ${rowToggle('hitShockwaveEnabled', '启用冲击波')}
+          ${rowNumber('hitShockwaveMaxConcurrent', '同时最多几个', 1, 4, 1)}
+          ${rowNumber('hitShockwaveThickness', '环带宽度', 0.005, 0.15, 0.001)}
+          <p class="panel-hint">轻 / 中 / 重 三档（时长单位：秒；半径与扭曲强度为屏幕比例）</p>
+          ${rowNumber('hitShockwaveDurationL', '轻·时长', 0.02, 0.6, 0.01)}
+          ${rowNumber('hitShockwaveDurationM', '中·时长', 0.02, 0.6, 0.01)}
+          ${rowNumber('hitShockwaveDurationH', '重·时长', 0.02, 0.8, 0.01)}
+          ${rowNumber('hitShockwaveMaxRadiusL', '轻·最大半径', 0.05, 0.9, 0.01)}
+          ${rowNumber('hitShockwaveMaxRadiusM', '中·最大半径', 0.05, 0.9, 0.01)}
+          ${rowNumber('hitShockwaveMaxRadiusH', '重·最大半径', 0.05, 1.2, 0.01)}
+          ${rowNumber('hitShockwaveAmplitudeL', '轻·扭曲强度', 0, 0.1, 0.001)}
+          ${rowNumber('hitShockwaveAmplitudeM', '中·扭曲强度', 0, 0.1, 0.001)}
+          ${rowNumber('hitShockwaveAmplitudeH', '重·扭曲强度', 0, 0.12, 0.001)}
+          <div class="light-toolbar">
+            <button type="button" id="btn-hitShockwaveTestL">试播·轻</button>
+            <button type="button" id="btn-hitShockwaveTestM">试播·中</button>
+            <button type="button" id="btn-hitShockwaveTestH">试播·重</button>
+          </div>
+          `,
+          'expandHitShockwave',
+        )}
+        ${sectionShell(
+          'hitGlow',
+          '【命中光晕】屏幕球状闪光',
+          `
+          <p class="panel-hint">命中点投影到屏幕后叠加软球光斑（additive，不照亮几何）。出现瞬间最强，随后缩小变淡。定格时继续播。仅真正打中触发（挡住不触发）。</p>
+          ${rowToggle('hitGlowEnabled', '启用光晕')}
+          ${rowNumber('hitGlowMaxConcurrent', '同时最多几个', 1, 4, 1)}
+          ${rowNumber('hitGlowHardness', '软硬（越大越聚核）', 0.5, 8, 0.1)}
+          <div class="panel-row light-color-row">
+            <div class="panel-row-header"><span>光晕颜色</span></div>
+            <input id="inp-hitGlowColorPicker" type="color" title="光晕颜色" />
+          </div>
+          <p class="panel-hint">轻 / 中 / 重 三档（时长：秒；半径：屏幕比例；强度：叠加亮度）</p>
+          ${rowNumber('hitGlowDurationL', '轻·时长', 0.02, 0.6, 0.01)}
+          ${rowNumber('hitGlowDurationM', '中·时长', 0.02, 0.6, 0.01)}
+          ${rowNumber('hitGlowDurationH', '重·时长', 0.02, 0.8, 0.01)}
+          ${rowNumber('hitGlowMaxRadiusL', '轻·最大半径', 0.01, 0.5, 0.005)}
+          ${rowNumber('hitGlowMaxRadiusM', '中·最大半径', 0.01, 0.5, 0.005)}
+          ${rowNumber('hitGlowMaxRadiusH', '重·最大半径', 0.01, 0.6, 0.005)}
+          ${rowNumber('hitGlowIntensityL', '轻·峰值强度', 0, 3, 0.05)}
+          ${rowNumber('hitGlowIntensityM', '中·峰值强度', 0, 3, 0.05)}
+          ${rowNumber('hitGlowIntensityH', '重·峰值强度', 0, 4, 0.05)}
+          <div class="light-toolbar">
+            <button type="button" id="btn-hitGlowTestL">试播·轻</button>
+            <button type="button" id="btn-hitGlowTestM">试播·中</button>
+            <button type="button" id="btn-hitGlowTestH">试播·重</button>
+          </div>
+          `,
+          'expandHitGlow',
         )}
       </details>
 
@@ -1174,6 +1234,30 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'hitVfxDebug', path: 'hitVfxDebug' },
   { id: 'hitVfxMaxConcurrent', path: 'hitVfxMaxConcurrent' },
   { id: 'hitVfxFlipbookSize', path: 'hitVfxFlipbookSize' },
+  { id: 'hitShockwaveEnabled', path: 'hitShockwaveEnabled' },
+  { id: 'hitShockwaveMaxConcurrent', path: 'hitShockwaveMaxConcurrent' },
+  { id: 'hitShockwaveThickness', path: 'hitShockwaveThickness' },
+  { id: 'hitShockwaveDurationL', path: 'hitShockwaveDurationL' },
+  { id: 'hitShockwaveDurationM', path: 'hitShockwaveDurationM' },
+  { id: 'hitShockwaveDurationH', path: 'hitShockwaveDurationH' },
+  { id: 'hitShockwaveMaxRadiusL', path: 'hitShockwaveMaxRadiusL' },
+  { id: 'hitShockwaveMaxRadiusM', path: 'hitShockwaveMaxRadiusM' },
+  { id: 'hitShockwaveMaxRadiusH', path: 'hitShockwaveMaxRadiusH' },
+  { id: 'hitShockwaveAmplitudeL', path: 'hitShockwaveAmplitudeL' },
+  { id: 'hitShockwaveAmplitudeM', path: 'hitShockwaveAmplitudeM' },
+  { id: 'hitShockwaveAmplitudeH', path: 'hitShockwaveAmplitudeH' },
+  { id: 'hitGlowEnabled', path: 'hitGlowEnabled' },
+  { id: 'hitGlowMaxConcurrent', path: 'hitGlowMaxConcurrent' },
+  { id: 'hitGlowHardness', path: 'hitGlowHardness' },
+  { id: 'hitGlowDurationL', path: 'hitGlowDurationL' },
+  { id: 'hitGlowDurationM', path: 'hitGlowDurationM' },
+  { id: 'hitGlowDurationH', path: 'hitGlowDurationH' },
+  { id: 'hitGlowMaxRadiusL', path: 'hitGlowMaxRadiusL' },
+  { id: 'hitGlowMaxRadiusM', path: 'hitGlowMaxRadiusM' },
+  { id: 'hitGlowMaxRadiusH', path: 'hitGlowMaxRadiusH' },
+  { id: 'hitGlowIntensityL', path: 'hitGlowIntensityL' },
+  { id: 'hitGlowIntensityM', path: 'hitGlowIntensityM' },
+  { id: 'hitGlowIntensityH', path: 'hitGlowIntensityH' },
 ];
 
 const TOGGLE_IDS = new Set([
@@ -1226,6 +1310,8 @@ const TOGGLE_IDS = new Set([
   'hitVfxEnabled',
   'hitVfxFollowHitstop',
   'hitVfxDebug',
+  'hitShockwaveEnabled',
+  'hitGlowEnabled',
 ]);
 
 export function setupControlPanel(
@@ -1384,6 +1470,8 @@ export function setupControlPanel(
     ['expandLighting', 'lighting', 'sect-lighting'],
     // cmosShake expand bound in bindCmosShakePanel
     ['expandHitVfx', 'hitVfx', 'sect-hitVfx'],
+    ['expandHitShockwave', 'hitShockwave', 'sect-hitShockwave'],
+    ['expandHitGlow', 'hitGlow', 'sect-hitGlow'],
     ['expandAnimDrive', 'animDrive', 'sect-animDrive'],
     ['expandAnimTest', 'animTest', 'sect-animTest'],
     ['expandWuda', 'wuda', 'sect-wuda'],
@@ -1666,6 +1754,10 @@ export function setupControlPanel(
   const gizmoModeSel = byId<HTMLSelectElement>(host, 'sel-lightGizmoMode');
   const bgColorPicker = byId<HTMLInputElement>(host, 'inp-bgColorPicker');
   const fogColorPicker = byId<HTMLInputElement>(host, 'inp-fogColorPicker');
+  const hitGlowColorPicker = byId<HTMLInputElement>(
+    host,
+    'inp-hitGlowColorPicker',
+  );
   const wudaStuckColorPicker = byId<HTMLInputElement>(
     host,
     'inp-wudaStuckColorPicker',
@@ -2277,6 +2369,12 @@ export function setupControlPanel(
     if (document.activeElement !== fogColorPicker) {
       fogColorPicker.value = hexToColorInput(CONFIG.fogColor);
     }
+    if (
+      hitGlowColorPicker &&
+      document.activeElement !== hitGlowColorPicker
+    ) {
+      hitGlowColorPicker.value = hexToColorInput(CONFIG.hitGlowColor);
+    }
     const wudaLayer = getActiveWudaLayer(CONFIG);
     if (wudaLayer && document.activeElement !== wudaStuckColorPicker) {
       wudaStuckColorPicker.value = hexToColorInput(wudaLayer.stuckColor);
@@ -2285,6 +2383,10 @@ export function setupControlPanel(
       wudaFreeColorPicker.value = hexToColorInput(wudaLayer.freeColor);
     }
   };
+  hitGlowColorPicker?.addEventListener('input', () => {
+    CONFIG.hitGlowColor = colorInputToHex(hitGlowColorPicker.value);
+    notify('hitGlowColor', CONFIG.hitGlowColor, CONFIG);
+  });
   bgColorPicker.addEventListener('input', () => {
     CONFIG.bgColor = colorInputToHex(bgColorPicker.value);
     notify('bgColor', CONFIG.bgColor, CONFIG);
@@ -2809,6 +2911,26 @@ export function setupControlPanel(
       );
     },
   );
+
+  const bindShockwaveTest = (btnId: string, strength: 'L' | 'M' | 'H') => {
+    byId<HTMLButtonElement>(host, btnId).addEventListener('click', () => {
+      hooks.testHitShockwave?.(strength);
+      notify(`action:hitShockwave:test:${strength}`, strength, CONFIG);
+    });
+  };
+  bindShockwaveTest('btn-hitShockwaveTestL', 'L');
+  bindShockwaveTest('btn-hitShockwaveTestM', 'M');
+  bindShockwaveTest('btn-hitShockwaveTestH', 'H');
+
+  const bindGlowTest = (id: string, strength: 'L' | 'M' | 'H') => {
+    byId<HTMLButtonElement>(host, id).addEventListener('click', () => {
+      hooks.testHitGlow?.(strength);
+      notify(`action:hitGlow:test:${strength}`, strength, CONFIG);
+    });
+  };
+  bindGlowTest('btn-hitGlowTestL', 'L');
+  bindGlowTest('btn-hitGlowTestM', 'M');
+  bindGlowTest('btn-hitGlowTestH', 'H');
 
   byId<HTMLButtonElement>(host, 'btn-save-local').addEventListener('click', () => {
     saveCurrentConfig();

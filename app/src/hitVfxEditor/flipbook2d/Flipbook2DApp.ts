@@ -119,8 +119,7 @@ export class Flipbook2DApp {
       strength: CONFIG.hitVfxPreviewStrength,
       height: CONFIG.hitVfxPreviewHeight,
       x: 0,
-      // Do not mirror the group: authored +X is world +X (screen right).
-      // Combat uses defenderFacing; facing>0 would set root.scale.x=-1 and invert offsets.
+      // Same orientation as combat: authored +X = screen right (no facing mirror).
       facing: -1,
     };
     this.host.world.combat.syncEditor(

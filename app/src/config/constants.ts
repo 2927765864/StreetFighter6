@@ -443,6 +443,39 @@ export type MutableSimConfig = {
    * 偏移单位：世界单位；输出写到 fight camera 视平面。
    */
   cmosShake: CmosShakeConfig;
+  /**
+   * 命中屏幕冲击波（水波式画面扭曲，纯扭曲无亮边）。
+   * 时长/半径/强度按轻(L)/中(M)/重(H)分档，均可在面板拧。
+   */
+  hitShockwaveEnabled: boolean;
+  hitShockwaveMaxConcurrent: number;
+  hitShockwaveThickness: number;
+  hitShockwaveDurationL: number;
+  hitShockwaveDurationM: number;
+  hitShockwaveDurationH: number;
+  hitShockwaveMaxRadiusL: number;
+  hitShockwaveMaxRadiusM: number;
+  hitShockwaveMaxRadiusH: number;
+  hitShockwaveAmplitudeL: number;
+  hitShockwaveAmplitudeM: number;
+  hitShockwaveAmplitudeH: number;
+  /**
+   * 命中屏幕球状光晕（additive 软球闪光，不真实照亮几何）。
+   * 时长/半径/强度按轻(L)/中(M)/重(H)分档，均可在面板拧。
+   */
+  hitGlowEnabled: boolean;
+  hitGlowMaxConcurrent: number;
+  hitGlowHardness: number;
+  hitGlowColor: number;
+  hitGlowDurationL: number;
+  hitGlowDurationM: number;
+  hitGlowDurationH: number;
+  hitGlowMaxRadiusL: number;
+  hitGlowMaxRadiusM: number;
+  hitGlowMaxRadiusH: number;
+  hitGlowIntensityL: number;
+  hitGlowIntensityM: number;
+  hitGlowIntensityH: number;
 };
 
 export function createDefaultSimConfig(): MutableSimConfig {
@@ -739,6 +772,31 @@ export function createDefaultSimConfig(): MutableSimConfig {
     wudaLayerPresets: createDefaultWudaLayerPresets(),
     wudaActiveLayerPresetId: 'wuda_p1_default',
     cmosShake: createDefaultCmosShakeConfig(),
+    hitShockwaveEnabled: true,
+    hitShockwaveMaxConcurrent: 4,
+    hitShockwaveThickness: 0.035,
+    hitShockwaveDurationL: 0.12,
+    hitShockwaveDurationM: 0.16,
+    hitShockwaveDurationH: 0.22,
+    hitShockwaveMaxRadiusL: 0.22,
+    hitShockwaveMaxRadiusM: 0.32,
+    hitShockwaveMaxRadiusH: 0.42,
+    hitShockwaveAmplitudeL: 0.012,
+    hitShockwaveAmplitudeM: 0.02,
+    hitShockwaveAmplitudeH: 0.032,
+    hitGlowEnabled: true,
+    hitGlowMaxConcurrent: 4,
+    hitGlowHardness: 2.5,
+    hitGlowColor: 0xffb060,
+    hitGlowDurationL: 0.1,
+    hitGlowDurationM: 0.14,
+    hitGlowDurationH: 0.2,
+    hitGlowMaxRadiusL: 0.06,
+    hitGlowMaxRadiusM: 0.09,
+    hitGlowMaxRadiusH: 0.13,
+    hitGlowIntensityL: 0.85,
+    hitGlowIntensityM: 1.1,
+    hitGlowIntensityH: 1.4,
   };
 }
 

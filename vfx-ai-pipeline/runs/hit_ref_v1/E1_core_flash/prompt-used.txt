@@ -1,20 +1,17 @@
-iter8 E1 — knockback RIGHT + dissolve (not retract)
+iter9 E1 — structural dissolve (not alpha fade)
 
-User correction:
-- iter7 displacement was reversed. There is NO pull-back toward the fist.
-- "向后" = opponent knockback = along punch (left→right on this clip).
-- Dissipation should feel like dissolving, not uniform shrink / retracting tongues.
+User: dissolve is NOT transparency fade.
 
-Motion:
-- Birth at contact, tongues already pointing right.
-- Whole burst is carried slightly RIGHT with the hit (drift_px +x).
-- Do not recede left. Do not bbox-center.
+Reference (crop_01 → 08 → 10):
+- Peak: one stacked white-hot mass
+- Mid: mass CRACKS along grain into separate horizontal gold-white ribbons with gaps
+- Late: ribbons shatter into short still-bright streaks; leftover pieces stay hot
+- End: a couple of remnant streaks, not a ghost of the original silhouette
 
-Dissolve (deterministic on peak seed):
-- Keep tongue family; fade additively (alpha).
-- Edges dissolve first (noise + edge band).
-- Light energy smear to the RIGHT.
-- Remaining pixels stay hot gold/white, not muddy grey.
-- Frame 6 holds frame 5.
+Prompts:
+- Split the solid core into three separate torn flame ribbons with visible gaps, still bright
+- Ribbons thinner, torn into shorter broken streaks, pieces drift right
+- Two short bright streaks remain, shards to the right
+Keep magenta, no smoke, no faded ghost silhouette.
 
-drift_px: [0, 8, 14, 22, 30, 30, 40, 50, 60, 70]
+Pack: left origin + RIGHT knockback drift. Do not bbox-center. Do not alpha-ghost the peak.
