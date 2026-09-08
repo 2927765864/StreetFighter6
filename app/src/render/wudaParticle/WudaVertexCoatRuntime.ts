@@ -38,6 +38,13 @@ import {
   resolveWudaInstanceColor,
   setWudaInstanceOpacity,
 } from './wudaInstanceAppearance';
+import {
+  resolveWudaEllipseShape,
+  resolveWudaEllipseShapeFromIndex,
+  sampleWudaFreeSize,
+  wudaFreeSizeOverLife,
+  type WudaEllipseShape,
+} from './wudaParticleShape';
 import type { MeshBasicNodeMaterial } from 'three/webgpu';
 
 /** After first full GPU validate, spot-check every N simulate frames. */
@@ -55,6 +62,9 @@ type Slot = {
   prevValid: boolean;
   /** Countdown (sec) while state==='refilling'. */
   refillIn: number;
+  size: number;
+  aspect: number;
+  spin: number;
 };
 
 const _vel = new THREE.Vector3();
@@ -63,9 +73,12 @@ const _flyVel = new THREE.Vector3();
 const _gravity = new THREE.Vector3();
 const _mat = new THREE.Matrix4();
 const _quat = new THREE.Quaternion();
+const _spinQuat = new THREE.Quaternion();
 const _scale = new THREE.Vector3();
 const _camQuat = new THREE.Quaternion();
+const _zAxis = new THREE.Vector3(0, 0, 1);
 const _tmpPos = new THREE.Vector3();
+const _unitShape: WudaEllipseShape = { aspect: 1, spin: 0 };
 
 /**
  * Async GPU pending is only safe for the intended 1-frame lag.
@@ -241,6 +254,9 @@ export class WudaVertexCoatRuntime {
         life: 0,
         prevValid: false,
         refillIn: 0,
+        size: 0,
+        aspect: 1,
+        spin: 0,
       });
     }
     this.freePool = refillOn ? createWudaFreePool(freeCap) : [];
@@ -612,8 +628,26 @@ export class WudaVertexCoatRuntime {
             this.plumeBurst.queueDetach(s.pos, _flyVel);
           }
 
+          const freeSize = sampleWudaFreeSize(
+            rng.next(),
+            cfg.wudaFreeSizeMin,
+            cfg.wudaFreeSize,
+          );
+          const freeShape = resolveWudaEllipseShape(
+            rng.next(),
+            rng.next(),
+            cfg.wudaEllipseAspectJitter,
+          );
           if (refillOn) {
-            spawnWudaFreeParticle(this.freePool, s.pos, _flyVel, life);
+            spawnWudaFreeParticle(
+              this.freePool,
+              s.pos,
+              _flyVel,
+              life,
+              freeSize,
+              freeShape.aspect,
+              freeShape.spin,
+            );
             if (refillDelay <= 0) {
               s.state = 'stuck';
               s.prevValid = false;
@@ -635,8 +669,19 @@ export class WudaVertexCoatRuntime {
             s.state = 'free';
             s.vel.copy(_flyVel);
             s.life = life;
+            s.size = freeSize;
+            s.aspect = freeShape.aspect;
+            s.spin = freeShape.spin;
             free++;
-            this.writeInstance(i, s.pos, cfg.wudaFreeSize, cfg, false);
+            this.writeInstance(
+              i,
+              s.pos,
+              freeSize,
+              cfg,
+              false,
+              undefined,
+              freeShape,
+            );
           }
         } else {
           stuck++;
@@ -680,10 +725,11 @@ export class WudaVertexCoatRuntime {
       this.writeInstance(
         i,
         s.pos,
-        cfg.wudaFreeSize * (0.35 + 0.65 * lifeT),
+        wudaFreeSizeOverLife(s.size > 0 ? s.size : cfg.wudaFreeSize, lifeT),
         cfg,
         false,
         cfg.wudaFreeOpacity * lifeT,
+        { aspect: s.aspect, spin: s.spin },
       );
     }
 
@@ -704,10 +750,11 @@ export class WudaVertexCoatRuntime {
       this.writeInstance(
         instIdx,
         p.pos,
-        cfg.wudaFreeSize * (0.35 + 0.65 * lifeT),
+        wudaFreeSizeOverLife(p.size > 0 ? p.size : cfg.wudaFreeSize, lifeT),
         cfg,
         false,
         cfg.wudaFreeOpacity * lifeT,
+        { aspect: p.aspect, spin: p.spin },
       );
     }
 
@@ -744,11 +791,26 @@ export class WudaVertexCoatRuntime {
     cfg: WudaCoatCfgShim,
     stuck: boolean,
     opacityOverride?: number,
+    shape?: WudaEllipseShape,
   ): void {
     if (!this.instanced || !this.opacityAttr) return;
-    const sx = Math.max(0, size);
-    _scale.set(sx, sx, sx);
+    const base = Math.max(0, size);
+    const ellipse =
+      shape ??
+      (base > 0
+        ? resolveWudaEllipseShapeFromIndex(
+            index,
+            cfg.wudaSeed,
+            cfg.wudaEllipseAspectJitter,
+          )
+        : _unitShape);
+    const aspect = ellipse.aspect > 0.05 ? ellipse.aspect : 1;
+    _scale.set(base * aspect, base / aspect, base > 0 ? 1 : 0);
     _quat.copy(_camQuat);
+    if (ellipse.spin !== 0) {
+      _spinQuat.setFromAxisAngle(_zAxis, ellipse.spin);
+      _quat.multiply(_spinQuat);
+    }
     this.dummy.position.copy(pos);
     this.dummy.quaternion.copy(_quat);
     this.dummy.scale.copy(_scale);
@@ -756,11 +818,11 @@ export class WudaVertexCoatRuntime {
     this.instanced.setMatrixAt(index, this.dummy.matrix);
 
     const op =
-      sx <= 0
+      base <= 0
         ? 0
         : (opacityOverride ??
           (stuck ? cfg.wudaStuckOpacity : cfg.wudaFreeOpacity));
-    resolveWudaInstanceColor(this._color, cfg, stuck, sx);
+    resolveWudaInstanceColor(this._color, cfg, stuck, base);
     this.instanced.setColorAt(index, this._color);
     setWudaInstanceOpacity(this.opacityAttr, index, op);
   }

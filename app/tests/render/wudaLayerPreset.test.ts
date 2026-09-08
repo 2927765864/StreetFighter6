@@ -52,6 +52,17 @@ describe('normalizeWudaLayerPreset', () => {
     expect(n!.stuckColor).toBe(0xff00aa);
     expect(n!.regionWeightHead).toBeCloseTo(0.7);
     expect(n!.particleCount).toBeGreaterThanOrEqual(0);
+    expect(n!.freeSizeMin).toBeLessThanOrEqual(n!.freeSize);
+    expect(n!.ellipseAspectJitter).toBeCloseTo(0.35);
+  });
+
+  it('derives freeSizeMin from freeSize when omitted', () => {
+    const n = normalizeWudaLayerPreset(
+      { id: 'sz', side: 'p1', freeSize: 0.02 },
+      0,
+    );
+    expect(n!.freeSize).toBeCloseTo(0.02);
+    expect(n!.freeSizeMin).toBeCloseTo(0.011);
   });
 
   it('returns null for non-objects and synthesizes id/name when missing', () => {
@@ -97,6 +108,9 @@ describe('buildWudaCoatCfgShim', () => {
     expect(shim.wudaVertexStride).toBe(3);
     expect(shim.wudaAlsoPlumeBurst).toBe(true);
     expect(shim.wudaDetachOnlyOnActiveHit).toBe(true);
+    expect(shim.wudaFreeSizeMin).toBeCloseTo(layer.freeSizeMin);
+    expect(shim.wudaFreeSize).toBeCloseTo(layer.freeSize);
+    expect(shim.wudaEllipseAspectJitter).toBeCloseTo(layer.ellipseAspectJitter);
     expect(shim.wudaP1RegionWeightHead).toBeCloseTo(0.5);
     expect(shim.wudaP2RegionWeightHead).toBeCloseTo(0.5);
 

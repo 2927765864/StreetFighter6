@@ -847,7 +847,9 @@ function buildDom(): HTMLElement {
           ${rowNumber('wudaLayer_speedLimit', '速度上限', 0.1, 50, 0.1)}
           ${rowNumber('wudaLayer_maxDeltaSec', 'dt上限', 0.016, 0.1, 0.001)}
           ${rowNumber('wudaLayer_stuckSize', '粘着尺寸', 0.001, 0.05, 0.001)}
-          ${rowNumber('wudaLayer_freeSize', '自由尺寸', 0.001, 0.08, 0.001)}
+          ${rowNumber('wudaLayer_freeSizeMin', '自由尺寸最小', 0.001, 0.08, 0.001)}
+          ${rowNumber('wudaLayer_freeSize', '自由尺寸最大', 0.001, 0.08, 0.001)}
+          ${rowNumber('wudaLayer_ellipseAspectJitter', '椭圆长宽抖动', 0, 0.85, 0.01)}
           ${rowNumber('wudaLayer_stuckOpacity', '粘着不透明度', 0, 1, 0.01)}
           ${rowNumber('wudaLayer_freeOpacity', '自由不透明度', 0, 1, 0.01)}
           <div class="panel-row light-color-row">
@@ -1617,7 +1619,9 @@ export function setupControlPanel(
     'speedLimit',
     'maxDeltaSec',
     'stuckSize',
+    'freeSizeMin',
     'freeSize',
+    'ellipseAspectJitter',
     'stuckOpacity',
     'freeOpacity',
   ];

@@ -119,7 +119,7 @@ export class Flipbook2DApp {
       strength: CONFIG.hitVfxPreviewStrength,
       height: CONFIG.hitVfxPreviewHeight,
       x: 0,
-      // Same orientation as combat: authored +X = screen right (no facing mirror).
+      // Defender facing -1 → unmirrored authored sheet (attack from left).
       facing: -1,
     };
     this.host.world.combat.syncEditor(

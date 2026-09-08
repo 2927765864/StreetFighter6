@@ -76,16 +76,16 @@ function applyMaterialLook(
 }
 
 /**
- * Keep authored orientation (same as the 2D editor). Sheets are drawn as
- * authored; do not mirror by attacker facing — that made combat look
- * horizontally reversed vs the editor timeline.
+ * Mirror the whole shot from defender facing.
+ * Authored sheets assume attack from the left (defender facing -1 → scale +1).
+ * When the defender faces +X (hit from the right), flip with scale.x = -1.
+ * Editor preview uses facing -1 so it stays unmirrored like the canvas.
  *
- * Layers still use Mesh planes (not Sprite): WebGPU SpriteNodeMaterial takes
- * scale from matrix column lengths, so parent scale.x = -1 would flip offsets
- * without flipping UVs.
+ * Mesh planes (not Sprite): parent scale.x = -1 correctly mirrors both UVs
+ * and layer offsetX.
  */
-export function flipbookFacingScaleX(_facing: number): number {
-  return 1;
+export function flipbookFacingScaleX(facing: number): number {
+  return facing > 0 ? -1 : 1;
 }
 
 export function layerLocalOffset(

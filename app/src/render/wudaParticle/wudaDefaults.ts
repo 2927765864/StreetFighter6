@@ -7,7 +7,9 @@ export function applyWudaPresetDust(layer: WudaLayerPreset): void {
   layer.drag = 1.5;
   layer.freeLifetime = 0.6;
   layer.stuckSize = 0.008;
+  layer.freeSizeMin = 0.006;
   layer.freeSize = 0.012;
+  layer.ellipseAspectJitter = 0.35;
   layer.stuckOpacity = 0.55;
   layer.freeOpacity = 0.85;
   layer.stuckColor = rgb01ToHex(0.65, 0.6, 0.5);
@@ -21,7 +23,9 @@ export function applyWudaPresetWater(layer: WudaLayerPreset): void {
   layer.drag = 0.8;
   layer.freeLifetime = 0.85;
   layer.stuckSize = 0.006;
+  layer.freeSizeMin = 0.005;
   layer.freeSize = 0.01;
+  layer.ellipseAspectJitter = 0.28;
   layer.stuckOpacity = 0.45;
   layer.freeOpacity = 0.9;
   layer.stuckColor = rgb01ToHex(0.45, 0.65, 0.85);
@@ -35,7 +39,9 @@ export function applyWudaPresetGas(layer: WudaLayerPreset): void {
   layer.drag = 3.5;
   layer.freeLifetime = 1.2;
   layer.stuckSize = 0.014;
+  layer.freeSizeMin = 0.012;
   layer.freeSize = 0.022;
+  layer.ellipseAspectJitter = 0.45;
   layer.stuckOpacity = 0.25;
   layer.freeOpacity = 0.4;
   layer.stuckColor = rgb01ToHex(0.85, 0.85, 0.88);

@@ -40,9 +40,11 @@ describe('sourceFrameAt', () => {
 });
 
 describe('flipbook facing / layer offset', () => {
-  it('keeps authored orientation for both facings (matches editor)', () => {
+  it('mirrors when defender faces +X (hit from the right)', () => {
+    // Defender on the right (facing -1): authored left→right sheet.
     expect(flipbookFacingScaleX(-1)).toBe(1);
-    expect(flipbookFacingScaleX(1)).toBe(1);
+    // Defender on the left (facing +1): mirror for right→left attack.
+    expect(flipbookFacingScaleX(1)).toBe(-1);
     expect(flipbookFacingScaleX(0)).toBe(1);
   });
 

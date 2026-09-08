@@ -308,13 +308,13 @@ async function boot(): Promise<void> {
   const applyLimbLock = (ev: HitVfxMatchEvent): HitVfxTriggerArgs => {
     const args = matchEventToTriggerArgs(ev);
     const kind = classifyAttackLimbKind(ev.moveId ?? '', ev.hitGroup ?? 0);
-    const facing = ev.attackerFacing ?? 1;
-    if (p1View.sampleAttackLimbWorld(kind, facing, limbScratch)) {
+    const attackerFacing = ev.attackerFacing ?? 1;
+    if (p1View.sampleAttackLimbWorld(kind, attackerFacing, limbScratch)) {
       args.x = limbScratch.x;
       args.y = limbScratch.y;
       args.z = limbScratch.z;
-      args.facing = facing >= 0 ? 1 : -1;
-      args.axis = [-facing, 0, 0];
+      // Keep args.facing as defenderFacing (flipbook mirror + height Z).
+      args.axis = [-attackerFacing, 0, 0];
     }
     return args;
   };

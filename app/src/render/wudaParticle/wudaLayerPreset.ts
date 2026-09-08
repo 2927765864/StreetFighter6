@@ -33,7 +33,12 @@ export type WudaLayerPreset = {
   speedLimit: number;
   maxDeltaSec: number;
   stuckSize: number;
+  /** Free particle size lower bound (random with freeSize). */
+  freeSizeMin: number;
+  /** Free particle size upper bound (also exposed as wudaFreeSize). */
   freeSize: number;
+  /** 0 = circle; ~0.35 = mild irregular ellipses via instance scale. */
+  ellipseAspectJitter: number;
   stuckOpacity: number;
   freeOpacity: number;
   stuckColor: number;
@@ -90,7 +95,10 @@ export type WudaCoatCfgShim = {
   wudaSpeedLimit: number;
   wudaMaxDeltaSec: number;
   wudaStuckSize: number;
+  wudaFreeSizeMin: number;
+  /** Upper bound / nominal free size (plume burst + legacy). */
   wudaFreeSize: number;
+  wudaEllipseAspectJitter: number;
   wudaStuckOpacity: number;
   wudaFreeOpacity: number;
   wudaStuckColor: number;
@@ -136,7 +144,9 @@ const DEFAULT_LAYER_PARAMS = {
   speedLimit: 12,
   maxDeltaSec: 0.05,
   stuckSize: 0.008,
+  freeSizeMin: 0.006,
   freeSize: 0.012,
+  ellipseAspectJitter: 0.35,
   stuckOpacity: 0.55,
   freeOpacity: 0.85,
   stuckColor: 0xa69980,
@@ -245,6 +255,15 @@ export function normalizeWudaLayerPreset(
     maxDeltaSec: pickNum(o, 'maxDeltaSec', base.maxDeltaSec),
     stuckSize: pickNum(o, 'stuckSize', base.stuckSize),
     freeSize: pickNum(o, 'freeSize', base.freeSize),
+    freeSizeMin: (() => {
+      const maxSize = pickNum(o, 'freeSize', base.freeSize);
+      return pickNum(o, 'freeSizeMin', Math.max(0, maxSize * 0.55));
+    })(),
+    ellipseAspectJitter: pickNum(
+      o,
+      'ellipseAspectJitter',
+      base.ellipseAspectJitter,
+    ),
     stuckOpacity: pickNum(o, 'stuckOpacity', base.stuckOpacity),
     freeOpacity: pickNum(o, 'freeOpacity', base.freeOpacity),
     stuckColor: Math.floor(pickNum(o, 'stuckColor', base.stuckColor)) >>> 0,
@@ -324,7 +343,9 @@ export function buildWudaCoatCfgShim(
     wudaSpeedLimit: layer.speedLimit,
     wudaMaxDeltaSec: layer.maxDeltaSec,
     wudaStuckSize: layer.stuckSize,
+    wudaFreeSizeMin: layer.freeSizeMin,
     wudaFreeSize: layer.freeSize,
+    wudaEllipseAspectJitter: layer.ellipseAspectJitter,
     wudaStuckOpacity: layer.stuckOpacity,
     wudaFreeOpacity: layer.freeOpacity,
     wudaStuckColor: layer.stuckColor,
@@ -464,6 +485,11 @@ export function migrateFlatWudaToLayerPresets(
     layer.maxDeltaSec = n('wudaMaxDeltaSec', layer.maxDeltaSec);
     layer.stuckSize = n('wudaStuckSize', layer.stuckSize);
     layer.freeSize = n('wudaFreeSize', layer.freeSize);
+    layer.freeSizeMin = n('wudaFreeSizeMin', Math.max(0, layer.freeSize * 0.55));
+    layer.ellipseAspectJitter = n(
+      'wudaEllipseAspectJitter',
+      layer.ellipseAspectJitter,
+    );
     layer.stuckOpacity = n('wudaStuckOpacity', layer.stuckOpacity);
     layer.freeOpacity = n('wudaFreeOpacity', layer.freeOpacity);
     layer.stuckColor =

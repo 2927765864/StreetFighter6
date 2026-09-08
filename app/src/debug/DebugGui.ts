@@ -412,7 +412,9 @@ export function createDebugGui(
   bindLayerNum('speedLimit', 0.1, 50, 0.1, '速度上限');
   bindLayerNum('maxDeltaSec', 0.016, 0.1, 0.001, 'dt上限');
   bindLayerNum('stuckSize', 0.001, 0.05, 0.001, '粘着尺寸');
-  bindLayerNum('freeSize', 0.001, 0.08, 0.001, '自由尺寸');
+  bindLayerNum('freeSizeMin', 0.001, 0.08, 0.001, '自由尺寸最小');
+  bindLayerNum('freeSize', 0.001, 0.08, 0.001, '自由尺寸最大');
+  bindLayerNum('ellipseAspectJitter', 0, 0.85, 0.01, '椭圆长宽抖动');
   bindLayerNum('stuckOpacity', 0, 1, 0.01, '粘着不透明度');
   bindLayerNum('freeOpacity', 0, 1, 0.01, '自由不透明度');
   wuda.addColor(layerProxy, 'stuckColor').name('粘着色').onChange(() => {

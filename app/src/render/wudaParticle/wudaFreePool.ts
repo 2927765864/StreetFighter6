@@ -10,6 +10,10 @@ export type WudaFreePoolParticle = {
   pos: THREE.Vector3;
   vel: THREE.Vector3;
   life: number;
+  /** Base world size sampled at spawn (life fade applied when drawing). */
+  size: number;
+  aspect: number;
+  spin: number;
 };
 
 export function createWudaFreePool(capacity: number): WudaFreePoolParticle[] {
@@ -21,6 +25,9 @@ export function createWudaFreePool(capacity: number): WudaFreePoolParticle[] {
       pos: new THREE.Vector3(),
       vel: new THREE.Vector3(),
       life: 0,
+      size: 0,
+      aspect: 1,
+      spin: 0,
     });
   }
   return out;
@@ -46,6 +53,9 @@ export function spawnWudaFreeParticle(
   pos: THREE.Vector3,
   vel: THREE.Vector3,
   life: number,
+  size = 0.012,
+  aspect = 1,
+  spin = 0,
 ): number {
   if (pool.length === 0) return -1;
   let freeIdx = -1;
@@ -68,6 +78,9 @@ export function spawnWudaFreeParticle(
   slot.pos.copy(pos);
   slot.vel.copy(vel);
   slot.life = Math.max(0, life);
+  slot.size = Math.max(0, size);
+  slot.aspect = aspect > 0.05 ? aspect : 1;
+  slot.spin = spin;
   return idx;
 }
 
