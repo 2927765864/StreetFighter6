@@ -25,6 +25,7 @@ export function defaultExpandedSections(): ExpandedSections {
     hitVfx: true,
     hitShockwave: true,
     hitGlow: true,
+    hitCloudShadow: true,
     extendedSim: false,
     extendedLoco: false,
     extendedAnim: false,

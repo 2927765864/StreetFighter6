@@ -476,6 +476,26 @@ export type MutableSimConfig = {
   hitGlowIntensityL: number;
   hitGlowIntensityM: number;
   hitGlowIntensityH: number;
+  /**
+   * 命中屏幕云影（暗色径向辐条 + 轻噪声，压暗角色/场景；层级在 2D 特效之下）。
+   */
+  hitCloudShadowEnabled: boolean;
+  hitCloudShadowMaxConcurrent: number;
+  hitCloudShadowSpokeCount: number;
+  hitCloudShadowSpokeWidth: number;
+  hitCloudShadowSpokeSpacingNoise: number;
+  hitCloudShadowHardness: number;
+  hitCloudShadowNoiseAmount: number;
+  hitCloudShadowColor: number;
+  hitCloudShadowDurationL: number;
+  hitCloudShadowDurationM: number;
+  hitCloudShadowDurationH: number;
+  hitCloudShadowMaxRadiusL: number;
+  hitCloudShadowMaxRadiusM: number;
+  hitCloudShadowMaxRadiusH: number;
+  hitCloudShadowIntensityL: number;
+  hitCloudShadowIntensityM: number;
+  hitCloudShadowIntensityH: number;
 };
 
 export function createDefaultSimConfig(): MutableSimConfig {
@@ -797,6 +817,23 @@ export function createDefaultSimConfig(): MutableSimConfig {
     hitGlowIntensityL: 0.85,
     hitGlowIntensityM: 1.1,
     hitGlowIntensityH: 1.4,
+    hitCloudShadowEnabled: true,
+    hitCloudShadowMaxConcurrent: 4,
+    hitCloudShadowSpokeCount: 6,
+    hitCloudShadowSpokeWidth: 0.45,
+    hitCloudShadowSpokeSpacingNoise: 0.65,
+    hitCloudShadowHardness: 2.0,
+    hitCloudShadowNoiseAmount: 0.35,
+    hitCloudShadowColor: 0x1a2030,
+    hitCloudShadowDurationL: 0.1,
+    hitCloudShadowDurationM: 0.14,
+    hitCloudShadowDurationH: 0.2,
+    hitCloudShadowMaxRadiusL: 0.1,
+    hitCloudShadowMaxRadiusM: 0.14,
+    hitCloudShadowMaxRadiusH: 0.2,
+    hitCloudShadowIntensityL: 0.45,
+    hitCloudShadowIntensityM: 0.6,
+    hitCloudShadowIntensityH: 0.75,
   };
 }
 

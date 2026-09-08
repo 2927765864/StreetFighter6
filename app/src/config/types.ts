@@ -26,6 +26,7 @@ export type ExpandedSections = {
   hitVfx: boolean;
   hitShockwave: boolean;
   hitGlow: boolean;
+  hitCloudShadow: boolean;
   extendedSim: boolean;
   extendedLoco: boolean;
   extendedAnim: boolean;

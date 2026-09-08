@@ -32,6 +32,11 @@ import {
   hitGlowParamsFromConfig,
   type HitGlowStrength,
 } from './render/HitGlowFx';
+import {
+  HitCloudShadowFx,
+  hitCloudShadowParamsFromConfig,
+  type HitCloudShadowStrength,
+} from './render/HitCloudShadowFx';
 import { resolveCmosShakePresetId } from './config/cmosShake';
 import { resolveGuardStrength } from './combat/systems/GuardPolicy';
 import { worldPosFromTrigger } from './render/hitVfx/HitVfxRuntime';
@@ -289,6 +294,8 @@ async function boot(): Promise<void> {
   hitShockwave.applyParams(hitShockwaveParamsFromConfig(cfg));
   const hitGlow = new HitGlowFx();
   hitGlow.applyParams(hitGlowParamsFromConfig(cfg));
+  const hitCloudShadow = new HitCloudShadowFx();
+  hitCloudShadow.applyParams(hitCloudShadowParamsFromConfig(cfg));
   const flipbookCombat = new Flipbook2DCombat(hitVfxScene, camera);
   /** Contact fires in logic before pose; spawn after FighterView.sync. */
   const pendingHitVfx: HitVfxMatchEvent[] = [];
@@ -863,6 +870,10 @@ async function boot(): Promise<void> {
       hitGlow.applyParams(hitGlowParamsFromConfig(CONFIG));
       hitGlow.triggerScreen(0.5, 0.45, strength);
     },
+    testHitCloudShadow: (strength: 'L' | 'M' | 'H') => {
+      hitCloudShadow.applyParams(hitCloudShadowParamsFromConfig(CONFIG));
+      hitCloudShadow.triggerScreen(0.5, 0.45, strength);
+    },
   };
   const panelApi = setupControlPanel(match, clock, hooks, {
     onChange: (key) => {
@@ -875,6 +886,9 @@ async function boot(): Promise<void> {
       }
       if (typeof key === 'string' && key.startsWith('hitGlow')) {
         hitGlow.applyParams(hitGlowParamsFromConfig(CONFIG));
+      }
+      if (typeof key === 'string' && key.startsWith('hitCloudShadow')) {
+        hitCloudShadow.applyParams(hitCloudShadowParamsFromConfig(CONFIG));
       }
       if (
         key === '*' ||
@@ -1128,6 +1142,13 @@ async function boot(): Promise<void> {
             camera,
             strength as HitGlowStrength,
           );
+          hitCloudShadow.triggerWorld(
+            world.x,
+            world.y,
+            world.z,
+            camera,
+            strength as HitCloudShadowStrength,
+          );
         }
       }
       pendingHitVfx.length = 0;
@@ -1136,6 +1157,8 @@ async function boot(): Promise<void> {
     hitShockwave.step(presentDt, camera);
     hitGlow.applyParams(hitGlowParamsFromConfig(cfg));
     hitGlow.step(presentDt, camera);
+    hitCloudShadow.applyParams(hitCloudShadowParamsFromConfig(cfg));
+    hitCloudShadow.step(presentDt, camera);
     flipbookCombat.tick(presentDt, match.hitstopTimer > 0);
 
     pantsHealthReporter.tick(collectPantsHealth(), cfg);
@@ -1173,7 +1196,8 @@ async function boot(): Promise<void> {
      * True 2.5D fighter priority + hit VFX above both fighters:
      * 1) main scene + back fighter
      * 2) clearDepth, then front fighter only
-     * 3) clearDepth, then hitVfxScene overlay (plume / volume smoke / spark lights)
+     * 3) cloud-shadow mid-pass (darken fighters+stage; under 2D FX)
+     * 4) clearDepth, then hitVfxScene overlay (plume / volume smoke / spark lights)
      *
      * Important (WebGPU / three Background): a Color `scene.background` sets
      * forceClear on every render, which would wipe pass 1 even when
@@ -1201,6 +1225,9 @@ async function boot(): Promise<void> {
       renderer.clearDepth();
       cam.layers.set(LAYER_FIGHTER_FRONT);
       await renderer.render(scene, cam);
+
+      // Darken fighters+stage before 2D / procedural hit VFX overlay.
+      await hitCloudShadow.apply(renderer, cam);
 
       // Overlay uses its own scene (default layer 0). Restore SCENE on the
       // camera so VFX meshes are visible; fighters are not in hitVfxScene.

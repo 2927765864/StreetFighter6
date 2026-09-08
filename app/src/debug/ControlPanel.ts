@@ -70,6 +70,8 @@ export type ControlPanelHooks = {
   testHitShockwave?: (strength: 'L' | 'M' | 'H') => void;
   /** Fire a center-screen hit glow for tuning (strength L/M/H). */
   testHitGlow?: (strength: 'L' | 'M' | 'H') => void;
+  /** Fire a center-screen hit cloud shadow for tuning (strength L/M/H). */
+  testHitCloudShadow?: (strength: 'L' | 'M' | 'H') => void;
 };
 
 export type HitVfxPanelHooks = {
@@ -669,6 +671,40 @@ function buildDom(): HTMLElement {
           `,
           'expandHitGlow',
         )}
+        ${sectionShell(
+          'hitCloudShadow',
+          '【命中云影】屏幕暗色云隙影',
+          `
+          <p class="panel-hint">命中点投影后压暗角色/场景（离散径向暗辐条 + 轻噪声）。「间隔随机」会独立抖动每根辐条的角度，使相邻间距不再相等。层级在角色之上、2D 特效 / 冲击波 / 光晕之下。仅真正打中触发。</p>
+          ${rowToggle('hitCloudShadowEnabled', '启用云影')}
+          ${rowNumber('hitCloudShadowMaxConcurrent', '同时最多几个', 1, 4, 1)}
+          ${rowNumber('hitCloudShadowSpokeCount', '辐条数量', 2, 16, 1)}
+          ${rowNumber('hitCloudShadowSpokeWidth', '辐条宽度', 0, 1, 0.05)}
+          ${rowNumber('hitCloudShadowSpokeSpacingNoise', '相邻间距随机', 0, 1, 0.05)}
+          ${rowNumber('hitCloudShadowHardness', '径向软硬', 0.5, 8, 0.1)}
+          ${rowNumber('hitCloudShadowNoiseAmount', '边缘噪声', 0, 1, 0.05)}
+          <div class="panel-row light-color-row">
+            <div class="panel-row-header"><span>暗影颜色</span></div>
+            <input id="inp-hitCloudShadowColorPicker" type="color" title="暗影颜色" />
+          </div>
+          <p class="panel-hint">轻 / 中 / 重 三档（时长：秒；半径：屏幕比例；强度：压暗权重）</p>
+          ${rowNumber('hitCloudShadowDurationL', '轻·时长', 0.02, 0.6, 0.01)}
+          ${rowNumber('hitCloudShadowDurationM', '中·时长', 0.02, 0.6, 0.01)}
+          ${rowNumber('hitCloudShadowDurationH', '重·时长', 0.02, 0.8, 0.01)}
+          ${rowNumber('hitCloudShadowMaxRadiusL', '轻·最大半径', 0.02, 0.6, 0.005)}
+          ${rowNumber('hitCloudShadowMaxRadiusM', '中·最大半径', 0.02, 0.6, 0.005)}
+          ${rowNumber('hitCloudShadowMaxRadiusH', '重·最大半径', 0.02, 0.7, 0.005)}
+          ${rowNumber('hitCloudShadowIntensityL', '轻·峰值强度', 0, 1.5, 0.05)}
+          ${rowNumber('hitCloudShadowIntensityM', '中·峰值强度', 0, 1.5, 0.05)}
+          ${rowNumber('hitCloudShadowIntensityH', '重·峰值强度', 0, 1.5, 0.05)}
+          <div class="light-toolbar">
+            <button type="button" id="btn-hitCloudShadowTestL">试播·轻</button>
+            <button type="button" id="btn-hitCloudShadowTestM">试播·中</button>
+            <button type="button" id="btn-hitCloudShadowTestH">试播·重</button>
+          </div>
+          `,
+          'expandHitCloudShadow',
+        )}
       </details>
 
       <details class="panel-group" data-cat="动画">
@@ -1258,6 +1294,25 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'hitGlowIntensityL', path: 'hitGlowIntensityL' },
   { id: 'hitGlowIntensityM', path: 'hitGlowIntensityM' },
   { id: 'hitGlowIntensityH', path: 'hitGlowIntensityH' },
+  { id: 'hitCloudShadowEnabled', path: 'hitCloudShadowEnabled' },
+  { id: 'hitCloudShadowMaxConcurrent', path: 'hitCloudShadowMaxConcurrent' },
+  { id: 'hitCloudShadowSpokeCount', path: 'hitCloudShadowSpokeCount' },
+  { id: 'hitCloudShadowSpokeWidth', path: 'hitCloudShadowSpokeWidth' },
+  {
+    id: 'hitCloudShadowSpokeSpacingNoise',
+    path: 'hitCloudShadowSpokeSpacingNoise',
+  },
+  { id: 'hitCloudShadowHardness', path: 'hitCloudShadowHardness' },
+  { id: 'hitCloudShadowNoiseAmount', path: 'hitCloudShadowNoiseAmount' },
+  { id: 'hitCloudShadowDurationL', path: 'hitCloudShadowDurationL' },
+  { id: 'hitCloudShadowDurationM', path: 'hitCloudShadowDurationM' },
+  { id: 'hitCloudShadowDurationH', path: 'hitCloudShadowDurationH' },
+  { id: 'hitCloudShadowMaxRadiusL', path: 'hitCloudShadowMaxRadiusL' },
+  { id: 'hitCloudShadowMaxRadiusM', path: 'hitCloudShadowMaxRadiusM' },
+  { id: 'hitCloudShadowMaxRadiusH', path: 'hitCloudShadowMaxRadiusH' },
+  { id: 'hitCloudShadowIntensityL', path: 'hitCloudShadowIntensityL' },
+  { id: 'hitCloudShadowIntensityM', path: 'hitCloudShadowIntensityM' },
+  { id: 'hitCloudShadowIntensityH', path: 'hitCloudShadowIntensityH' },
 ];
 
 const TOGGLE_IDS = new Set([
@@ -1312,6 +1367,7 @@ const TOGGLE_IDS = new Set([
   'hitVfxDebug',
   'hitShockwaveEnabled',
   'hitGlowEnabled',
+  'hitCloudShadowEnabled',
 ]);
 
 export function setupControlPanel(
@@ -1472,6 +1528,7 @@ export function setupControlPanel(
     ['expandHitVfx', 'hitVfx', 'sect-hitVfx'],
     ['expandHitShockwave', 'hitShockwave', 'sect-hitShockwave'],
     ['expandHitGlow', 'hitGlow', 'sect-hitGlow'],
+    ['expandHitCloudShadow', 'hitCloudShadow', 'sect-hitCloudShadow'],
     ['expandAnimDrive', 'animDrive', 'sect-animDrive'],
     ['expandAnimTest', 'animTest', 'sect-animTest'],
     ['expandWuda', 'wuda', 'sect-wuda'],
@@ -1757,6 +1814,10 @@ export function setupControlPanel(
   const hitGlowColorPicker = byId<HTMLInputElement>(
     host,
     'inp-hitGlowColorPicker',
+  );
+  const hitCloudShadowColorPicker = byId<HTMLInputElement>(
+    host,
+    'inp-hitCloudShadowColorPicker',
   );
   const wudaStuckColorPicker = byId<HTMLInputElement>(
     host,
@@ -2375,6 +2436,14 @@ export function setupControlPanel(
     ) {
       hitGlowColorPicker.value = hexToColorInput(CONFIG.hitGlowColor);
     }
+    if (
+      hitCloudShadowColorPicker &&
+      document.activeElement !== hitCloudShadowColorPicker
+    ) {
+      hitCloudShadowColorPicker.value = hexToColorInput(
+        CONFIG.hitCloudShadowColor,
+      );
+    }
     const wudaLayer = getActiveWudaLayer(CONFIG);
     if (wudaLayer && document.activeElement !== wudaStuckColorPicker) {
       wudaStuckColorPicker.value = hexToColorInput(wudaLayer.stuckColor);
@@ -2386,6 +2455,12 @@ export function setupControlPanel(
   hitGlowColorPicker?.addEventListener('input', () => {
     CONFIG.hitGlowColor = colorInputToHex(hitGlowColorPicker.value);
     notify('hitGlowColor', CONFIG.hitGlowColor, CONFIG);
+  });
+  hitCloudShadowColorPicker?.addEventListener('input', () => {
+    CONFIG.hitCloudShadowColor = colorInputToHex(
+      hitCloudShadowColorPicker.value,
+    );
+    notify('hitCloudShadowColor', CONFIG.hitCloudShadowColor, CONFIG);
   });
   bgColorPicker.addEventListener('input', () => {
     CONFIG.bgColor = colorInputToHex(bgColorPicker.value);
@@ -2931,6 +3006,16 @@ export function setupControlPanel(
   bindGlowTest('btn-hitGlowTestL', 'L');
   bindGlowTest('btn-hitGlowTestM', 'M');
   bindGlowTest('btn-hitGlowTestH', 'H');
+
+  const bindCloudShadowTest = (id: string, strength: 'L' | 'M' | 'H') => {
+    byId<HTMLButtonElement>(host, id).addEventListener('click', () => {
+      hooks.testHitCloudShadow?.(strength);
+      notify(`action:hitCloudShadow:test:${strength}`, strength, CONFIG);
+    });
+  };
+  bindCloudShadowTest('btn-hitCloudShadowTestL', 'L');
+  bindCloudShadowTest('btn-hitCloudShadowTestM', 'M');
+  bindCloudShadowTest('btn-hitCloudShadowTestH', 'H');
 
   byId<HTMLButtonElement>(host, 'btn-save-local').addEventListener('click', () => {
     saveCurrentConfig();
