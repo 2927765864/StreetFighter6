@@ -1,0 +1,11 @@
+{
+  "layers": {
+    "E1_core_flash": 10,
+    "E2_near_sparks": 10,
+    "E3_ring_smoke": 14,
+    "E4_wide_short_smoke": 14,
+    "E5_narrow_long_smoke": 14,
+    "E6_narrow_long_smoke_rtl": 14
+  },
+  "total": 76
+}

@@ -1,47 +1,38 @@
 import type { FlipbookLayerId } from './types';
 
-const globE1 = import.meta.glob(
-  '../../../../vfx-ai-pipeline/runs/hit_ref_v1/E1_core_flash/frames/frame-*.png',
-  { eager: true, query: '?url', import: 'default' },
-) as Record<string, string>;
-const globE2 = import.meta.glob(
-  '../../../../vfx-ai-pipeline/runs/hit_ref_v1/E2_near_sparks/frames/frame-*.png',
-  { eager: true, query: '?url', import: 'default' },
-) as Record<string, string>;
-const globE3 = import.meta.glob(
-  '../../../../vfx-ai-pipeline/runs/hit_ref_v1/E3_ring_smoke/frames/frame-*.png',
-  { eager: true, query: '?url', import: 'default' },
-) as Record<string, string>;
-const globE4 = import.meta.glob(
-  '../../../../vfx-ai-pipeline/runs/hit_ref_v1/E4_wide_short_smoke/frames/frame-*.png',
-  { eager: true, query: '?url', import: 'default' },
-) as Record<string, string>;
-const globE5 = import.meta.glob(
-  '../../../../vfx-ai-pipeline/runs/hit_ref_v1/E5_narrow_long_smoke/frames/frame-*.png',
-  { eager: true, query: '?url', import: 'default' },
-) as Record<string, string>;
-const globE6 = import.meta.glob(
-  '../../../../vfx-ai-pipeline/runs/hit_ref_v1/E6_narrow_long_smoke_rtl/frames/frame-*.png',
-  { eager: true, query: '?url', import: 'default' },
-) as Record<string, string>;
+/** Static URLs under public/ so Habby ZIP includes every frame (no Vite glob). */
+export const FLIPBOOK_PUBLIC_BASE = '/vfx/hit_ref_v1';
 
-function sortedUrls(map: Record<string, string>): string[] {
-  return Object.entries(map)
-    .sort(([a], [b]) => {
-      const na = Number(/frame-(\d+)/.exec(a)?.[1] ?? 0);
-      const nb = Number(/frame-(\d+)/.exec(b)?.[1] ?? 0);
-      return na - nb;
-    })
-    .map(([, url]) => url);
+/** Keep in sync with app/public/vfx/hit_ref_v1/manifest.json (package:habby verifies). */
+const LAYER_FRAME_COUNTS: Record<FlipbookLayerId, number> = {
+  E1_core_flash: 10,
+  E2_near_sparks: 10,
+  E3_ring_smoke: 14,
+  E4_wide_short_smoke: 14,
+  E5_narrow_long_smoke: 14,
+  E6_narrow_long_smoke_rtl: 14,
+};
+
+function padFrame(i: number): string {
+  return String(i).padStart(2, '0');
+}
+
+function urlsFor(id: FlipbookLayerId): string[] {
+  const n = LAYER_FRAME_COUNTS[id] ?? 0;
+  const out: string[] = [];
+  for (let i = 0; i < n; i++) {
+    out.push(`${FLIPBOOK_PUBLIC_BASE}/${id}/frame-${padFrame(i)}.png`);
+  }
+  return out;
 }
 
 export const FLIPBOOK_SHEETS: Record<FlipbookLayerId, string[]> = {
-  E1_core_flash: sortedUrls(globE1),
-  E2_near_sparks: sortedUrls(globE2),
-  E3_ring_smoke: sortedUrls(globE3),
-  E4_wide_short_smoke: sortedUrls(globE4),
-  E5_narrow_long_smoke: sortedUrls(globE5),
-  E6_narrow_long_smoke_rtl: sortedUrls(globE6),
+  E1_core_flash: urlsFor('E1_core_flash'),
+  E2_near_sparks: urlsFor('E2_near_sparks'),
+  E3_ring_smoke: urlsFor('E3_ring_smoke'),
+  E4_wide_short_smoke: urlsFor('E4_wide_short_smoke'),
+  E5_narrow_long_smoke: urlsFor('E5_narrow_long_smoke'),
+  E6_narrow_long_smoke_rtl: urlsFor('E6_narrow_long_smoke_rtl'),
 };
 
 export function sheetCount(id: FlipbookLayerId): number {

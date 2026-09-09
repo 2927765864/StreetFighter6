@@ -4,6 +4,9 @@ import type {
   FlipbookRecipeBank,
   FlipbookStrength,
 } from './types';
+import shippingRecipes from '../../../public/vfx/hit_ref_v1/recipes.json' with {
+  type: 'json',
+};
 
 export const FLIPBOOK_STRENGTHS: FlipbookStrength[] = ['L', 'M', 'H'];
 
@@ -138,8 +141,19 @@ export function recipeForStrength(
   return copy;
 }
 
-/** Existing authored look is medium; light and heavy start as identical copies. */
+/**
+ * Factory bank shipped in the Habby zip (editor L/M/H, not identical copies).
+ * Source: app/public/vfx/hit_ref_v1/recipes.json
+ */
 export function defaultFlipbookBank(): FlipbookRecipeBank {
+  const rec = (shippingRecipes as { recipes?: FlipbookRecipeBank }).recipes;
+  if (rec?.L && rec?.M && rec?.H) {
+    return cloneBank({
+      L: { ...rec.L, layers: rec.L.layers.map((l) => ({ ...l })) },
+      M: { ...rec.M, layers: rec.M.layers.map((l) => ({ ...l })) },
+      H: { ...rec.H, layers: rec.H.layers.map((l) => ({ ...l })) },
+    });
+  }
   return {
     L: recipeForStrength(DEFAULT_FLIPBOOK_RECIPE, 'L'),
     M: cloneRecipe(DEFAULT_FLIPBOOK_RECIPE),

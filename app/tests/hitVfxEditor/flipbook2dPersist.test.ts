@@ -31,7 +31,7 @@ afterEach(() => {
 });
 
 describe('flipbook 2d L/M/H recipes', () => {
-  it('defaults to three identical E1–E6 copies, tagged L/M/H', () => {
+  it('defaults to authored L/M/H banks (not identical copies)', () => {
     const bank = defaultFlipbookBank();
     expect(bank.L.strength).toBe('L');
     expect(bank.M.strength).toBe('M');
@@ -46,7 +46,10 @@ describe('flipbook 2d L/M/H recipes', () => {
       'E2_near_sparks',
       'E1_core_flash',
     ]);
-    expect(bank.L.layers[0]?.opacity).toBe(bank.M.layers[0]?.opacity);
+    const e5 = (s: 'L' | 'M' | 'H') =>
+      bank[s].layers.find((l) => l.id === 'E5_narrow_long_smoke')!;
+    expect(e5('L').scale).toBeLessThan(e5('M').scale);
+    expect(e5('M').scale).toBeLessThan(e5('H').scale);
   });
 
   it('migrates a v1 single recipe into medium and copies it to L/H', () => {

@@ -4,11 +4,13 @@ import {
   loadSavedConfig,
   loadShippingConfig,
 } from '../config/persist';
+import { hydrateFlipbookFactory } from './flipbook2d/persist';
 import { bootHitVfxEditor } from './HitVfxEditorApp';
 
 async function main(): Promise<void> {
   setActiveDefaultConfig(cloneConfig(CONFIG));
   await loadShippingConfig();
+  await hydrateFlipbookFactory();
   loadSavedConfig();
   loadHitVfxEditorDraft();
   await bootHitVfxEditor();

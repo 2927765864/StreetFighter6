@@ -3,6 +3,7 @@ import * as THREE from 'three/webgpu';
 import { applyConfigToMatchOpts, syncMatchOpts } from './config/constants';
 import { cloneConfig, CONFIG, setActiveDefaultConfig } from './config/store';
 import { loadSavedConfig, loadShippingConfig } from './config/persist';
+import { hydrateFlipbookFactory } from './hitVfxEditor/flipbook2d/persist';
 import { FrameClock } from './combat/frameClock';
 import { parseMoveDefinition } from './combat/move/MoveDefinition';
 import { MatchSim } from './combat/match/MatchSim';
@@ -204,6 +205,7 @@ async function boot(): Promise<void> {
   // Content-seeded snapshot becomes the "project default" baseline before shipping.
   setActiveDefaultConfig(cloneConfig(cfg));
   await loadShippingConfig();
+  await hydrateFlipbookFactory();
   loadSavedConfig();
 
   const match = new MatchSim(move, catalog, applyConfigToMatchOpts(cfg));

@@ -7,6 +7,10 @@ import {
 import { migrateFlatLightsToList } from './lightTypes';
 import type { RuntimeConfig } from './types';
 import { CONFIG_VERSION, isPresetEnvelope } from './types';
+import {
+  applyFlipbookShipping,
+  loadFlipbookState,
+} from '../hitVfxEditor/flipbook2d/persist';
 
 export const STORAGE_KEYS = {
   config: 'sf6RuntimeConfig',
@@ -146,6 +150,9 @@ export async function loadShippingConfig(): Promise<boolean> {
     applyShippingDefaults(
       migrateSavedConfig(body as Record<string, unknown>),
     );
+    if (isPresetEnvelope(data) && data.flipbook2d != null) {
+      applyFlipbookShipping(data.flipbook2d);
+    }
     console.info('[config] shipping preset loaded');
     return true;
   } catch (e) {
@@ -287,11 +294,17 @@ export function deleteNamedPreset(name: string): void {
 }
 
 export function exportShippingJson(): void {
+  const fb = loadFlipbookState();
   const data = {
     type: 'runtime-control-preset' as const,
     version: CONFIG_VERSION,
     name: 'shipping',
     config: cloneConfig(CONFIG),
+    flipbook2d: {
+      v: 2,
+      selected: fb.selected,
+      recipes: fb.recipes,
+    },
   };
   downloadJson('shipping.json', data);
 }

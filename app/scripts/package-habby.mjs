@@ -20,7 +20,8 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
-import { prune, dedup, resample } from '@gltf-transform/functions';
+import { prune, dedup, resample, weld, simplify } from '@gltf-transform/functions';
+import { MeshoptSimplifier } from 'meshoptimizer';
 import sharp from 'sharp';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -36,6 +37,28 @@ const logicMapPath = path.join(
   appRoot,
   'public/data/clips/ryu_logic_to_glb_map.json',
 );
+
+const VFX_LAYERS = [
+  'E1_core_flash',
+  'E2_near_sparks',
+  'E3_ring_smoke',
+  'E4_wide_short_smoke',
+  'E5_narrow_long_smoke',
+  'E6_narrow_long_smoke_rtl',
+];
+const vfxPipelineRoot = path.join(
+  repoRoot,
+  'vfx-ai-pipeline/runs/hit_ref_v1',
+);
+const vfxPublicRoot = path.join(appRoot, 'public/vfx/hit_ref_v1');
+const CATALOG_FRAME_COUNTS = {
+  E1_core_flash: 10,
+  E2_near_sparks: 10,
+  E3_ring_smoke: 14,
+  E4_wide_short_smoke: 14,
+  E5_narrow_long_smoke: 14,
+  E6_narrow_long_smoke_rtl: 14,
+};
 
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
 
@@ -102,6 +125,67 @@ async function writeStripAnimGlb(src, dest) {
   await io.write(dest, doc);
 }
 
+function copyVfxFrames(destRoot) {
+  const counts = {};
+  let total = 0;
+  for (const layer of VFX_LAYERS) {
+    const srcDir = path.join(vfxPipelineRoot, layer, 'frames');
+    const destDir = path.join(destRoot, layer);
+    if (!fs.existsSync(srcDir)) {
+      throw new Error(`[habby] missing VFX frames dir ${srcDir}`);
+    }
+    ensureDir(destDir);
+    let n = 0;
+    for (const name of fs.readdirSync(srcDir)) {
+      if (!/^frame-\d+\.png$/i.test(name)) continue;
+      copyFile(path.join(srcDir, name), path.join(destDir, name));
+      n += 1;
+    }
+    counts[layer] = n;
+    total += n;
+  }
+  fs.writeFileSync(
+    path.join(destRoot, 'manifest.json'),
+    `${JSON.stringify({ layers: counts, total }, null, 2)}\n`,
+  );
+  const recipesSrc = path.join(vfxPublicRoot, 'recipes.json');
+  if (fs.existsSync(recipesSrc)) {
+    copyFile(recipesSrc, path.join(destRoot, 'recipes.json'));
+  }
+  return { counts, total };
+}
+
+function countTriangles(doc) {
+  let tris = 0;
+  for (const mesh of doc.getRoot().listMeshes()) {
+    for (const prim of mesh.listPrimitives()) {
+      const idx = prim.getIndices();
+      if (idx) tris += idx.getCount() / 3;
+    }
+  }
+  return tris;
+}
+
+/** Reduce stage face count in-place. Does not write EXT_meshopt_compression. */
+async function simplifyGlbInPlace(file, { ratio, error, label }) {
+  await MeshoptSimplifier.ready;
+  const doc = await io.read(file);
+  const before = countTriangles(doc);
+  await doc.transform(
+    weld(),
+    simplify({ simplifier: MeshoptSimplifier, ratio, error }),
+    prune(),
+    dedup(),
+  );
+  const after = countTriangles(doc);
+  await io.write(file, doc);
+  console.info(
+    `[habby] ${label} tris ${Math.round(before)} → ${Math.round(after)} ` +
+      `(${bytesLabel(fs.statSync(file).size)})`,
+  );
+  return { before, after };
+}
+
 async function writeOptimizedPng(src, dest) {
   ensureDir(path.dirname(dest));
   const base = path.basename(src);
@@ -114,6 +198,21 @@ async function writeOptimizedPng(src, dest) {
 }
 
 console.info(`[habby] node time ${new Date().toISOString()}`);
+
+console.info('[habby] materialize 2D VFX frames → public/vfx/hit_ref_v1');
+const vfxCopied = copyVfxFrames(vfxPublicRoot);
+for (const layer of VFX_LAYERS) {
+  const want = CATALOG_FRAME_COUNTS[layer];
+  const got = vfxCopied.counts[layer] ?? 0;
+  if (got !== want) {
+    console.error(
+      `[habby] VFX frame count mismatch ${layer}: disk=${got} catalog=${want}`,
+    );
+    process.exit(1);
+  }
+}
+console.info(`[habby] VFX frames ${vfxCopied.total} across ${VFX_LAYERS.length} layers`);
+
 console.info('[habby] vite build…');
 const build = spawnSync('npx', ['vite', 'build'], {
   cwd: appRoot,
@@ -128,6 +227,43 @@ if (build.status !== 0) {
 if (!fs.existsSync(path.join(distRoot, 'index.html'))) {
   console.error('[habby] dist/index.html missing after build');
   process.exit(1);
+}
+
+// Vite copies public/, but re-copy so a stale dist cannot drop new frames.
+copyVfxFrames(path.join(distRoot, 'vfx/hit_ref_v1'));
+let distVfxPng = 0;
+const distVfxRoot = path.join(distRoot, 'vfx/hit_ref_v1');
+for (const layer of VFX_LAYERS) {
+  const dir = path.join(distVfxRoot, layer);
+  const n = fs.existsSync(dir)
+    ? fs.readdirSync(dir).filter((f) => /^frame-\d+\.png$/i.test(f)).length
+    : 0;
+  distVfxPng += n;
+  if (n !== CATALOG_FRAME_COUNTS[layer]) {
+    console.error(
+      `[habby] dist missing VFX ${layer}: ${n}/${CATALOG_FRAME_COUNTS[layer]}`,
+    );
+    process.exit(1);
+  }
+}
+console.info(`[habby] dist VFX frames ${distVfxPng}`);
+
+const stageGlbs = fs.existsSync(path.join(distRoot, 'assets'))
+  ? fs
+      .readdirSync(path.join(distRoot, 'assets'))
+      .filter((n) => n.startsWith('SF6 Training Stage') && n.endsWith('.glb'))
+      .map((n) => path.join(distRoot, 'assets', n))
+  : [];
+if (stageGlbs.length === 0) {
+  console.warn('[habby] no hashed training-stage glb in dist/assets');
+} else {
+  for (const g of stageGlbs) {
+    await simplifyGlbInPlace(g, {
+      ratio: 0.35,
+      error: 0.002,
+      label: path.basename(g),
+    });
+  }
 }
 
 // Drop heavy public mesh fallbacks — shipping uses private-runtime mesh_only.
@@ -149,10 +285,11 @@ if (!fs.existsSync(meshOnlySrc)) {
   console.error('[habby] missing', meshOnlySrc);
   process.exit(1);
 }
-copyFile(meshOnlySrc, path.join(runtimeDest, 'ryu/ryu_c1_mesh_only.glb'));
+const meshOnlyDest = path.join(runtimeDest, 'ryu/ryu_c1_mesh_only.glb');
+copyFile(meshOnlySrc, meshOnlyDest);
 console.info(
-  '[habby] mesh_only',
-  bytesLabel(fs.statSync(meshOnlySrc).size),
+  '[habby] mesh_only (unsimplified — weld/simplify wrecks head UVs)',
+  bytesLabel(fs.statSync(meshOnlyDest).size),
 );
 
 // --- prepared textures (resized PNG, same filenames) ---
@@ -216,8 +353,6 @@ const zip = spawnSync(
     '.',
     '-x',
     '*.DS_Store',
-    '*_preview*',
-    '*_work*',
   ],
   { cwd: distRoot, stdio: 'inherit' },
 );
@@ -246,6 +381,19 @@ const simple = [
     'no heavy public ryu glb',
     !listing.includes('models/ryu/ryu_c1.glb') &&
       !listing.includes('models/ryu/ryu_c1_textured.glb'),
+  ],
+  [
+    `2D VFX frames (${vfxCopied.total})`,
+    (listing.match(/vfx\/hit_ref_v1\/E\d_[^/]+\/frame-\d+\.png/g) ?? [])
+      .length === vfxCopied.total,
+  ],
+  [
+    'shipping preset',
+    listing.includes('presets/shipping.json'),
+  ],
+  [
+    '2D VFX L/M/H recipes',
+    listing.includes('vfx/hit_ref_v1/recipes.json'),
   ],
   [
     `zip ≤ 200 MiB (${bytesLabel(zipStat.size)})`,

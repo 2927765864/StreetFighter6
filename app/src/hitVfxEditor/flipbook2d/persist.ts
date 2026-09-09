@@ -15,6 +15,13 @@ import type {
 } from './types';
 
 const KEY = 'sf6.flipbook2d.hit_ref_v1';
+export const FLIPBOOK_RECIPES_URL = '/vfx/hit_ref_v1/recipes.json';
+
+/** Factory bank from shipping JSON; localStorage overlays when present. */
+let factoryState: FlipbookPersistState = {
+  selected: 'M',
+  recipes: defaultFlipbookBank(),
+};
 
 const LAYER_IDS: FlipbookLayerId[] = [
   'E1_core_flash',
@@ -125,13 +132,43 @@ function migrateParsed(parsed: unknown): FlipbookPersistState {
   return { selected: 'M', recipes: bank };
 }
 
+export function applyFlipbookShipping(raw: unknown): FlipbookPersistState {
+  factoryState = migrateParsed(raw);
+  return {
+    selected: factoryState.selected,
+    recipes: cloneBank(factoryState.recipes),
+  };
+}
+
+/** Load packaged editor recipes (Habby has empty localStorage). */
+export async function hydrateFlipbookFactory(): Promise<boolean> {
+  try {
+    const res = await fetch(FLIPBOOK_RECIPES_URL, { cache: 'no-cache' });
+    if (!res.ok) return false;
+    const ct = res.headers.get('content-type') ?? '';
+    if (!ct.includes('json') && !ct.includes('text/plain')) return false;
+    applyFlipbookShipping(await res.json());
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function loadFlipbookState(): FlipbookPersistState {
   try {
     const raw = localStorage.getItem(KEY);
-    if (!raw) return { selected: 'M', recipes: defaultFlipbookBank() };
+    if (!raw) {
+      return {
+        selected: factoryState.selected,
+        recipes: cloneBank(factoryState.recipes),
+      };
+    }
     return migrateParsed(JSON.parse(raw));
   } catch {
-    return { selected: 'M', recipes: defaultFlipbookBank() };
+    return {
+      selected: factoryState.selected,
+      recipes: cloneBank(factoryState.recipes),
+    };
   }
 }
 

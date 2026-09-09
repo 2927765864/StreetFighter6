@@ -45,6 +45,8 @@ export type PresetEnvelope = {
   version: number;
   name: string;
   config: Partial<RuntimeConfig> & Record<string, unknown>;
+  /** 2D flipbook L/M/H recipes (editor bank). Optional for older shipping files. */
+  flipbook2d?: unknown;
 };
 
 export function isPresetEnvelope(v: unknown): v is PresetEnvelope {
