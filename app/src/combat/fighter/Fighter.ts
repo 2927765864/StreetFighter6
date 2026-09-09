@@ -318,11 +318,20 @@ export class Fighter {
 
   /**
    * Logical facing just changed (§3.14). Mesh stays until land if still airborne.
+   * Air normals (`phase===attack` + `jumpPhase===air`) queue the same pending
+   * land-turn as freefall — they must not clear it (§3.14.3.a4).
    */
   onLogicalTurn(): void {
     if (this.phase === 'walk') {
       this.clearTurn();
       this.applyVisualFacing();
+      return;
+    }
+    // Air attack: same as freefall — owe turn after land; do not clear pending.
+    if (this.phase === 'attack' && this.jumpPhase === 'air') {
+      this.turning = false;
+      this.turnFrame = 0;
+      this.pendingTurnAfterLand = true;
       return;
     }
     if (
@@ -1138,8 +1147,15 @@ export class Fighter {
       this.stateTimer = 0;
     }
     this.clearLoco();
-    this.clearTurn();
-    if (!onJumpArc) this.applyVisualFacing();
+    if (onJumpArc) {
+      // Air normals must not consume pending land-turn (§3.14.3.a4).
+      // Mesh stays on pre-cross visual facing until land / interrupt flip family.
+      this.turning = false;
+      this.turnFrame = 0;
+    } else {
+      this.clearTurn();
+      this.applyVisualFacing();
+    }
     this.lastSelfDx = 0;
     this.lastAttackAcceptSeq = nextAttackAcceptSeq++;
   }

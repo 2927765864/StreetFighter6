@@ -72,7 +72,7 @@ describe('logical facing §3.14', () => {
     expect(f.pendingTurnAfterLand).toBe(true);
   });
 
-  it('attack clears pending turn', () => {
+  it('ground attack clears pending turn', () => {
     const f = new Fighter('p1', 0, 1, 10000);
     f.phase = 'landing';
     f.onLogicalTurn();
@@ -94,6 +94,110 @@ describe('logical facing §3.14', () => {
     });
     expect(f.pendingTurnAfterLand).toBe(false);
     expect(f.turning).toBe(false);
+  });
+
+  it('air-attack logical turn queues pending land-turn (§3.14.3.a4)', () => {
+    const f = new Fighter('p1', 0, 1, 10000);
+    f.phase = 'attack';
+    f.jumpPhase = 'air';
+    f.y = 1.2;
+    f.facing = -1;
+    f.visualFacing = 1;
+    f.onLogicalTurn();
+    expect(f.turning).toBe(false);
+    expect(f.visualFacing).toBe(1);
+    expect(f.pendingTurnAfterLand).toBe(true);
+  });
+
+  it('starting air normal preserves pending land-turn (§3.14.3.a4)', () => {
+    const f = new Fighter('p1', 0, 1, 10000);
+    f.phase = 'airborne';
+    f.jumpPhase = 'air';
+    f.y = 1.2;
+    f.stateTimer = 20;
+    f.facing = -1;
+    f.visualFacing = 1;
+    f.pendingTurnAfterLand = true;
+    f.startMove({
+      id: 'ryu_jhk',
+      characterId: 'ryu',
+      moveId: 'ryu_jhk',
+      displayName: 'j.HK',
+      frames: { startup: 9, active: 6, recovery: 0, total: 15 },
+      advantage: { onHit: 0, onBlock: 0 },
+      damage: 1,
+      hitstun: 1,
+      blockstun: 1,
+      cancel: { specialCancel: false, targetCombo: [], windows: [] },
+      boxes: { hurt: [], hit: [] },
+      clipId: 'jhk',
+      facingRelative: true,
+      review: { status: 't', notes: '' },
+    });
+    expect(f.phase).toBe('attack');
+    expect(f.jumpPhase).toBe('air');
+    expect(f.usedAirNormal).toBe(true);
+    expect(f.pendingTurnAfterLand).toBe(true);
+    expect(f.visualFacing).toBe(1);
+  });
+
+  it('air-attack land with pending turn opens stand-turn path (§3.14.3.a4)', () => {
+    const f = new Fighter('p1', 0, 1, 10000);
+    f.setStanceTable(fallbackStanceTable());
+    f.phase = 'attack';
+    f.jumpPhase = 'air';
+    f.y = 0.2;
+    f.stateTimer = 1;
+    f.jumpFrame = 37;
+    f.facing = -1;
+    f.visualFacing = 1;
+    f.pendingTurnAfterLand = true;
+    f.jumpClipId = 'jump_f';
+    f.startMove({
+      id: 'ryu_jhk',
+      characterId: 'ryu',
+      moveId: 'ryu_jhk',
+      displayName: 'j.HK',
+      frames: { startup: 9, active: 6, recovery: 0, total: 80 },
+      advantage: { onHit: 0, onBlock: 0 },
+      damage: 1,
+      hitstun: 1,
+      blockstun: 1,
+      cancel: { specialCancel: false, targetCombo: [], windows: [] },
+      boxes: { hurt: [], hit: [] },
+      clipId: 'jhk',
+      facingRelative: true,
+      review: { status: 't', notes: '' },
+    });
+    // Re-assert pending after startMove (must survive air normal).
+    expect(f.pendingTurnAfterLand).toBe(true);
+
+    const landOpts = {
+      airFrames: 38,
+      landingFrames: 3,
+      dashSpeed: 0.1,
+      landingAnimFrames: 20,
+      neutralLandToRiseIdleRatio: 0,
+      neutralLandToRiseTurnRatio: 0,
+      neutralRiseToTurnDissolveRatio: 0,
+      crouchHeld: false,
+    };
+    // Land while still in attack (interrupt jump-attack anim).
+    f.advance(landOpts);
+    expect(f.phase).toBe('landing');
+    expect(f.animRole).toBe('land');
+    expect(f.pendingTurnAfterLand).toBe(true);
+    expect(f.visualFacing).toBe(1);
+
+    // Drain landing hardstun + open rise→turn.
+    for (let i = 0; i < 40; i++) {
+      f.advance({ ...landOpts, crouchHeld: false });
+      if (f.turning && f.clipId === 'turn_std') break;
+    }
+    expect(f.turning).toBe(true);
+    expect(f.clipId).toBe('turn_std');
+    expect(f.visualFacing).toBe(-1);
+    expect(f.visualFacing).toBe(f.facing);
   });
 
   it('land→rejump snaps visual facing after airborne logical turn (§3.14.3.a)', () => {
