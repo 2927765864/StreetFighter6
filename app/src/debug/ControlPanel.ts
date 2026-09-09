@@ -72,6 +72,10 @@ export type ControlPanelHooks = {
   testHitGlow?: (strength: 'L' | 'M' | 'H') => void;
   /** Fire a center-screen hit cloud shadow for tuning (strength L/M/H). */
   testHitCloudShadow?: (strength: 'L' | 'M' | 'H') => void;
+  /** Copy current PerfSnapshot JSON to clipboard. */
+  copyPerfSnapshot?: () => void | Promise<void>;
+  /** Download recent perf ring-buffer JSON. */
+  downloadPerfRing?: () => void;
 };
 
 export type HitVfxPanelHooks = {
@@ -330,6 +334,62 @@ function buildDom(): HTMLElement {
           </div>
           `,
           'expandSim',
+        )}
+      </details>
+
+      <details class="panel-group" data-cat="性能">
+        <summary>性能</summary>
+        ${sectionShell(
+          'perf',
+          '【性能】悬浮 HUD',
+          `
+          <p class="panel-hint">呈现 FPS（非整机 CPU%）。GPU 计时需刷新页面；官方 Inspector 需 setAnimationLoop。</p>
+          ${rowToggle('perfOverlayEnabled', '显示性能悬浮层')}
+          <div class="panel-row">
+            <div class="panel-row-header"><span>悬浮位置</span></div>
+            <select id="sel-perfOverlayPosition">
+              <option value="top-right">右上</option>
+              <option value="top-left">左上</option>
+              <option value="bottom-right">右下</option>
+              <option value="bottom-left">左下</option>
+            </select>
+          </div>
+          ${rowNumber('perfOverlayOpacity', '不透明度', 0.4, 1, 0.05)}
+          ${rowNumber('perfRefreshMs', '文字刷新 (ms)', 100, 1000, 50)}
+          ${rowNumber('perfHistoryLength', '曲线历史点数', 60, 300, 10)}
+          ${rowNumber('perfTargetFps', '目标帧率', 30, 120, 1)}
+          ${rowNumber('perfWarnFps', '黄色阈值 FPS', 20, 60, 1)}
+          ${rowNumber('perfBadFps', '红色阈值 FPS', 10, 45, 1)}
+          ${rowToggle('perfShowGraphs', '显示曲线')}
+          ${rowToggle('perfShowSegments', '显示模块分段')}
+          ${rowToggle('perfShowRenderInfo', '显示绘制计数')}
+          ${rowToggle('perfShowJsHeap', '显示 JS 堆 (Chrome)')}
+          ${rowToggle('perfPauseOverlayWhenHidden', '页签隐藏时暂停重绘')}
+          `,
+          'expandPerf',
+        )}
+        ${sectionShell(
+          'perfGpu',
+          '【性能】GPU 与官方检查器',
+          `
+          ${rowToggle('perfGpuTimingEnabled', '启用 GPU 时间戳 (需刷新)')}
+          ${rowNumber('perfGpuSampleAverage', 'GPU 滚动平均帧数', 5, 120, 1)}
+          ${rowToggle('perfThreeInspectorEnabled', 'Three 官方 Inspector')}
+          <p class="panel-hint">GPU：写入 sessionStorage 后刷新才生效。Inspector：Performance/Memory 页。</p>
+          `,
+          'expandPerfGpu',
+        )}
+        ${sectionShell(
+          'perfTools',
+          '【性能】工具',
+          `
+          ${rowNumber('perfExportRingBufferSec', '导出缓冲时长 (s)', 3, 30, 1)}
+          <div class="panel-actions-row">
+            <button type="button" id="btn-perf-copy-snap">复制性能快照 JSON</button>
+            <button type="button" id="btn-perf-download-ring">下载环形缓冲 JSON</button>
+          </div>
+          `,
+          'expandPerfTools',
         )}
       </details>
 
@@ -1315,6 +1375,22 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'hitCloudShadowIntensityL', path: 'hitCloudShadowIntensityL' },
   { id: 'hitCloudShadowIntensityM', path: 'hitCloudShadowIntensityM' },
   { id: 'hitCloudShadowIntensityH', path: 'hitCloudShadowIntensityH' },
+  { id: 'perfOverlayEnabled', path: 'perfOverlayEnabled' },
+  { id: 'perfOverlayOpacity', path: 'perfOverlayOpacity' },
+  { id: 'perfRefreshMs', path: 'perfRefreshMs' },
+  { id: 'perfHistoryLength', path: 'perfHistoryLength' },
+  { id: 'perfTargetFps', path: 'perfTargetFps' },
+  { id: 'perfWarnFps', path: 'perfWarnFps' },
+  { id: 'perfBadFps', path: 'perfBadFps' },
+  { id: 'perfShowGraphs', path: 'perfShowGraphs' },
+  { id: 'perfShowSegments', path: 'perfShowSegments' },
+  { id: 'perfShowRenderInfo', path: 'perfShowRenderInfo' },
+  { id: 'perfShowJsHeap', path: 'perfShowJsHeap' },
+  { id: 'perfGpuTimingEnabled', path: 'perfGpuTimingEnabled' },
+  { id: 'perfGpuSampleAverage', path: 'perfGpuSampleAverage' },
+  { id: 'perfThreeInspectorEnabled', path: 'perfThreeInspectorEnabled' },
+  { id: 'perfPauseOverlayWhenHidden', path: 'perfPauseOverlayWhenHidden' },
+  { id: 'perfExportRingBufferSec', path: 'perfExportRingBufferSec' },
 ];
 
 const TOGGLE_IDS = new Set([
@@ -1370,6 +1446,14 @@ const TOGGLE_IDS = new Set([
   'hitShockwaveEnabled',
   'hitGlowEnabled',
   'hitCloudShadowEnabled',
+  'perfOverlayEnabled',
+  'perfShowGraphs',
+  'perfShowSegments',
+  'perfShowRenderInfo',
+  'perfShowJsHeap',
+  'perfGpuTimingEnabled',
+  'perfThreeInspectorEnabled',
+  'perfPauseOverlayWhenHidden',
 ]);
 
 export function setupControlPanel(
@@ -1459,6 +1543,23 @@ export function setupControlPanel(
     'residualToStanceBlendSec',
     'crossfadeAdvanceMode',
     'plantSlewPerSec',
+    'perfOverlayEnabled',
+    'perfOverlayPosition',
+    'perfOverlayOpacity',
+    'perfRefreshMs',
+    'perfHistoryLength',
+    'perfTargetFps',
+    'perfWarnFps',
+    'perfBadFps',
+    'perfShowGraphs',
+    'perfShowSegments',
+    'perfShowRenderInfo',
+    'perfShowJsHeap',
+    'perfGpuTimingEnabled',
+    'perfGpuSampleAverage',
+    'perfThreeInspectorEnabled',
+    'perfPauseOverlayWhenHidden',
+    'perfExportRingBufferSec',
   ]);
 
   const notify: OnChange = (key, value, config) => {
@@ -1518,6 +1619,9 @@ export function setupControlPanel(
   // --- Section expands ---
   const sectionMap: Array<[string, keyof ExpandedSections, string]> = [
     ['expandSim', 'sim', 'sect-sim'],
+    ['expandPerf', 'perf', 'sect-perf'],
+    ['expandPerfGpu', 'perfGpu', 'sect-perfGpu'],
+    ['expandPerfTools', 'perfTools', 'sect-perfTools'],
     ['expandMatchTools', 'matchTools', 'sect-matchTools'],
     ['expandInputBuffer', 'inputBuffer', 'sect-inputBuffer'],
     ['expandCancelHitstop', 'cancelHitstop', 'sect-cancelHitstop'],
@@ -1579,6 +1683,7 @@ export function setupControlPanel(
   bindSelect(ctx, 'sel-wudaAttachMode', 'wudaAttachMode');
   bindSelect(ctx, 'sel-wudaCoverMode', 'wudaCoverMode');
   bindSelect(ctx, 'sel-hitVfxPlayMode', 'hitVfxPlayMode');
+  bindSelect(ctx, 'sel-perfOverlayPosition', 'perfOverlayPosition');
 
   bindCmosShakePanel({
     root: host,
@@ -3020,6 +3125,24 @@ export function setupControlPanel(
   bindCloudShadowTest('btn-hitCloudShadowTestL', 'L');
   bindCloudShadowTest('btn-hitCloudShadowTestM', 'M');
   bindCloudShadowTest('btn-hitCloudShadowTestH', 'H');
+
+  byId<HTMLButtonElement>(host, 'btn-perf-copy-snap').addEventListener(
+    'click',
+    () => {
+      void Promise.resolve(hooks.copyPerfSnapshot?.()).then(() => {
+        setFlash('已复制性能快照 JSON');
+        notify('action:perf:copySnapshot', true, CONFIG);
+      });
+    },
+  );
+  byId<HTMLButtonElement>(host, 'btn-perf-download-ring').addEventListener(
+    'click',
+    () => {
+      hooks.downloadPerfRing?.();
+      setFlash('已下载环形缓冲 JSON');
+      notify('action:perf:downloadRing', true, CONFIG);
+    },
+  );
 
   byId<HTMLButtonElement>(host, 'btn-save-local').addEventListener('click', () => {
     saveCurrentConfig();

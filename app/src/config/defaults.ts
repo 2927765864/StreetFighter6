@@ -29,6 +29,9 @@ export function defaultExpandedSections(): ExpandedSections {
     extendedSim: false,
     extendedLoco: false,
     extendedAnim: false,
+    perf: true,
+    perfGpu: true,
+    perfTools: true,
   };
 }
 

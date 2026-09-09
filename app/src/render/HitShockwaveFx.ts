@@ -347,10 +347,10 @@ export class HitShockwaveFx {
    * After the fight color buffer is fully drawn into the current viewport.
    * Reprojects fixed world centers with the camera used for that draw.
    */
-  async apply(
+  apply(
     renderer: THREE.WebGPURenderer,
     camera?: THREE.Camera | null,
-  ): Promise<void> {
+  ): void {
     if (!this.params.enabled || !this.hasActive()) return;
 
     if (camera) {
@@ -366,7 +366,7 @@ export class HitShockwaveFx {
     const prevAutoClear = renderer.autoClear;
     renderer.autoClear = false;
     try {
-      await renderer.render(this.quad, this.quad.camera);
+      renderer.render(this.quad, this.quad.camera);
     } finally {
       renderer.autoClear = prevAutoClear;
     }

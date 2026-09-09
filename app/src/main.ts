@@ -64,7 +64,12 @@ import {
   setupControlPanel,
 } from './debug/ControlPanel';
 import { PantsHealthReporter } from './debug/PantsHealthReporter';
-import { FpsHud } from './debug/FpsHud';
+import { PerfMonitor } from './debug/perf/PerfMonitor';
+import {
+  PERF_GPU_SESSION_KEY,
+  type PerfOverlayPosition,
+} from './debug/perf/perfTypes';
+import { Inspector } from 'three/addons/inspector/Inspector.js';
 import { BoxEditorApp } from './boxEditor/BoxEditorApp';
 import type { MoveDefinition } from './combat/move/MoveDefinition';
 import {
@@ -222,13 +227,30 @@ async function boot(): Promise<void> {
     cfg.maxFrameTimeMs / 1000,
   );
 
-  const renderer = new THREE.WebGPURenderer({ antialias: true, alpha: false });
+  // GPU timestamps require trackTimestamp at construct time (plan Step 5).
+  const wantGpuTiming =
+    cfg.perfGpuTimingEnabled ||
+    (typeof sessionStorage !== 'undefined' &&
+      sessionStorage.getItem(PERF_GPU_SESSION_KEY) === '1');
+  if (wantGpuTiming) cfg.perfGpuTimingEnabled = true;
+
+  const renderer = new THREE.WebGPURenderer({
+    antialias: true,
+    alpha: false,
+    trackTimestamp: wantGpuTiming,
+  });
   await renderer.init();
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.domElement.style.display = 'block';
   document.body.appendChild(renderer.domElement);
+  // Multi-pass present: reset once per present (plan Step 2).
+  renderer.info.autoReset = false;
+
+  if (cfg.perfThreeInspectorEnabled) {
+    renderer.inspector = new Inspector();
+  }
 
   // Plan §S3: DynamicLighting for WebGPU add/remove without full recompile.
   if (cfg.lightUseDynamicLighting) {
@@ -729,8 +751,32 @@ async function boot(): Promise<void> {
 
   const debugDraw = new DebugDraw(scene);
   const hud = new HudDom();
-  const fpsHud = new FpsHud();
+  const perf = new PerfMonitor();
+  perf.applyCfg(cfg);
   const keys = new KeyboardSource();
+
+  const syncPerfGpuSessionFlag = (enabled: boolean) => {
+    try {
+      if (enabled) sessionStorage.setItem(PERF_GPU_SESSION_KEY, '1');
+      else sessionStorage.removeItem(PERF_GPU_SESSION_KEY);
+    } catch {
+      /* ignore */
+    }
+  };
+  syncPerfGpuSessionFlag(cfg.perfGpuTimingEnabled);
+
+  const applyThreeInspector = (enabled: boolean) => {
+    if (enabled) {
+      if (!(renderer.inspector instanceof Inspector)) {
+        renderer.inspector = new Inspector();
+      }
+      if (cfg.perfOverlayPosition === 'top-right') {
+        cfg.perfOverlayPosition = 'top-left' as PerfOverlayPosition;
+      }
+    }
+    perf.refreshOverlay(cfg);
+  };
+  applyThreeInspector(cfg.perfThreeInspectorEnabled);
 
   let boxEditor: BoxEditorApp | null = null;
   /** Last preview size while in box-edit (for aspect / setSize). */
@@ -874,12 +920,44 @@ async function boot(): Promise<void> {
       hitCloudShadow.applyParams(hitCloudShadowParamsFromConfig(CONFIG));
       hitCloudShadow.triggerScreen(0.5, 0.45, strength);
     },
+    copyPerfSnapshot: async () => {
+      const text = perf.exportSnapshot();
+      await navigator.clipboard.writeText(text);
+    },
+    downloadPerfRing: () => {
+      const blob = new Blob([perf.exportRingBuffer()], {
+        type: 'application/json',
+      });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `perf-ring-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    },
   };
+  let panelFlash: (msg: string) => void = () => {};
   const panelApi = setupControlPanel(match, clock, hooks, {
     onChange: (key) => {
       if (typeof key === 'string' && key.startsWith('action:cmosShake:')) {
         screenShake.handleAction(key);
         return;
+      }
+      if (
+        typeof key === 'string' &&
+        (key === 'perfOverlayPosition' || key.startsWith('perf'))
+      ) {
+        if (key === 'perfGpuTimingEnabled') {
+          syncPerfGpuSessionFlag(CONFIG.perfGpuTimingEnabled);
+          panelFlash(
+            CONFIG.perfGpuTimingEnabled
+              ? 'GPU 计时已请求 — 请刷新页面生效'
+              : '已关闭 GPU 计时标记 — 刷新后完全关闭',
+          );
+        }
+        if (key === 'perfThreeInspectorEnabled') {
+          applyThreeInspector(CONFIG.perfThreeInspectorEnabled);
+        }
+        perf.refreshOverlay(CONFIG);
       }
       if (typeof key === 'string' && key.startsWith('hitShockwave')) {
         hitShockwave.applyParams(hitShockwaveParamsFromConfig(CONFIG));
@@ -935,6 +1013,7 @@ async function boot(): Promise<void> {
     },
   });
   refreshLightPanel = () => panelApi.refresh();
+  panelFlash = panelApi.setFlash;
 
   /** R: return both fighters to start positions / idle state (training reset). */
   window.addEventListener('keydown', (e) => {
@@ -989,6 +1068,7 @@ async function boot(): Promise<void> {
     match.opts.cameraAspect = viewWPre / Math.max(viewHPre, 1);
 
     let logicSteps = 0;
+    perf.begin('logic');
     if (hooks.boxEditActive && boxEditor) {
       layoutFightCanvasForBoxEdit();
       boxEditor.tick();
@@ -999,6 +1079,7 @@ async function boot(): Promise<void> {
         match.step();
       }
     }
+    perf.end('logic');
     logicStepsSincePresent += logicSteps;
 
     // High-refresh: skip empty presents so display stays locked to logicFps.
@@ -1009,7 +1090,8 @@ async function boot(): Promise<void> {
       !cfg.lockPresentToLogic ||
       logicSteps > 0;
     if (!mustPresent) {
-      requestAnimationFrame(frame);
+      // Discard segment timings from non-present ticks (plan: present-only metrics).
+      perf.spans.flush();
       return;
     }
 
@@ -1017,8 +1099,10 @@ async function boot(): Promise<void> {
     presentAccum = 0;
     const presentLogicSteps = logicStepsSincePresent;
     logicStepsSincePresent = 0;
-    fpsHud.tick(now, presentLogicSteps);
+    perf.beginPresent(now);
+    perf.armRenderer(renderer);
 
+    perf.begin('vfxCpu');
     {
       const steps = cfg.hitVfxStepFrames;
       if (steps > 0) cfg.hitVfxStepFrames = 0;
@@ -1027,6 +1111,7 @@ async function boot(): Promise<void> {
       wudaPlumeBurst.setCamera(camera);
       wudaPlumeBurst.tick(presentDt, camera);
     }
+    perf.end('vfxCpu');
 
     const fullW = window.innerWidth;
     const fullH = window.innerHeight;
@@ -1036,6 +1121,7 @@ async function boot(): Promise<void> {
       hooks.boxEditActive && boxEditView.h > 0 ? boxEditView.h : fullH;
     const viewAspect = viewW / Math.max(viewH, 1);
 
+    perf.begin('syncView');
     const fightPose = cameraRig.update(
       {
         p1x: match.p1.x,
@@ -1111,7 +1197,9 @@ async function boot(): Promise<void> {
         inHitstop,
       });
     }
+    perf.end('syncView');
 
+    perf.begin('vfxCpu');
     if (pendingHitVfx.length > 0) {
       for (const ev of pendingHitVfx) {
         const args = applyLimbLock(ev);
@@ -1160,6 +1248,7 @@ async function boot(): Promise<void> {
     hitCloudShadow.applyParams(hitCloudShadowParamsFromConfig(cfg));
     hitCloudShadow.step(presentDt, camera);
     flipbookCombat.tick(presentDt, match.hitstopTimer > 0);
+    perf.end('vfxCpu');
 
     pantsHealthReporter.tick(collectPantsHealth(), cfg);
 
@@ -1204,14 +1293,14 @@ async function boot(): Promise<void> {
      * autoClear=false. Later passes must temporarily clear background + disable
      * autoClearColor so the color buffer is loaded, not cleared.
      */
-    const renderFightDisplayLayers = async (
+    const renderFightDisplayLayers = (
       cam: THREE.Camera,
       autoClearFirst: boolean,
-    ): Promise<void> => {
+    ): void => {
       cam.layers.set(LAYER_SCENE);
       cam.layers.enable(LAYER_FIGHTER_BACK);
       renderer.autoClear = autoClearFirst;
-      await renderer.render(scene, cam);
+      renderer.render(scene, cam);
 
       const prevBackground = scene.background;
       const prevAutoClear = renderer.autoClear;
@@ -1224,16 +1313,16 @@ async function boot(): Promise<void> {
 
       renderer.clearDepth();
       cam.layers.set(LAYER_FIGHTER_FRONT);
-      await renderer.render(scene, cam);
+      renderer.render(scene, cam);
 
       // Darken fighters+stage before 2D / procedural hit VFX overlay.
-      await hitCloudShadow.apply(renderer, cam);
+      hitCloudShadow.apply(renderer, cam);
 
       // Overlay uses its own scene (default layer 0). Restore SCENE on the
       // camera so VFX meshes are visible; fighters are not in hitVfxScene.
       renderer.clearDepth();
       cam.layers.set(LAYER_SCENE);
-      await renderer.render(hitVfxScene, cam);
+      renderer.render(hitVfxScene, cam);
 
       scene.background = prevBackground;
       renderer.autoClear = prevAutoClear;
@@ -1246,15 +1335,15 @@ async function boot(): Promise<void> {
       renderer.autoClear = true;
     };
 
-    const fullRender = async () => {
+    const fullRender = (): void => {
       renderer.setScissorTest(false);
       renderer.setViewport(0, 0, viewW, viewH);
-      await renderFightDisplayLayers(camera, true);
+      renderFightDisplayLayers(camera, true);
       // Distort the main view after all fight + VFX layers are in the color buffer.
       // Reproject with the same camera used for this draw so the ring stays on the limb.
-      await hitShockwave.apply(renderer, camera);
+      hitShockwave.apply(renderer, camera);
       // Additive glow on top of (possibly warped) buffer — peak flash stays readable.
-      await hitGlow.apply(renderer, camera);
+      hitGlow.apply(renderer, camera);
 
       if (!cfg.lightOrbitMode || hooks.boxEditActive) return;
 
@@ -1277,7 +1366,7 @@ async function boot(): Promise<void> {
       renderer.setScissorTest(true);
       renderer.setViewport(x, yTop, w, h);
       renderer.setScissor(x, yTop, w, h);
-      await renderFightDisplayLayers(fightCamera, true);
+      renderFightDisplayLayers(fightCamera, true);
       renderer.setScissorTest(false);
       renderer.setViewport(0, 0, fullW, fullH);
 
@@ -1285,12 +1374,21 @@ async function boot(): Promise<void> {
       gizmoHelper.visible = gizmoWas;
     };
 
-    void fullRender().then(() => {
-      requestAnimationFrame(frame);
+    perf.begin('render');
+    fullRender();
+    perf.end('render');
+    perf.finalizePresent({
+      renderer,
+      nowMs: performance.now(),
+      logicSteps: presentLogicSteps,
+      cfg,
     });
-    return;
   }
-  requestAnimationFrame(frame);
+
+  // Official Animation loop: info/inspector begin-finish (plan Step 6).
+  void renderer.setAnimationLoop((timeMs: number) => {
+    frame(timeMs);
+  });
 }
 
 function countMeshes(root: THREE.Object3D): number {

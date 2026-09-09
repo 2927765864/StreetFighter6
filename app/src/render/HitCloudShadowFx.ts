@@ -496,10 +496,10 @@ export class HitCloudShadowFx {
   /**
    * Mid-pass: call after fighters are in the color buffer, before hitVfxScene.
    */
-  async apply(
+  apply(
     renderer: THREE.WebGPURenderer,
     camera?: THREE.Camera | null,
-  ): Promise<void> {
+  ): void {
     if (!this.params.enabled || !this.hasActive()) return;
 
     if (camera) {
@@ -515,7 +515,7 @@ export class HitCloudShadowFx {
     const prevAutoClear = renderer.autoClear;
     renderer.autoClear = false;
     try {
-      await renderer.render(this.quad, this.quad.camera);
+      renderer.render(this.quad, this.quad.camera);
     } finally {
       renderer.autoClear = prevAutoClear;
     }

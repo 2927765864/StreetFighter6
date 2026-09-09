@@ -30,6 +30,9 @@ export type ExpandedSections = {
   extendedSim: boolean;
   extendedLoco: boolean;
   extendedAnim: boolean;
+  perf: boolean;
+  perfGpu: boolean;
+  perfTools: boolean;
 };
 
 export type RuntimeConfig = MutableSimConfig & {

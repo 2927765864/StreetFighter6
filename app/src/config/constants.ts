@@ -496,6 +496,29 @@ export type MutableSimConfig = {
   hitCloudShadowIntensityL: number;
   hitCloudShadowIntensityM: number;
   hitCloudShadowIntensityH: number;
+
+  /** Performance overlay / GPU timing (see ai-execution-plan-web-perf-monitor-v0). */
+  perfOverlayEnabled: boolean;
+  perfOverlayPosition:
+    | 'top-right'
+    | 'top-left'
+    | 'bottom-right'
+    | 'bottom-left';
+  perfOverlayOpacity: number;
+  perfRefreshMs: number;
+  perfHistoryLength: number;
+  perfTargetFps: number;
+  perfWarnFps: number;
+  perfBadFps: number;
+  perfShowGraphs: boolean;
+  perfShowSegments: boolean;
+  perfShowRenderInfo: boolean;
+  perfShowJsHeap: boolean;
+  perfGpuTimingEnabled: boolean;
+  perfGpuSampleAverage: number;
+  perfThreeInspectorEnabled: boolean;
+  perfPauseOverlayWhenHidden: boolean;
+  perfExportRingBufferSec: number;
 };
 
 export function createDefaultSimConfig(): MutableSimConfig {
@@ -834,6 +857,23 @@ export function createDefaultSimConfig(): MutableSimConfig {
     hitCloudShadowIntensityL: 0.45,
     hitCloudShadowIntensityM: 0.6,
     hitCloudShadowIntensityH: 0.75,
+    perfOverlayEnabled: true,
+    perfOverlayPosition: 'top-right',
+    perfOverlayOpacity: 0.85,
+    perfRefreshMs: 250,
+    perfHistoryLength: 120,
+    perfTargetFps: 60,
+    perfWarnFps: 45,
+    perfBadFps: 30,
+    perfShowGraphs: true,
+    perfShowSegments: true,
+    perfShowRenderInfo: true,
+    perfShowJsHeap: true,
+    perfGpuTimingEnabled: false,
+    perfGpuSampleAverage: 30,
+    perfThreeInspectorEnabled: false,
+    perfPauseOverlayWhenHidden: true,
+    perfExportRingBufferSec: 8,
   };
 }
 

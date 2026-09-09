@@ -330,10 +330,10 @@ export class HitGlowFx {
    * After the fight color buffer (and optional shockwave) are drawn.
    * Reprojects fixed world centers with the camera used for that draw.
    */
-  async apply(
+  apply(
     renderer: THREE.WebGPURenderer,
     camera?: THREE.Camera | null,
-  ): Promise<void> {
+  ): void {
     if (!this.params.enabled || !this.hasActive()) return;
 
     if (camera) {
@@ -349,7 +349,8 @@ export class HitGlowFx {
     const prevAutoClear = renderer.autoClear;
     renderer.autoClear = false;
     try {
-      await renderer.render(this.quad, this.quad.camera);
+      // Sync after renderer.init() (three r185; setAnimationLoop must not await).
+      renderer.render(this.quad, this.quad.camera);
     } finally {
       renderer.autoClear = prevAutoClear;
     }
