@@ -358,6 +358,11 @@ export type HitVfxTriggerArgs = {
   facing: number;
   /** Optional world punch axis (unit). Default (-facing, 0, 0). */
   axis?: [number, number, number];
+  /**
+   * Fight-plane travel of the striking limb at contact (world X/Y, Z = 0).
+   * 2D flipbook faces the camera; depth is not part of the spin.
+   */
+  impulse?: [number, number, number];
 };
 
 const ELEMENT_TYPES: HitVfxElementType[] = [

@@ -22,9 +22,12 @@ type LayerBillboard = {
 
 type Shot = {
   root: THREE.Group;
+  spin: THREE.Group;
   layers: LayerBillboard[];
   playhead: number;
   age: number;
+  facing: number;
+  impulse: THREE.Vector3;
 };
 
 const texCache = new Map<string, THREE.Texture>();
@@ -90,6 +93,26 @@ export function flipbookFacingScaleX(facing: number): number {
 }
 
 const _layerOff = new THREE.Vector3();
+const _camRight = new THREE.Vector3();
+const _camUp = new THREE.Vector3();
+
+/**
+ * Billboard Z spin so authored +X follows `dir` on the camera plane.
+ * `facingScaleX` is flipbookFacingScaleX (parent scale.x); see tests.
+ */
+export function flipbookSpinRad(
+  dir: THREE.Vector3,
+  camRight: THREE.Vector3,
+  camUp: THREE.Vector3,
+  facingScaleX: number,
+): number {
+  // Billboard plane only: camera-forward is unused (same as fixed-Z impulse).
+  const x = dir.dot(camRight);
+  const y = dir.dot(camUp);
+  if (x * x + y * y < 1e-10) return 0;
+  const sx = facingScaleX < 0 ? -1 : 1;
+  return Math.atan2(y, x * sx);
+}
 
 export function layerLocalOffset(
   layer: Pick<FlipbookLayer, 'offsetX' | 'offsetY' | 'z'>,
@@ -162,14 +185,16 @@ export class Flipbook2DCombat {
       this.editorShot?.layers.map((l) => l.layer.id).join(',') ?? '';
     if (!this.editorShot || have !== ids) {
       if (this.editorShot) this.disposeShot(this.editorShot);
-      this.editorShot = this.spawnShot(world, args.facing);
+      this.editorShot = this.spawnShot(world, args);
     } else {
       this.editorShot.root.position.copy(world);
       this.editorShot.root.scale.set(flipbookFacingScaleX(args.facing), 1, 1);
+      this.writeImpulse(this.editorShot, args);
     }
     this.editorShot.playhead = playhead;
     this.editorShot.age = playhead;
-    this.editorShot.root.quaternion.copy(this.camera.quaternion);
+    this.editorShot.facing = args.facing;
+    this.billboardShot(this.editorShot);
     this.applyFrame(this.editorShot);
   }
 
@@ -187,8 +212,9 @@ export class Flipbook2DCombat {
       const old = this.shots.shift();
       if (old) this.disposeShot(old);
     }
-    const shot = this.spawnShot(world, args.facing);
+    const shot = this.spawnShot(world, args);
     this.shots.push(shot);
+    this.billboardShot(shot);
     this.applyFrame(shot);
   }
 
@@ -217,16 +243,19 @@ export class Flipbook2DCombat {
       }
     }
     for (const s of this.shots) {
-      s.root.quaternion.copy(this.camera.quaternion);
+      this.billboardShot(s);
       this.applyFrame(s);
     }
     this.pool.visible = this.hasDrawable();
   }
 
-  private spawnShot(world: THREE.Vector3, facing: number): Shot {
+  private spawnShot(world: THREE.Vector3, args: HitVfxTriggerArgs): Shot {
     const root = new THREE.Group();
+    const spin = new THREE.Group();
+    spin.name = 'Flipbook2DSpin';
+    root.add(spin);
     root.position.copy(world);
-    root.scale.set(flipbookFacingScaleX(facing), 1, 1);
+    root.scale.set(flipbookFacingScaleX(args.facing), 1, 1);
     const layers: LayerBillboard[] = [];
     const size = flipbookWorldSize(CONFIG.hitVfxFlipbookSize);
     for (const layer of this.recipe.layers) {
@@ -237,11 +266,43 @@ export class Flipbook2DCombat {
       mesh.renderOrder = 20 + layer.z;
       mesh.visible = false;
       mesh.position.copy(layerLocalOffset(layer, size));
-      root.add(mesh);
+      spin.add(mesh);
       layers.push({ mesh, material: mat, layer, lookApplied: true });
     }
     this.pool.add(root);
-    return { root, layers, playhead: 0, age: 0 };
+    const shot: Shot = {
+      root,
+      spin,
+      layers,
+      playhead: 0,
+      age: 0,
+      facing: args.facing,
+      impulse: new THREE.Vector3(),
+    };
+    this.writeImpulse(shot, args);
+    return shot;
+  }
+
+  private writeImpulse(shot: Shot, args: HitVfxTriggerArgs): void {
+    const imp = args.impulse;
+    if (imp && (imp[0] !== 0 || imp[1] !== 0 || imp[2] !== 0)) {
+      shot.impulse.set(imp[0], imp[1], imp[2]);
+    } else {
+      shot.impulse.set(0, 0, 0);
+    }
+  }
+
+  private billboardShot(shot: Shot): void {
+    shot.root.quaternion.copy(this.camera.quaternion);
+    this.camera.updateMatrixWorld();
+    _camRight.setFromMatrixColumn(this.camera.matrixWorld, 0);
+    _camUp.setFromMatrixColumn(this.camera.matrixWorld, 1);
+    shot.spin.rotation.z = flipbookSpinRad(
+      shot.impulse,
+      _camRight,
+      _camUp,
+      flipbookFacingScaleX(shot.facing),
+    );
   }
 
   private applyFrame(shot: Shot): void {

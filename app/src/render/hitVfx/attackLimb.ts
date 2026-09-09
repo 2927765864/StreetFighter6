@@ -76,3 +76,113 @@ export function pickAttackLimbSide(
     (p.x - hips.x) * fx + (p.y - hips.y) * 0.25;
   return score(right) >= score(left) ? 'R' : 'L';
 }
+
+/** Present samples kept for punch/kick impulse (≈80ms at 60fps). */
+export const LIMB_IMPULSE_LOOKBACK = 5;
+/** 5LP / 2LP: contact + 1 present before it (one Δt). */
+export const LIMB_IMPULSE_LOOKBACK_SHORT = 2;
+/** 5MP: contact + 2 presents (two Δt). */
+export const LIMB_IMPULSE_LOOKBACK_5MP = 3;
+
+export function contactMoveToken(moveId: string, hitGroup = 0): string {
+  const tokens = moveLimbTokens(moveId);
+  if (tokens.length === 0) return moveId.toLowerCase();
+  const i = Math.min(Math.max(0, hitGroup), tokens.length - 1);
+  return tokens[i]!.toLowerCase();
+}
+
+/**
+ * How many history samples to average. Standing/crouch light punch use only
+ * the last interval; everything else uses the full lookback.
+ */
+export function limbImpulseSampleCount(
+  moveId: string,
+  hitGroup = 0,
+): number {
+  const tok = contactMoveToken(moveId, hitGroup);
+  if (tok === '5lp' || tok === '2lp') return LIMB_IMPULSE_LOOKBACK_SHORT;
+  if (tok === '5mp') return LIMB_IMPULSE_LOOKBACK_5MP;
+  return LIMB_IMPULSE_LOOKBACK;
+}
+
+/**
+ * Per-move 2D FX aim on the fight plane (X/Y, Z already 0):
+ * - 5LP / 2LP: flatten to forward (no up/down).
+ * - 5MP: computed swing sits slightly above horizontal; authored FX wants
+ *   slightly below — mirror Y.
+ */
+export function adjustLimbImpulseForMove(
+  moveId: string,
+  hitGroup: number,
+  impulse: LimbSample,
+): LimbSample {
+  const tok = contactMoveToken(moveId, hitGroup);
+  if (tok === '5lp' || tok === '2lp') {
+    impulse.y = 0;
+  } else if (tok === '5mp') {
+    impulse.y = -impulse.y;
+  }
+  return impulse;
+}
+
+/** Knee→foot blend for lower shin when numbered shin bones are missing. */
+export const LOWER_SHIN_ALONG_LEG = 0.72;
+
+export function averageLimbSamples(
+  points: LimbSample[],
+  out: LimbSample,
+): boolean {
+  if (points.length === 0) return false;
+  let x = 0;
+  let y = 0;
+  let z = 0;
+  for (const p of points) {
+    x += p.x;
+    y += p.y;
+    z += p.z;
+  }
+  const n = points.length;
+  out.x = x / n;
+  out.y = y / n;
+  out.z = z / n;
+  return true;
+}
+
+/** Point on the lower calf: t=0 at knee, t=1 at foot. */
+export function lowerShinAlongLeg(
+  knee: LimbSample,
+  foot: LimbSample,
+  t = LOWER_SHIN_ALONG_LEG,
+  out: LimbSample = { x: 0, y: 0, z: 0 },
+): LimbSample {
+  const u = Math.min(1, Math.max(0, t));
+  out.x = knee.x + (foot.x - knee.x) * u;
+  out.y = knee.y + (foot.y - knee.y) * u;
+  out.z = knee.z + (foot.z - knee.z) * u;
+  return out;
+}
+
+/**
+ * Mean velocity from oldest→newest over `elapsedSec` (not adjacent frames).
+ * 2D hit FX faces the camera: only fight-plane X/Y; depth Z is held fixed
+ * (delta Z does not contribute). Need ≥2 samples and a positive span.
+ */
+export function limbImpulseFromHistory(
+  samples: LimbSample[],
+  elapsedSec: number,
+  out: LimbSample,
+): LimbSample {
+  if (samples.length < 2 || elapsedSec <= 1e-8) {
+    out.x = 0;
+    out.y = 0;
+    out.z = 0;
+    return out;
+  }
+  const a = samples[0]!;
+  const b = samples[samples.length - 1]!;
+  const inv = 1 / elapsedSec;
+  out.x = (b.x - a.x) * inv;
+  out.y = (b.y - a.y) * inv;
+  out.z = 0;
+  return out;
+}

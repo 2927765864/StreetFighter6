@@ -78,7 +78,14 @@ import {
   shouldResetGroundOffset,
   shouldSnapSoleOnLand,
 } from './plantPolicy';
-import { pickAttackLimbSide } from './hitVfx/attackLimb';
+import {
+  LIMB_IMPULSE_LOOKBACK,
+  averageLimbSamples,
+  limbImpulseFromHistory,
+  lowerShinAlongLeg,
+  pickAttackLimbSide,
+  type LimbSample,
+} from './hitVfx/attackLimb';
 import {
   FIGHTER_DISPLAY_Z,
   FIGHTER_RENDER_ORDER_BACK,
@@ -221,6 +228,24 @@ export class FighterView {
   private wudaPlumeBurst: WudaPlumeBurst | null = null;
   /** Latched from syncFromLogic — hitstop must not open detach gates. */
   private wudaInHitstop = false;
+  /**
+   * Whole-arm / lower-shin world history for hit-FX impulse.
+   * Lookback of several presents (not adjacent-frame Δpos).
+   */
+  private readonly limbHist: Record<
+    'armL' | 'armR' | 'shinL' | 'shinR',
+    { samples: LimbSample[]; age: number[] }
+  > = {
+    armL: { samples: [], age: [] },
+    armR: { samples: [], age: [] },
+    shinL: { samples: [], age: [] },
+    shinR: { samples: [], age: [] },
+  };
+  private readonly _limbNow = new THREE.Vector3();
+  private readonly _limbTmpA = { x: 0, y: 0, z: 0 };
+  private readonly _limbTmpB = { x: 0, y: 0, z: 0 };
+  private readonly _limbPts: LimbSample[] = [];
+  private readonly _limbImp = { x: 0, y: 0, z: 0 };
   /** Scene root — spring debug helpers must parent here (not under fighter). */
   private readonly scene: THREE.Scene;
 
@@ -746,6 +771,57 @@ export class FighterView {
     );
   }
 
+  private findUpperArmBone(side: 'L' | 'R'): THREE.Bone | null {
+    return this.findNamedLimbBone(
+      side === 'L'
+        ? ['L_UpperArm', 'LeftUpperArm', 'LeftArm', 'UpperArm_L']
+        : ['R_UpperArm', 'RightUpperArm', 'RightArm', 'UpperArm_R'],
+      (n) =>
+        side === 'L'
+          ? /^(L_|Left)?UpperArm$/i.test(n)
+          : /^(R_|Right)?UpperArm$/i.test(n),
+    );
+  }
+
+  private findForeArmBone(side: 'L' | 'R'): THREE.Bone | null {
+    return this.findNamedLimbBone(
+      side === 'L'
+        ? ['L_ForeArm', 'L_Forearm', 'LeftForeArm', 'ForeArm_L']
+        : ['R_ForeArm', 'R_Forearm', 'RightForeArm', 'ForeArm_R'],
+      (n) =>
+        side === 'L'
+          ? /^(L_|Left)?ForeArm$/i.test(n)
+          : /^(R_|Right)?ForeArm$/i.test(n),
+    );
+  }
+
+  private findKneeBone(side: 'L' | 'R'): THREE.Bone | null {
+    return this.findNamedLimbBone(
+      side === 'L'
+        ? ['L_Knee', 'LeftLeg', 'LeftLowerLeg', 'Knee_L']
+        : ['R_Knee', 'RightLeg', 'RightLowerLeg', 'Knee_R'],
+      (n) =>
+        side === 'L'
+          ? /^(L_|Left)?(Knee|LowerLeg)$/i.test(n)
+          : /^(R_|Right)?(Knee|LowerLeg)$/i.test(n),
+    );
+  }
+
+  private findLowerShinBones(side: 'L' | 'R'): THREE.Bone[] {
+    const names =
+      side === 'L'
+        ? ['L_Shin_3', 'L_Shin_4', 'L_Shin_5']
+        : ['R_Shin_3', 'R_Shin_4', 'R_Shin_5'];
+    const out: THREE.Bone[] = [];
+    if (!this.modelRoot) return out;
+    this.modelRoot.traverse((o) => {
+      const b = o as THREE.Bone;
+      if (!b.isBone) return;
+      if (names.includes(b.name)) out.push(b);
+    });
+    return out;
+  }
+
   private boneWorld(bone: THREE.Bone | null, out: THREE.Vector3): boolean {
     if (!bone) return false;
     bone.getWorldPosition(out);
@@ -755,11 +831,15 @@ export class FighterView {
   /**
    * World position of the striking fist or foot after the current pose.
    * Kind is punch vs kick; side is the more-extended L/R limb.
+   * Optional `outVel` is whole-arm / lower-shin mean velocity over
+   * LIMB_IMPULSE_LOOKBACK presents.
    */
   sampleAttackLimbWorld(
     kind: 'hand' | 'foot',
     facing: number,
     out: THREE.Vector3,
+    outVel?: THREE.Vector3,
+    impulseSamples = LIMB_IMPULSE_LOOKBACK,
   ): boolean {
     this.root.updateMatrixWorld(true);
     const left =
@@ -772,19 +852,34 @@ export class FighterView {
     const hp = new THREE.Vector3();
     const hasL = this.boneWorld(left, lp);
     const hasR = this.boneWorld(right, rp);
+    const copyVel = (side: 'L' | 'R'): void => {
+      if (!outVel) return;
+      const key =
+        kind === 'hand'
+          ? side === 'L'
+            ? 'armL'
+            : 'armR'
+          : side === 'L'
+            ? 'shinL'
+            : 'shinR';
+      this.fillLimbImpulse(key, outVel, impulseSamples);
+    };
     if (!hasL && !hasR) return false;
     if (hasL && !hasR) {
       out.copy(lp);
+      copyVel('L');
       return true;
     }
     if (hasR && !hasL) {
       out.copy(rp);
+      copyVel('R');
       return true;
     }
     if (!hips) this.root.getWorldPosition(hp);
     else hips.getWorldPosition(hp);
     const side = pickAttackLimbSide(facing, lp, rp, hp, kind);
     out.copy(side === 'R' ? rp : lp);
+    copyVel(side);
     return true;
   }
 
@@ -1014,8 +1109,124 @@ export class FighterView {
     this.updateBeltPhysics(fighter, cfg, wallDtSec);
     this.updatePantsPhysics(fighter, cfg, wallDtSec);
     this.modelRoot?.updateMatrixWorld(true);
+    this.updateLimbHistory(wallDtSec);
     // Wuda after world matrices (TRAP-LAG); never gated by hitstop.
     this.updateWudaCoat(fighter, cfg, wallDtSec);
+  }
+
+  private updateLimbHistory(dtSec: number): void {
+    const dt = dtSec > 1e-8 ? dtSec : 1 / 60;
+    this.pushLimbHist('armL', this.sampleArmCentroid('L'), dt);
+    this.pushLimbHist('armR', this.sampleArmCentroid('R'), dt);
+    this.pushLimbHist('shinL', this.sampleLowerShin('L'), dt);
+    this.pushLimbHist('shinR', this.sampleLowerShin('R'), dt);
+  }
+
+  private pushLimbHist(
+    key: 'armL' | 'armR' | 'shinL' | 'shinR',
+    pos: LimbSample | null,
+    dt: number,
+  ): void {
+    const h = this.limbHist[key];
+    if (!pos) {
+      h.samples.length = 0;
+      h.age.length = 0;
+      return;
+    }
+    const t = (h.age[h.age.length - 1] ?? 0) + dt;
+    // Depth held fixed: 2D FX lives on the camera/fight plane (world XY).
+    h.samples.push({ x: pos.x, y: pos.y, z: 0 });
+    h.age.push(t);
+    while (h.samples.length > LIMB_IMPULSE_LOOKBACK) {
+      h.samples.shift();
+      h.age.shift();
+    }
+  }
+
+  private fillLimbImpulse(
+    key: 'armL' | 'armR' | 'shinL' | 'shinR',
+    out: THREE.Vector3,
+    sampleCount: number,
+  ): void {
+    const h = this.limbHist[key];
+    if (h.samples.length < 2) {
+      out.set(0, 0, 0);
+      return;
+    }
+    const n = Math.min(
+      Math.max(2, sampleCount),
+      h.samples.length,
+    );
+    const samples = h.samples.slice(-n);
+    const ages = h.age.slice(-n);
+    const span = ages[ages.length - 1]! - ages[0]!;
+    limbImpulseFromHistory(samples, span, this._limbImp);
+    out.set(this._limbImp.x, this._limbImp.y, this._limbImp.z);
+  }
+
+  /** UpperArm + ForeArm + Hand centroid — whole-arm travel, not palm-only. */
+  private sampleArmCentroid(side: 'L' | 'R'): LimbSample | null {
+    this._limbPts.length = 0;
+    if (this.boneWorld(this.findUpperArmBone(side), this._limbNow)) {
+      this._limbPts.push({
+        x: this._limbNow.x,
+        y: this._limbNow.y,
+        z: this._limbNow.z,
+      });
+    }
+    if (this.boneWorld(this.findForeArmBone(side), this._limbNow)) {
+      this._limbPts.push({
+        x: this._limbNow.x,
+        y: this._limbNow.y,
+        z: this._limbNow.z,
+      });
+    }
+    if (this.boneWorld(this.findHandBone(side), this._limbNow)) {
+      this._limbPts.push({
+        x: this._limbNow.x,
+        y: this._limbNow.y,
+        z: this._limbNow.z,
+      });
+    }
+    return averageLimbSamples(this._limbPts, this._limbTmpA)
+      ? this._limbTmpA
+      : null;
+  }
+
+  /**
+   * Lower calf: Shin_3/4/5 if present, else 72% of knee→foot.
+   * Kick impulse should not sit on the sole.
+   */
+  private sampleLowerShin(side: 'L' | 'R'): LimbSample | null {
+    this._limbPts.length = 0;
+    for (const bone of this.findLowerShinBones(side)) {
+      if (this.boneWorld(bone, this._limbNow)) {
+        this._limbPts.push({
+          x: this._limbNow.x,
+          y: this._limbNow.y,
+          z: this._limbNow.z,
+        });
+      }
+    }
+    if (averageLimbSamples(this._limbPts, this._limbTmpA)) return this._limbTmpA;
+    const hasK = this.boneWorld(this.findKneeBone(side), this._limbNow);
+    if (hasK) {
+      this._limbTmpA.x = this._limbNow.x;
+      this._limbTmpA.y = this._limbNow.y;
+      this._limbTmpA.z = this._limbNow.z;
+    }
+    const hasF = this.boneWorld(this.findFootBone(side), this._limbNow);
+    if (hasF) {
+      this._limbTmpB.x = this._limbNow.x;
+      this._limbTmpB.y = this._limbNow.y;
+      this._limbTmpB.z = this._limbNow.z;
+    }
+    if (hasK && hasF) {
+      return lowerShinAlongLeg(this._limbTmpA, this._limbTmpB);
+    }
+    if (hasF) return this._limbTmpB;
+    if (hasK) return this._limbTmpA;
+    return null;
   }
 
   /** Shared detach splash helper (same instance for p1/p2 is OK). */

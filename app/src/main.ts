@@ -99,7 +99,11 @@ import {
   type HitVfxMatchEvent,
 } from './render/hitVfx/HitVfxDirector';
 import { Flipbook2DCombat } from './hitVfxEditor/flipbook2d/Flipbook2DCombat';
-import { classifyAttackLimbKind } from './render/hitVfx/attackLimb';
+import {
+  adjustLimbImpulseForMove,
+  classifyAttackLimbKind,
+  limbImpulseSampleCount,
+} from './render/hitVfx/attackLimb';
 import type { HitVfxTriggerArgs } from './render/hitVfx/hitVfxTypes';
 
 // Mesh-only skinned Ryu; combat clips from private/assets/ryu/anims via map
@@ -327,6 +331,7 @@ async function boot(): Promise<void> {
   /** Contact fires in logic before pose; spawn after FighterView.sync. */
   const pendingHitVfx: HitVfxMatchEvent[] = [];
   const limbScratch = new THREE.Vector3();
+  const limbVelScratch = new THREE.Vector3();
 
   /**
    * Snap spawn to the striking fist/foot at contact, then leave the FX at that
@@ -336,12 +341,30 @@ async function boot(): Promise<void> {
     const args = matchEventToTriggerArgs(ev);
     const kind = classifyAttackLimbKind(ev.moveId ?? '', ev.hitGroup ?? 0);
     const attackerFacing = ev.attackerFacing ?? 1;
-    if (p1View.sampleAttackLimbWorld(kind, attackerFacing, limbScratch)) {
+    if (
+      p1View.sampleAttackLimbWorld(
+        kind,
+        attackerFacing,
+        limbScratch,
+        limbVelScratch,
+        limbImpulseSampleCount(ev.moveId ?? '', ev.hitGroup ?? 0),
+      )
+    ) {
       args.x = limbScratch.x;
       args.y = limbScratch.y;
       args.z = limbScratch.z;
       // Keep args.facing as defenderFacing (flipbook mirror + height Z).
       args.axis = [-attackerFacing, 0, 0];
+      if (limbVelScratch.lengthSq() > 1e-8) {
+        adjustLimbImpulseForMove(
+          ev.moveId ?? '',
+          ev.hitGroup ?? 0,
+          limbVelScratch,
+        );
+        args.impulse = [limbVelScratch.x, limbVelScratch.y, limbVelScratch.z];
+      } else {
+        args.impulse = [attackerFacing, 0, 0];
+      }
     }
     return args;
   };

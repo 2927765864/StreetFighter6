@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import * as THREE from 'three';
 import {
   flipbookFacingScaleX,
+  flipbookSpinRad,
   layerLocalOffset,
 } from '../../src/hitVfxEditor/flipbook2d/Flipbook2DCombat';
 import { sourceFrameAt, type FlipbookLayer } from '../../src/hitVfxEditor/flipbook2d/types';
@@ -53,5 +55,38 @@ describe('flipbook facing / layer offset', () => {
     expect(p.x).toBeCloseTo(0.9, 5);
     expect(p.y).toBeCloseTo(-0.45, 5);
     expect(p.z).toBeCloseTo(0.006, 5);
+  });
+});
+
+describe('flipbookSpinRad (punch impulse on camera plane)', () => {
+  const right = new THREE.Vector3(1, 0, 0);
+  const up = new THREE.Vector3(0, 1, 0);
+
+  it('is 0 for horizontal punch matching authored +X / mirrored −X', () => {
+    expect(
+      flipbookSpinRad(new THREE.Vector3(1, 0, 0), right, up, 1),
+    ).toBeCloseTo(0, 5);
+    expect(
+      flipbookSpinRad(new THREE.Vector3(-1, 0, 0), right, up, -1),
+    ).toBeCloseTo(0, 5);
+  });
+
+  it('tilts up for an uppercut from the left (unmirrored)', () => {
+    const rad = flipbookSpinRad(new THREE.Vector3(1, 1, 0), right, up, 1);
+    expect(rad).toBeCloseTo(Math.PI / 4, 5);
+  });
+
+  it('tilts the mirrored sheet so leftward+up punch stays 45°', () => {
+    const rad = flipbookSpinRad(new THREE.Vector3(-1, 1, 0), right, up, -1);
+    expect(rad).toBeCloseTo(Math.PI / 4, 5);
+  });
+
+  it('ignores camera-forward (depth) and near-zero dirs', () => {
+    expect(
+      flipbookSpinRad(new THREE.Vector3(0, 0, 4), right, up, 1),
+    ).toBe(0);
+    expect(
+      flipbookSpinRad(new THREE.Vector3(0, 0, 0), right, up, 1),
+    ).toBe(0);
   });
 });
