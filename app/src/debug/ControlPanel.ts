@@ -603,6 +603,7 @@ function buildDom(): HTMLElement {
           ${rowNumber('lightOrbitPipHeight', '预览窗高度 (px)', 80, 540, 1)}
           ${rowToggle('shadowMapEnabled', '启用阴影总开关')}
           ${rowNumber('shadowMapSize', '阴影贴图边长', 256, 4096, 256)}
+          ${rowNumber('maxPixelRatio', '像素比上限 (DPR)', 0.5, 2, 0.25)}
           ${rowNumber('shadowCameraExtent', '阴影范围 extent', 5, 80, 0.5)}
           ${rowNumber('shadowCameraNear', '阴影近裁', 0.01, 10, 0.01)}
           ${rowNumber('shadowCameraFar', '阴影远裁', 10, 200, 1)}
@@ -1205,6 +1206,7 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'lightOrbitPipHeight', path: 'lightOrbitPipHeight' },
   { id: 'shadowMapEnabled', path: 'shadowMapEnabled' },
   { id: 'shadowMapSize', path: 'shadowMapSize' },
+  { id: 'maxPixelRatio', path: 'maxPixelRatio' },
   { id: 'shadowCameraExtent', path: 'shadowCameraExtent' },
   { id: 'shadowCameraNear', path: 'shadowCameraNear' },
   { id: 'shadowCameraFar', path: 'shadowCameraFar' },
@@ -1510,6 +1512,7 @@ export function setupControlPanel(
     'lightUseDynamicLighting',
     'shadowMapEnabled',
     'shadowMapSize',
+    'maxPixelRatio',
     'shadowCameraExtent',
     'shadowCameraNear',
     'shadowCameraFar',

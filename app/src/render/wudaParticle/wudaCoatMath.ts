@@ -62,6 +62,25 @@ export function shouldDetachWithLock(
   return shouldDetach(input);
 }
 
+/**
+ * Present-frame latch after a detach gate opens (hitstun pulse / active-hit).
+ * Sensing sleep clears velocity history, so the opening present only seeds
+ * `prevPos` — keep the gate open for a few presents so impact motion can shed.
+ */
+export const WUDA_DETACH_LATCH_PRESENTS = 4;
+
+/** CPU bake presents after waking from sensing sleep (avoid GPU 1-frame lag). */
+export const WUDA_WAKE_CPU_SENSE_PRESENTS = 3;
+
+export function armWudaDetachLatch(
+  currentLatch: number,
+  allowDetachThisPresent: boolean,
+  latchPresents = WUDA_DETACH_LATCH_PRESENTS,
+): number {
+  if (!allowDetachThisPresent) return Math.max(0, currentLatch);
+  return Math.max(currentLatch, Math.max(1, Math.floor(latchPresents)));
+}
+
 /** True when this fighter is on an attack hitbox-active logic frame. */
 export function isAttackActiveHitFrame(fighter: {
   phase: string;

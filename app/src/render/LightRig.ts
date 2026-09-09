@@ -166,6 +166,9 @@ function writeDescToLight(
       (!followChar || !!desc.shadowOnly);
     dir.castShadow = wantShadow;
     dir.shadow.intensity = resolveShadowMapIntensity(desc);
+    // Multi-pass present (2.5D layers / PIP) must not re-bake the map per camera.
+    // main.ts marks needsUpdate once before the first fight pass each present.
+    dir.shadow.autoUpdate = false;
     if (wantShadow) applyShadowCamera(dir, cfg);
     return;
   }
@@ -295,6 +298,19 @@ export function updateLightHelpers(rig: LightRig): void {
   for (const rt of rig.runtimes.values()) {
     const h = rt.helper as { update?: () => void } | null;
     h?.update?.();
+  }
+}
+
+/** Request one shadow-map bake on the next render that samples shadows. */
+export function markShadowMapsNeedUpdate(rig: LightRig): void {
+  for (const rt of rig.runtimes.values()) {
+    const light = rt.light as THREE_NS.Light & {
+      castShadow?: boolean;
+      shadow?: { needsUpdate: boolean };
+    };
+    if (light.castShadow && light.shadow) {
+      light.shadow.needsUpdate = true;
+    }
   }
 }
 

@@ -177,8 +177,8 @@ export function worldToScreenUV(
 export class HitShockwaveFx {
   private readonly slots: WaveSlot[] = [];
   /** xy = center UV, z = radius, w = amplitude (0 = dead). */
-  private readonly waveData: Array<ReturnType<typeof uniform>>;
-  private readonly uThickness = uniform(0.035);
+  readonly waveData: Array<ReturnType<typeof uniform>>;
+  readonly uThickness = uniform(0.035);
   private readonly uAspect = uniform(1);
   private readonly material: THREE.NodeMaterial;
   private readonly quad: THREE.QuadMesh;
@@ -347,18 +347,21 @@ export class HitShockwaveFx {
    * After the fight color buffer is fully drawn into the current viewport.
    * Reprojects fixed world centers with the camera used for that draw.
    */
+  prepareForDraw(camera?: THREE.Camera | null): void {
+    if (!camera) return;
+    for (const s of this.slots) {
+      if (s.alive) this.refreshSlotScreenCenter(s, camera);
+    }
+    this.syncUniforms();
+  }
+
   apply(
     renderer: THREE.WebGPURenderer,
     camera?: THREE.Camera | null,
   ): void {
     if (!this.params.enabled || !this.hasActive()) return;
 
-    if (camera) {
-      for (const s of this.slots) {
-        if (s.alive) this.refreshSlotScreenCenter(s, camera);
-      }
-      this.syncUniforms();
-    }
+    this.prepareForDraw(camera);
 
     renderer.getDrawingBufferSize(_size);
     this.uAspect.value = _size.x / Math.max(_size.y, 1);

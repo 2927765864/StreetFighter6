@@ -175,7 +175,9 @@ export class RyuHeadbandPhysics {
 
     this.applyColliderRadii(cfg);
     this.applyJointSettings(cfg, jumpPhase);
-    this.syncHelpers(cfg);
+    if (cfg.headbandShowColliders || cfg.headbandShowChainHelpers) {
+      this.syncHelpers(cfg);
+    }
 
     this.manager.update(delta);
     this.refreshHelperOverlay(cfg);
@@ -255,8 +257,30 @@ export class RyuHeadbandPhysics {
     for (const j of this.joints) j.center = center;
   }
 
+  private lastColliderHeadR = Number.NaN;
+  private lastColliderNeckR = Number.NaN;
+  private lastColliderShoulderR = Number.NaN;
+  private lastColliderHeadY = Number.NaN;
+  private lastColliderShoulderX = Number.NaN;
+  private readonly _baseG = new THREE.Vector3();
+  private readonly _external = new THREE.Vector3();
+
   private applyColliderRadii(cfg: MutableSimConfig): void {
     const shoulderX = cfg.headbandColliderShoulderXOffset;
+    if (
+      this.lastColliderHeadR === cfg.headbandColliderHeadRadius &&
+      this.lastColliderNeckR === cfg.headbandColliderNeckRadius &&
+      this.lastColliderShoulderR === cfg.headbandColliderShoulderRadius &&
+      this.lastColliderHeadY === cfg.headbandColliderHeadYOffset &&
+      this.lastColliderShoulderX === shoulderX
+    ) {
+      return;
+    }
+    this.lastColliderHeadR = cfg.headbandColliderHeadRadius;
+    this.lastColliderNeckR = cfg.headbandColliderNeckRadius;
+    this.lastColliderShoulderR = cfg.headbandColliderShoulderRadius;
+    this.lastColliderHeadY = cfg.headbandColliderHeadYOffset;
+    this.lastColliderShoulderX = shoulderX;
     for (const a of this.attached) {
       if (a.boneName === RYU_HEADBAND_HEAD) {
         a.shape.radius = cfg.headbandColliderHeadRadius;
@@ -286,7 +310,7 @@ export class RyuHeadbandPhysics {
       jumpPhase,
       cfg.headbandGravityAirScale,
     );
-    const baseG = new THREE.Vector3(
+    const baseG = this._baseG.set(
       cfg.headbandGravityDirX,
       cfg.headbandGravityDirY,
       cfg.headbandGravityDirZ,
@@ -300,13 +324,12 @@ export class RyuHeadbandPhysics {
       cfg.headbandBreathAmp,
       cfg.headbandBreathHz,
     );
-    const external = baseG
-      .clone()
+    const external = this._external
+      .copy(baseG)
       .multiplyScalar(cfg.headbandGravityPower * airScale)
       .add(breath);
     const gravityPower = external.length();
-    const gravityDir =
-      gravityPower > 1e-8 ? external.normalize() : baseG.clone();
+    const gravityDir = gravityPower > 1e-8 ? external.normalize() : baseG;
 
     // Joints are left chain then right chain; each has (n-1) spring heads.
     const leftCount = RYU_HEADBAND_LEFT_CHAIN.length - 1;
@@ -413,15 +436,18 @@ function buildChainJoints(
   return joints;
 }
 
+const _breathZero = new THREE.Vector3();
+const _breathLocal = new THREE.Vector3();
+
 function breathWindWorld(
   head: THREE.Object3D | null,
   elapsed: number,
   amp: number,
   hz: number,
 ): THREE.Vector3 {
-  if (!head || amp <= 0 || hz <= 0) return new THREE.Vector3();
+  if (!head || amp <= 0 || hz <= 0) return _breathZero.set(0, 0, 0);
   const phase = elapsed * hz * Math.PI * 2;
-  const local = new THREE.Vector3(
+  const local = _breathLocal.set(
     Math.sin(phase) * amp,
     0,
     -Math.cos(phase * 0.5) * amp * 0.35,

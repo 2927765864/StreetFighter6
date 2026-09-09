@@ -46,13 +46,19 @@ const _slide = new THREE.Vector3();
 const _rotDelta = new THREE.Quaternion();
 const _invPrevRot = new THREE.Quaternion();
 const _tmp = new THREE.Vector3();
+const _localPos = new THREE.Vector3();
 
-function syncTransformPos(p: PantsParticle): void {
+function syncTransformPos(
+  p: PantsParticle,
+  opts?: { skipParentUpdate?: boolean },
+): void {
   // Free drive bones: rebuild anim target from bind local × parent world.
   // Never trust bone.position after a physics write (mixer may not restore it).
   if (!p.isFixed && p.bindLocalPos && p.bone.parent) {
     const parent = p.bone.parent;
-    parent.updateWorldMatrix(true, false);
+    if (!opts?.skipParentUpdate) {
+      parent.updateWorldMatrix(true, false);
+    }
     _bindWorld.copy(p.bindLocalPos).applyMatrix4(parent.matrixWorld);
     p.transformPos.copy(_bindWorld);
     if (p.bindLocalQuat) {
@@ -62,7 +68,11 @@ function syncTransformPos(p: PantsParticle): void {
     }
     return;
   }
-  p.bone.getWorldPosition(p.transformPos);
+  if (opts?.skipParentUpdate) {
+    p.transformPos.setFromMatrixPosition(p.bone.matrixWorld);
+  } else {
+    p.bone.getWorldPosition(p.transformPos);
+  }
   p.transformLocalQuat.copy(p.bone.quaternion);
 }
 
@@ -133,17 +143,21 @@ function collideParticle(
  * Keep bind/animated local rotation (short cloth bones are mostly
  * translation secondary motion; tips often have no skin weight to aim with).
  */
-function writeBoneFromParticle(p: PantsParticle): void {
+function writeBoneFromParticle(
+  p: PantsParticle,
+  opts?: { skipParentUpdate?: boolean },
+): void {
   if (p.isFixed) return;
   const bone = p.bone;
   const parent = bone.parent;
   if (!parent) return;
 
-  parent.updateWorldMatrix(true, false);
+  if (!opts?.skipParentUpdate) {
+    parent.updateWorldMatrix(true, false);
+  }
   _invParent.copy(parent.matrixWorld).invert();
-
-  const localPos = p.positionCurrent.clone().applyMatrix4(_invParent);
-  bone.position.copy(localPos);
+  _localPos.copy(p.positionCurrent).applyMatrix4(_invParent);
+  bone.position.copy(_localPos);
   bone.quaternion.copy(p.transformLocalQuat);
 }
 
@@ -278,12 +292,18 @@ export function applyPantsRootMotion(args: {
   return 'none';
 }
 
-export function capturePantsAnimTargets(particles: PantsParticle[]): void {
-  for (const p of particles) syncTransformPos(p);
+export function capturePantsAnimTargets(
+  particles: PantsParticle[],
+  opts?: { skipParentUpdate?: boolean },
+): void {
+  for (const p of particles) syncTransformPos(p, opts);
 }
 
-export function writePantsBones(particles: PantsParticle[]): void {
-  for (const p of particles) writeBoneFromParticle(p);
+export function writePantsBones(
+  particles: PantsParticle[],
+  opts?: { skipParentUpdate?: boolean },
+): void {
+  for (const p of particles) writeBoneFromParticle(p, opts);
 }
 
 export function stepPantsSolver(args: {

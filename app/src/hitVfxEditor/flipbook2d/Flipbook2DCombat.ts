@@ -17,6 +17,7 @@ type LayerBillboard = {
   mesh: THREE.Mesh;
   material: THREE.MeshBasicMaterial;
   layer: FlipbookLayer;
+  lookApplied: boolean;
 };
 
 type Shot = {
@@ -88,13 +89,16 @@ export function flipbookFacingScaleX(facing: number): number {
   return facing > 0 ? -1 : 1;
 }
 
+const _layerOff = new THREE.Vector3();
+
 export function layerLocalOffset(
   layer: Pick<FlipbookLayer, 'offsetX' | 'offsetY' | 'z'>,
   size: number,
+  out: THREE.Vector3 = _layerOff,
 ): THREE.Vector3 {
   const ox = (layer.offsetX / 384) * size;
   const oy = -(layer.offsetY / 384) * size;
-  return new THREE.Vector3(ox, oy, layer.z * 0.002);
+  return out.set(ox, oy, layer.z * 0.002);
 }
 
 export class Flipbook2DCombat {
@@ -188,31 +192,35 @@ export class Flipbook2DCombat {
     this.applyFrame(shot);
   }
 
+  /** True when combat/editor flipbook meshes should be drawn this frame. */
+  hasDrawable(): boolean {
+    return this.shots.length > 0 || this.editorShot != null;
+  }
+
   tick(dt: number, inHitstop: boolean): void {
     if (CONFIG.hitVfxPlayMode !== 'flipbook2d') {
       if (this.shots.length) this.clear();
       return;
     }
-    this.pool.visible = true;
     const freeze = CONFIG.hitVfxFollowHitstop && inHitstop;
     const fps = Math.max(1, this.recipe.fps);
     if (!CONFIG.hitVfxPaused && !freeze) {
       const step = dt * fps * (CONFIG.hitVfxTimeScale || 1);
-      for (const s of this.shots) {
+      for (let i = this.shots.length - 1; i >= 0; i -= 1) {
+        const s = this.shots[i]!;
         s.age += step;
         s.playhead = Math.floor(s.age);
+        if (s.playhead > this.recipe.length - 1) {
+          this.disposeShot(s);
+          this.shots.splice(i, 1);
+        }
       }
-      const keep: Shot[] = [];
-      for (const s of this.shots) {
-        if (s.playhead <= this.recipe.length - 1) keep.push(s);
-        else this.disposeShot(s);
-      }
-      this.shots = keep;
     }
     for (const s of this.shots) {
       s.root.quaternion.copy(this.camera.quaternion);
       this.applyFrame(s);
     }
+    this.pool.visible = this.hasDrawable();
   }
 
   private spawnShot(world: THREE.Vector3, facing: number): Shot {
@@ -230,7 +238,7 @@ export class Flipbook2DCombat {
       mesh.visible = false;
       mesh.position.copy(layerLocalOffset(layer, size));
       root.add(mesh);
-      layers.push({ mesh, material: mat, layer });
+      layers.push({ mesh, material: mat, layer, lookApplied: true });
     }
     this.pool.add(root);
     return { root, layers, playhead: 0, age: 0 };
@@ -262,10 +270,13 @@ export class Flipbook2DCombat {
       const maxSide = Math.max(w, h) || 1;
       const s = size * item.layer.scale;
       item.mesh.scale.set((w / maxSide) * s, (h / maxSide) * s, 1);
-      item.mesh.position.copy(layerLocalOffset(item.layer, size));
+      item.mesh.position.copy(layerLocalOffset(item.layer, size, _layerOff));
       item.mesh.renderOrder = 20 + item.layer.z;
-      item.material.map = tex;
-      applyMaterialLook(item.material, item.layer);
+      if (item.material.map !== tex) item.material.map = tex;
+      if (!item.lookApplied) {
+        applyMaterialLook(item.material, item.layer);
+        item.lookApplied = true;
+      }
       item.mesh.visible = item.layer.enabled;
     }
   }

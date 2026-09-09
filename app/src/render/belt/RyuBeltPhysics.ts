@@ -169,7 +169,9 @@ export class RyuBeltPhysics {
 
     this.applyColliderRadii(cfg);
     this.applyJointSettings(cfg, jumpPhase);
-    this.syncHelpers(cfg);
+    if (cfg.beltShowColliders || cfg.beltShowChainHelpers) {
+      this.syncHelpers(cfg);
+    }
 
     this.manager.update(delta);
     this.refreshHelperOverlay(cfg);
@@ -247,8 +249,39 @@ export class RyuBeltPhysics {
     for (const j of this.joints) j.center = center;
   }
 
+  private lastHipR = Number.NaN;
+  private lastThighR = Number.NaN;
+  private lastHipY = Number.NaN;
+  private lastThighY = Number.NaN;
+  private lastThighZ = Number.NaN;
+  private lastJumpPhase: JumpPhase | null = null;
+  private lastStiffness = Number.NaN;
+  private lastDrag = Number.NaN;
+  private lastHitRadius = Number.NaN;
+  private lastGravityPower = Number.NaN;
+  private lastAirScale = Number.NaN;
+  private lastTipScale = Number.NaN;
+  private lastGx = Number.NaN;
+  private lastGy = Number.NaN;
+  private lastGz = Number.NaN;
+  private readonly _gravityDir = new THREE.Vector3();
+
   private applyColliderRadii(cfg: MutableSimConfig): void {
     const thighZ = cfg.beltColliderThighZOffset;
+    if (
+      this.lastHipR === cfg.beltColliderHipRadius &&
+      this.lastThighR === cfg.beltColliderThighRadius &&
+      this.lastHipY === cfg.beltColliderHipYOffset &&
+      this.lastThighY === cfg.beltColliderThighYOffset &&
+      this.lastThighZ === thighZ
+    ) {
+      return;
+    }
+    this.lastHipR = cfg.beltColliderHipRadius;
+    this.lastThighR = cfg.beltColliderThighRadius;
+    this.lastHipY = cfg.beltColliderHipYOffset;
+    this.lastThighY = cfg.beltColliderThighYOffset;
+    this.lastThighZ = thighZ;
     for (const a of this.attached) {
       if (a.boneName === RYU_BELT_HIP) {
         a.shape.radius = cfg.beltColliderHipRadius;
@@ -271,7 +304,32 @@ export class RyuBeltPhysics {
       jumpPhase,
       cfg.beltGravityAirScale,
     );
-    const gravityDir = new THREE.Vector3(
+    if (
+      this.lastJumpPhase === jumpPhase &&
+      this.lastStiffness === cfg.beltStiffness &&
+      this.lastDrag === cfg.beltDragForce &&
+      this.lastHitRadius === cfg.beltHitRadius &&
+      this.lastGravityPower === cfg.beltGravityPower &&
+      this.lastAirScale === cfg.beltGravityAirScale &&
+      this.lastTipScale === cfg.beltStiffnessTipScale &&
+      this.lastGx === cfg.beltGravityDirX &&
+      this.lastGy === cfg.beltGravityDirY &&
+      this.lastGz === cfg.beltGravityDirZ
+    ) {
+      return;
+    }
+    this.lastJumpPhase = jumpPhase;
+    this.lastStiffness = cfg.beltStiffness;
+    this.lastDrag = cfg.beltDragForce;
+    this.lastHitRadius = cfg.beltHitRadius;
+    this.lastGravityPower = cfg.beltGravityPower;
+    this.lastAirScale = cfg.beltGravityAirScale;
+    this.lastTipScale = cfg.beltStiffnessTipScale;
+    this.lastGx = cfg.beltGravityDirX;
+    this.lastGy = cfg.beltGravityDirY;
+    this.lastGz = cfg.beltGravityDirZ;
+
+    const gravityDir = this._gravityDir.set(
       cfg.beltGravityDirX,
       cfg.beltGravityDirY,
       cfg.beltGravityDirZ,

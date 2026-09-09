@@ -28,17 +28,33 @@ def sample_chroma(im: Image.Image, inset: int = 12) -> tuple[int, int, int]:
 
 
 def chroma_alpha(im: Image.Image, key: tuple[int, int, int] | None = None, tol: float = CHROMA_TOL) -> Image.Image:
+    """Key magenta. Steam baked as higher-G magenta is recovered via green lift, then despilled to grey."""
     im = im.convert("RGBA")
     if key is None:
         key = sample_chroma(im)
     px = im.load()
     w, h = im.size
     kr, kg, kb = key
+    g_floor = kg + 18
     for y in range(h):
         for x in range(w):
             r, g, b, a = px[x, y]
             dist = math.sqrt((r - kr) ** 2 + (g - kg) ** 2 + (b - kb) ** 2)
-            magenta_like = r > 140 and b > 90 and g < 90 and r - g > 80
+            g_lift = g - kg
+            if g_lift <= 18 and dist <= tol * 1.35:
+                px[x, y] = (r, g, b, 0)
+                continue
+            if g_lift > 18 and r > 120 and b > 100:
+                t = min(1.0, g_lift / 110.0)
+                grey = max(g, int(80 + t * 150))
+                px[x, y] = (grey, grey, grey, int(max(40, min(255, t * 255))))
+                continue
+            mx = max(r, g, b, 1)
+            mn = min(r, g, b)
+            sat = (mx - mn) / mx
+            if sat < 0.28 and g >= 40:
+                continue
+            magenta_like = min(r, b) - g > 40 and sat > 0.35 and g < 140
             if dist <= tol or magenta_like:
                 px[x, y] = (r, g, b, 0)
             elif dist < tol * 1.7:
@@ -95,6 +111,33 @@ def gutter_half_width(im: Image.Image, split_x: int, split_y: int) -> int:
             break
         half = d
     return max(2, half)
+
+
+def despill(im: Image.Image) -> Image.Image:
+    im = im.convert("RGBA")
+    px = im.load()
+    w, h = im.size
+    for y in range(h):
+        for x in range(w):
+            r, g, b, a = px[x, y]
+            if a == 0:
+                continue
+            extra = min(r, b) - g
+            if extra > 12 and r > 90 and b > 70:
+                r = max(g, r - int(extra * 0.75))
+                b = max(g, b - int(extra * 0.75))
+                px[x, y] = (r, g, b, a)
+    return im
+
+
+def split_grid(im: Image.Image, rows: int, cols: int) -> list[Image.Image]:
+    w, h = im.size
+    cw, ch = w // cols, h // rows
+    cells: list[Image.Image] = []
+    for r in range(rows):
+        for c in range(cols):
+            cells.append(im.crop((c * cw, r * ch, (c + 1) * cw, (r + 1) * ch)))
+    return cells
 
 
 def split_2x2(im: Image.Image) -> list[Image.Image]:
@@ -157,27 +200,45 @@ def save_gif(frames: list[Image.Image], path: Path, duration_ms: int = 90) -> No
     )
 
 
-def process(raw_path: Path, out_dir: Path) -> dict:
+def process(
+    raw_path: Path,
+    out_dir: Path,
+    *,
+    rows: int = 2,
+    cols: int = 2,
+    cell: int = CELL,
+    pack_cols: int | None = None,
+    element: str = "E1_core_flash",
+    fps: int = 30,
+    use_gutter_2x2: bool = False,
+) -> dict:
     out_dir.mkdir(parents=True, exist_ok=True)
     frames_dir = out_dir / "frames"
     frames_dir.mkdir(exist_ok=True)
 
     raw = Image.open(raw_path).convert("RGBA")
     key = sample_chroma(raw)
-    keyed = chroma_alpha(raw, key=key)
-    cells = split_2x2(keyed)
-    centered = [center_on_cell(c) for c in cells]
+    keyed = despill(chroma_alpha(raw, key=key))
+    if use_gutter_2x2 and rows == 2 and cols == 2:
+        cells = split_2x2(keyed)
+    else:
+        cells = split_grid(keyed, rows, cols)
+    centered = [center_on_cell(c, cell=cell) for c in cells]
     for i, fr in enumerate(centered):
         fr.save(frames_dir / f"frame-{i:02d}.png")
-    sheet = pack_grid(centered, 2)
+    pc = pack_cols if pack_cols is not None else cols
+    sheet = pack_grid(centered, pc)
     sheet_path = out_dir / "sheet-transparent.png"
     sheet.save(sheet_path)
     gif_path = out_dir / "preview.gif"
-    save_gif(centered, gif_path)
+    duration_ms = max(1, round(1000 / fps))
+    save_gif(centered, gif_path, duration_ms=duration_ms)
     meta = {
-        "element": "E1_core_flash",
-        "grid": [2, 2],
-        "cell": CELL,
+        "element": element,
+        "grid": [cols, rows],
+        "pack_cols": pc,
+        "cell": cell,
+        "fps": fps,
         "chroma": "#FF00FF",
         "chroma_sampled": list(key),
         "chroma_tol": CHROMA_TOL,
@@ -192,8 +253,34 @@ def process(raw_path: Path, out_dir: Path) -> dict:
 
 
 if __name__ == "__main__":
-    import sys
+    import argparse
 
-    raw = Path(sys.argv[1] if len(sys.argv) > 1 else "vfx-ai-pipeline/runs/hit_ref_v1/E1_core_flash/raw-sheet.png")
-    out = Path(sys.argv[2] if len(sys.argv) > 2 else raw.parent)
-    print(json.dumps(process(raw, out), indent=2))
+    p = argparse.ArgumentParser(description="Chroma-key, split, pack a magenta VFX sheet")
+    p.add_argument("raw", nargs="?", default="vfx-ai-pipeline/runs/hit_ref_v1/E1_core_flash/raw-sheet.png")
+    p.add_argument("out", nargs="?")
+    p.add_argument("--rows", type=int, default=2)
+    p.add_argument("--cols", type=int, default=2)
+    p.add_argument("--cell", type=int, default=CELL)
+    p.add_argument("--pack-cols", type=int, default=None)
+    p.add_argument("--element", default="E1_core_flash")
+    p.add_argument("--fps", type=int, default=30)
+    p.add_argument("--gutter-2x2", action="store_true")
+    args = p.parse_args()
+    raw = Path(args.raw)
+    out = Path(args.out) if args.out else raw.parent
+    print(
+        json.dumps(
+            process(
+                raw,
+                out,
+                rows=args.rows,
+                cols=args.cols,
+                cell=args.cell,
+                pack_cols=args.pack_cols,
+                element=args.element,
+                fps=args.fps,
+                use_gutter_2x2=args.gutter_2x2,
+            ),
+            indent=2,
+        )
+    )

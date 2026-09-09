@@ -150,13 +150,15 @@ export function glowEnvelope(t01: number): {
   return { radiusT: ease, intensityT: ease };
 }
 
+const _color = new THREE.Color();
+
 export class HitGlowFx {
   private readonly slots: GlowSlot[] = [];
   /** xy = center UV, z = radius, w = intensity (0 = dead). */
-  private readonly glowData: Array<ReturnType<typeof uniform>>;
-  private readonly uHardness = uniform(2.5);
+  readonly glowData: Array<ReturnType<typeof uniform>>;
+  readonly uHardness = uniform(2.5);
   private readonly uAspect = uniform(1);
-  private readonly uColor = uniform(new THREE.Vector3(1, 0.69, 0.376));
+  readonly uColor = uniform(new THREE.Vector3(1, 0.69, 0.376));
   private readonly material: THREE.NodeMaterial;
   private readonly quad: THREE.QuadMesh;
   private params: HitGlowParams = createDefaultHitGlowParams();
@@ -226,8 +228,8 @@ export class HitGlowFx {
   applyParams(params: HitGlowParams): void {
     this.params = params;
     this.uHardness.value = Math.max(0.1, params.hardness);
-    const c = new THREE.Color(params.color >>> 0);
-    (this.uColor.value as THREE.Vector3).set(c.r, c.g, c.b);
+    _color.setHex(params.color >>> 0);
+    (this.uColor.value as THREE.Vector3).set(_color.r, _color.g, _color.b);
   }
 
   getParams(): HitGlowParams {
@@ -330,18 +332,21 @@ export class HitGlowFx {
    * After the fight color buffer (and optional shockwave) are drawn.
    * Reprojects fixed world centers with the camera used for that draw.
    */
+  prepareForDraw(camera?: THREE.Camera | null): void {
+    if (!camera) return;
+    for (const s of this.slots) {
+      if (s.alive && !s.screenPinned) this.refreshSlotScreenCenter(s, camera);
+    }
+    this.syncUniforms();
+  }
+
   apply(
     renderer: THREE.WebGPURenderer,
     camera?: THREE.Camera | null,
   ): void {
     if (!this.params.enabled || !this.hasActive()) return;
 
-    if (camera) {
-      for (const s of this.slots) {
-        if (s.alive && !s.screenPinned) this.refreshSlotScreenCenter(s, camera);
-      }
-      this.syncUniforms();
-    }
+    this.prepareForDraw(camera);
 
     renderer.getDrawingBufferSize(_size);
     this.uAspect.value = _size.x / Math.max(_size.y, 1);

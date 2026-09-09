@@ -18,6 +18,21 @@ export type WudaSkeletonSyncStats = {
   groups: number;
 };
 
+/** Cached src Bone → index maps; skeletons are stable for a bound coat. */
+const boneIndexCache = new WeakMap<Skeleton, Map<Bone, number>>();
+
+function boneIndexMap(sk: Skeleton): Map<Bone, number> {
+  let map = boneIndexCache.get(sk);
+  if (map && map.size === sk.bones.length) return map;
+  map = new Map<Bone, number>();
+  const bones = sk.bones;
+  for (let i = 0; i < bones.length; i++) {
+    map.set(bones[i]!, i);
+  }
+  boneIndexCache.set(sk, map);
+  return map;
+}
+
 /**
  * Copy src.boneMatrices into dst by matching Bone object identity (not index).
  * Returns false if any dst bone is missing from src (caller should update dst).
@@ -26,16 +41,11 @@ export function copyBoneMatricesByBoneRef(
   dst: Skeleton,
   src: Skeleton,
 ): boolean {
-  const srcBones = src.bones;
   const dstBones = dst.bones;
   if (!src.boneMatrices || !dst.boneMatrices) return false;
   if (dstBones.length === 0) return false;
 
-  const srcIndex = new Map<Bone, number>();
-  for (let i = 0; i < srcBones.length; i++) {
-    srcIndex.set(srcBones[i]!, i);
-  }
-
+  const srcIndex = boneIndexMap(src);
   const srcMats = src.boneMatrices;
   const dstMats = dst.boneMatrices;
   for (let i = 0; i < dstBones.length; i++) {

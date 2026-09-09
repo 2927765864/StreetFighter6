@@ -32,6 +32,7 @@ import {
   hitGlowParamsFromConfig,
   type HitGlowStrength,
 } from './render/HitGlowFx';
+import { HitScreenCompositeFx } from './render/HitScreenCompositeFx';
 import {
   HitCloudShadowFx,
   hitCloudShadowParamsFromConfig,
@@ -44,6 +45,7 @@ import {
   applyEnvironment,
   applyLightTransformsFromConfig,
   createLightRig,
+  markShadowMapsNeedUpdate,
   syncLightsFromConfig,
   updateLightHelpers,
 } from './render/LightRig';
@@ -240,7 +242,9 @@ async function boot(): Promise<void> {
     trackTimestamp: wantGpuTiming,
   });
   await renderer.init();
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(
+    Math.min(window.devicePixelRatio, Math.max(0.5, cfg.maxPixelRatio)),
+  );
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.domElement.style.display = 'block';
@@ -316,6 +320,7 @@ async function boot(): Promise<void> {
   hitShockwave.applyParams(hitShockwaveParamsFromConfig(cfg));
   const hitGlow = new HitGlowFx();
   hitGlow.applyParams(hitGlowParamsFromConfig(cfg));
+  const hitScreenComposite = new HitScreenCompositeFx(hitShockwave, hitGlow);
   const hitCloudShadow = new HitCloudShadowFx();
   hitCloudShadow.applyParams(hitCloudShadowParamsFromConfig(cfg));
   const flipbookCombat = new Flipbook2DCombat(hitVfxScene, camera);
@@ -798,7 +803,9 @@ async function boot(): Promise<void> {
     canvas.style.inset = '';
     const fullW = window.innerWidth;
     const fullH = window.innerHeight;
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(
+      Math.min(window.devicePixelRatio, Math.max(0.5, cfg.maxPixelRatio)),
+    );
     renderer.setSize(fullW, fullH, false);
     camera.aspect = fullW / Math.max(fullH, 1);
     camera.updateProjectionMatrix();
@@ -823,7 +830,9 @@ async function boot(): Promise<void> {
     const h = Math.max(1, Math.floor(slot.clientHeight));
     if (w !== boxEditView.w || h !== boxEditView.h) {
       boxEditView = { w, h, left: 0, top: 0 };
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setPixelRatio(
+        Math.min(window.devicePixelRatio, Math.max(0.5, cfg.maxPixelRatio)),
+      );
       renderer.setSize(w, h, false);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
@@ -959,13 +968,19 @@ async function boot(): Promise<void> {
         }
         perf.refreshOverlay(CONFIG);
       }
-      if (typeof key === 'string' && key.startsWith('hitShockwave')) {
+      if (
+        key === '*' ||
+        (typeof key === 'string' && key.startsWith('hitShockwave'))
+      ) {
         hitShockwave.applyParams(hitShockwaveParamsFromConfig(CONFIG));
       }
-      if (typeof key === 'string' && key.startsWith('hitGlow')) {
+      if (key === '*' || (typeof key === 'string' && key.startsWith('hitGlow'))) {
         hitGlow.applyParams(hitGlowParamsFromConfig(CONFIG));
       }
-      if (typeof key === 'string' && key.startsWith('hitCloudShadow')) {
+      if (
+        key === '*' ||
+        (typeof key === 'string' && key.startsWith('hitCloudShadow'))
+      ) {
         hitCloudShadow.applyParams(hitCloudShadowParamsFromConfig(CONFIG));
       }
       if (
@@ -990,6 +1005,12 @@ async function boot(): Promise<void> {
         key === 'bgColor'
       ) {
         refreshLighting();
+      }
+      if (key === '*' || key === 'maxPixelRatio') {
+        const cap = Math.max(0.5, cfg.maxPixelRatio);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, cap));
+        if (hooks.boxEditActive) layoutFightCanvasForBoxEdit();
+        else restoreFightCanvasLayout();
       }
       if (key === '*' || key.startsWith('hitVfx')) {
         if (
@@ -1241,11 +1262,8 @@ async function boot(): Promise<void> {
       }
       pendingHitVfx.length = 0;
     }
-    hitShockwave.applyParams(hitShockwaveParamsFromConfig(cfg));
     hitShockwave.step(presentDt, camera);
-    hitGlow.applyParams(hitGlowParamsFromConfig(cfg));
     hitGlow.step(presentDt, camera);
-    hitCloudShadow.applyParams(hitCloudShadowParamsFromConfig(cfg));
     hitCloudShadow.step(presentDt, camera);
     flipbookCombat.tick(presentDt, match.hitstopTimer > 0);
     perf.end('vfxCpu');
@@ -1318,11 +1336,18 @@ async function boot(): Promise<void> {
       // Darken fighters+stage before 2D / procedural hit VFX overlay.
       hitCloudShadow.apply(renderer, cam);
 
-      // Overlay uses its own scene (default layer 0). Restore SCENE on the
-      // camera so VFX meshes are visible; fighters are not in hitVfxScene.
-      renderer.clearDepth();
-      cam.layers.set(LAYER_SCENE);
-      renderer.render(hitVfxScene, cam);
+      // Skip empty overlay pass (idle most of the time in flipbook2d shipping).
+      const hitVfxDrawable =
+        (cfg.hitVfxPlayMode === 'flipbook2d' && flipbookCombat.hasDrawable()) ||
+        (cfg.hitVfxPlayMode !== 'flipbook2d' &&
+          hitVfxRuntime.getActiveCount() > 0);
+      if (hitVfxDrawable) {
+        // Overlay uses its own scene (default layer 0). Restore SCENE on the
+        // camera so VFX meshes are visible; fighters are not in hitVfxScene.
+        renderer.clearDepth();
+        cam.layers.set(LAYER_SCENE);
+        renderer.render(hitVfxScene, cam);
+      }
 
       scene.background = prevBackground;
       renderer.autoClear = prevAutoClear;
@@ -1338,12 +1363,11 @@ async function boot(): Promise<void> {
     const fullRender = (): void => {
       renderer.setScissorTest(false);
       renderer.setViewport(0, 0, viewW, viewH);
+      // One bake per present: layers / PIP share the light-space map.
+      markShadowMapsNeedUpdate(lights);
       renderFightDisplayLayers(camera, true);
-      // Distort the main view after all fight + VFX layers are in the color buffer.
-      // Reproject with the same camera used for this draw so the ring stays on the limb.
-      hitShockwave.apply(renderer, camera);
-      // Additive glow on top of (possibly warped) buffer — peak flash stays readable.
-      hitGlow.apply(renderer, camera);
+      // One fullscreen copy: UV warp then additive glow (was two viewportTexture passes).
+      hitScreenComposite.apply(renderer, camera);
 
       if (!cfg.lightOrbitMode || hooks.boxEditActive) return;
 

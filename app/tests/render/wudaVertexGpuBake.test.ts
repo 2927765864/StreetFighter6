@@ -361,13 +361,14 @@ describe('WudaVertexGpuBaker CPU gold standard', () => {
   });
 
   it('isWudaGpuPendingFresh rejects multi-frame-late GPU ghosts', () => {
-    expect(WUDA_GPU_PENDING_MAX_AGE_FRAMES).toBe(1);
-    // Kick on frame 10, consume on 11 → intended 1-frame lag, OK.
+    expect(WUDA_GPU_PENDING_MAX_AGE_FRAMES).toBe(2);
+    // Kick on frame 10, consume on 11–12 → within lag window.
     expect(isWudaGpuPendingFresh(11, 10)).toBe(true);
+    expect(isWudaGpuPendingFresh(12, 10)).toBe(true);
     // Same-frame completion (await path / very fast readback).
     expect(isWudaGpuPendingFresh(10, 10)).toBe(true);
-    // Full-body batches often finish 2+ frames later → ghost if applied.
-    expect(isWudaGpuPendingFresh(12, 10)).toBe(false);
+    // Older than lag window → ghost if applied.
+    expect(isWudaGpuPendingFresh(13, 10)).toBe(false);
     expect(isWudaGpuPendingFresh(20, 10)).toBe(false);
     expect(isWudaGpuPendingFresh(5, -1)).toBe(false);
   });

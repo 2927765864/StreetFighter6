@@ -7,11 +7,13 @@ import type { WebGPURenderer } from 'three/webgpu';
 import type { WudaCoatCfgShim } from './wudaLayerPreset';
 import { createMulberry32 } from '../hitVfx/mulberry32';
 import {
+  armWudaDetachLatch,
   clampWudaDeltaSec,
   computeSurfaceVelocity,
   freeLifetimeFromSpeed,
   integrateFreeParticle,
   shouldDetachWithLock,
+  WUDA_WAKE_CPU_SENSE_PRESENTS,
 } from './wudaCoatMath';
 import type { WudaCoatStats, WudaParticleState } from './wudaTypes';
 import type { WudaPlumeBurst } from './WudaPlumeBurst';
@@ -27,6 +29,7 @@ import {
 } from './wudaBodyRegions';
 import {
   advanceRefillTimer,
+  clampWudaFreePoolCapacity,
   createWudaFreePool,
   resolveWudaInstanceCapacity,
   spawnWudaFreeParticle,
@@ -85,7 +88,8 @@ const _unitShape: WudaEllipseShape = { aspect: 1, spin: 0 };
  * Older results are discarded; the stable GPU path **holds** the last GPU
  * world instead of mixing in a fresh CPU bake (which caused ghost flashes).
  */
-export const WUDA_GPU_PENDING_MAX_AGE_FRAMES = 1;
+/** Allow 2 presents of lag so a slow readback is not always discarded. */
+export const WUDA_GPU_PENDING_MAX_AGE_FRAMES = 2;
 
 /** True when a bake kicked at `kickFrame` is still usable on `simFrame`. */
 export function isWudaGpuPendingFresh(
@@ -118,6 +122,26 @@ export class WudaVertexCoatRuntime {
   private bakeInFlight: Promise<void> | null = null;
   /** Completed GPU world for *next* simulate; copied out of baker.gpuOut. */
   private pendingGpuWorld: Float32Array | null = null;
+  /** Highest free-pool index written this session (for clearing / count shrink). */
+  private freeHighWater = -1;
+  /** InstancedMesh buffer length at bake time (draw `count` may shrink each frame). */
+  private allocatedInstanceCap = 0;
+  /** Consecutive stale GPU pending discards — pause kicks to avoid CPU+GPU thrash. */
+  private gpuStaleStreak = 0;
+  /**
+   * Sleep when stuck is invisible, detach is locked, and no free flecks are flying.
+   * Shipping sweat spends most frames here — skip bake/simulate/GPU kick entirely.
+   */
+  private sensingSleep = false;
+  /** Presents remaining where detach stays allowed after a gate pulse. */
+  private detachLatchPresents = 0;
+  /** Force same-frame CPU bake after waking (hit impact must not wait on GPU lag). */
+  private wakeCpuSensePresents = 0;
+  /** Accumulate dt across skipped dormant presents (half-rate tracking). */
+  private dormantAccumDt = 0;
+  private dormantSkipParity = 0;
+  private detachRng: { next: () => number } | null = null;
+  private detachRngSeed = -1;
   /** `simFrame` when the in-flight/pending bake was kicked (pose freeze time). */
   private pendingGpuKickFrame = -1;
   /** Monotonic simulate frame counter for pending age checks. */
@@ -187,7 +211,10 @@ export class WudaVertexCoatRuntime {
     if (this.meshes.length === 0 || !this.parent) return false;
     const count = Math.max(0, Math.floor(cfg.wudaParticleCount));
     const refillOn = !!cfg.wudaDetachInstantRefill;
-    const freeCap = Math.max(0, Math.floor(cfg.wudaFreePoolCapacity));
+    const freeCap = clampWudaFreePoolCapacity(
+      count,
+      Math.max(0, Math.floor(cfg.wudaFreePoolCapacity)),
+    );
     const instanceCap = resolveWudaInstanceCapacity(count, refillOn, freeCap);
     const stride = Math.max(1, Math.floor(cfg.wudaVertexStride || 1));
     const meshKey = this.meshes.map((m) => m.uuid).join(',');
@@ -204,7 +231,7 @@ export class WudaVertexCoatRuntime {
       this.instanced &&
       this.slots.length === count &&
       this.freePool.length === (refillOn ? freeCap : 0) &&
-      this.instanced.count === instanceCap &&
+      this.allocatedInstanceCap === instanceCap &&
       this.baker.isReady
     ) {
       return true;
@@ -214,6 +241,16 @@ export class WudaVertexCoatRuntime {
     this.baker.dispose();
     this.slots = [];
     this.freePool = [];
+    this.freeHighWater = -1;
+    this.allocatedInstanceCap = 0;
+    this.gpuStaleStreak = 0;
+    this.sensingSleep = false;
+    this.detachLatchPresents = 0;
+    this.wakeCpuSensePresents = 0;
+    this.dormantAccumDt = 0;
+    this.dormantSkipParity = 0;
+    this.detachRng = null;
+    this.detachRngSeed = -1;
     this.bakeKey = key;
     this.degradedLogged = false;
     this.bakeInFlight = null;
@@ -271,6 +308,7 @@ export class WudaVertexCoatRuntime {
     this.instanced = new THREE.InstancedMesh(geo, appearance.material, instanceCap);
     this.instanced.frustumCulled = false;
     this.instanced.count = instanceCap;
+    this.allocatedInstanceCap = instanceCap;
     this.instanced.name = 'WudaVertexCoatInstances';
     this.instanced.instanceColor = new THREE.InstancedBufferAttribute(
       new Float32Array(instanceCap * 3),
@@ -322,11 +360,30 @@ export class WudaVertexCoatRuntime {
       return;
     }
 
+    // Hitstun/active-hit gates are short; arm a present latch so sleep→seed→shed works.
+    this.detachLatchPresents = armWudaDetachLatch(
+      this.detachLatchPresents,
+      allowDetach,
+    );
+    const canDetach = this.detachLatchPresents > 0;
+
+    const drawStuck = cfg.wudaStuckOpacity > 1e-5;
+    const hasFlying = this.hasFlyingFlecks();
     const dt = clampWudaDeltaSec(
       wallDtSec,
       cfg.wudaMaxDeltaSec,
       cfg.timeScaleAnim || 1,
     );
+    // Dormant: keep body-surface history (idle→hit pose jump needs prevPos),
+    // but skip detach / draws / GPU kicks. Hard-clearing prevValid broke P2 shed.
+    if (!canDetach && !drawStuck && !hasFlying) {
+      this.trackStuckDormant(dt, cfg);
+      return;
+    }
+    if (this.sensingSleep) {
+      this.wakeSensingSleep();
+    }
+
     if (dt <= 0) return;
 
     this.simFrame++;
@@ -341,28 +398,28 @@ export class WudaVertexCoatRuntime {
       ? THREE.AdditiveBlending
       : THREE.NormalBlending;
 
-    // Opt-in same-frame CPU (no GPU simulate).
-    if (cfg.wudaBakeAwaitReadback === true) {
+    const forceCpuSense =
+      cfg.wudaBakeAwaitReadback === true ||
+      this.wakeCpuSensePresents > 0 ||
+      !this.baker.hasGpu;
+    if (this.wakeCpuSensePresents > 0) this.wakeCpuSensePresents--;
+
+    // Opt-in same-frame CPU, wake window, or no GPU.
+    if (forceCpuSense) {
       this.pendingGpuWorld = null;
       this.pendingGpuKickFrame = -1;
       this.baker.bakeCpuIntoCurr();
       this.lastBakeMs = this.baker.lastBakeMs;
-      this.simulateFromWorld(this.baker.getCurrWorld(), dt, cfg, allowDetach);
-      this.finishCoatStats(t0, cfg);
-      return;
-    }
-
-    if (!this.baker.hasGpu) {
-      this.baker.bakeCpuIntoCurr();
-      this.lastBakeMs = this.baker.lastBakeMs;
-      this.simulateFromWorld(this.baker.getCurrWorld(), dt, cfg, allowDetach);
+      this.simulateFromWorld(this.baker.getCurrWorld(), dt, cfg, canDetach);
+      if (this.detachLatchPresents > 0) this.detachLatchPresents--;
       this.finishCoatStats(t0, cfg);
       return;
     }
 
     this.commitGpuStable(cfg);
     this.lastBakeMs = this.baker.lastBakeMs;
-    this.simulateFromWorld(this.baker.getCurrWorld(), dt, cfg, allowDetach);
+    this.simulateFromWorld(this.baker.getCurrWorld(), dt, cfg, canDetach);
+    if (this.detachLatchPresents > 0) this.detachLatchPresents--;
     this.kickGpuBakeForNextFrame();
     this.finishCoatStats(t0, cfg);
   }
@@ -402,16 +459,24 @@ export class WudaVertexCoatRuntime {
     if (pending && this.baker.hasGpu) {
       if (!isWudaGpuPendingFresh(this.simFrame, kickFrame)) {
         this.stalePendingDiscardCount++;
+        this.gpuStaleStreak++;
         if (cfg.wudaShowBakeStats) {
           const age = kickFrame >= 0 ? this.simFrame - kickFrame : -1;
           console.info(
             `[WudaVertexCoat] discard stale GPU pending age=${age} frames (hold; discarded=${this.stalePendingDiscardCount})`,
           );
         }
+        // Too slow to finish within the lag window: stop kicking GPU (avoid
+        // paying CPU simulate + abandoned GPU compute/readback every frame).
+        if (this.gpuStaleStreak >= 3) {
+          this.fallbackCpuDegraded('GPU pending always stale');
+          return;
+        }
         if (this.gpuStreamActive || this.baker.hasBakedFrame) return;
         this.baker.bakeCpuIntoCurr();
         return;
       }
+      this.gpuStaleStreak = 0;
       if (this.baker.gpuWorldLooksDegenerate(pending)) {
         this.fallbackCpuDegraded('degenerate GPU pending');
         return;
@@ -515,6 +580,151 @@ export class WudaVertexCoatRuntime {
     }
   }
 
+  private hasFlyingFlecks(): boolean {
+    for (const p of this.freePool) {
+      if (p.active) return true;
+    }
+    for (const s of this.slots) {
+      if (s.state === 'free' && s.life > 0) return true;
+    }
+    return false;
+  }
+
+  private hasStuckHistory(): boolean {
+    for (const s of this.slots) {
+      if (
+        (s.state === 'stuck' || s.state === 'refilling') &&
+        s.prevValid
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Invisible + detach-locked: keep body-surface history for idle→hit shed.
+   * Half-rate bake (every other present) once history exists — cuts idle CPU.
+   */
+  private trackStuckDormant(dt: number, cfg: WudaCoatCfgShim): void {
+    if (this.instanced) {
+      this.instanced.count = 0;
+      this.instanced.visible = false;
+    }
+    this.pendingGpuWorld = null;
+    this.pendingGpuKickFrame = -1;
+    this.bakeInFlight = null;
+    this.sensingSleep = true;
+    this.dormantAccumDt += Math.max(0, dt);
+    if (this.dormantAccumDt <= 0) {
+      this.lastStats = {
+        ...this.lastStats,
+        stuck: this.slots.length,
+        free: 0,
+        dead: 0,
+        refilling: 0,
+        coatMs: 0,
+      };
+      return;
+    }
+
+    this.dormantSkipParity ^= 1;
+    // Skip alternate presents only after we already have a valid surface history.
+    if (this.dormantSkipParity === 0 && this.hasStuckHistory()) {
+      this.lastStats = {
+        ...this.lastStats,
+        stuck: this.slots.length,
+        free: 0,
+        dead: 0,
+        refilling: 0,
+        coatMs: 0,
+      };
+      return;
+    }
+
+    const stepDt = this.dormantAccumDt;
+    this.dormantAccumDt = 0;
+    const t0 =
+      typeof performance !== 'undefined' ? performance.now() : Date.now();
+    this.baker.bakeCpuIntoCurr();
+    this.lastBakeMs = this.baker.lastBakeMs;
+    const world = this.baker.getCurrWorld();
+    let stuck = 0;
+    let refilling = 0;
+    for (let i = 0; i < this.slots.length; i++) {
+      const s = this.slots[i]!;
+      if (s.state === 'refilling') {
+        s.refillIn = advanceRefillTimer(s.refillIn, stepDt);
+        if (s.refillIn > 0) {
+          refilling++;
+          continue;
+        }
+        s.state = 'stuck';
+        s.vel.set(0, 0, 0);
+        s.prevVel.set(0, 0, 0);
+        s.life = 0;
+      }
+      if (s.state !== 'stuck') continue;
+      _tmpPos.set(world[i * 3]!, world[i * 3 + 1]!, world[i * 3 + 2]!);
+      if (
+        !Number.isFinite(_tmpPos.x) ||
+        !Number.isFinite(_tmpPos.y) ||
+        !Number.isFinite(_tmpPos.z)
+      ) {
+        stuck++;
+        continue;
+      }
+      if (!s.prevValid) {
+        s.pos.copy(_tmpPos);
+        s.prevPos.copy(_tmpPos);
+        s.vel.set(0, 0, 0);
+        s.prevVel.set(0, 0, 0);
+        s.prevValid = true;
+        stuck++;
+        continue;
+      }
+      s.prevPos.copy(s.pos);
+      s.pos.copy(_tmpPos);
+      computeSurfaceVelocity(s.pos, s.prevPos, stepDt, _vel);
+      s.prevVel.copy(s.vel);
+      s.vel.copy(_vel);
+      stuck++;
+    }
+    this.baker.commitPrev();
+    this.lastStats = {
+      ...this.lastStats,
+      stuck,
+      free: 0,
+      dead: 0,
+      refilling,
+      coatMs:
+        (typeof performance !== 'undefined' ? performance.now() : Date.now()) -
+        t0,
+    };
+  }
+
+  private wakeSensingSleep(): void {
+    this.sensingSleep = false;
+    this.dormantAccumDt = 0;
+    this.dormantSkipParity = 0;
+    // Do NOT clear prevValid — dormant tracking kept the idle surface history
+    // that impact detach needs (pose jump into hitstun react).
+    this.wakeCpuSensePresents = Math.max(
+      this.wakeCpuSensePresents,
+      WUDA_WAKE_CPU_SENSE_PRESENTS,
+    );
+    if (this.instanced) this.instanced.visible = true;
+  }
+
+  private rngForDetach(cfg: WudaCoatCfgShim): { next: () => number } {
+    const seed = (cfg.wudaSeed ^ (this.slots.length * 2654435761)) >>> 0;
+    if (!this.detachRng || this.detachRngSeed !== seed) {
+      this.detachRngSeed = seed;
+      this.detachRng = createMulberry32(seed);
+    }
+    return this.detachRng;
+  }
+
   private simulateFromWorld(
     world: Float32Array,
     dt: number,
@@ -525,11 +735,11 @@ export class WudaVertexCoatRuntime {
     if (_gravity.lengthSq() > 1e-8) _gravity.normalize();
     else _gravity.set(0, -1, 0);
 
-    const rng = createMulberry32(
-      (cfg.wudaSeed ^ (this.slots.length * 2654435761)) >>> 0,
-    );
+    const rng = this.rngForDetach(cfg);
     const refillOn = !!cfg.wudaDetachInstantRefill;
     const refillDelay = Math.max(0, cfg.wudaDetachRefillDelay);
+    // Shipping sweat: stuckOpacity=0 — sense only, skip invisible instance writes.
+    const drawStuck = cfg.wudaStuckOpacity > 1e-5;
 
     let stuck = 0;
     let free = 0;
@@ -556,7 +766,7 @@ export class WudaVertexCoatRuntime {
         s.refillIn = advanceRefillTimer(s.refillIn, dt);
         if (s.refillIn > 0) {
           refilling++;
-          this.writeInstance(i, s.pos, 0, cfg, true);
+          if (drawStuck) this.writeInstance(i, s.pos, 0, cfg, true);
           continue;
         }
         s.state = 'stuck';
@@ -574,7 +784,9 @@ export class WudaVertexCoatRuntime {
           !Number.isFinite(_tmpPos.z)
         ) {
           stuck++;
-          this.writeInstance(i, s.pos, cfg.wudaStuckSize, cfg, true);
+          if (drawStuck) {
+            this.writeInstance(i, s.pos, cfg.wudaStuckSize, cfg, true);
+          }
           continue;
         }
         s.pos.copy(_tmpPos);
@@ -585,7 +797,9 @@ export class WudaVertexCoatRuntime {
           s.prevVel.set(0, 0, 0);
           s.prevValid = true;
           stuck++;
-          this.writeInstance(i, s.pos, cfg.wudaStuckSize, cfg, true);
+          if (drawStuck) {
+            this.writeInstance(i, s.pos, cfg.wudaStuckSize, cfg, true);
+          }
           continue;
         }
 
@@ -655,7 +869,9 @@ export class WudaVertexCoatRuntime {
               s.prevVel.set(0, 0, 0);
               s.life = 0;
               stuck++;
-              this.writeInstance(i, s.pos, cfg.wudaStuckSize, cfg, true);
+              if (drawStuck) {
+                this.writeInstance(i, s.pos, cfg.wudaStuckSize, cfg, true);
+              }
             } else {
               s.state = 'refilling';
               s.refillIn = refillDelay;
@@ -663,7 +879,7 @@ export class WudaVertexCoatRuntime {
               s.prevVel.set(0, 0, 0);
               s.life = 0;
               refilling++;
-              this.writeInstance(i, s.pos, 0, cfg, true);
+              if (drawStuck) this.writeInstance(i, s.pos, 0, cfg, true);
             }
           } else {
             s.state = 'free';
@@ -685,7 +901,9 @@ export class WudaVertexCoatRuntime {
           }
         } else {
           stuck++;
-          this.writeInstance(i, s.pos, cfg.wudaStuckSize, cfg, true);
+          if (drawStuck) {
+            this.writeInstance(i, s.pos, cfg.wudaStuckSize, cfg, true);
+          }
         }
         continue;
       }
@@ -699,7 +917,9 @@ export class WudaVertexCoatRuntime {
           s.prevVel.set(0, 0, 0);
           stuck++;
           s.pos.set(world[i * 3]!, world[i * 3 + 1]!, world[i * 3 + 2]!);
-          this.writeInstance(i, s.pos, cfg.wudaStuckSize, cfg, true);
+          if (drawStuck) {
+            this.writeInstance(i, s.pos, cfg.wudaStuckSize, cfg, true);
+          }
         } else {
           dead++;
           this.writeInstance(i, s.pos, 0, cfg, false);
@@ -733,15 +953,19 @@ export class WudaVertexCoatRuntime {
       );
     }
 
-    // Count free-pool actives after possible same-frame spawns; write instances.
+    // Free-pool: write actives only; clear vacated slots within prior high-water.
     const coatCount = this.slots.length;
+    let high = -1;
     for (let fi = 0; fi < this.freePool.length; fi++) {
       const p = this.freePool[fi]!;
       const instIdx = coatCount + fi;
       if (!p.active) {
-        this.writeInstance(instIdx, p.pos, 0, cfg, false);
+        if (fi <= this.freeHighWater) {
+          this.writeInstance(instIdx, p.pos, 0, cfg, false);
+        }
         continue;
       }
+      high = fi;
       free++;
       const lifeT = Math.max(
         0,
@@ -757,18 +981,29 @@ export class WudaVertexCoatRuntime {
         { aspect: p.aspect, spin: p.spin },
       );
     }
+    this.freeHighWater = high;
 
     this.baker.commitPrev();
 
-    this.instanced!.instanceMatrix.needsUpdate = true;
-    if (this.instanced!.instanceColor) {
-      this.instanced!.instanceColor.needsUpdate = true;
+    // Shrink draw range: invisible stuck + empty free pool → count 0.
+    if (!this.instanced) return;
+    if (high >= 0) {
+      this.instanced.count = coatCount + high + 1;
+    } else if (drawStuck) {
+      this.instanced.count = coatCount;
+    } else {
+      this.instanced.count = 0;
+    }
+
+    this.instanced.instanceMatrix.needsUpdate = true;
+    if (this.instanced.instanceColor) {
+      this.instanced.instanceColor.needsUpdate = true;
     }
     if (this.opacityAttr) this.opacityAttr.needsUpdate = true;
-    const opacityMat = this.instanced!.material as MeshBasicNodeMaterial;
+    const opacityMat = this.instanced.material as MeshBasicNodeMaterial;
     opacityMat.opacity = 1;
     opacityMat.transparent = true;
-    this.instanced!.visible = true;
+    this.instanced.visible = true;
     this.lastStats = {
       ...this.lastStats,
       stuck,

@@ -14,7 +14,9 @@ import {
   isAttackActiveHitFrame,
   isHitstunDetachPulse,
   isHitstunFrame,
+  armWudaDetachLatch,
   resolveWudaAllowDetach,
+  WUDA_DETACH_LATCH_PRESENTS,
   shouldDetach,
   shouldDetachWithLock,
 } from '../../src/render/wudaParticle/wudaCoatMath';
@@ -72,7 +74,7 @@ describe('wuda CONFIG defaults', () => {
       expect(layer.detachOnlyOnHitstun).toBe(false);
       expect(layer.detachInstantRefill).toBe(false);
       expect(layer.detachRefillDelay).toBeCloseTo(0.05);
-      expect(layer.freePoolCapacity).toBe(1024);
+      expect(layer.freePoolCapacity).toBe(128);
       expect(layer.regionWeightHead).toBeCloseTo(0.1);
       expect(layer.regionWeightTorso).toBeCloseTo(0.4);
       expect(layer.regionWeightLimbRoot).toBeCloseTo(0.25);
@@ -383,13 +385,58 @@ describe('wudaCoatMath', () => {
       resolveWudaAllowDetach(neither, hitstunMid, { inHitstop: true }),
     ).toBe(false);
   });
+
+  it('armWudaDetachLatch keeps the gate open after a short pulse', () => {
+    expect(WUDA_DETACH_LATCH_PRESENTS).toBeGreaterThanOrEqual(3);
+    let latch = 0;
+    // Idle: stays 0
+    latch = armWudaDetachLatch(latch, false);
+    expect(latch).toBe(0);
+    // Pulse present arms latch
+    latch = armWudaDetachLatch(latch, true);
+    expect(latch).toBe(WUDA_DETACH_LATCH_PRESENTS);
+    // Later presents with gate closed still keep remaining latch
+    latch = armWudaDetachLatch(latch, false);
+    expect(latch).toBe(WUDA_DETACH_LATCH_PRESENTS);
+    // Runtime decrements after simulate; emulate one present used
+    latch -= 1;
+    latch = armWudaDetachLatch(latch, false);
+    expect(latch).toBe(WUDA_DETACH_LATCH_PRESENTS - 1);
+  });
+
+  it('idle→hit pose jump exceeds shipping detachSpeed when prev history is kept', () => {
+    // Dormant tracking must keep prevPos; clearing it made P2 shed almost never.
+    const prev = new THREE.Vector3(0, 1.2, 0);
+    const curr = new THREE.Vector3(0.08, 1.15, 0.02); // ~react pose nudge
+    const out = new THREE.Vector3();
+    const dt = 1 / 60;
+    computeSurfaceVelocity(curr, prev, dt, out);
+    expect(out.length()).toBeGreaterThan(1); // shipping detachSpeed
+    expect(
+      shouldDetachWithLock(
+        {
+          speed: out.length(),
+          prevSpeed: 0,
+          accelMag: out.length() / dt,
+          detachSpeed: 1,
+          detachAccel: 100,
+          detachSpeedDrop: 10,
+          detachSpeedDropMinPrev: 10.9,
+        },
+        true,
+      ),
+    ).toBe(true);
+  });
 });
 
 describe('wudaFreePool', () => {
   it('resolves instance capacity with refill off/on', () => {
     expect(resolveWudaInstanceCapacity(512, false, 1024)).toBe(512);
+    // Soft-cap: max(128, stuck*2) — 512*2=1024, so 1024 request stays.
     expect(resolveWudaInstanceCapacity(512, true, 1024)).toBe(1536);
     expect(resolveWudaInstanceCapacity(512, true, 0)).toBe(512);
+    // Combat-sized coat: oversized free pool clamps to 128.
+    expect(resolveWudaInstanceCapacity(64, true, 1024)).toBe(192);
   });
 
   it('spawns into inactive slots then replaces shortest life when full', () => {

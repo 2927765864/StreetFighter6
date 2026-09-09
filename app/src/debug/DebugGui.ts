@@ -285,6 +285,7 @@ export function createDebugGui(
   light.add(cfg, 'lightOrbitPipHeight', 80, 540, 1).name('预览窗高度');
   light.add(cfg, 'shadowMapEnabled').name('启用阴影');
   light.add(cfg, 'shadowMapSize', 256, 4096, 256).name('阴影贴图边长');
+  light.add(cfg, 'maxPixelRatio', 0.5, 2, 0.25).name('像素比上限');
   light.add(cfg, 'shadowCameraExtent', 5, 80, 0.5).name('阴影范围');
   light.add(cfg, 'shadowCameraNear', 0.01, 10, 0.01).name('阴影近裁');
   light.add(cfg, 'shadowCameraFar', 10, 200, 1).name('阴影远裁');

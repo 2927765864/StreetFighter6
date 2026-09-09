@@ -33,6 +33,20 @@ export function createWudaFreePool(capacity: number): WudaFreePoolParticle[] {
   return out;
 }
 
+/**
+ * Soft-cap free-pool size for combat. Presets occasionally set 1024, but
+ * sweat flecks live ~0.2s — peaks are far smaller. Keeps instance writes bounded.
+ */
+export function clampWudaFreePoolCapacity(
+  stuckCount: number,
+  freePoolCapacity: number,
+): number {
+  const stuck = Math.max(0, Math.floor(stuckCount));
+  const requested = Math.max(0, Math.floor(freePoolCapacity));
+  const softCap = Math.max(128, stuck * 2);
+  return Math.min(requested, softCap);
+}
+
 /** Instance capacity = stuckCount (+ free pool when refill mode on). */
 export function resolveWudaInstanceCapacity(
   stuckCount: number,
@@ -41,7 +55,7 @@ export function resolveWudaInstanceCapacity(
 ): number {
   const stuck = Math.max(0, Math.floor(stuckCount));
   if (!refillOn) return stuck;
-  return stuck + Math.max(0, Math.floor(freePoolCapacity));
+  return stuck + clampWudaFreePoolCapacity(stuck, freePoolCapacity);
 }
 
 /**

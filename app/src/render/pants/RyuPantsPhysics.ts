@@ -86,6 +86,7 @@ export class RyuPantsPhysics {
   private clampCountSession = 0;
   private lastEvent = '';
   private lastHealth: PantsHealthSnapshot | null = null;
+  private lastHealthSampleMs = -Infinity;
   private fighterId: PantsHealthSnapshot['fighterId'] = 'unknown';
 
   get isBound(): boolean {
@@ -251,6 +252,7 @@ export class RyuPantsPhysics {
     this.clampCountSession = 0;
     this.lastEvent = '';
     this.lastHealth = null;
+    this.lastHealthSampleMs = -Infinity;
     resetPantsParticles(this.particles);
     if (this.rootTrack) {
       this.rootTrack.getWorldPosition(this.prevRootPos);
@@ -276,26 +278,7 @@ export class RyuPantsPhysics {
   }): void {
     const { cfg, jumpPhase } = args;
     if (!cfg.pantsPhysicsEnabled || !this.bound) {
-      this.lastHealth = samplePantsHealth({
-        enabled: cfg.pantsPhysicsEnabled,
-        bound: this.bound,
-        fighterId: this.fighterId,
-        particles: this.particles,
-        constraints: this.constraints,
-        warnRatio: cfg.pantsHealthWarnRatio,
-        abnormalThreshold: cfg.pantsMaxSeparation,
-        warpCountSession: this.warpCountSession,
-        clampCountSession: this.clampCountSession,
-        lastEvent: this.lastEvent,
-        params: {
-          pantsHardness: cfg.pantsHardness,
-          pantsGravityPower: cfg.pantsGravityPower,
-          pantsResistance: cfg.pantsResistance,
-          pantsMaxSeparation: cfg.pantsMaxSeparation,
-          pantsRootSlideLimit: cfg.pantsRootSlideLimit,
-          pantsRootRotateLimitDeg: cfg.pantsRootRotateLimitDeg,
-        },
-      });
+      this.maybeSampleHealth(cfg, performance.now());
       return;
     }
 
@@ -380,8 +363,9 @@ export class RyuPantsPhysics {
       },
     };
 
-    // Anim targets from bind-local × parent (immune to last-frame physics write).
-    capturePantsAnimTargets(this.particles);
+    // One tree refresh, then capture without per-particle parent walks.
+    this.rootTrack?.updateMatrixWorld(true);
+    capturePantsAnimTargets(this.particles, { skipParentUpdate: true });
 
     // Recover from a previous explode before integrating further.
     if (pantsParticlesExceedSeparation(this.particles, cfg.pantsMaxSeparation)) {
@@ -436,28 +420,9 @@ export class RyuPantsPhysics {
       this.clampCountSession++;
       this.lastEvent = 'separation-clamp';
     }
-    writePantsBones(this.particles);
-
-    this.lastHealth = samplePantsHealth({
-      enabled: cfg.pantsPhysicsEnabled,
-      bound: this.bound,
-      fighterId: this.fighterId,
-      particles: this.particles,
-      constraints: this.constraints,
-      warnRatio: cfg.pantsHealthWarnRatio,
-      abnormalThreshold: cfg.pantsMaxSeparation,
-      warpCountSession: this.warpCountSession,
-      clampCountSession: this.clampCountSession,
-      lastEvent: this.lastEvent,
-      params: {
-        pantsHardness: cfg.pantsHardness,
-        pantsGravityPower: cfg.pantsGravityPower,
-        pantsResistance: cfg.pantsResistance,
-        pantsMaxSeparation: cfg.pantsMaxSeparation,
-        pantsRootSlideLimit: cfg.pantsRootSlideLimit,
-        pantsRootRotateLimitDeg: cfg.pantsRootRotateLimitDeg,
-      },
-    });
+    // Parents unchanged by solve; reuse matrices from the capture refresh.
+    writePantsBones(this.particles, { skipParentUpdate: true });
+    this.maybeSampleHealth(cfg, performance.now());
 
     this.refreshConstraintHelper(cfg);
   }
@@ -493,6 +458,44 @@ export class RyuPantsPhysics {
     this.rootTrack = null;
     this.hasRootPrev = false;
     this.hasFacingPrev = false;
+    this.lastHealth = null;
+    this.lastHealthSampleMs = -Infinity;
+  }
+
+  private maybeSampleHealth(cfg: MutableSimConfig, nowMs: number): void {
+    const want =
+      cfg.pantsHealthHudEnabled ||
+      cfg.pantsHealthReportEnabled ||
+      cfg.pantsHealthAutoShowConstraintsOnAbnormal;
+    if (!want) return;
+    const intervalMs = Math.max(50, cfg.pantsHealthHudMinIntervalMs);
+    if (
+      this.lastHealth &&
+      nowMs - this.lastHealthSampleMs < intervalMs
+    ) {
+      return;
+    }
+    this.lastHealthSampleMs = nowMs;
+    this.lastHealth = samplePantsHealth({
+      enabled: cfg.pantsPhysicsEnabled,
+      bound: this.bound,
+      fighterId: this.fighterId,
+      particles: this.particles,
+      constraints: this.constraints,
+      warnRatio: cfg.pantsHealthWarnRatio,
+      abnormalThreshold: cfg.pantsMaxSeparation,
+      warpCountSession: this.warpCountSession,
+      clampCountSession: this.clampCountSession,
+      lastEvent: this.lastEvent,
+      params: {
+        pantsHardness: cfg.pantsHardness,
+        pantsGravityPower: cfg.pantsGravityPower,
+        pantsResistance: cfg.pantsResistance,
+        pantsMaxSeparation: cfg.pantsMaxSeparation,
+        pantsRootSlideLimit: cfg.pantsRootSlideLimit,
+        pantsRootRotateLimitDeg: cfg.pantsRootRotateLimitDeg,
+      },
+    });
   }
 
   private buildColliders(

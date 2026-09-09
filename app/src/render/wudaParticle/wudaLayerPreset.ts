@@ -155,7 +155,7 @@ const DEFAULT_LAYER_PARAMS = {
   respawnStuck: false,
   detachInstantRefill: false,
   detachRefillDelay: 0.05,
-  freePoolCapacity: 1024,
+  freePoolCapacity: 128,
   showDebug: false,
   alsoPlumeBurst: false,
   detachOnlyOnActiveHit: false,

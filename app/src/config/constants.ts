@@ -110,6 +110,11 @@ export type MutableSimConfig = {
   lightUseDynamicLighting: boolean;
   shadowMapEnabled: boolean;
   shadowMapSize: number;
+  /**
+   * Cap on `devicePixelRatio` for the fight canvas (Retina often 2).
+   * Lower values cut fill-rate cost; 1.5 is a good performance default.
+   */
+  maxPixelRatio: number;
   shadowCameraExtent: number;
   shadowCameraNear: number;
   shadowCameraFar: number;
@@ -569,7 +574,8 @@ export function createDefaultSimConfig(): MutableSimConfig {
     lightMaxCount: 30,
     lightUseDynamicLighting: true,
     shadowMapEnabled: true,
-    shadowMapSize: 2048,
+    shadowMapSize: 512,
+    maxPixelRatio: 1,
     shadowCameraExtent: 20,
     shadowCameraNear: 0.5,
     shadowCameraFar: 80,

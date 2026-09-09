@@ -69,6 +69,7 @@ import { resolveWudaAllowDetach } from './wudaParticle/wudaCoatMath';
 import {
   buildWudaCoatCfgShim,
   listActiveWudaLayersForSide,
+  type WudaLayerPreset,
 } from './wudaParticle/wudaLayerPreset';
 import type { WebGPURenderer } from 'three/webgpu';
 import {
@@ -203,6 +204,11 @@ export class FighterView {
   private wudaCoats = new Map<
     string,
     WudaCoatRuntime | WudaVertexCoatRuntime
+  >();
+  /** Reuse shim objects — buildWudaCoatCfgShim allocates ~40 fields per call. */
+  private wudaShimByLayerId = new Map<
+    string,
+    { layer: WudaLayerPreset; shim: ReturnType<typeof buildWudaCoatCfgShim> }
   >();
   private wudaCoatMeshes: THREE.SkinnedMesh[] = [];
   private wudaModelRoot: THREE.Object3D | null = null;
@@ -1035,6 +1041,25 @@ export class FighterView {
       coat.dispose();
     }
     this.wudaCoats.clear();
+    this.wudaShimByLayerId.clear();
+  }
+
+  private shimForWudaLayer(
+    cfg: MutableSimConfig,
+    layer: WudaLayerPreset,
+  ): ReturnType<typeof buildWudaCoatCfgShim> {
+    const cached = this.wudaShimByLayerId.get(layer.id);
+    if (cached && cached.layer === layer) {
+      cached.shim.wudaEnabled = !!cfg.wudaEnabled && !!layer.enabled;
+      cached.shim.timeScaleAnim = cfg.timeScaleAnim || 1;
+      cached.shim.wudaAttachMode = cfg.wudaAttachMode;
+      cached.shim.wudaCoverMode = cfg.wudaCoverMode;
+      cached.shim.wudaCoverMeshMinVerts = cfg.wudaCoverMeshMinVerts;
+      return cached.shim;
+    }
+    const shim = buildWudaCoatCfgShim(cfg, layer);
+    this.wudaShimByLayerId.set(layer.id, { layer, shim });
+    return shim;
   }
 
   private createWudaCoatForMode(
@@ -1152,7 +1177,7 @@ export class FighterView {
         coat.setRenderer(this.wudaRenderer);
       }
       this.ensureWudaCoatCamera(coat);
-      const shim = buildWudaCoatCfgShim(cfg, layer);
+      const shim = this.shimForWudaLayer(cfg, layer);
       const allowDetach = resolveWudaAllowDetach(shim, fighter, {
         inHitstop: this.wudaInHitstop,
       });
