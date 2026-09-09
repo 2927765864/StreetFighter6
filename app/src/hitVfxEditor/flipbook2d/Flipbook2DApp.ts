@@ -1,16 +1,22 @@
 import { BoxEditorPlayback } from '../../boxEditor/playback/BoxEditorPlayback';
 import { attachDragScrub, attachDragScrubAll } from '../../debug/dragScrub';
 import { FLIPBOOK_SHEETS } from './catalog';
-import { cloneRecipe, DEFAULT_FLIPBOOK_RECIPE, findLayer } from './defaults';
+import {
+  defaultFlipbookBank,
+  findLayer,
+  FLIPBOOK_STRENGTH_LABEL,
+} from './defaults';
 import './flipbook2d.css';
 import { parseBlend } from './layerLook';
-import { loadFlipbookRecipe, saveFlipbookRecipe } from './persist';
+import { loadFlipbookState, saveFlipbookBank } from './persist';
 import { Flipbook2DCombat } from './Flipbook2DCombat';
 import {
   layerEndFrame,
   type FlipbookLayer,
   type FlipbookLayerId,
   type FlipbookRecipe,
+  type FlipbookRecipeBank,
+  type FlipbookStrength,
 } from './types';
 import type { HitVfxTriggerArgs } from '../../render/hitVfx/hitVfxTypes';
 import { CONFIG } from '../../config/store';
@@ -21,6 +27,7 @@ const TRACK_COLORS: Record<FlipbookLayerId, string> = {
   E3_ring_smoke: '#8aa0b8',
   E4_wide_short_smoke: '#6a9bb8',
   E5_narrow_long_smoke: '#7ab8a0',
+  E6_narrow_long_smoke_rtl: '#9ab07a',
 };
 
 export type Flipbook2DHost = {
@@ -38,7 +45,8 @@ export type Flipbook2DHost = {
 
 export class Flipbook2DApp {
   private host: Flipbook2DHost;
-  private recipe: FlipbookRecipe;
+  private bank: FlipbookRecipeBank;
+  private strength: FlipbookStrength;
   private playback = new BoxEditorPlayback();
   private selectedId: FlipbookLayerId = 'E1_core_flash';
   private timelineWrap: HTMLElement;
@@ -49,9 +57,15 @@ export class Flipbook2DApp {
   private active = false;
   private suppressInsp = false;
 
+  private get recipe(): FlipbookRecipe {
+    return this.bank[this.strength];
+  }
+
   constructor(host: Flipbook2DHost) {
     this.host = host;
-    this.recipe = loadFlipbookRecipe();
+    const loaded = loadFlipbookState();
+    this.bank = loaded.recipes;
+    this.strength = loaded.selected;
     this.playback.playbackFps = this.recipe.fps;
     this.playback.loop = true;
     this.playback.setLength(this.recipe.length);
@@ -62,6 +76,11 @@ export class Flipbook2DApp {
     this.timelineWrap.innerHTML = `
       <div class="fb2d-timeline-meta">
         <span data-fb-frame>第 0 帧</span>
+        <span class="fb2d-strength" data-fb-strength>
+          <button type="button" data-fb-str="L">轻</button>
+          <button type="button" data-fb-str="M">中</button>
+          <button type="button" data-fb-str="H">重</button>
+        </span>
         <button type="button" data-fb-act="play">播放</button>
         <button type="button" data-fb-act="pause">暂停</button>
         <button type="button" data-fb-act="prev">上一帧</button>
@@ -69,7 +88,7 @@ export class Flipbook2DApp {
         <button type="button" data-fb-act="loop" class="is-active">循环</button>
         <label>fps <input type="number" data-fb-fps min="1" max="60" step="1" style="width:56px" /></label>
         <label>总帧 <input type="number" data-fb-len min="1" max="120" step="1" style="width:56px" /></label>
-        <button type="button" data-fb-act="reset">恢复默认配方</button>
+        <button type="button" data-fb-act="reset">恢复本力度默认</button>
       </div>
       <div class="fb2d-timeline" data-fb-timeline>
         <div class="fb2d-playhead" data-fb-playhead></div>
@@ -97,9 +116,14 @@ export class Flipbook2DApp {
     this.host.appRoot.classList.toggle('hvfx-mode-2d', on);
     const treeHead = this.host.appRoot.querySelector('#hvfx-tree-pane .hvfx-pane-header');
     const inspHead = this.host.appRoot.querySelector('#hvfx-inspector-pane .hvfx-pane-header');
-    if (treeHead) treeHead.textContent = on ? '2D 层级（上=更靠前）' : '配方 / 分组 / 元素';
+    if (treeHead) {
+      treeHead.textContent = on
+        ? `2D 层级 · ${FLIPBOOK_STRENGTH_LABEL[this.strength]}（上=更靠前）`
+        : '配方 / 分组 / 元素';
+    }
     if (inspHead) inspHead.textContent = on ? '2D 层参数' : '检查器';
     if (on) {
+      this.setStrength(CONFIG.hitVfxPreviewStrength, { persist: false, syncToolbar: false });
       this.playback.playbackFps = this.recipe.fps;
       this.playback.setLength(this.recipe.length);
       this.refreshTree();
@@ -116,7 +140,7 @@ export class Flipbook2DApp {
     if (!this.active || !this.host.world) return;
     const args: HitVfxTriggerArgs = {
       kind: CONFIG.hitVfxPreviewKind,
-      strength: CONFIG.hitVfxPreviewStrength,
+      strength: this.strength,
       height: CONFIG.hitVfxPreviewHeight,
       x: 0,
       // Defender facing -1 → unmirrored authored sheet (attack from left).
@@ -129,8 +153,39 @@ export class Flipbook2DApp {
     );
   }
 
+  setStrength(
+    strength: FlipbookStrength,
+    opts: { persist?: boolean; syncToolbar?: boolean } = {},
+  ): void {
+    if (strength !== 'L' && strength !== 'M' && strength !== 'H') return;
+    const persist = opts.persist !== false;
+    const syncToolbar = opts.syncToolbar !== false;
+    const changed = this.strength !== strength;
+    if (changed) {
+      this.strength = strength;
+      this.playback.playbackFps = this.recipe.fps;
+      this.playback.setLength(this.recipe.length);
+    }
+    if (syncToolbar) {
+      CONFIG.hitVfxPreviewStrength = strength;
+      const sel = this.host.appRoot.querySelector(
+        '#hvfx-strength',
+      ) as HTMLSelectElement | null;
+      if (sel && sel.value !== strength) sel.value = strength;
+    }
+    if (persist) this.persist();
+    this.paintStrengthButtons();
+    if (this.active && changed) this.refreshAll();
+  }
+
   private persist(): void {
-    saveFlipbookRecipe(this.recipe);
+    saveFlipbookBank(this.bank, this.strength);
+  }
+
+  private paintStrengthButtons(): void {
+    this.timelineWrap.querySelectorAll<HTMLButtonElement>('[data-fb-str]').forEach((btn) => {
+      btn.classList.toggle('is-active', btn.dataset.fbStr === this.strength);
+    });
   }
 
   private onPlayhead(): void {
@@ -141,6 +196,12 @@ export class Flipbook2DApp {
 
   private bindChrome(): void {
     this.timelineWrap.addEventListener('click', (e) => {
+      const strBtn = (e.target as HTMLElement).closest('button[data-fb-str]');
+      if (strBtn instanceof HTMLButtonElement) {
+        const s = strBtn.dataset.fbStr as FlipbookStrength;
+        this.setStrength(s);
+        return;
+      }
       const btn = (e.target as HTMLElement).closest('button[data-fb-act]');
       if (!(btn instanceof HTMLButtonElement)) return;
       const act = btn.dataset.fbAct;
@@ -153,13 +214,14 @@ export class Flipbook2DApp {
         btn.classList.toggle('is-active', this.playback.loop);
       }
       if (act === 'reset') {
-        this.recipe = cloneRecipe(DEFAULT_FLIPBOOK_RECIPE);
+        this.bank[this.strength] = defaultFlipbookBank()[this.strength];
         this.playback.setLength(this.recipe.length);
         this.playback.playbackFps = this.recipe.fps;
         this.persist();
         this.refreshAll();
       }
     });
+    this.paintStrengthButtons();
     const fps = this.timelineWrap.querySelector('[data-fb-fps]') as HTMLInputElement;
     const len = this.timelineWrap.querySelector('[data-fb-len]') as HTMLInputElement;
     fps.value = String(this.recipe.fps);
@@ -255,6 +317,10 @@ export class Flipbook2DApp {
   }
 
   private refreshAll(): void {
+    const treeHead = this.host.appRoot.querySelector('#hvfx-tree-pane .hvfx-pane-header');
+    if (this.active && treeHead) {
+      treeHead.textContent = `2D 层级 · ${FLIPBOOK_STRENGTH_LABEL[this.strength]}（上=更靠前）`;
+    }
     this.refreshTree();
     this.refreshInspector();
     this.refreshTimeline();

@@ -81,7 +81,7 @@ export function pickAttackLimbSide(
 export const LIMB_IMPULSE_LOOKBACK = 5;
 /** 5LP / 2LP: contact + 1 present before it (one Δt). */
 export const LIMB_IMPULSE_LOOKBACK_SHORT = 2;
-/** 5MP: contact + 2 presents (two Δt). */
+/** 5MP / 5MK / 6HK: contact + 2 presents (two Δt). */
 export const LIMB_IMPULSE_LOOKBACK_5MP = 3;
 
 export function contactMoveToken(moveId: string, hitGroup = 0): string {
@@ -101,7 +101,9 @@ export function limbImpulseSampleCount(
 ): number {
   const tok = contactMoveToken(moveId, hitGroup);
   if (tok === '5lp' || tok === '2lp') return LIMB_IMPULSE_LOOKBACK_SHORT;
-  if (tok === '5mp') return LIMB_IMPULSE_LOOKBACK_5MP;
+  if (tok === '5mp' || tok === '5mk' || tok === '6hk') {
+    return LIMB_IMPULSE_LOOKBACK_5MP;
+  }
   return LIMB_IMPULSE_LOOKBACK;
 }
 

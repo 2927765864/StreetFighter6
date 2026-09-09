@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
 import {
+  bindShotLayers,
+  editorShotNeedsRebuild,
   flipbookFacingScaleX,
   flipbookSpinRad,
   layerLocalOffset,
 } from '../../src/hitVfxEditor/flipbook2d/Flipbook2DCombat';
+import { defaultFlipbookBank } from '../../src/hitVfxEditor/flipbook2d/defaults';
 import { sourceFrameAt, type FlipbookLayer } from '../../src/hitVfxEditor/flipbook2d/types';
 
 const layer = (over: Partial<FlipbookLayer> = {}): FlipbookLayer => ({
@@ -88,5 +91,31 @@ describe('flipbookSpinRad (punch impulse on camera plane)', () => {
     expect(
       flipbookSpinRad(new THREE.Vector3(0, 0, 0), right, up, 1),
     ).toBe(0);
+  });
+});
+
+describe('editor shot rebind across L/M/H', () => {
+  it('rebuilds when strength changes even if E1–E6 ids match', () => {
+    const bank = defaultFlipbookBank();
+    const shot = {
+      recipe: bank.L,
+      layers: bank.L.layers.map((layer) => ({ layer })),
+    };
+    expect(editorShotNeedsRebuild(shot, bank.L)).toBe(false);
+    expect(editorShotNeedsRebuild(shot, bank.M)).toBe(true);
+    expect(editorShotNeedsRebuild(shot, bank.H)).toBe(true);
+  });
+
+  it('points billboards at the active recipe so later edits are live', () => {
+    const bank = defaultFlipbookBank();
+    const items = bank.L.layers.map((layer) => ({
+      layer,
+      lookApplied: true,
+    }));
+    bindShotLayers(items, bank.H);
+    bank.H.layers[0]!.scale = 2.5;
+    expect(items[0]!.layer).toBe(bank.H.layers[0]);
+    expect(items[0]!.layer.scale).toBe(2.5);
+    expect(items[0]!.lookApplied).toBe(false);
   });
 });

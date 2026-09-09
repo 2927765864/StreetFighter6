@@ -1,6 +1,18 @@
-import { cloneRecipe, DEFAULT_FLIPBOOK_RECIPE } from './defaults';
+import {
+  cloneBank,
+  cloneRecipe,
+  defaultFlipbookBank,
+  DEFAULT_FLIPBOOK_RECIPE,
+  recipeForStrength,
+} from './defaults';
 import { parseBlend } from './layerLook';
-import type { FlipbookLayer, FlipbookLayerId, FlipbookRecipe } from './types';
+import type {
+  FlipbookLayer,
+  FlipbookLayerId,
+  FlipbookRecipe,
+  FlipbookRecipeBank,
+  FlipbookStrength,
+} from './types';
 
 const KEY = 'sf6.flipbook2d.hit_ref_v1';
 
@@ -10,10 +22,15 @@ const LAYER_IDS: FlipbookLayerId[] = [
   'E3_ring_smoke',
   'E4_wide_short_smoke',
   'E5_narrow_long_smoke',
+  'E6_narrow_long_smoke_rtl',
 ];
 
 function isLayerId(s: string): s is FlipbookLayerId {
   return (LAYER_IDS as string[]).includes(s);
+}
+
+function isStrength(s: unknown): s is FlipbookStrength {
+  return s === 'L' || s === 'M' || s === 'H';
 }
 
 function num(raw: unknown, fallback: number, min: number, max: number): number {
@@ -54,27 +71,103 @@ function sanitizeLayer(raw: Partial<FlipbookLayer>, fallback: FlipbookLayer): Fl
   };
 }
 
-export function loadFlipbookRecipe(): FlipbookRecipe {
-  const base = cloneRecipe(DEFAULT_FLIPBOOK_RECIPE);
+function sanitizeRecipe(
+  raw: Partial<FlipbookRecipe> | undefined,
+  strength: FlipbookStrength,
+): FlipbookRecipe {
+  const fallback = recipeForStrength(DEFAULT_FLIPBOOK_RECIPE, strength);
+  if (!raw || !Array.isArray(raw.layers)) return fallback;
+  const byId = new Map((raw.layers ?? []).map((l) => [l.id, l] as const));
+  return {
+    id: `hit_ref_v1_${strength}`,
+    name: typeof raw.name === 'string' ? raw.name : fallback.name,
+    strength,
+    fps: Math.max(1, Math.floor(Number(raw.fps) || fallback.fps)),
+    length: Math.max(1, Math.floor(Number(raw.length) || fallback.length)),
+    layers: fallback.layers.map((fb) => sanitizeLayer(byId.get(fb.id) ?? fb, fb)),
+  };
+}
+
+export type FlipbookPersistState = {
+  selected: FlipbookStrength;
+  recipes: FlipbookRecipeBank;
+};
+
+function migrateParsed(parsed: unknown): FlipbookPersistState {
+  const bank = defaultFlipbookBank();
+  if (!parsed || typeof parsed !== 'object') {
+    return { selected: 'M', recipes: bank };
+  }
+  const o = parsed as Record<string, unknown>;
+  if (o.recipes && typeof o.recipes === 'object') {
+    const rec = o.recipes as Record<string, Partial<FlipbookRecipe>>;
+    return {
+      selected: isStrength(o.selected) ? o.selected : 'M',
+      recipes: {
+        L: sanitizeRecipe(rec.L, 'L'),
+        M: sanitizeRecipe(rec.M, 'M'),
+        H: sanitizeRecipe(rec.H, 'H'),
+      },
+    };
+  }
+  // v1: a single recipe (medium). Copy it to L/H so edits aren't lost.
+  if (Array.isArray(o.layers)) {
+    const mid = sanitizeRecipe(o as Partial<FlipbookRecipe>, 'M');
+    return {
+      selected: 'M',
+      recipes: {
+        L: recipeForStrength(mid, 'L'),
+        M: cloneRecipe(mid),
+        H: recipeForStrength(mid, 'H'),
+      },
+    };
+  }
+  return { selected: 'M', recipes: bank };
+}
+
+export function loadFlipbookState(): FlipbookPersistState {
   try {
     const raw = localStorage.getItem(KEY);
-    if (!raw) return base;
-    const parsed = JSON.parse(raw) as Partial<FlipbookRecipe>;
-    const byId = new Map(
-      (parsed.layers ?? []).map((l) => [l.id, l] as const),
-    );
-    return {
-      id: base.id,
-      name: typeof parsed.name === 'string' ? parsed.name : base.name,
-      fps: Math.max(1, Math.floor(Number(parsed.fps) || base.fps)),
-      length: Math.max(1, Math.floor(Number(parsed.length) || base.length)),
-      layers: base.layers.map((fb) => sanitizeLayer(byId.get(fb.id) ?? fb, fb)),
-    };
+    if (!raw) return { selected: 'M', recipes: defaultFlipbookBank() };
+    return migrateParsed(JSON.parse(raw));
   } catch {
-    return base;
+    return { selected: 'M', recipes: defaultFlipbookBank() };
   }
 }
 
-export function saveFlipbookRecipe(recipe: FlipbookRecipe): void {
-  localStorage.setItem(KEY, JSON.stringify(recipe));
+export function loadFlipbookRecipe(
+  strength: FlipbookStrength = 'M',
+): FlipbookRecipe {
+  return cloneRecipe(loadFlipbookState().recipes[strength] ?? defaultFlipbookBank()[strength]);
+}
+
+export function loadFlipbookBank(): FlipbookRecipeBank {
+  return cloneBank(loadFlipbookState().recipes);
+}
+
+export function saveFlipbookState(state: FlipbookPersistState): void {
+  localStorage.setItem(
+    KEY,
+    JSON.stringify({
+      v: 2,
+      selected: state.selected,
+      recipes: state.recipes,
+    }),
+  );
+}
+
+export function saveFlipbookRecipe(
+  recipe: FlipbookRecipe,
+  selected: FlipbookStrength = recipe.strength,
+): void {
+  const recipes = loadFlipbookBank();
+  recipes[recipe.strength] = cloneRecipe(recipe);
+  saveFlipbookState({ selected, recipes });
+}
+
+export function saveFlipbookBank(
+  recipes: FlipbookRecipeBank,
+  selected: FlipbookStrength,
+): void {
+  saveFlipbookState({ selected, recipes: cloneBank(recipes) });
 }

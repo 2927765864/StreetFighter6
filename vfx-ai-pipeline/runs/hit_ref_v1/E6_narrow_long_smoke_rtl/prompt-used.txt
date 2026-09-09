@@ -1,0 +1,15 @@
+E6 reverse narrow-long impact smoke — iter2 mirrored packing
+
+SOURCE
+- E5_narrow_long_smoke/frames (iter5)
+- E5 pack: left edge slow (18→54), right edge fast (108→246), centroid 63→150 (LTR)
+
+TRANSFORM
+- Flip the whole 256 cell (NOT crop-and-center). That maps:
+    E6 right edge slow 238→202, left edge fast 148→10, centroid 193→106 (RTL)
+- Vertical thicken ×1.32 around the band's vertical center; keep X placement.
+
+PHASES
+0–4 tongue on the right, tip pointing left, already offset right of cell center
+5–7 stretch left, blend to fragments
+8–13 broken remnant continues left and fades

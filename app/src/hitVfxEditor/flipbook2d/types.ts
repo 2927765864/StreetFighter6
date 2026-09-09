@@ -1,11 +1,14 @@
 export type FlipbookBlend = 'normal' | 'add' | 'screen';
 
+export type FlipbookStrength = 'L' | 'M' | 'H';
+
 export type FlipbookLayerId =
   | 'E1_core_flash'
   | 'E2_near_sparks'
   | 'E3_ring_smoke'
   | 'E4_wide_short_smoke'
-  | 'E5_narrow_long_smoke';
+  | 'E5_narrow_long_smoke'
+  | 'E6_narrow_long_smoke_rtl';
 
 export type FlipbookLayer = {
   id: FlipbookLayerId;
@@ -33,10 +36,14 @@ export type FlipbookLayer = {
 export type FlipbookRecipe = {
   id: string;
   name: string;
+  /** Light / medium / heavy hit; same E1–E6 layers, independently tuned. */
+  strength: FlipbookStrength;
   fps: number;
   length: number;
   layers: FlipbookLayer[];
 };
+
+export type FlipbookRecipeBank = Record<FlipbookStrength, FlipbookRecipe>;
 
 export function layerEndFrame(layer: FlipbookLayer): number {
   return layer.startFrame + Math.max(1, layer.duration) - 1;

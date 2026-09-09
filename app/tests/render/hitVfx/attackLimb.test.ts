@@ -66,9 +66,13 @@ describe('limbImpulseSampleCount', () => {
     expect(limbImpulseSampleCount('2lp')).toBe(2);
   });
 
-  it('uses two presents before contact for standing MP', () => {
+  it('uses two presents before contact for standing MP and MK', () => {
     expect(limbImpulseSampleCount('ryu_5mp')).toBe(LIMB_IMPULSE_LOOKBACK_5MP);
     expect(limbImpulseSampleCount('5mp')).toBe(3);
+    expect(limbImpulseSampleCount('ryu_5mk')).toBe(LIMB_IMPULSE_LOOKBACK_5MP);
+    expect(limbImpulseSampleCount('5mk')).toBe(3);
+    expect(limbImpulseSampleCount('ryu_6hk')).toBe(LIMB_IMPULSE_LOOKBACK_5MP);
+    expect(limbImpulseSampleCount('6hk')).toBe(3);
   });
 
   it('keeps the full window for other punches and jump LP', () => {

@@ -20,6 +20,10 @@ const globE5 = import.meta.glob(
   '../../../../vfx-ai-pipeline/runs/hit_ref_v1/E5_narrow_long_smoke/frames/frame-*.png',
   { eager: true, query: '?url', import: 'default' },
 ) as Record<string, string>;
+const globE6 = import.meta.glob(
+  '../../../../vfx-ai-pipeline/runs/hit_ref_v1/E6_narrow_long_smoke_rtl/frames/frame-*.png',
+  { eager: true, query: '?url', import: 'default' },
+) as Record<string, string>;
 
 function sortedUrls(map: Record<string, string>): string[] {
   return Object.entries(map)
@@ -37,6 +41,7 @@ export const FLIPBOOK_SHEETS: Record<FlipbookLayerId, string[]> = {
   E3_ring_smoke: sortedUrls(globE3),
   E4_wide_short_smoke: sortedUrls(globE4),
   E5_narrow_long_smoke: sortedUrls(globE5),
+  E6_narrow_long_smoke_rtl: sortedUrls(globE6),
 };
 
 export function sheetCount(id: FlipbookLayerId): number {

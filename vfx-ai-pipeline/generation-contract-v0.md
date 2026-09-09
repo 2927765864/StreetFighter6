@@ -13,7 +13,7 @@
 
 | 项 | 契约 |
 |----|------|
-| 默认网格 | **对本命中参考作废 2×2 / 6 帧终稿**。E1/E2 约 10 帧；E3/E4/E5 约 12–16 帧 @30fps。行优先横条或 5×2 / 4×4 均可 |
+| 默认网格 | **对本命中参考作废 2×2 / 6 帧终稿**。E1/E2 约 10 帧；E3/E4/E5/E6 约 12–16 帧 @30fps。行优先横条或 5×2 / 4×4 均可 |
 | 旧默认 | 契约初稿的 2×2（4 帧）只适用于极短元素的草稿，**不得**当本参考烟层/火花的最终密度 |
 | 画布 | 正方形整图（建议 1024×1024）；格等大、无装饰分隔线、无黑边框 |
 | 每格内容 | **仅当前元素的一个相位**；禁止同格混入其它元素（烟格里不要画闪光，反之亦然） |
@@ -82,7 +82,7 @@ The effect itself must not contain magenta or hot pink.
 
 ---
 
-## 3. 分元素契约与 Prompt（E1–E5）
+## 3. 分元素契约与 Prompt（E1–E6）
 
 描述来自拆解文档；下列英文主体供 `image_gen` 使用，中文要点供审查对照。
 
@@ -186,6 +186,25 @@ The whole band translates forward; leading edge travels farther than the wide pu
 短细条 → 前缘右伸拉长 → 远端残带。禁止 4/6 帧终稿。
 
 **推荐文件名**：`E5_narrow_long_smoke`
+
+---
+
+### E6 · 反向窄长冲击烟雾（右→左，略宽）
+
+**中文要点**  
+与 E5 同一套窄长灰白烟带，**运动方向相反（从右到左）**，烟带宽度比 E5 **略宽**。约 12–16 帧。从 E5 成品派生（水平翻转 + 垂直加厚），不要重新文生。
+
+**C. ELEMENT BODY**
+
+```text
+Subject: ONLY a slightly-wider narrow long impact smoke streak. Light grey-white translucent, elongated along the punch axis.
+The whole band translates right-to-left (opposite of E5). Not a ring, not a fat short cloud, not flash, not sparks.
+```
+
+**D. FRAMES**  
+短细条（尖端朝左）→ 前缘左伸拉长 → 远端残带。禁止 4/6 帧终稿。
+
+**推荐文件名**：`E6_narrow_long_smoke_rtl`
 
 汗水不在本契约内（程序化）。
 

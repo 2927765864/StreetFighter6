@@ -1,0 +1,12 @@
+{
+  "element": "E6_narrow_long_smoke_rtl",
+  "iter": "iter2_mirror_pack_keep_travel",
+  "frames": 14,
+  "fps": 30,
+  "grid": "7x2",
+  "cell": 256,
+  "source": "E5_narrow_long_smoke/frames (iter5 deliverable)",
+  "motion": "trailing edge slow on the right, leading edge races left; centroid ~193\u2192106",
+  "width_scale_y": 1.32,
+  "transform": "full-cell horizontal flip (preserves E5 travel as RTL) + 1.32x vertical thicken in place; no recenter"
+}

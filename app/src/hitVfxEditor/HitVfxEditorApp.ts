@@ -278,6 +278,12 @@ export async function bootHitVfxEditor(): Promise<void> {
       if (key === 'hitVfxPreviewLoop' && !CONFIG.hitVfxPreviewLoop) {
         stopLoop();
       }
+      if (key === 'hitVfxPreviewStrength') {
+        flipbook?.setStrength(CONFIG.hitVfxPreviewStrength, {
+          persist: true,
+          syncToolbar: false,
+        });
+      }
       syncRuntime();
     },
     onEditorModeChange: (mode) => {

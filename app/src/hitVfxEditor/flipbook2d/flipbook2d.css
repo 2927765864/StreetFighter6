@@ -69,6 +69,25 @@
   background: rgba(70, 110, 190, 0.7);
 }
 
+.fb2d-strength {
+  display: inline-flex;
+  gap: 0;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.fb2d-strength button {
+  border: none;
+  border-radius: 0;
+  min-width: 36px;
+}
+
+.fb2d-strength button.is-active {
+  background: rgba(70, 110, 190, 0.75);
+  color: #fff;
+}
+
 .fb2d-timeline {
   position: relative;
   height: 150px;

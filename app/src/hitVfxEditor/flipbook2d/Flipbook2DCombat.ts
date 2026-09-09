@@ -4,13 +4,15 @@ import type { HitVfxTriggerArgs } from '../../render/hitVfx/hitVfxTypes';
 import { worldPosFromTrigger } from '../../render/hitVfx/HitVfxRuntime';
 import { FLIPBOOK_SHEETS } from './catalog';
 import { loadImage } from './imageCache';
-import { loadFlipbookRecipe } from './persist';
+import { loadFlipbookBank, loadFlipbookRecipe } from './persist';
 import { threeBlendParams, tintFromLayer } from './layerLook';
 import { flipbookWorldSize, prepImage } from './texturePrep';
 import {
   sourceFrameAt,
   type FlipbookLayer,
   type FlipbookRecipe,
+  type FlipbookRecipeBank,
+  type FlipbookStrength,
 } from './types';
 
 type LayerBillboard = {
@@ -24,6 +26,7 @@ type Shot = {
   root: THREE.Group;
   spin: THREE.Group;
   layers: LayerBillboard[];
+  recipe: FlipbookRecipe;
   playhead: number;
   age: number;
   facing: number;
@@ -124,10 +127,39 @@ export function layerLocalOffset(
   return out.set(ox, oy, layer.z * 0.002);
 }
 
+/** L/M/H share E1–E6 ids; rebuild when the strength (or layer set) changes. */
+export function editorShotNeedsRebuild(
+  shot: { recipe: FlipbookRecipe; layers: { layer: { id: string } }[] },
+  recipe: FlipbookRecipe,
+): boolean {
+  if (shot.recipe.strength !== recipe.strength) return true;
+  if (shot.recipe.id !== recipe.id) return true;
+  if (shot.layers.length !== recipe.layers.length) return true;
+  const have = shot.layers.map((l) => l.layer.id).join(',');
+  const want = recipe.layers.map((l) => l.id).join(',');
+  return have !== want;
+}
+
+/** Point billboards at the live recipe layers so inspector edits hit this shot. */
+export function bindShotLayers(
+  items: { layer: FlipbookLayer; lookApplied: boolean }[],
+  recipe: FlipbookRecipe,
+): void {
+  const byId = new Map(recipe.layers.map((l) => [l.id, l] as const));
+  for (const item of items) {
+    const next = byId.get(item.layer.id);
+    if (next && next !== item.layer) {
+      item.layer = next;
+      item.lookApplied = false;
+    }
+  }
+}
+
 export class Flipbook2DCombat {
   private readonly scene: THREE.Object3D;
   private camera: THREE.Camera;
   private recipe: FlipbookRecipe;
+  private bank: FlipbookRecipeBank;
   private shots: Shot[] = [];
   private editorShot: Shot | null = null;
   private readonly pool: THREE.Group;
@@ -135,7 +167,8 @@ export class Flipbook2DCombat {
   constructor(scene: THREE.Object3D, camera: THREE.Camera) {
     this.scene = scene;
     this.camera = camera;
-    this.recipe = loadFlipbookRecipe();
+    this.bank = loadFlipbookBank();
+    this.recipe = this.bank.M;
     this.pool = new THREE.Group();
     this.pool.name = 'Flipbook2DCombat';
     this.scene.add(this.pool);
@@ -147,7 +180,8 @@ export class Flipbook2DCombat {
   }
 
   reloadRecipe(): void {
-    this.recipe = loadFlipbookRecipe();
+    this.bank = loadFlipbookBank();
+    this.recipe = this.bank.M;
   }
 
   clear(): void {
@@ -174,19 +208,19 @@ export class Flipbook2DCombat {
     args: HitVfxTriggerArgs,
   ): void {
     this.recipe = recipe;
+    this.bank[recipe.strength] = recipe;
     this.pool.visible = true;
     const world = worldPosFromTrigger(
       args,
       CONFIG.hitVfxHeightOffsets,
       CONFIG.modelYOffset,
     );
-    const ids = recipe.layers.map((l) => l.id).join(',');
-    const have =
-      this.editorShot?.layers.map((l) => l.layer.id).join(',') ?? '';
-    if (!this.editorShot || have !== ids) {
+    if (!this.editorShot || editorShotNeedsRebuild(this.editorShot, recipe)) {
       if (this.editorShot) this.disposeShot(this.editorShot);
       this.editorShot = this.spawnShot(world, args);
     } else {
+      bindShotLayers(this.editorShot.layers, recipe);
+      this.editorShot.recipe = recipe;
       this.editorShot.root.position.copy(world);
       this.editorShot.root.scale.set(flipbookFacingScaleX(args.facing), 1, 1);
       this.writeImpulse(this.editorShot, args);
@@ -195,13 +229,15 @@ export class Flipbook2DCombat {
     this.editorShot.age = playhead;
     this.editorShot.facing = args.facing;
     this.billboardShot(this.editorShot);
-    this.applyFrame(this.editorShot);
+    this.applyFrame(this.editorShot, true);
   }
 
   /** Spawn at contact world position; stays fixed while the sheet plays. */
   trigger(args: HitVfxTriggerArgs): void {
     if (!CONFIG.hitVfxEnabled) return;
-    this.recipe = loadFlipbookRecipe();
+    this.bank = loadFlipbookBank();
+    const strength = (args.strength as FlipbookStrength) || 'M';
+    this.recipe = this.bank[strength] ?? loadFlipbookRecipe(strength);
     this.pool.visible = true;
     const world = worldPosFromTrigger(
       args,
@@ -229,14 +265,13 @@ export class Flipbook2DCombat {
       return;
     }
     const freeze = CONFIG.hitVfxFollowHitstop && inHitstop;
-    const fps = Math.max(1, this.recipe.fps);
     if (!CONFIG.hitVfxPaused && !freeze) {
-      const step = dt * fps * (CONFIG.hitVfxTimeScale || 1);
       for (let i = this.shots.length - 1; i >= 0; i -= 1) {
         const s = this.shots[i]!;
-        s.age += step;
+        const fps = Math.max(1, s.recipe.fps);
+        s.age += dt * fps * (CONFIG.hitVfxTimeScale || 1);
         s.playhead = Math.floor(s.age);
-        if (s.playhead > this.recipe.length - 1) {
+        if (s.playhead > s.recipe.length - 1) {
           this.disposeShot(s);
           this.shots.splice(i, 1);
         }
@@ -274,6 +309,7 @@ export class Flipbook2DCombat {
       root,
       spin,
       layers,
+      recipe: this.recipe,
       playhead: 0,
       age: 0,
       facing: args.facing,
@@ -305,7 +341,7 @@ export class Flipbook2DCombat {
     );
   }
 
-  private applyFrame(shot: Shot): void {
+  private applyFrame(shot: Shot, forceLook = false): void {
     const size = flipbookWorldSize(CONFIG.hitVfxFlipbookSize);
     for (const item of shot.layers) {
       const urls = FLIPBOOK_SHEETS[item.layer.id] ?? [];
@@ -334,7 +370,7 @@ export class Flipbook2DCombat {
       item.mesh.position.copy(layerLocalOffset(item.layer, size, _layerOff));
       item.mesh.renderOrder = 20 + item.layer.z;
       if (item.material.map !== tex) item.material.map = tex;
-      if (!item.lookApplied) {
+      if (forceLook || !item.lookApplied) {
         applyMaterialLook(item.material, item.layer);
         item.lookApplied = true;
       }
