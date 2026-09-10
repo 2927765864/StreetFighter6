@@ -54,6 +54,12 @@ import {
 import { hitAnimForHit, selectHitReactLogicId } from '../systems/HitPolicy';
 import { resolveHitOnHit } from '../systems/HitResolve';
 import type { StanceBoxTable } from '../../data/loadStanceBoxes';
+import type { CombatSfxEvent } from '../sfx/SfxSlots';
+import {
+  initialWalkFootstepClock,
+  stepWalkFootstepClock,
+  type WalkFootstepClock,
+} from '../sfx/WalkFootstepSfx';
 
 export type MatchSimOptions = {
   actionBufferStandard: number;
@@ -168,6 +174,11 @@ export type MatchSimOptions = {
     hitGroup?: number;
     attackerFacing?: number;
   }) => void;
+  /**
+   * Four-layer combat SFX (swing / contact / loco / knockdown).
+   * Wired from main → CombatSfxPlayer; missing manifest slots stay silent.
+   */
+  onCombatSfx?: (ev: CombatSfxEvent) => void;
 };
 
 const DEFAULT_OPTS: MatchSimOptions = {
@@ -602,6 +613,32 @@ export class MatchSim {
 
   /** Set when a move/dash/jump starts this logic frame — skip advance once (ADR-003 frame 0). */
   private skipP1Advance = false;
+  /** Phase edges for land / jump_cloth / wakeup SFX. */
+  private prevP1Phase = '';
+  private prevP2KdPhase = '';
+  /** Alternating L/R footsteps while walk start/loop drives. */
+  private walkFootClock: WalkFootstepClock = initialWalkFootstepClock();
+  /** Swing whoosh once per move, on first active (发生帧), not on button accept. */
+  private p1SwingSfxEmitted = false;
+
+  private emitSfx(ev: CombatSfxEvent): void {
+    this.opts.onCombatSfx?.(ev);
+  }
+
+  /** Punch/kick whoosh at first hit-active frame (startup−1). */
+  private maybeEmitSwingSfx(): void {
+    if (this.p1SwingSfxEmitted) return;
+    if (this.p1.phase !== 'attack') return;
+    const mv = this.p1.mover.move;
+    if (!mv || !this.p1.mover.isHitActive()) return;
+    this.p1SwingSfxEmitted = true;
+    this.emitSfx({
+      kind: 'swing',
+      moveId: mv.moveId || mv.id,
+      guardStrength: mv.guardStrength,
+      hitstopOnHit: mv.hitstopOnHit,
+    });
+  }
 
   private executeIntent(intent: Intent): boolean {
     if (intent.kind === 'special' && !this.opts.enableSpecials) return false;
@@ -636,6 +673,7 @@ export class MatchSim {
       this.debugProbe.hitsLandedThisMove = 0;
       this.actionBuffer.clear();
       this.skipP1Advance = true;
+      this.p1SwingSfxEmitted = false;
       this.debugProbe.lastMoveMiss = '';
       this.debugProbe.lastExecuteOk = true;
       if (this.debugProbe.logCommandsToConsole) {
@@ -651,6 +689,7 @@ export class MatchSim {
       );
       this.actionBuffer.clear();
       this.skipP1Advance = true;
+      this.emitSfx({ kind: 'dash', forward: true });
       return true;
     }
     if (intent.kind === 'dash_back') {
@@ -661,6 +700,7 @@ export class MatchSim {
       );
       this.actionBuffer.clear();
       this.skipP1Advance = true;
+      this.emitSfx({ kind: 'dash', forward: false });
       return true;
     }
     if (intent.kind === 'jump') {
@@ -673,6 +713,7 @@ export class MatchSim {
       );
       this.actionBuffer.clear();
       this.skipP1Advance = true;
+      this.emitSfx({ kind: 'jump' });
       return true;
     }
     if (intent.kind === 'crouch') {
@@ -699,7 +740,7 @@ export class MatchSim {
       walk_fwd: { start: 19, loop: 114, end: 47 },
       walk_back: { start: 15, loop: 118, end: 47 },
     };
-    const { state, dxFacing } = stepWalk(this.p1.walkState, {
+    const { state, dxFacing, enteredStart } = stepWalk(this.p1.walkState, {
       holdFwd,
       holdBack,
       clips,
@@ -710,6 +751,31 @@ export class MatchSim {
     });
     this.p1.x += this.p1.facing * dxFacing;
     this.p1.applyWalkState(state);
+    this.emitWalkFootstepSfx(state, clips, enteredStart);
+  }
+
+  /** Foot plant SFX on walk start/loop; suppressed during input-freeze. */
+  private emitWalkFootstepSfx(
+    state: ReturnType<typeof stepWalk>['state'],
+    clips: {
+      walk_fwd: { start: number; loop: number; end: number };
+      walk_back: { start: number; loop: number; end: number };
+    },
+    enteredStart: boolean,
+  ): void {
+    const dir = state.walkDir ?? 'fwd';
+    const loopLen =
+      dir === 'back' ? clips.walk_back.loop : clips.walk_fwd.loop;
+    const { clock, side } = stepWalkFootstepClock(this.walkFootClock, {
+      locoPhase: state.locoPhase,
+      enteredStart,
+      loopLen,
+      suppress: this.p1.walkInputFreeze.active,
+    });
+    this.walkFootClock = clock;
+    if (side) {
+      this.emitSfx({ kind: 'footstep', side });
+    }
   }
 
   /**
@@ -786,6 +852,7 @@ export class MatchSim {
       this.p1.applyWalkState(
         beginWalkStart(walkDir, { firstFramePending: false }),
       );
+      this.walkFootClock = initialWalkFootstepClock();
       return;
     }
     // Released: no start — reopen end from entry (early-release if never looped).
@@ -803,6 +870,7 @@ export class MatchSim {
         keepRatio: this.opts.walkEarlyReleaseEndKeepRatio,
       }),
     );
+    this.walkFootClock = initialWalkFootstepClock();
   }
 
   private commitLogicalFacing(): void {
@@ -978,6 +1046,9 @@ export class MatchSim {
 
     this.commitLogicalFacing();
 
+    // Swing whoosh on first active frame (same sample as hit ∩ hurt).
+    this.maybeEmitSwingSfx();
+
     // 6. Hit ∩ Hurt (throws: presentation only). Multi-hit: one unlanded group / frame.
     if (
       this.p1.phase === 'attack' &&
@@ -1051,6 +1122,13 @@ export class MatchSim {
           }
           this.lastHitResult = 'block';
           this.hitstopTimer = br.hitstop;
+          this.emitSfx({
+            kind: 'block',
+            moveId: mv.moveId || mv.id,
+            guardStrength: mv.guardStrength,
+            hitstopOnHit: mv.hitstopOnHit,
+            hitstopOnBlock: mv.hitstopOnBlock,
+          });
           this.opts.onHitVfx?.({
             kind: 'onBlock',
             defenderX: this.p2.x,
@@ -1071,14 +1149,20 @@ export class MatchSim {
             hitPushbackTotal: this.opts.hitPushbackTotal,
             knockdownFramesOverride: this.opts.knockdownFramesOverride,
           });
-          const hitSel = selectHitReactLogicId({
-            crouching,
-            guard: level,
-            hitstopOnHit: mv.hitstopOnHit,
-            guardStrength: mv.guardStrength,
-            hitAnim: hitAnimForHit(mv.hitAnim, pendingGroup),
-            hitAnimDir: mv.hitAnimDir,
-          });
+          // Attacker: switch to on-hit recovery clip (4HP/2HP ATK_*_H).
+          this.p1.applyOnHitAttackPresentation(mv);
+          const explicitReact = mv.hitReactClipId?.trim() || '';
+          const hitCrouching = mv.forcesStand ? false : crouching;
+          const hitSel = explicitReact
+            ? { logicId: explicitReact, fallback: false }
+            : selectHitReactLogicId({
+                crouching: hitCrouching,
+                guard: level,
+                hitstopOnHit: mv.hitstopOnHit,
+                guardStrength: mv.guardStrength,
+                hitAnim: hitAnimForHit(mv.hitAnim, pendingGroup),
+                hitAnimDir: mv.hitAnimDir,
+              });
           const reactClipId = hitSel.logicId;
           this.debugProbe.hitClipFallback = hitSel.fallback;
           this.debugProbe.lastHitClipId = reactClipId;
@@ -1097,6 +1181,7 @@ export class MatchSim {
                 this.dummy.wakeupStyle === 'back' ? this.opts.wakeupBackDxTotal : 0,
               downHoldOverride: this.opts.knockdownDownHoldOverride,
             });
+            this.emitSfx({ kind: 'body_fall' });
           } else {
             this.p2.applyHitstun(hr.hitstun, hr.damage, { reactClipId });
           }
@@ -1119,11 +1204,18 @@ export class MatchSim {
           }
           this.lastHitResult = 'hit';
           this.hitstopTimer = hr.hitstop;
+          this.emitSfx({
+            kind: 'hit',
+            moveId: mv.moveId || mv.id,
+            guardStrength: mv.guardStrength,
+            hitstopOnHit: mv.hitstopOnHit,
+            hitstopOnBlock: mv.hitstopOnBlock,
+          });
           this.opts.onHitVfx?.({
             kind: 'onHit',
             defenderX: this.p2.x,
             defenderFacing: this.p2.facing,
-            defenderCrouching: crouching,
+            defenderCrouching: hitCrouching,
             guardLevel: level,
             hitstopOnHit: mv.hitstopOnHit,
             guardStrength: mv.guardStrength,
@@ -1175,7 +1267,24 @@ export class MatchSim {
     if (this.p1.attackResidual) this.p1.tickAttackResidual();
     if (this.p2.attackResidual) this.p2.tickAttackResidual();
 
+    this.emitLocoKnockdownSfxEdges();
     this.syncDebugProbe();
+  }
+
+  /** Land / jump cloth / wakeup edges after fighter advance. */
+  private emitLocoKnockdownSfxEdges(): void {
+    if (this.prevP1Phase !== 'landing' && this.p1.phase === 'landing') {
+      this.emitSfx({ kind: 'land' });
+    }
+    // Cloth / wind whoosh when leaving the ground (prejump → airborne).
+    if (this.prevP1Phase === 'prejump' && this.p1.phase === 'airborne') {
+      this.emitSfx({ kind: 'jump_cloth' });
+    }
+    if (this.prevP2KdPhase !== 'rise' && this.p2.kdPhase === 'rise') {
+      this.emitSfx({ kind: 'wakeup' });
+    }
+    this.prevP1Phase = this.p1.phase;
+    this.prevP2KdPhase = this.p2.kdPhase;
   }
 
   private syncDebugProbe(): void {

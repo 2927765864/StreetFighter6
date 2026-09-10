@@ -90,4 +90,19 @@ describe('selectHitReactLogicId', () => {
       }).logicId,
     ).toBe('dmg_hh_lt');
   });
+  it('4HP/2HP declare force-stand uppercut react + on-hit attacker role', () => {
+    const m4 = load('ryu_4hp.json');
+    expect(m4.forcesStand).toBe(true);
+    expect(m4.hitReactClipId).toBe('dmg_hu_up_h');
+    expect(m4.animRoleOnHit).toBe('on_hit');
+    expect(m4.hitAnim).toBe('h');
+    expect(m4.animFrameCountOnHit).toBeGreaterThan(m4.animFrameCount ?? 0);
+
+    const m2 = load('ryu_2hp.json');
+    expect(m2.forcesStand).toBe(true);
+    expect(m2.hitReactClipId).toBe('dmg_mh_up');
+    expect(m2.animRoleOnHit).toBe('on_hit');
+    expect(m2.hitAnim).toBe('m');
+    expect(m2.animFrameCountOnHit).toBeGreaterThan(m2.animFrameCount ?? 0);
+  });
 });

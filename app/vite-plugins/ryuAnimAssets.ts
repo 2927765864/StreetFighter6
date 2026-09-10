@@ -77,6 +77,10 @@ function contentType(file: string): string {
   if (ext === '.jpg' || ext === '.jpeg') return 'image/jpeg';
   if (ext === '.webp') return 'image/webp';
   if (ext === '.dds') return 'application/octet-stream';
+  if (ext === '.ogg') return 'audio/ogg';
+  if (ext === '.wav') return 'audio/wav';
+  if (ext === '.mp3') return 'audio/mpeg';
+  if (ext === '.m4a') return 'audio/mp4';
   return 'application/octet-stream';
 }
 
@@ -324,7 +328,15 @@ function serveStaticFile(
   }
   res.statusCode = 200;
   res.setHeader('Content-Type', contentType(file));
-  res.setHeader('Cache-Control', 'no-cache');
+  // SFX re-export keeps the same filename; avoid sticky browser disk cache.
+  const ext = path.extname(file).toLowerCase();
+  const isAudio =
+    ext === '.ogg' || ext === '.wav' || ext === '.mp3' || ext === '.m4a';
+  const isSfxManifest = file.endsWith(`${path.sep}sfx${path.sep}manifest.json`);
+  res.setHeader(
+    'Cache-Control',
+    isAudio || isSfxManifest ? 'no-store' : 'no-cache',
+  );
   fs.createReadStream(file).pipe(res);
   return true;
 }

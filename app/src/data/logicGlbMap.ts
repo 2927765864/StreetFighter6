@@ -182,6 +182,8 @@ export const BOOT_PRELOAD_LOGIC_IDS = [
   'dmg_hl_st',
   'dmg_hm_st',
   'dmg_hh_st',
+  'dmg_hu_up_h',
+  'dmg_mh_up',
   'dmg_mm_lt',
   'dmg_hh_lt',
   'dmg_hh_rt',

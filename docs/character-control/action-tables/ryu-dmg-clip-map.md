@@ -22,6 +22,8 @@ HIT_DT `DmgPart` 对照（命中侧 common[0]）：`1→h`（5HP/5HK）、`2→m
 | 5LK | `dmg_hl_st`（无 hitAnim 默认 h） | `dmg_ll_st` |
 | 5MK | `dmg_hm_st` | `dmg_mm_st` |
 | 5HK | `dmg_hh_st` | `dmg_hh_lt`（HH 侧转；RT 转反了） |
+| 4HP | `dmg_hh_st`（旧） | `dmg_hu_up_h`（上勾抬头重；`forcesStand`） |
+| 2HP | `dmg_hu_up_h`（旧误用） | `dmg_mh_up`（中段上勾；`forcesStand`） |
 
 倒地总帧：sweep 20 + HIT_DT `DownTime`(2HK=10) + rise 42 = **72**。
 

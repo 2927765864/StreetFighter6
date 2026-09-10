@@ -203,7 +203,9 @@
     "dmg_mh_lt": "dmg_mh_lt",
     "dmg_lm_lt": "dmg_lm_lt",
     "dmg_hh_lt": "dmg_hh_lt",
-    "dmg_hh_rt": "dmg_hh_rt"
+    "dmg_hh_rt": "dmg_hh_rt",
+    "dmg_hu_up_h": "dmg_hu_up_h",
+    "dmg_mh_up": "dmg_mh_up"
   },
   "moves": [
     {
@@ -455,10 +457,18 @@
           "stem": "000_esf001_ATK_2HP_id2000_f76",
           "motionId": 2000,
           "frameCount": 76
+        },
+        {
+          "role": "on_hit",
+          "assetKey": "ATK_2HP_H",
+          "path": "attack/esf001v00_attack_08/glb/001_esf001_ATK_2HP_H_id2005_f80.glb",
+          "stem": "001_esf001_ATK_2HP_H_id2005_f80",
+          "motionId": 2005,
+          "frameCount": 80
         }
       ],
       "primaryPath": "attack/esf001v00_attack_08/glb/000_esf001_ATK_2HP_id2000_f76.glb",
-      "notes": "Prefer base take; variants ATK_*_B/C exist for some lights.",
+      "notes": "Prefer base take; variants ATK_*_B/C exist for some lights. on_hit = ATK_*_H (hit recovery); main = whiff/block.",
       "variants": [
         {
           "role": "variant",
@@ -763,10 +773,18 @@
           "stem": "000_esf001_ATK_4HP_id0000_f82",
           "motionId": 0,
           "frameCount": 82
+        },
+        {
+          "role": "on_hit",
+          "assetKey": "ATK_4HP_H",
+          "path": "basic/esf001v00_skill_05/glb/001_esf001_ATK_4HP_H_id0001_f100.glb",
+          "stem": "001_esf001_ATK_4HP_H_id0001_f100",
+          "motionId": 1,
+          "frameCount": 100
         }
       ],
       "primaryPath": "basic/esf001v00_skill_05/glb/000_esf001_ATK_4HP_id0000_f82.glb",
-      "notes": "",
+      "notes": "on_hit = ATK_*_H (hit recovery); main = whiff/block.",
       "variants": [
         {
           "role": "variant",
@@ -2397,6 +2415,46 @@
       ],
       "primaryPath": "basic/esf001v00_damage/glb/004_esf001_0050_DMG_HH_ST_id0050_f69.glb",
       "notes": "ungarded-hit-kd v0 ST-only"
+    },
+    {
+      "moveId": "dmg_mh_up",
+      "command": "—",
+      "displayName": "Damage MH UP (2HP force-stand)",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "1040_DMG_MH_UP",
+          "path": "basic/esf001v00_damage/glb/032_esf001_1040_DMG_MH_UP_id0410_f70.glb",
+          "stem": "032_esf001_1040_DMG_MH_UP_id0410_f70",
+          "motionId": 410,
+          "frameCount": 70
+        }
+      ],
+      "primaryPath": "basic/esf001v00_damage/glb/032_esf001_1040_DMG_MH_UP_id0410_f70.glb",
+      "notes": "2HP force-stand mid-upper hit react"
+    },
+    {
+      "moveId": "dmg_hu_up_h",
+      "command": "—",
+      "displayName": "Damage HU UP H (uppercut force-stand)",
+      "category": "system",
+      "status": "mapped",
+      "aliases": [],
+      "clips": [
+        {
+          "role": "main",
+          "assetKey": "1020_DMG_HU_UP_H",
+          "path": "basic/esf001v00_damage/glb/030_esf001_1020_DMG_HU_UP_H_id0380_f70.glb",
+          "stem": "030_esf001_1020_DMG_HU_UP_H_id0380_f70",
+          "motionId": 380,
+          "frameCount": 70
+        }
+      ],
+      "primaryPath": "basic/esf001v00_damage/glb/030_esf001_1020_DMG_HU_UP_H_id0380_f70.glb",
+      "notes": "4HP/2HP force-stand uppercut hit react"
     },
     {
       "moveId": "dmg_ml_st",

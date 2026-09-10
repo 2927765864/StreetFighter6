@@ -94,8 +94,8 @@
         "y": 1.2776541739435279,
         "w": 0.5172303883068932,
         "h": 0.3945543666892153,
-        "from": 0,
-        "to": 1,
+        "from": 6,
+        "to": 7,
         "rectId": 160
       },
       {
@@ -103,8 +103,8 @@
         "y": 1.8259298484393223,
         "w": 0.41275865631358977,
         "h": 0.728026650839114,
-        "from": 2,
-        "to": 4,
+        "from": 8,
+        "to": 10,
         "rectId": 162
       }
     ],
@@ -121,6 +121,10 @@
     ]
   },
   "clipId": "ryu_4hp",
+  "animRoleOnHit": "on_hit",
+  "animFrameCountOnHit": 100,
+  "hitReactClipId": "dmg_hu_up_h",
+  "forcesStand": true,
   "facingRelative": true,
   "review": {
     "status": "mmdk_converted",
@@ -259,5 +263,7 @@
     "fabFrame": 82
   },
   "guard": "high",
-  "guardStrength": "H"
+  "guardStrength": "H",
+  "hitAnim": "h",
+  "hitAnimDir": "st"
 }

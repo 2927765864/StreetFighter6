@@ -95,6 +95,24 @@ export type MoveDefinition = {
    * `variant_l` while medium keeps `main`.
    */
   animRole?: string;
+  /**
+   * Capcom SWING-branch hit clip role (e.g. `on_hit` → ATK_4HP_H / ATK_2HP_H).
+   * When set: start on this clip for startup; on miss branch to `animRole`/`main`
+   * at first active (MainFrame = startup-1); on hit stay on this clip for recovery.
+   */
+  animRoleOnHit?: string;
+  /**
+   * Presentation length for the hit clip (@60Hz). Residual after logic total
+   * uses this when the attack connected.
+   */
+  animFrameCountOnHit?: number;
+  /**
+   * Explicit defender hit-react logic id (e.g. `dmg_hu_up_h`). When set,
+   * bypasses height/strength selection in HitPolicy.
+   */
+  hitReactClipId?: string;
+  /** Force standing hit react even if defender was crouching. */
+  forcesStand?: boolean;
   facingRelative: boolean;
   review: { status: string; notes: string };
   sources?: { name: string; url: string; retrieved: string }[];
@@ -450,6 +468,22 @@ export function parseMoveDefinition(raw: unknown): MoveDefinition {
   if (o.animRole != null && String(o.animRole).trim()) {
     animRole = String(o.animRole).trim();
   }
+  let animRoleOnHit: string | undefined;
+  if (o.animRoleOnHit != null && String(o.animRoleOnHit).trim()) {
+    animRoleOnHit = String(o.animRoleOnHit).trim();
+  }
+  let animFrameCountOnHit: number | undefined;
+  if (
+    o.animFrameCountOnHit != null &&
+    Number.isFinite(Number(o.animFrameCountOnHit))
+  ) {
+    animFrameCountOnHit = Math.max(1, Math.floor(Number(o.animFrameCountOnHit)));
+  }
+  let hitReactClipId: string | undefined;
+  if (o.hitReactClipId != null && String(o.hitReactClipId).trim()) {
+    hitReactClipId = String(o.hitReactClipId).trim();
+  }
+  const forcesStand = o.forcesStand === true;
 
   let animRemap: AnimRemapSegment[] | undefined;
   if (Array.isArray(o.animRemap)) {
@@ -532,6 +566,10 @@ export function parseMoveDefinition(raw: unknown): MoveDefinition {
     },
     clipId: String(o.clipId ?? o.moveId ?? o.id ?? 'idle'),
     animRole,
+    animRoleOnHit,
+    animFrameCountOnHit,
+    hitReactClipId,
+    forcesStand: forcesStand || undefined,
     facingRelative: o.facingRelative !== false,
     review: (o.review as MoveDefinition['review']) ?? {
       status: 'placeholder',
@@ -568,6 +606,85 @@ export function parseMoveDefinition(raw: unknown): MoveDefinition {
 
 export function cloneMove(m: MoveDefinition): MoveDefinition {
   return structuredClone(m);
+}
+
+/** 0-based first active frame (= MMDK fab.ActionFrame.MainFrame for _H). */
+export function swingMainFrame(move: MoveDefinition): number {
+  return Math.max(0, Math.floor(move.frames.startup) - 1);
+}
+
+/**
+ * Default SWING path: shared startup on hit-clip, then whiff clip from first
+ * active (whiff MainFrame=0 → motion 0). Used until an unguarded hit lands.
+ */
+export function buildSwingAnimSequence(
+  move: MoveDefinition,
+): AnimSequenceSegment[] | null {
+  const hitRole = move.animRoleOnHit?.trim();
+  if (!hitRole) return null;
+  const whiffRole = move.animRole?.trim() || 'main';
+  const mainFrame = swingMainFrame(move);
+  const whiffN = Math.max(
+    1,
+    Math.floor(move.animFrameCount ?? move.frames.total),
+  );
+  return [
+    {
+      role: hitRole,
+      logicFrom: 0,
+      logicTo: mainFrame,
+      motionFrom: 0,
+      motionTo: mainFrame,
+    },
+    {
+      role: whiffRole,
+      logicFrom: mainFrame,
+      logicTo: mainFrame + whiffN,
+      motionFrom: 0,
+      motionTo: whiffN,
+    },
+  ];
+}
+
+/** Connected hit: stay on hit-clip for full authored length. */
+export function buildHitAnimSequence(
+  move: MoveDefinition,
+): AnimSequenceSegment[] | null {
+  const hitRole = move.animRoleOnHit?.trim();
+  if (!hitRole) return null;
+  const hitN = Math.max(
+    1,
+    Math.floor(
+      move.animFrameCountOnHit ?? move.animFrameCount ?? move.frames.total,
+    ),
+  );
+  return [
+    {
+      role: hitRole,
+      logicFrom: 0,
+      logicTo: hitN,
+      motionFrom: 0,
+      motionTo: hitN,
+    },
+  ];
+}
+
+/** Presentation end frame for residual (swing vs hit). */
+export function attackPresentationFrameCount(
+  move: MoveDefinition,
+  connectedHit: boolean,
+): number {
+  const mainFrame = swingMainFrame(move);
+  if (connectedHit && move.animFrameCountOnHit != null) {
+    return Math.max(move.frames.total, Math.floor(move.animFrameCountOnHit));
+  }
+  if (move.animRoleOnHit && move.animFrameCount != null) {
+    return Math.max(move.frames.total, mainFrame + Math.floor(move.animFrameCount));
+  }
+  return Math.max(
+    move.frames.total,
+    Math.floor(move.animFrameCount ?? move.frames.total),
+  );
 }
 
 /**

@@ -116,8 +116,8 @@
         "y": 1.4972588737008057,
         "w": 0.5078077677836003,
         "h": 0.49813220523293644,
-        "from": 1,
-        "to": 2,
+        "from": 7,
+        "to": 8,
         "rectId": 19
       },
       {
@@ -125,8 +125,8 @@
         "y": 2.021698074124915,
         "w": 0.4596474458765163,
         "h": 0.6472036187551871,
-        "from": 3,
-        "to": 6,
+        "from": 9,
+        "to": 12,
         "rectId": 20
       }
     ],
@@ -152,6 +152,10 @@
     ]
   },
   "clipId": "ryu_2hp",
+  "animRoleOnHit": "on_hit",
+  "animFrameCountOnHit": 80,
+  "hitReactClipId": "dmg_mh_up",
+  "forcesStand": true,
   "facingRelative": true,
   "review": {
     "status": "mmdk_converted",
@@ -274,7 +278,7 @@
     0.0006949661908339567,
     0.0003568745304282306,
     0.0001314800901577762,
-    0.00001878287002254897
+    1.878287002254897e-05
   ],
   "hitReaction": "stun",
   "animFrameCount": 76,
@@ -284,5 +288,7 @@
     "fabFrame": 76
   },
   "guard": "high",
-  "guardStrength": "H"
+  "guardStrength": "H",
+  "hitAnim": "m",
+  "hitAnimDir": "st"
 }

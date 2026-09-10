@@ -343,6 +343,12 @@
     0.0006949661908339567,
     0.0003568745304282306,
     0.0001314800901577762,
-    0.00001878287002254897
-  ]
+    1.878287002254897e-05
+  ],
+  "hitAnim": "m",
+  "hitAnimDir": "st",
+  "forcesStand": true,
+  "hitReactClipId": "dmg_mh_up",
+  "animRoleOnHit": "on_hit",
+  "animFrameCountOnHit": 80
 }

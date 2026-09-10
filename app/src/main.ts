@@ -41,6 +41,7 @@ import {
 } from './render/HitCloudShadowFx';
 import { resolveCmosShakePresetId } from './config/cmosShake';
 import { resolveGuardStrength } from './combat/systems/GuardPolicy';
+import { CombatSfxPlayer } from './combat/sfx/SfxPlayer';
 import { worldPosFromTrigger } from './render/hitVfx/HitVfxRuntime';
 import {
   applyEnvironment,
@@ -209,6 +210,12 @@ async function boot(): Promise<void> {
   loadSavedConfig();
 
   const match = new MatchSim(move, catalog, applyConfigToMatchOpts(cfg));
+  const combatSfx = new CombatSfxPlayer();
+  void combatSfx.init().catch((e) => console.warn('[sfx] init failed', e));
+  match.opts.onCombatSfx = (ev) => combatSfx.handle(ev);
+  const unlockSfx = () => combatSfx.unlock();
+  window.addEventListener('pointerdown', unlockSfx, { once: true });
+  window.addEventListener('keydown', unlockSfx, { once: true });
   if (ryuMovement) match.setMovementTable(ryuMovement);
   try {
     const { loadStanceTableResolved } = await import(

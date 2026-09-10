@@ -117,7 +117,9 @@
 - `ATK_2LP_C` → `attack/esf001v00_attack_06/glb/002_esf001_ATK_2LP_C_id2002_f58.glb`
 
 ### `ryu_2hp`
-- `ATK_2HP_H` → `attack/esf001v00_attack_08/glb/001_esf001_ATK_2HP_H_id2005_f80.glb`
+- **on_hit** `ATK_2HP_H` → `…/ATK_2HP_H_…_f80.glb`（入口+前摇；命中收尾）
+- **main** `ATK_2HP` → `…/ATK_2HP_…_f76.glb`（SWING 挥空：MainFrame=0，第 1 帧即 active）
+- 流程：先播 `_H` 前摇 → active 起切 `main` 挥空；若命中则锁回 `_H` 收尾
 
 ### `ryu_2lk`
 - `ATK_2LK_B` → `attack/esf001v00_attack_09/glb/001_esf001_ATK_2LK_B_id2001_f82.glb`
@@ -127,7 +129,9 @@
 - `ATK_2HK_G` → `attack/esf001v00_attack_11/glb/001_esf001_ATK_2HK_G_id2005_f97.glb`
 
 ### `ryu_4hp`
-- `ATK_4HP_H` → `basic/esf001v00_skill_05/glb/001_esf001_ATK_4HP_H_id0001_f100.glb`
+- **on_hit** `ATK_4HP_H` → `…/ATK_4HP_H_…_f100.glb`（入口+前摇；命中收尾）
+- **main** `ATK_4HP` → `…/ATK_4HP_…_f82.glb`（SWING 挥空：MainFrame=0）
+- 流程同 2HP（MMDK BranchKey Type=SWING → Action ATK_4HP）
 
 ## aliasIndex（节选）
 

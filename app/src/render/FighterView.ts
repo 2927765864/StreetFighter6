@@ -2230,10 +2230,11 @@ export class FighterView {
     if (fighter.phase === 'attack' && fighter.mover.move) {
       this.clearPoseBlend(true);
       const vf = fighter.mover.moveFrame;
-      const seq = resolveAnimSequenceFrame(
-        vf,
-        fighter.mover.move.animSequence,
-      );
+      const attackSeq =
+        fighter.attackAnimSequence?.length
+          ? fighter.attackAnimSequence
+          : fighter.mover.move.animSequence;
+      const seq = resolveAnimSequenceFrame(vf, attackSeq);
       const attackRole = seq?.role || role;
       if (seq) fighter.animRole = seq.role;
       this.playBest(fighter.clipId, attackRole, HARD_CUT);

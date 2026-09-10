@@ -20,3 +20,7 @@ dist/
 __pycache__/
 *.pyc
 *.pyo
+
+# sfx-lab 中间产物（源码可提交；work/ 为解包转码缓存）
+sfx-lab/work/
+sfx-lab/dist/

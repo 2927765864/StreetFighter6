@@ -8,7 +8,12 @@ import type {
   AnimSequenceSegment,
   MoveDefinition,
 } from '../move/MoveDefinition';
-import { inferTimelineFrames } from '../move/MoveDefinition';
+import {
+  attackPresentationFrameCount,
+  buildHitAnimSequence,
+  buildSwingAnimSequence,
+  inferTimelineFrames,
+} from '../move/MoveDefinition';
 import { MovePlayer } from '../move/MovePlayer';
 import type {
   Facing,
@@ -103,6 +108,16 @@ export class Fighter {
   clipId = 'idle';
   /** Presentation role for multi-clip maps (start/loop/end/prejump/air/land). */
   animRole = 'main';
+  /**
+   * When an attack lands and switches to `animRoleOnHit`, residual length uses
+   * this instead of `move.animFrameCount` (e.g. ATK_4HP_H = 100).
+   */
+  attackAnimFrameCountOverride: number | null = null;
+  /**
+   * Runtime attack clip sequence (SWING startup→whiff, or full hit). Prefer
+   * over `move.animSequence` while the attack is locked / residual.
+   */
+  attackAnimSequence: AnimSequenceSegment[] | null = null;
   locoPhase: LocoPhase = 'none';
   locoFrame = 0;
   jumpPhase: JumpPhase = 'none';
@@ -650,20 +665,33 @@ export class Fighter {
    * Starts immediately at logic total (no table recovery wait); scrubs
    * total…animFrameCount−1. Missing animFrameCount → freeze last logic frame.
    */
+  private activeAttackAnimSequence(
+    move: MoveDefinition,
+  ): AnimSequenceSegment[] | undefined {
+    if (this.attackAnimSequence?.length) return this.attackAnimSequence;
+    if (move.animSequence?.length) return move.animSequence;
+    return undefined;
+  }
+
   private beginAirAttackAnimTail(move: MoveDefinition): void {
     const total = Math.max(1, Math.floor(move.frames.total));
     let animN = total;
-    if (move.animFrameCount != null && move.animFrameCount > 0) {
+    if (
+      this.attackAnimFrameCountOverride != null &&
+      this.attackAnimFrameCountOverride > 0
+    ) {
+      animN = Math.max(total, Math.floor(this.attackAnimFrameCountOverride));
+    } else if (move.animFrameCount != null && move.animFrameCount > 0) {
       animN = Math.max(total, Math.floor(move.animFrameCount));
     } else if (move.glbPath) {
       const m = /_f(\d+)(?:\.|$)/i.exec(move.glbPath);
       if (m) animN = Math.max(total, parseInt(m[1]!, 10));
     }
-    const seq = move.animSequence?.length ? move.animSequence : undefined;
+    const seq = this.activeAttackAnimSequence(move);
     const role =
       seq?.find((s) => total >= s.logicFrom && total < s.logicTo)?.role ??
       seq?.[seq.length - 1]?.role ??
-      (move.animRole?.trim() || 'main');
+      (this.animRole?.trim() || move.animRole?.trim() || 'main');
     this.animTail = {
       clipId: move.clipId,
       // First residual sample = first frame after locked segment
@@ -681,14 +709,36 @@ export class Fighter {
   }
 
   private beginAnimTail(move: MoveDefinition): void {
+    const animN =
+      this.attackAnimFrameCountOverride != null &&
+      this.attackAnimFrameCountOverride > 0
+        ? this.attackAnimFrameCountOverride
+        : move.animFrameCount;
+    const seq = this.activeAttackAnimSequence(move);
     this.beginClipAnimTail(
       move.clipId,
       move.frames.total,
-      move.animFrameCount,
+      animN,
       inferMoveStance(move),
-      move.animRole?.trim() || 'main',
+      this.animRole?.trim() || move.animRole?.trim() || 'main',
       move.animRemap,
-      move.animSequence,
+      seq,
+    );
+  }
+
+  /**
+   * Ungarded connect: keep/switch to hit-clip recovery (ATK_*_H). No-op when
+   * the move has no SWING-branch hit role.
+   */
+  applyOnHitAttackPresentation(move: MoveDefinition): void {
+    const role = move.animRoleOnHit?.trim();
+    if (!role) return;
+    const hitSeq = buildHitAnimSequence(move);
+    if (hitSeq) this.attackAnimSequence = hitSeq;
+    this.animRole = role;
+    this.attackAnimFrameCountOverride = attackPresentationFrameCount(
+      move,
+      true,
     );
   }
 
@@ -1139,10 +1189,25 @@ export class Fighter {
     this.phase = 'attack';
     this.mover.start(move);
     this.clipId = move.clipId;
-    this.animRole =
-      move.animSequence?.[0]?.role?.trim() ||
-      move.animRole?.trim() ||
-      'main';
+    const swingSeq = buildSwingAnimSequence(move);
+    if (swingSeq) {
+      // Capcom: enter ATK_*_H for startup, SWING-branch to whiff at MainFrame.
+      this.attackAnimSequence = swingSeq;
+      this.animRole = move.animRoleOnHit!.trim();
+      this.attackAnimFrameCountOverride = attackPresentationFrameCount(
+        move,
+        false,
+      );
+    } else {
+      this.attackAnimSequence = move.animSequence?.length
+        ? move.animSequence.slice()
+        : null;
+      this.animRole =
+        move.animSequence?.[0]?.role?.trim() ||
+        move.animRole?.trim() ||
+        'main';
+      this.attackAnimFrameCountOverride = null;
+    }
     if (!onJumpArc) {
       this.stateTimer = 0;
     }

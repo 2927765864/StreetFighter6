@@ -12,6 +12,8 @@ export const DMG_LOGIC_IDS = new Set([
   'dmg_hl_st',
   'dmg_hm_st',
   'dmg_hh_st',
+  'dmg_hu_up_h',
+  'dmg_mh_up',
   'dmg_ml_st',
   'dmg_mm_st',
   'dmg_mh_st',
