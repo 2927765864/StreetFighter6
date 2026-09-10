@@ -782,7 +782,10 @@ export class MatchSim {
       walk_back: { start: 15, loop: 118, end: 47 },
     };
     if (stillHolding && walkDir) {
-      this.p1.applyWalkState(beginWalkStart(walkDir));
+      // Same press as freeze edge — do not re-arm first-frame 1/4 speed.
+      this.p1.applyWalkState(
+        beginWalkStart(walkDir, { firstFramePending: false }),
+      );
       return;
     }
     // Released: no start — reopen end from entry (early-release if never looped).

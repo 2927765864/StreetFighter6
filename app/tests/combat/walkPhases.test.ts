@@ -22,6 +22,37 @@ const base = {
 };
 
 describe('WalkController', () => {
+  it('first walk frame is 1/4 speed, then full; reverse re-arms', () => {
+    let s = initialWalkState();
+    let r = stepWalk(s, { ...base, holdFwd: true, holdBack: false });
+    expect(r.dxFacing).toBeCloseTo(0.047 * 0.25);
+    expect(r.state.firstFramePending).toBe(false);
+    s = r.state;
+    r = stepWalk(s, { ...base, holdFwd: true, holdBack: false });
+    expect(r.dxFacing).toBeCloseTo(0.047);
+    s = r.state;
+    r = stepWalk(s, { ...base, holdFwd: false, holdBack: true });
+    expect(r.enteredStart).toBe(true);
+    expect(r.dxFacing).toBeCloseTo(-0.032 * 0.25);
+    s = r.state;
+    r = stepWalk(s, { ...base, holdFwd: false, holdBack: true });
+    expect(r.dxFacing).toBeCloseTo(-0.032);
+    s = r.state;
+    r = stepWalk(s, { ...base, holdFwd: true, holdBack: false });
+    expect(r.dxFacing).toBeCloseTo(0.047 * 0.25);
+  });
+
+  it('release then press again re-arms first-frame scale', () => {
+    let s = initialWalkState();
+    let r = stepWalk(s, { ...base, holdFwd: true, holdBack: false });
+    s = r.state;
+    r = stepWalk(s, { ...base, holdFwd: false, holdBack: false });
+    expect(r.state.locoPhase).toBe('end');
+    s = r.state;
+    r = stepWalk(s, { ...base, holdFwd: true, holdBack: false });
+    expect(r.dxFacing).toBeCloseTo(0.047 * 0.25);
+  });
+
   it('start → loop on hold forward', () => {
     let s = initialWalkState();
     let r = stepWalk(s, { ...base, holdFwd: true, holdBack: false });

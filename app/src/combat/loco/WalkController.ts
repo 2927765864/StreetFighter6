@@ -23,6 +23,11 @@ export type WalkState = {
    * end still plays from locoFrame 0 (authored recovery).
    */
   exitCycle01: number;
+  /**
+   * Next start/loop displacement uses `firstFrameSpeedScale` once, then clears.
+   * Armed on a new walk press (idle/end → start, or reverse).
+   */
+  firstFramePending: boolean;
 };
 
 export type WalkStepInput = {
@@ -75,6 +80,7 @@ const IDLE: WalkState = {
   clipId: 'idle',
   animRole: 'main',
   exitCycle01: 0,
+  firstFramePending: false,
 };
 
 function framesFor(dir: WalkDir, phase: LocoPhase, clips: WalkStepInput['clips']): number {
@@ -85,7 +91,10 @@ function framesFor(dir: WalkDir, phase: LocoPhase, clips: WalkStepInput['clips']
   return 1;
 }
 
-function startWalk(dir: WalkDir): WalkState {
+function startWalk(
+  dir: WalkDir,
+  firstFramePending = true,
+): WalkState {
   return {
     locoPhase: 'start',
     locoFrame: 0,
@@ -93,12 +102,16 @@ function startWalk(dir: WalkDir): WalkState {
     clipId: dir === 'fwd' ? 'walk_fwd' : 'walk_back',
     animRole: 'start',
     exitCycle01: 0,
+    firstFramePending,
   };
 }
 
 /** Public: restart walk start at frame 0 (e.g. after input-freeze delay). */
-export function beginWalkStart(dir: WalkDir): WalkState {
-  return startWalk(dir);
+export function beginWalkStart(
+  dir: WalkDir,
+  opts?: { firstFramePending?: boolean },
+): WalkState {
+  return startWalk(dir, opts?.firstFramePending ?? true);
 }
 
 /**
@@ -126,6 +139,7 @@ export function beginWalkEnd(
     clipId: dir === 'fwd' ? 'walk_fwd' : 'walk_back',
     animRole: 'end',
     exitCycle01: opts?.exitCycle01 ?? 0,
+    firstFramePending: false,
   };
 }
 
@@ -182,6 +196,7 @@ export function stepWalk(prev: WalkState, input: WalkStepInput): WalkStepResult 
       clipId: s.clipId === 'walk_back' ? 'walk_back' : 'walk_fwd',
       animRole: 'end',
       exitCycle01: cycle01(s.locoFrame, segLen),
+      firstFramePending: false,
     };
     enteredEnd = true;
   }
@@ -195,11 +210,11 @@ export function stepWalk(prev: WalkState, input: WalkStepInput): WalkStepResult 
   const sign = dir === 'fwd' ? 1 : -1;
 
   if (s.locoPhase === 'start' || s.locoPhase === 'loop') {
-    const scale =
-      s.locoPhase === 'start' && s.locoFrame === 0
-        ? input.firstFrameSpeedScale
-        : 1;
+    const scale = s.firstFramePending ? input.firstFrameSpeedScale : 1;
     dxFacing = sign * base * scale;
+    if (s.firstFramePending) {
+      s = { ...s, firstFramePending: false };
+    }
   }
   // end: P0 horizontal speed 0
 
@@ -218,6 +233,7 @@ export function stepWalk(prev: WalkState, input: WalkStepInput): WalkStepResult 
       clipId: dir === 'fwd' ? 'walk_fwd' : 'walk_back',
       animRole: 'loop',
       exitCycle01: s.exitCycle01,
+      firstFramePending: false,
     };
   } else if (s.locoPhase === 'loop' && s.locoFrame >= segLen) {
     s.locoFrame = 0; // loop wrap
