@@ -1,7 +1,10 @@
 /**
  * Lit capsule/box for spark light verification (consensus: must have littee).
+ * Lives on the front-fighter display layer so 2D flipbook can draw behind it
+ * (stage → behind VFX → dummy → front VFX), matching training.
  */
 import * as THREE from 'three/webgpu';
+import { LAYER_FIGHTER_FRONT } from '../fighterDisplayOrder';
 
 export class HitVfxPreviewDummy {
   readonly root: THREE.Group;
@@ -22,6 +25,9 @@ export class HitVfxPreviewDummy {
     this.mesh.receiveShadow = true;
     this.mesh.position.y = 0.88;
     this.root.add(this.mesh);
+    this.root.traverse((o) => {
+      o.layers.set(LAYER_FIGHTER_FRONT);
+    });
     this.root.visible = false;
   }
 

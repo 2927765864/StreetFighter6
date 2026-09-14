@@ -101,4 +101,29 @@ describe('flipbook 2d L/M/H recipes', () => {
     expect(loadFlipbookState().selected).toBe('H');
     expect(loadFlipbookBank().L.layers[0]!.scale).toBe(0.5);
   });
+
+  it('persists overCharacter and defaults missing field to true', () => {
+    const bank = defaultFlipbookBank();
+    bank.M.layers[0]!.overCharacter = false;
+    saveFlipbookBank(bank, 'M');
+    expect(loadFlipbookRecipe('M').layers[0]!.overCharacter).toBe(false);
+    expect(loadFlipbookRecipe('L').layers[0]!.overCharacter).not.toBe(false);
+
+    localStorage.setItem(
+      KEY,
+      JSON.stringify({
+        v: 2,
+        selected: 'M',
+        recipes: {
+          L: bank.L,
+          M: {
+            ...bank.M,
+            layers: bank.M.layers.map(({ overCharacter: _oc, ...rest }) => rest),
+          },
+          H: bank.H,
+        },
+      }),
+    );
+    expect(loadFlipbookRecipe('M').layers[0]!.overCharacter).toBe(true);
+  });
 });

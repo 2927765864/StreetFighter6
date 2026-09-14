@@ -63,6 +63,8 @@ function sanitizeLayer(raw: Partial<FlipbookLayer>, fallback: FlipbookLayer): Fl
     name: typeof raw.name === 'string' ? raw.name : fallback.name,
     enabled: raw.enabled !== false,
     z: Number.isFinite(Number(raw.z)) ? Number(raw.z) : fallback.z,
+    // Missing field (old recipes) → keep covering characters (legacy look).
+    overCharacter: raw.overCharacter !== false,
     offsetX: Number.isFinite(Number(raw.offsetX)) ? Number(raw.offsetX) : 0,
     offsetY: Number.isFinite(Number(raw.offsetY)) ? Number(raw.offsetY) : 0,
     scale: num(raw.scale, 1, 0.05, 8),

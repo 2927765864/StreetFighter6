@@ -29,6 +29,7 @@ export const DEFAULT_FLIPBOOK_RECIPE: FlipbookRecipe = {
       name: 'E3 圆环烟',
       enabled: true,
       z: 0,
+      overCharacter: true,
       offsetX: 0,
       offsetY: 0,
       scale: 1,
@@ -45,6 +46,7 @@ export const DEFAULT_FLIPBOOK_RECIPE: FlipbookRecipe = {
       name: 'E4 宽短冲击烟',
       enabled: true,
       z: 1,
+      overCharacter: true,
       offsetX: 0,
       offsetY: 0,
       scale: 1,
@@ -61,6 +63,7 @@ export const DEFAULT_FLIPBOOK_RECIPE: FlipbookRecipe = {
       name: 'E5 窄长冲击烟',
       enabled: true,
       z: 2,
+      overCharacter: true,
       offsetX: 0,
       offsetY: 0,
       scale: 1,
@@ -77,6 +80,7 @@ export const DEFAULT_FLIPBOOK_RECIPE: FlipbookRecipe = {
       name: 'E6 反向窄长烟',
       enabled: true,
       z: 3,
+      overCharacter: true,
       offsetX: 0,
       offsetY: 0,
       scale: 1,
@@ -93,6 +97,7 @@ export const DEFAULT_FLIPBOOK_RECIPE: FlipbookRecipe = {
       name: 'E2 近核火花',
       enabled: true,
       z: 4,
+      overCharacter: true,
       offsetX: 0,
       offsetY: 0,
       scale: 1,
@@ -109,6 +114,7 @@ export const DEFAULT_FLIPBOOK_RECIPE: FlipbookRecipe = {
       name: 'E1 核心闪光',
       enabled: true,
       z: 5,
+      overCharacter: true,
       offsetX: 0,
       offsetY: 0,
       scale: 1,
@@ -145,13 +151,22 @@ export function recipeForStrength(
  * Factory bank shipped in the Habby zip (editor L/M/H, not identical copies).
  * Source: app/public/vfx/hit_ref_v1/recipes.json
  */
+function withLayerDefaults(layer: FlipbookLayer): FlipbookLayer {
+  return {
+    ...layer,
+    overCharacter: layer.overCharacter !== false,
+  };
+}
+
 export function defaultFlipbookBank(): FlipbookRecipeBank {
-  const rec = (shippingRecipes as { recipes?: FlipbookRecipeBank }).recipes;
+  // Shipping JSON may omit newer fields (e.g. overCharacter); normalize below.
+  const rec = (shippingRecipes as unknown as { recipes?: FlipbookRecipeBank })
+    .recipes;
   if (rec?.L && rec?.M && rec?.H) {
     return cloneBank({
-      L: { ...rec.L, layers: rec.L.layers.map((l) => ({ ...l })) },
-      M: { ...rec.M, layers: rec.M.layers.map((l) => ({ ...l })) },
-      H: { ...rec.H, layers: rec.H.layers.map((l) => ({ ...l })) },
+      L: { ...rec.L, layers: rec.L.layers.map((l) => withLayerDefaults({ ...l })) },
+      M: { ...rec.M, layers: rec.M.layers.map((l) => withLayerDefaults({ ...l })) },
+      H: { ...rec.H, layers: rec.H.layers.map((l) => withLayerDefaults({ ...l })) },
     });
   }
   return {

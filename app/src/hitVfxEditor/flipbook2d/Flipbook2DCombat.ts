@@ -21,11 +21,15 @@ type LayerBillboard = {
   material: THREE.MeshBasicMaterial;
   layer: FlipbookLayer;
   lookApplied: boolean;
+  /** Last parent spin used; reparent when overCharacter flips. */
+  overCharacter: boolean;
 };
 
 type Shot = {
-  root: THREE.Group;
-  spin: THREE.Group;
+  frontRoot: THREE.Group;
+  behindRoot: THREE.Group;
+  frontSpin: THREE.Group;
+  behindSpin: THREE.Group;
   layers: LayerBillboard[];
   recipe: FlipbookRecipe;
   playhead: number;
@@ -128,6 +132,10 @@ export function layerLocalOffset(
   return out.set(ox, oy, layer.z * 0.002);
 }
 
+export function layerOverCharacter(layer: Pick<FlipbookLayer, 'overCharacter'>): boolean {
+  return layer.overCharacter !== false;
+}
+
 /** L/M/H share E1–E6 ids; rebuild when the strength (or layer set) changes. */
 export function editorShotNeedsRebuild(
   shot: { recipe: FlipbookRecipe; layers: { layer: { id: string } }[] },
@@ -157,22 +165,32 @@ export function bindShotLayers(
 }
 
 export class Flipbook2DCombat {
-  private readonly scene: THREE.Object3D;
+  private readonly overlayScene: THREE.Object3D;
+  private readonly behindScene: THREE.Object3D;
   private camera: THREE.Camera;
   private recipe: FlipbookRecipe;
   private bank: FlipbookRecipeBank;
   private shots: Shot[] = [];
   private editorShot: Shot | null = null;
-  private readonly pool: THREE.Group;
+  private readonly frontPool: THREE.Group;
+  private readonly behindPool: THREE.Group;
 
-  constructor(scene: THREE.Object3D, camera: THREE.Camera) {
-    this.scene = scene;
+  constructor(
+    overlayScene: THREE.Object3D,
+    camera: THREE.Camera,
+    behindScene: THREE.Object3D = overlayScene,
+  ) {
+    this.overlayScene = overlayScene;
+    this.behindScene = behindScene;
     this.camera = camera;
     this.bank = loadFlipbookBank();
     this.recipe = this.bank.M;
-    this.pool = new THREE.Group();
-    this.pool.name = 'Flipbook2DCombat';
-    this.scene.add(this.pool);
+    this.frontPool = new THREE.Group();
+    this.frontPool.name = 'Flipbook2DCombatFront';
+    this.behindPool = new THREE.Group();
+    this.behindPool.name = 'Flipbook2DCombatBehind';
+    this.overlayScene.add(this.frontPool);
+    this.behindScene.add(this.behindPool);
     void this.warmTextures();
   }
 
@@ -189,7 +207,8 @@ export class Flipbook2DCombat {
     for (const s of this.shots) this.disposeShot(s);
     this.shots = [];
     this.clearEditor();
-    this.pool.visible = false;
+    this.frontPool.visible = false;
+    this.behindPool.visible = false;
   }
 
   clearEditor(): void {
@@ -210,7 +229,8 @@ export class Flipbook2DCombat {
   ): void {
     this.recipe = recipe;
     this.bank[recipe.strength] = recipe;
-    this.pool.visible = true;
+    this.frontPool.visible = true;
+    this.behindPool.visible = true;
     const world = worldPosFromTrigger(
       args,
       CONFIG.hitVfxHeightOffsets,
@@ -222,8 +242,7 @@ export class Flipbook2DCombat {
     } else {
       bindShotLayers(this.editorShot.layers, recipe);
       this.editorShot.recipe = recipe;
-      this.editorShot.root.position.copy(world);
-      this.editorShot.root.scale.set(flipbookFacingScaleX(args.facing), 1, 1);
+      this.placeShot(this.editorShot, world, args.facing);
       this.writeImpulse(this.editorShot, args);
     }
     this.editorShot.playhead = playhead;
@@ -239,7 +258,8 @@ export class Flipbook2DCombat {
     this.bank = loadFlipbookBank();
     const strength = (args.strength as FlipbookStrength) || 'M';
     this.recipe = this.bank[strength] ?? loadFlipbookRecipe(strength);
-    this.pool.visible = true;
+    this.frontPool.visible = true;
+    this.behindPool.visible = true;
     const world = worldPosFromTrigger(
       args,
       CONFIG.hitVfxHeightOffsets,
@@ -261,9 +281,19 @@ export class Flipbook2DCombat {
     this.applyFrame(shot);
   }
 
-  /** True when combat/editor flipbook meshes should be drawn this frame. */
+  /** True when any combat/editor flipbook mesh may need a draw this frame. */
   hasDrawable(): boolean {
     return this.shots.length > 0 || this.editorShot != null;
+  }
+
+  /** Behind-character pass: layers with overCharacter === false. */
+  hasBehindDrawable(): boolean {
+    return this.anyLayerDrawable(false);
+  }
+
+  /** Overlay pass: layers with overCharacter !== false (default). */
+  hasFrontDrawable(): boolean {
+    return this.anyLayerDrawable(true);
   }
 
   tick(dt: number, inHitstop: boolean): void {
@@ -288,16 +318,44 @@ export class Flipbook2DCombat {
       this.billboardShot(s);
       this.applyFrame(s);
     }
-    this.pool.visible = this.hasDrawable();
+    const any = this.hasDrawable();
+    this.frontPool.visible = any;
+    this.behindPool.visible = any;
+  }
+
+  private anyLayerDrawable(wantOver: boolean): boolean {
+    const consider = (shot: Shot | null): boolean => {
+      if (!shot) return false;
+      for (const item of shot.layers) {
+        if (!item.mesh.visible) continue;
+        if (layerOverCharacter(item.layer) === wantOver) return true;
+      }
+      return false;
+    };
+    if (consider(this.editorShot)) return true;
+    for (const s of this.shots) {
+      if (consider(s)) return true;
+    }
+    return false;
+  }
+
+  private placeShot(shot: Shot, world: THREE.Vector3, facing: number): void {
+    const sx = flipbookFacingScaleX(facing);
+    for (const root of [shot.frontRoot, shot.behindRoot]) {
+      root.position.copy(world);
+      root.scale.set(sx, 1, 1);
+    }
   }
 
   private spawnShot(world: THREE.Vector3, args: HitVfxTriggerArgs): Shot {
-    const root = new THREE.Group();
-    const spin = new THREE.Group();
-    spin.name = 'Flipbook2DSpin';
-    root.add(spin);
-    root.position.copy(world);
-    root.scale.set(flipbookFacingScaleX(args.facing), 1, 1);
+    const frontRoot = new THREE.Group();
+    const behindRoot = new THREE.Group();
+    const frontSpin = new THREE.Group();
+    const behindSpin = new THREE.Group();
+    frontSpin.name = 'Flipbook2DSpinFront';
+    behindSpin.name = 'Flipbook2DSpinBehind';
+    frontRoot.add(frontSpin);
+    behindRoot.add(behindSpin);
     const layers: LayerBillboard[] = [];
     const size = flipbookWorldSize(CONFIG.hitVfxFlipbookSize);
     for (const layer of this.recipe.layers) {
@@ -308,13 +366,23 @@ export class Flipbook2DCombat {
       mesh.renderOrder = 20 + layer.z;
       mesh.visible = false;
       mesh.position.copy(layerLocalOffset(layer, size));
-      spin.add(mesh);
-      layers.push({ mesh, material: mat, layer, lookApplied: true });
+      const over = layerOverCharacter(layer);
+      (over ? frontSpin : behindSpin).add(mesh);
+      layers.push({
+        mesh,
+        material: mat,
+        layer,
+        lookApplied: true,
+        overCharacter: over,
+      });
     }
-    this.pool.add(root);
+    this.frontPool.add(frontRoot);
+    this.behindPool.add(behindRoot);
     const shot: Shot = {
-      root,
-      spin,
+      frontRoot,
+      behindRoot,
+      frontSpin,
+      behindSpin,
       layers,
       recipe: this.recipe,
       playhead: 0,
@@ -322,6 +390,7 @@ export class Flipbook2DCombat {
       facing: args.facing,
       impulse: new THREE.Vector3(),
     };
+    this.placeShot(shot, world, args.facing);
     this.writeImpulse(shot, args);
     return shot;
   }
@@ -336,21 +405,30 @@ export class Flipbook2DCombat {
   }
 
   private billboardShot(shot: Shot): void {
-    shot.root.quaternion.copy(this.camera.quaternion);
+    const q = this.camera.quaternion;
+    shot.frontRoot.quaternion.copy(q);
+    shot.behindRoot.quaternion.copy(q);
     this.camera.updateMatrixWorld();
     _camRight.setFromMatrixColumn(this.camera.matrixWorld, 0);
     _camUp.setFromMatrixColumn(this.camera.matrixWorld, 1);
-    shot.spin.rotation.z = flipbookSpinRad(
+    const spin = flipbookSpinRad(
       shot.impulse,
       _camRight,
       _camUp,
       flipbookFacingScaleX(shot.facing),
     );
+    shot.frontSpin.rotation.z = spin;
+    shot.behindSpin.rotation.z = spin;
   }
 
   private applyFrame(shot: Shot, forceLook = false): void {
     const size = flipbookWorldSize(CONFIG.hitVfxFlipbookSize);
     for (const item of shot.layers) {
+      const over = layerOverCharacter(item.layer);
+      if (item.overCharacter !== over) {
+        (over ? shot.frontSpin : shot.behindSpin).add(item.mesh);
+        item.overCharacter = over;
+      }
       const urls = FLIPBOOK_SHEETS[item.layer.id] ?? [];
       const idx = sourceFrameAt(item.layer, shot.playhead, urls.length);
       if (idx == null) {
@@ -386,7 +464,8 @@ export class Flipbook2DCombat {
   }
 
   private disposeShot(shot: Shot): void {
-    this.pool.remove(shot.root);
+    this.frontPool.remove(shot.frontRoot);
+    this.behindPool.remove(shot.behindRoot);
     for (const item of shot.layers) {
       item.material.map = null;
       item.material.dispose();

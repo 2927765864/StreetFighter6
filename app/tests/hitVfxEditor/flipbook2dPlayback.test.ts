@@ -6,6 +6,7 @@ import {
   flipbookFacingScaleX,
   flipbookSpinRad,
   layerLocalOffset,
+  layerOverCharacter,
 } from '../../src/hitVfxEditor/flipbook2d/Flipbook2DCombat';
 import { defaultFlipbookBank } from '../../src/hitVfxEditor/flipbook2d/defaults';
 import {
@@ -19,6 +20,7 @@ const layer = (over: Partial<FlipbookLayer> = {}): FlipbookLayer => ({
   name: 'E1',
   enabled: true,
   z: 0,
+  overCharacter: true,
   offsetX: 0,
   offsetY: 0,
   scale: 1,
@@ -123,6 +125,16 @@ describe('flipbookSpinRad (punch impulse on camera plane)', () => {
     expect(
       flipbookSpinRad(new THREE.Vector3(0, 0, 0), right, up, 1),
     ).toBe(0);
+  });
+});
+
+describe('layerOverCharacter', () => {
+  it('defaults to covering the character when the field is missing', () => {
+    expect(layerOverCharacter({ overCharacter: true })).toBe(true);
+    expect(layerOverCharacter({ overCharacter: false })).toBe(false);
+    expect(
+      layerOverCharacter({} as Pick<FlipbookLayer, 'overCharacter'>),
+    ).toBe(true);
   });
 });
 

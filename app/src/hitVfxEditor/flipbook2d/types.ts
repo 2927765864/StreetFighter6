@@ -14,8 +14,13 @@ export type FlipbookLayer = {
   id: FlipbookLayerId;
   name: string;
   enabled: boolean;
-  /** Higher draws on top. */
+  /** Higher draws on top (within the same over/behind pass). */
   z: number;
+  /**
+   * true = draw in the post-fighter overlay (covers characters).
+   * false = draw before fighters (entire layer behind characters).
+   */
+  overCharacter: boolean;
   offsetX: number;
   offsetY: number;
   scale: number;

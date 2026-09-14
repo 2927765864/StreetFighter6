@@ -404,6 +404,12 @@ export class Flipbook2DApp {
           layer.blend === 'add' ? '加法' : layer.blend === 'screen' ? '滤色' : '普通'
         }</p>
         <div class="fb2d-insp-row"><label>显示层级 z</label><input type="number" data-f="z" step="1" value="${layer.z}" /></div>
+        <div class="fb2d-insp-row"><label>盖在角色上</label>
+          <select data-f="overCharacter">
+            <option value="yes" ${layer.overCharacter !== false ? 'selected' : ''}>是（盖住角色）</option>
+            <option value="no" ${layer.overCharacter === false ? 'selected' : ''}>否（在角色后）</option>
+          </select>
+        </div>
         <div class="fb2d-insp-row"><label>位置 X</label><input type="number" data-f="offsetX" step="1" value="${layer.offsetX}" /></div>
         <div class="fb2d-insp-row"><label>位置 Y</label><input type="number" data-f="offsetY" step="1" value="${layer.offsetY}" /></div>
         <div class="fb2d-insp-row"><label>缩放</label><input type="number" data-f="scale" step="0.05" min="0.05" value="${layer.scale}" /></div>
@@ -420,7 +426,7 @@ export class Flipbook2DApp {
             <option value="add" ${layer.blend === 'add' ? 'selected' : ''}>加法（火/火花）</option>
           </select>
         </div>
-        <p style="opacity:.65;font-size:12px;line-height:1.45">预览就是训练场 3D 场景（同一套光照）。Shift+拖画面改本层位置；左键拖仍是转镜头。时间线改出现时机。</p>
+        <p style="opacity:.65;font-size:12px;line-height:1.45">预览就是训练场 3D 场景（同一套光照）。「盖在角色上」选否时整层画在假人/角色背后。勾选工具栏「显示假人」可对照。Shift+拖画面改本层位置；左键拖仍是转镜头。时间线改出现时机。</p>
       </div>
     `;
     attachDragScrubAll(this.host.inspectorBody);
@@ -439,6 +445,8 @@ export class Flipbook2DApp {
     const f = el.dataset.f as keyof FlipbookLayer;
     if (f === 'blend') {
       layer.blend = parseBlend(el.value);
+    } else if (f === 'overCharacter') {
+      layer.overCharacter = el.value !== 'no';
     } else if (f === 'enabled') {
       /* n/a */
     } else if (typeof layer[f] === 'number') {

@@ -11,6 +11,11 @@ import { HitVfxPreviewDummy } from '../render/hitVfx/HitVfxPreviewDummy';
 import { setupHitVfxEditorPanel } from './HitVfxEditorPanel';
 import { Flipbook2DApp } from './flipbook2d/Flipbook2DApp';
 import { Flipbook2DCombat } from './flipbook2d/Flipbook2DCombat';
+import {
+  enableFighterDisplayLayersOnLight,
+  LAYER_FIGHTER_FRONT,
+  LAYER_SCENE,
+} from '../render/fighterDisplayOrder';
 
 import stageUrl from '@interim/SF6 Training Stage/SF6 Training Stage.glb?url';
 
@@ -125,9 +130,11 @@ export async function bootHitVfxEditor(): Promise<void> {
     originZ: CONFIG.stageOriginZ,
   });
 
-  // Same overlay scene as training — spark lights stay out of the stage graph.
+  // Same overlay / behind scenes as training — spark lights stay out of the stage graph.
   const hitVfxScene = new THREE.Scene();
   hitVfxScene.name = 'HitVfxOverlay';
+  const hitVfxBehindScene = new THREE.Scene();
+  hitVfxBehindScene.name = 'HitVfxBehind';
 
   const hitVfxRuntime = new HitVfxRuntime({
     renderer,
@@ -162,6 +169,9 @@ export async function bootHitVfxEditor(): Promise<void> {
         p2: emptyP2,
       },
     });
+    for (const rt of lights.runtimes.values()) {
+      enableFighterDisplayLayersOnLight(rt.light);
+    }
     lights.helperGroup.visible = false;
   };
 
@@ -169,9 +179,8 @@ export async function bootHitVfxEditor(): Promise<void> {
 
   const syncRuntime = (): void => {
     hitVfxRuntime.applyConfig(runtimeSlice());
-    dummy.setVisible(
-      CONFIG.hitVfxPreviewDummyVisible && flipbook?.isActive() !== true,
-    );
+    // Keep dummy in 2D so overCharacter behind/front can be previewed.
+    dummy.setVisible(CONFIG.hitVfxPreviewDummyVisible);
     refreshLighting();
   };
 
@@ -291,11 +300,10 @@ export async function bootHitVfxEditor(): Promise<void> {
       if (twoD) {
         stopLoop();
         hitVfxRuntime.invalidatePrefabs();
-        dummy.setVisible(false);
       }
       flipbook?.setActive(twoD);
+      dummy.setVisible(CONFIG.hitVfxPreviewDummyVisible);
       if (!twoD) {
-        dummy.setVisible(CONFIG.hitVfxPreviewDummyVisible);
         firePreview();
       }
     },
@@ -320,7 +328,11 @@ export async function bootHitVfxEditor(): Promise<void> {
   const slot =
     document.getElementById('hvfx-canvas-slot') ?? document.body;
   slot.appendChild(host);
-  const flipbookWorld = new Flipbook2DCombat(hitVfxScene, camera);
+  const flipbookWorld = new Flipbook2DCombat(
+    hitVfxScene,
+    camera,
+    hitVfxBehindScene,
+  );
   const appRoot = document.getElementById('hvfx-app');
   if (appRoot) {
     flipbook = new Flipbook2DApp({
@@ -372,7 +384,10 @@ export async function bootHitVfxEditor(): Promise<void> {
     }
 
     void (async () => {
+      // Match training: stage → behind flipbook → dummy → front overlay.
+      camera.layers.set(LAYER_SCENE);
       await renderer.render(scene, camera);
+
       const prevBackground = scene.background;
       const prevAutoClear = renderer.autoClear;
       const prevAutoClearColor = renderer.autoClearColor;
@@ -381,12 +396,33 @@ export async function bootHitVfxEditor(): Promise<void> {
       renderer.autoClear = false;
       renderer.autoClearColor = false;
       renderer.autoClearDepth = false;
-      renderer.clearDepth();
-      await renderer.render(hitVfxScene, camera);
+
+      if (twoD && flipbookWorld.hasBehindDrawable()) {
+        camera.layers.set(LAYER_SCENE);
+        await renderer.render(hitVfxBehindScene, camera);
+      }
+
+      if (dummy.isVisible()) {
+        renderer.clearDepth();
+        camera.layers.set(LAYER_FIGHTER_FRONT);
+        await renderer.render(scene, camera);
+      }
+
+      const frontVfx =
+        (twoD && flipbookWorld.hasFrontDrawable()) ||
+        (!twoD && hitVfxRuntime.getActiveCount() > 0);
+      if (frontVfx) {
+        renderer.clearDepth();
+        camera.layers.set(LAYER_SCENE);
+        await renderer.render(hitVfxScene, camera);
+      }
+
       scene.background = prevBackground;
       renderer.autoClear = prevAutoClear;
       renderer.autoClearColor = prevAutoClearColor;
       renderer.autoClearDepth = prevAutoClearDepth;
+      camera.layers.set(LAYER_SCENE);
+      camera.layers.enable(LAYER_FIGHTER_FRONT);
       requestAnimationFrame(frame);
     })();
   };

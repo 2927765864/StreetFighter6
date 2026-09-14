@@ -304,10 +304,13 @@ async function boot(): Promise<void> {
   camera.up.set(0, 1, 0);
   camera.lookAt(0, cfg.cameraLookY, 0);
 
-  // Overlay scene: hit VFX never share the fighter layer passes, so they always
-  // composite above both characters after a depth clear.
+  // Overlay scene: front flipbook / procedural VFX after fighters (depth clear).
+  // Behind scene: flipbook layers with overCharacter=false, drawn after stage
+  // and before either fighter so the whole layer sits behind characters.
   const hitVfxScene = new THREE.Scene();
   hitVfxScene.name = 'HitVfxOverlay';
+  const hitVfxBehindScene = new THREE.Scene();
+  hitVfxBehindScene.name = 'HitVfxBehind';
 
   const hitVfxRuntime = new HitVfxRuntime({
     renderer,
@@ -340,7 +343,11 @@ async function boot(): Promise<void> {
   const hitScreenComposite = new HitScreenCompositeFx(hitShockwave, hitGlow);
   const hitCloudShadow = new HitCloudShadowFx();
   hitCloudShadow.applyParams(hitCloudShadowParamsFromConfig(cfg));
-  const flipbookCombat = new Flipbook2DCombat(hitVfxScene, camera);
+  const flipbookCombat = new Flipbook2DCombat(
+    hitVfxScene,
+    camera,
+    hitVfxBehindScene,
+  );
   /** Contact fires in logic before pose; spawn after FighterView.sync. */
   const pendingHitVfx: HitVfxMatchEvent[] = [];
   const limbScratch = new THREE.Vector3();
@@ -1398,11 +1405,13 @@ async function boot(): Promise<void> {
     const gizmoHelper = lightEdit.transform.getHelper();
 
     /**
-     * True 2.5D fighter priority + hit VFX above both fighters:
-     * 1) main scene + back fighter
-     * 2) clearDepth, then front fighter only
-     * 3) cloud-shadow mid-pass (darken fighters+stage; under 2D FX)
-     * 4) clearDepth, then hitVfxScene overlay (plume / volume smoke / spark lights)
+     * True 2.5D fighter priority + hit VFX:
+     * 1) stage only (LAYER_SCENE)
+     * 2) optional flipbook behind-character pass (overCharacter=false)
+     * 3) back fighter
+     * 4) clearDepth, then front fighter only
+     * 5) cloud-shadow mid-pass (darken fighters+stage; under front 2D FX)
+     * 6) clearDepth, then hitVfxScene overlay (front flipbook / plume / sparks)
      *
      * Important (WebGPU / three Background): a Color `scene.background` sets
      * forceClear on every render, which would wipe pass 1 even when
@@ -1414,7 +1423,6 @@ async function boot(): Promise<void> {
       autoClearFirst: boolean,
     ): void => {
       cam.layers.set(LAYER_SCENE);
-      cam.layers.enable(LAYER_FIGHTER_BACK);
       renderer.autoClear = autoClearFirst;
       renderer.render(scene, cam);
 
@@ -1427,19 +1435,30 @@ async function boot(): Promise<void> {
       renderer.autoClearColor = false;
       renderer.autoClearDepth = false;
 
+      const flipbookBehind =
+        cfg.hitVfxPlayMode === 'flipbook2d' &&
+        flipbookCombat.hasBehindDrawable();
+      if (flipbookBehind) {
+        cam.layers.set(LAYER_SCENE);
+        renderer.render(hitVfxBehindScene, cam);
+      }
+
+      cam.layers.set(LAYER_FIGHTER_BACK);
+      renderer.render(scene, cam);
+
       renderer.clearDepth();
       cam.layers.set(LAYER_FIGHTER_FRONT);
       renderer.render(scene, cam);
 
-      // Darken fighters+stage before 2D / procedural hit VFX overlay.
+      // Darken fighters+stage before front 2D / procedural hit VFX overlay.
       hitCloudShadow.apply(renderer, cam);
 
-      // Skip empty overlay pass (idle most of the time in flipbook2d shipping).
-      const hitVfxDrawable =
-        (cfg.hitVfxPlayMode === 'flipbook2d' && flipbookCombat.hasDrawable()) ||
+      const hitVfxFront =
+        (cfg.hitVfxPlayMode === 'flipbook2d' &&
+          flipbookCombat.hasFrontDrawable()) ||
         (cfg.hitVfxPlayMode !== 'flipbook2d' &&
           hitVfxRuntime.getActiveCount() > 0);
-      if (hitVfxDrawable) {
+      if (hitVfxFront) {
         // Overlay uses its own scene (default layer 0). Restore SCENE on the
         // camera so VFX meshes are visible; fighters are not in hitVfxScene.
         renderer.clearDepth();
