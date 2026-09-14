@@ -9,27 +9,34 @@ import {
 export type SfxLimb = 'punch' | 'kick';
 export type SfxStrength = 'l' | 'm' | 'h';
 
+/** Which fighter owns the emitter for stereo pan (plan §3.4). */
+export type SfxSourceSide = 'p1' | 'p2' | 'center';
+
+type SfxPanFields = {
+  sourceSide?: SfxSourceSide;
+};
+
 export type CombatSfxEvent =
-  | {
+  | ({
       kind: 'swing';
       moveId: string;
       guardStrength?: string | null;
       hitstopOnHit?: number;
-    }
-  | {
+    } & SfxPanFields)
+  | ({
       kind: 'hit' | 'block';
       moveId: string;
       guardStrength?: string | null;
       hitstopOnHit?: number;
       hitstopOnBlock?: number;
-    }
-  | { kind: 'dash'; forward: boolean }
-  | { kind: 'footstep'; side: 'left' | 'right' }
-  | { kind: 'jump' }
-  | { kind: 'jump_cloth' }
-  | { kind: 'land' }
-  | { kind: 'body_fall' }
-  | { kind: 'wakeup' };
+    } & SfxPanFields)
+  | ({ kind: 'dash'; forward: boolean } & SfxPanFields)
+  | ({ kind: 'footstep'; side: 'left' | 'right' } & SfxPanFields)
+  | ({ kind: 'jump' } & SfxPanFields)
+  | ({ kind: 'jump_cloth' } & SfxPanFields)
+  | ({ kind: 'land' } & SfxPanFields)
+  | ({ kind: 'body_fall' } & SfxPanFields)
+  | ({ kind: 'wakeup' } & SfxPanFields);
 
 export function strengthToSlot(s: GuardStrength): SfxStrength {
   return s.toLowerCase() as SfxStrength;

@@ -41,6 +41,8 @@ export interface CmosShakeEffectPreset {
   mode: CmosShakePresetMode;
   strength: number;
   spin: number;
+  /** FOV 速度冲量（无量纲；经 fovToVelocity 映射为 °/s） */
+  fov: number;
   dirAngleDeg: number;
   dirRadius: number;
   dirRandom: boolean;
@@ -52,10 +54,14 @@ export interface CmosShakeEffectPreset {
   falloff: number;
   posKick: number;
   angleKickDeg: number;
+  /** 瞬间 FOV 位移踢（度）；正=视野变宽，负=变窄（冲击感常用负） */
+  fovKickDeg: number;
   durationMS: number;
   freqHz: number;
   amp: number;
   ampRotDeg: number;
+  /** 衰减摆动：FOV 振幅（度） */
+  ampFovDeg: number;
   decay: number;
   phaseDeg: number;
 }
@@ -68,6 +74,7 @@ export type CmosDebugImpulse = {
   dirAngleMax: number;
   strength: number;
   spin: number;
+  fov: number;
 };
 
 export type CmosShakeConfig = {
@@ -80,13 +87,25 @@ export type CmosShakeConfig = {
   rotMass: number;
   rotAngularFreq: number;
   rotDampingRatio: number;
+  /** FOV 通道质量（MSMD；默认 1） */
+  fovMass: number;
+  /** FOV 自然频率 ωn (rad/s) */
+  fovAngularFreq: number;
+  /** FOV 阻尼比 ζ */
+  fovDampingRatio: number;
   maxOffsetX: number;
   maxOffsetY: number;
   maxAngleDeg: number;
+  /** FOV 偏移软夹持上限（度，相对基础 cameraFov） */
+  maxFovDeg: number;
   strengthToVelocity: number;
   spinToVelocity: number;
+  /** 预设/冲量 `fov` → FOV 弹簧速度 (°/s) */
+  fovToVelocity: number;
   maxSpeedXY: number;
   maxSpeedRot: number;
+  /** FOV 速度上限 (°/s) */
+  maxSpeedFov: number;
   minImpulseIntervalMS: number;
   maxDtSec: number;
   substeps: number;
@@ -94,6 +113,8 @@ export type CmosShakeConfig = {
   settleVelPx: number;
   settleAngleRad: number;
   settleAngVel: number;
+  settleFovDeg: number;
+  settleFovVel: number;
   /**
    * 命中震动按轻/中/重（S/M/L）选预设 id。
    * 对应招式 guardStrength L→S、M→M、H→L。空字符串=该档不震。
@@ -258,6 +279,7 @@ export function normalizeCmosShakeEffectPreset(
     mode: normalizeCmosShakeMode(src.mode ?? f.mode),
     strength: num(src.strength, num(f.strength, 0.3)),
     spin: num(src.spin, num(f.spin, 0)),
+    fov: num(src.fov, num(f.fov, 0)),
     dirAngleDeg,
     dirRadius,
     dirRandom: bool(src.dirRandom, f.dirRandom === true),
@@ -269,10 +291,12 @@ export function normalizeCmosShakeEffectPreset(
     falloff: Math.max(0, num(src.falloff, num(f.falloff, 1))),
     posKick: num(src.posKick, num(f.posKick, 0)),
     angleKickDeg: num(src.angleKickDeg, num(f.angleKickDeg, 0)),
+    fovKickDeg: num(src.fovKickDeg, num(f.fovKickDeg, 0)),
     durationMS: Math.max(0, num(src.durationMS, num(f.durationMS, 300))),
     freqHz: Math.max(0, num(src.freqHz, num(f.freqHz, 12))),
     amp: num(src.amp, num(f.amp, 0)),
     ampRotDeg: num(src.ampRotDeg, num(f.ampRotDeg, 0)),
+    ampFovDeg: num(src.ampFovDeg, num(f.ampFovDeg, 0)),
     decay: Math.max(0, num(src.decay, num(f.decay, 4))),
     phaseDeg: num(src.phaseDeg, num(f.phaseDeg, 0)),
   };
@@ -301,6 +325,7 @@ export function normalizeCmosDebugImpulse(
     dirAngleMax: 360,
     strength: 0.45,
     spin: 0.05,
+    fov: 0,
   };
   const src = raw && typeof raw === 'object' ? raw : {};
   const num = (v: unknown, fb: number): number =>
@@ -341,6 +366,7 @@ export function normalizeCmosDebugImpulse(
     dirAngleMax: clampAngleRange(num(src.dirAngleMax, f.dirAngleMax)),
     strength: num(src.strength, f.strength),
     spin: num(src.spin, f.spin),
+    fov: num(src.fov, f.fov),
   };
 }
 
@@ -412,6 +438,8 @@ export function createDefaultCmosShakePresets(): Record<
       spin: 0.09,
       posKick: 0.022,
       angleKickDeg: 0.15,
+      fov: -0.25,
+      fovKickDeg: -0.6,
     }),
     impact: impulsePreset('主冲击', { strength: 0.4, spin: 0.05 }),
     heavy: impulsePreset('重击', {
@@ -419,6 +447,8 @@ export function createDefaultCmosShakePresets(): Record<
       spin: 0.09,
       posKick: 0.02,
       angleKickDeg: 0.15,
+      fov: -0.25,
+      fovKickDeg: -0.6,
     }),
     error: impulsePreset('错误', {
       strength: 0.28,
@@ -520,13 +550,19 @@ export function createDefaultCmosShakeConfig(): CmosShakeConfig {
     rotMass: 1,
     rotAngularFreq: 22,
     rotDampingRatio: 0.72,
+    fovMass: 1,
+    fovAngularFreq: 20,
+    fovDampingRatio: 0.68,
     maxOffsetX: 0.12,
     maxOffsetY: 0.12,
     maxAngleDeg: 1.2,
+    maxFovDeg: 2.5,
     strengthToVelocity: 8,
     spinToVelocity: 8,
+    fovToVelocity: 8,
     maxSpeedXY: 24,
     maxSpeedRot: 20,
+    maxSpeedFov: 40,
     minImpulseIntervalMS: 0,
     maxDtSec: 0.05,
     substeps: 4,
@@ -534,6 +570,8 @@ export function createDefaultCmosShakeConfig(): CmosShakeConfig {
     settleVelPx: 0.02,
     settleAngleRad: 0.0005,
     settleAngVel: 0.01,
+    settleFovDeg: 0.02,
+    settleFovVel: 0.2,
     presetOnHitByStrength: createDefaultStrengthPresets('hit'),
     presetOnBlockByStrength: createDefaultStrengthPresets('block'),
     presets: createDefaultCmosShakePresets(),
@@ -545,6 +583,7 @@ export function createDefaultCmosShakeConfig(): CmosShakeConfig {
       dirAngleMax: 360,
       strength: 0.45,
       spin: 0.05,
+      fov: 0.2,
     },
   };
 }
@@ -582,13 +621,19 @@ export function mergeCmosShakeConfig(
     rotMass: num(incoming.rotMass, base.rotMass),
     rotAngularFreq: num(incoming.rotAngularFreq, base.rotAngularFreq),
     rotDampingRatio: num(incoming.rotDampingRatio, base.rotDampingRatio),
+    fovMass: num(incoming.fovMass, base.fovMass),
+    fovAngularFreq: num(incoming.fovAngularFreq, base.fovAngularFreq),
+    fovDampingRatio: num(incoming.fovDampingRatio, base.fovDampingRatio),
     maxOffsetX: num(incoming.maxOffsetX, base.maxOffsetX),
     maxOffsetY: num(incoming.maxOffsetY, base.maxOffsetY),
     maxAngleDeg: num(incoming.maxAngleDeg, base.maxAngleDeg),
+    maxFovDeg: num(incoming.maxFovDeg, base.maxFovDeg),
     strengthToVelocity: num(incoming.strengthToVelocity, base.strengthToVelocity),
     spinToVelocity: num(incoming.spinToVelocity, base.spinToVelocity),
+    fovToVelocity: num(incoming.fovToVelocity, base.fovToVelocity),
     maxSpeedXY: num(incoming.maxSpeedXY, base.maxSpeedXY),
     maxSpeedRot: num(incoming.maxSpeedRot, base.maxSpeedRot),
+    maxSpeedFov: num(incoming.maxSpeedFov, base.maxSpeedFov),
     minImpulseIntervalMS: num(
       incoming.minImpulseIntervalMS,
       base.minImpulseIntervalMS,
@@ -599,6 +644,8 @@ export function mergeCmosShakeConfig(
     settleVelPx: num(incoming.settleVelPx, base.settleVelPx),
     settleAngleRad: num(incoming.settleAngleRad, base.settleAngleRad),
     settleAngVel: num(incoming.settleAngVel, base.settleAngVel),
+    settleFovDeg: num(incoming.settleFovDeg, base.settleFovDeg),
+    settleFovVel: num(incoming.settleFovVel, base.settleFovVel),
     presetOnHitByStrength: normalizeStrengthPresets(
       incoming.presetOnHitByStrength,
       base.presetOnHitByStrength,

@@ -19,6 +19,7 @@ import * as THREE from 'three/webgpu';
 
 export type GuiHooks = {
   paused: boolean;
+  setPaused?: (paused: boolean) => void;
   stepOnce: () => void;
   reloadMoveJson: () => Promise<void>;
   /** P1 view used by the animation test panel */
@@ -68,8 +69,13 @@ export function createDebugGui(
   const gui = new GUI({ title: 'SF6 MVP 调试' });
 
   const sim = gui.addFolder('模拟');
-  sim.add(hooks, 'paused').name('暂停');
-  sim.add(hooks, 'stepOnce').name('单帧步进');
+  sim
+    .add(hooks, 'paused')
+    .name('暂停（逐帧 P）')
+    .onChange((v: boolean) => {
+      hooks.setPaused?.(v);
+    });
+  sim.add(hooks, 'stepOnce').name('单帧步进 (N)');
   sim
     .add(cfg, 'logicFps', 30, 120, 1)
     .name('逻辑帧率')
@@ -263,9 +269,13 @@ export function createDebugGui(
   shake.add(cfg.cmosShake, 'dampingRatio', 0.2, 1.5, 0.02).name('平移阻尼↑少过冲');
   shake.add(cfg.cmosShake, 'rotAngularFreq', 4, 40, 0.5).name('旋转频率↑更快回');
   shake.add(cfg.cmosShake, 'rotDampingRatio', 0.2, 1.5, 0.02).name('旋转阻尼↑少扭晃');
+  shake.add(cfg.cmosShake, 'fovAngularFreq', 4, 40, 0.5).name('FOV频率↑更快回');
+  shake.add(cfg.cmosShake, 'fovDampingRatio', 0.2, 1.5, 0.02).name('FOV阻尼↑少过冲');
   shake.add(cfg.cmosShake, 'maxOffsetX', 0, 2, 0.01).name('水平最大偏移↑');
   shake.add(cfg.cmosShake, 'maxOffsetY', 0, 2, 0.01).name('垂直最大偏移↑');
   shake.add(cfg.cmosShake, 'maxAngleDeg', 0, 5, 0.1).name('最大转角↑更斜');
+  shake.add(cfg.cmosShake, 'maxFovDeg', 0, 8, 0.1).name('最大FOV偏移↑更猛');
+  shake.add(cfg.cmosShake, 'fovToVelocity', 0, 40, 0.5).name('FOV冲击→速度↑');
   shake
     .add(cfg.cmosShake, 'strengthToVelocity', 0.5, 80, 0.5)
     .name('强度灵敏度↑更猛');

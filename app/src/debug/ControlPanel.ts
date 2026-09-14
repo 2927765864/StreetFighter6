@@ -49,9 +49,13 @@ import {
 } from '../render/wudaParticle/wudaLayerPreset';
 import { reloadMoveFromPublic } from './DebugGui';
 import { bindCmosShakePanel, cmosShakeSectionHtml } from './cmosShakePanel';
+import { bindSfxPanel, sfxSectionHtml } from './sfxPanel';
+import type { CombatSfxPlayer } from '../combat/sfx/SfxPlayer';
 
 export type ControlPanelHooks = {
   paused: boolean;
+  /** Preferred pause toggle — clears present residue for true frame-step freeze. */
+  setPaused?: (paused: boolean) => void;
   stepOnce: () => void;
   reloadMoveJson: () => Promise<void>;
   p1View?: FighterView;
@@ -76,6 +80,8 @@ export type ControlPanelHooks = {
   copyPerfSnapshot?: () => void | Promise<void>;
   /** Download recent perf ring-buffer JSON. */
   downloadPerfRing?: () => void;
+  /** Combat SFX enhance player (音效 panel). */
+  combatSfx?: CombatSfxPlayer;
 };
 
 export type HitVfxPanelHooks = {
@@ -319,9 +325,10 @@ function buildDom(): HTMLElement {
           '【模拟】时钟与步进',
           `
           <div class="panel-actions-row">
-            <button type="button" id="btn-toggle-pause">暂停 / 继续</button>
-            <button type="button" id="btn-step-once">单帧步进</button>
+            <button type="button" id="btn-toggle-pause">暂停（逐帧）/ 继续</button>
+            <button type="button" id="btn-step-once">单帧步进 (N)</button>
           </div>
+          <p class="panel-hint">快捷键：P 开关逐帧查看 · N 下一帧（可按住连跳）</p>
           ${rowNumber('logicFps', '逻辑帧率 (fps)', 30, 120, 1)}
           ${rowNumber('maxLogicStepsPerRaf', '每帧最大逻辑步', 1, 8, 1)}
           ${rowNumber('maxFrameTimeMs', '最大帧耗时 (ms)', 16, 250, 1)}
@@ -588,6 +595,7 @@ function buildDom(): HTMLElement {
       </details>
 
       ${cmosShakeSectionHtml()}
+      ${sfxSectionHtml()}
 
       <details class="panel-group" data-cat="打光">
         <summary>打光</summary>
@@ -1699,6 +1707,7 @@ export function setupControlPanel(
     bindSectionExpand: (inputId, valueId, sectionKey, bodyId) =>
       bindSectionExpand(ctx, inputId, valueId, sectionKey, bodyId),
   });
+  bindSfxPanel(host, hooks.combatSfx, syncers);
 
   // --- Wuda layer presets (stacked coats per P1/P2) ---
   const WUDA_LAYER_NUM_KEYS: Array<keyof WudaLayerPreset> = [
@@ -2807,11 +2816,18 @@ export function setupControlPanel(
   });
 
   byId<HTMLButtonElement>(host, 'btn-toggle-pause').addEventListener('click', () => {
-    hooks.paused = !hooks.paused;
-    setFlash(hooks.paused ? '已暂停' : '继续运行');
+    const next = !hooks.paused;
+    if (hooks.setPaused) hooks.setPaused(next);
+    else {
+      hooks.paused = next;
+      setFlash(
+        next ? '逐帧查看已开启（N 下一帧 · P 退出）' : '继续运行',
+      );
+    }
   });
   byId<HTMLButtonElement>(host, 'btn-step-once').addEventListener('click', () => {
     hooks.stepOnce();
+    setFlash('单帧步进');
   });
 
   // Move edit

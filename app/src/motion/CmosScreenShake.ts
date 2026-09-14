@@ -1,10 +1,11 @@
 /**
  * CMOS 屏幕震动 — 纯运动核（无 Three.js / 渲染依赖）
  *
- * 三轴 MSMD（x/y/θ），目标默认 0；速度冲量 + 可选位置踢；
+ * 四通道 MSMD（x/y/θ/fov），目标默认 0；速度冲量 + 可选位置踢；
  * 预设模式：impulse / pulse（定时脉冲串）/ oscillate（衰减正弦驱动目标）。
  * 规格：CMOS屏幕震动-弹簧悬挂.md
- * 积分：SpringDamper1D（半隐式欧拉 + maxDt + substeps）
+ * 积分：SpringDamper1D（半隐式欧拉 + maxDt + substeps；与 spring.1d.msmd 一致）
+ * FOV 状态单位：度（相对基础 cameraFov 的偏移；正=变宽，负=变窄）
  */
 
 import { SpringDamper1D, type SpringDamper1DParams } from './SpringDamper1D';
@@ -49,6 +50,12 @@ export interface ImpulseArgs {
   y?: number;
   rot?: number;
   /**
+   * FOV 通道冲量：
+   * - 极坐标路径：无量纲，经 fovToVelocity → °/s（语义同 spin）
+   * - 显式路径（已给 x/y/rot）：直接当作 °/s 速度冲量
+   */
+  fov?: number;
+  /**
    * 方向角（度，0–360）。屏幕坐标：0°=+X 右，90°=+Y 下。
    * 与 radius 组成极坐标；未给时默认 90°（向下）。
    */
@@ -64,11 +71,14 @@ export interface ImpulseArgs {
   posKick?: number;
   /** 角位移踢（度） */
   angleKickDeg?: number;
+  /** FOV 位移踢（度） */
+  fovKickDeg?: number;
 }
 
 export interface PresetOverride {
   strength?: number;
   spin?: number;
+  fov?: number;
   dirAngleDeg?: number;
   dirRadius?: number;
   dirRandom?: boolean;
@@ -81,10 +91,12 @@ export interface PresetOverride {
   falloff?: number;
   posKick?: number;
   angleKickDeg?: number;
+  fovKickDeg?: number;
   durationMS?: number;
   freqHz?: number;
   amp?: number;
   ampRotDeg?: number;
+  ampFovDeg?: number;
   decay?: number;
   phaseDeg?: number;
 }
@@ -93,6 +105,8 @@ export interface CmosShakeOutput {
   x: number;
   y: number;
   rotation: number;
+  /** FOV 偏移（度）；加到基础 cameraFov */
+  fov: number;
 }
 
 interface ScheduledImpulse {
@@ -106,6 +120,7 @@ interface OscillateDrive {
   freqHz: number;
   amp: number;
   ampRotDeg: number;
+  ampFovDeg: number;
   ux: number;
   uy: number;
   decay: number;
@@ -180,6 +195,8 @@ export class CmosScreenShake {
   readonly x = new SpringDamper1D();
   readonly y = new SpringDamper1D();
   readonly rot = new SpringDamper1D();
+  /** FOV 偏移弹簧（度） */
+  readonly fov = new SpringDamper1D();
 
   private lastImpulseMS = 0;
   private nowMS = 0;
@@ -208,6 +225,7 @@ export class CmosScreenShake {
     this.x.reset(0, 0);
     this.y.reset(0, 0);
     this.rot.reset(0, 0);
+    this.fov.reset(0, 0);
     this.schedule.length = 0;
     this.drive = null;
   }
@@ -257,22 +275,29 @@ export class CmosScreenShake {
       angularFreq: cfg.rotAngularFreq,
       dampingRatio: cfg.rotDampingRatio,
     };
+    const pFov: SpringDamper1DParams = {
+      mass: cfg.fovMass,
+      angularFreq: cfg.fovAngularFreq,
+      dampingRatio: cfg.fovDampingRatio,
+    };
 
     this.x.step(safeDt, targets.x, pXY, cfg.maxDtSec, cfg.substeps);
     this.y.step(safeDt, targets.y, pXY, cfg.maxDtSec, cfg.substeps);
     this.rot.step(safeDt, targets.rot, pR, cfg.maxDtSec, cfg.substeps);
+    this.fov.step(safeDt, targets.fov, pFov, cfg.maxDtSec, cfg.substeps);
 
     softClampAxis(this.x, cfg.maxOffsetX);
     softClampAxis(this.y, cfg.maxOffsetY);
     softClampAxis(this.rot, degToRad(cfg.maxAngleDeg));
+    softClampAxis(this.fov, cfg.maxFovDeg);
   }
 
-  private computeDriveTargets(): { x: number; y: number; rot: number } {
+  private computeDriveTargets(): { x: number; y: number; rot: number; fov: number } {
     const d = this.drive;
-    if (!d) return { x: 0, y: 0, rot: 0 };
+    if (!d) return { x: 0, y: 0, rot: 0, fov: 0 };
     if (this.nowMS >= d.endMS) {
       this.drive = null;
-      return { x: 0, y: 0, rot: 0 };
+      return { x: 0, y: 0, rot: 0, fov: 0 };
     }
     const t = Math.max(0, (this.nowMS - d.startMS) / 1000);
     const env = d.decay > 0 ? Math.exp(-d.decay * t) : 1;
@@ -281,6 +306,7 @@ export class CmosScreenShake {
       x: d.amp * d.ux * s,
       y: d.amp * d.uy * s,
       rot: degToRad(d.ampRotDeg) * s,
+      fov: d.ampFovDeg * s,
     };
   }
 
@@ -292,26 +318,34 @@ export class CmosScreenShake {
     const I = this.getIntensity();
     if (I <= 0) return;
 
+    // 与 spin/rot 分工一致：显式由 x/y/rot 判定；fov 在显式下为 °/s，极坐标下为无量纲
     const hasExplicit = args.x != null || args.y != null || args.rot != null;
 
     let vx = 0;
     let vy = 0;
     let omega = 0;
+    let vFov = 0;
     let posX = 0;
     let posY = 0;
     let posR = 0;
+    let posFov = 0;
 
     if (hasExplicit) {
       vx = args.x ?? 0;
       vy = args.y ?? 0;
       omega = args.rot ?? 0;
-      // 显式速度冲量时仍允许角/位置踢
+      vFov = args.fov ?? 0;
+      // 显式速度冲量时仍允许角/FOV/位置踢
       if (args.angleKickDeg != null && Number.isFinite(args.angleKickDeg)) {
         posR = degToRad(args.angleKickDeg);
+      }
+      if (args.fovKickDeg != null && Number.isFinite(args.fovKickDeg)) {
+        posFov = args.fovKickDeg;
       }
     } else {
       let strength = args.strength ?? 0;
       let spin = args.spin ?? 0;
+      let fovImp = args.fov ?? 0;
 
       const interval = cfg.minImpulseIntervalMS ?? 0;
       if (interval > 0 && this.lastImpulseMS > 0) {
@@ -319,6 +353,7 @@ export class CmosScreenShake {
         if (elapsed < interval) {
           strength *= 0.35;
           spin *= 0.35;
+          fovImp *= 0.35;
         }
       }
 
@@ -327,6 +362,7 @@ export class CmosScreenShake {
       vx = ux * speed;
       vy = uy * speed;
       omega = spin * (cfg.spinToVelocity ?? 0);
+      vFov = fovImp * (cfg.fovToVelocity ?? 0);
 
       const pk = args.posKick ?? 0;
       if (Number.isFinite(pk) && pk !== 0) {
@@ -337,15 +373,21 @@ export class CmosScreenShake {
       if (Number.isFinite(ak) && ak !== 0) {
         posR = degToRad(ak);
       }
+      const fk = args.fovKickDeg ?? 0;
+      if (Number.isFinite(fk) && fk !== 0) {
+        posFov = fk;
+      }
     }
 
     if (
       !Number.isFinite(vx) ||
       !Number.isFinite(vy) ||
       !Number.isFinite(omega) ||
+      !Number.isFinite(vFov) ||
       !Number.isFinite(posX) ||
       !Number.isFinite(posY) ||
-      !Number.isFinite(posR)
+      !Number.isFinite(posR) ||
+      !Number.isFinite(posFov)
     ) {
       return;
     }
@@ -353,12 +395,15 @@ export class CmosScreenShake {
     this.x.v += vx;
     this.y.v += vy;
     this.rot.v += omega;
+    this.fov.v += vFov;
     this.x.x += posX;
     this.y.x += posY;
     this.rot.x += posR;
+    this.fov.x += posFov;
 
     const maxXY = cfg.maxSpeedXY ?? Infinity;
     const maxR = cfg.maxSpeedRot ?? Infinity;
+    const maxF = cfg.maxSpeedFov ?? Infinity;
     const sp = Math.hypot(this.x.v, this.y.v);
     if (sp > maxXY && sp > 1e-8) {
       const s = maxXY / sp;
@@ -368,11 +413,15 @@ export class CmosScreenShake {
     if (Math.abs(this.rot.v) > maxR) {
       this.rot.v = Math.sign(this.rot.v) * maxR;
     }
+    if (Math.abs(this.fov.v) > maxF) {
+      this.fov.v = Math.sign(this.fov.v) * maxF;
+    }
 
     // 位置夹持（位置踢后立即）
     softClampAxis(this.x, cfg.maxOffsetX);
     softClampAxis(this.y, cfg.maxOffsetY);
     softClampAxis(this.rot, degToRad(cfg.maxAngleDeg));
+    softClampAxis(this.fov, cfg.maxFovDeg);
 
     this.lastImpulseMS = this.nowMS;
   }
@@ -418,16 +467,20 @@ export class CmosScreenShake {
       if (
         (preset.posKick !== 0 && Number.isFinite(preset.posKick)) ||
         (preset.angleKickDeg !== 0 && Number.isFinite(preset.angleKickDeg)) ||
+        (preset.fovKickDeg !== 0 && Number.isFinite(preset.fovKickDeg)) ||
         preset.strength > 0 ||
-        preset.spin !== 0
+        preset.spin !== 0 ||
+        preset.fov !== 0
       ) {
         this.impulse({
           angleDeg,
           radius,
           strength: preset.strength,
           spin: preset.spin,
+          fov: preset.fov,
           posKick: preset.posKick,
           angleKickDeg: preset.angleKickDeg,
+          fovKickDeg: preset.fovKickDeg,
         });
       }
       return;
@@ -442,15 +495,17 @@ export class CmosScreenShake {
     for (let i = 0; i < count; i += 1) {
       const sign = alternate && i % 2 === 1 ? -1 : 1;
       const scale = falloff === 1 ? 1 : Math.pow(falloff, i);
-      // alternate：角度 +180° 翻向；spin / 角踢仍乘符号
+      // alternate：角度 +180° 翻向；spin / 角踢 / FOV 仍乘符号
       const kickAngle = sign < 0 ? angleDeg + 180 : angleDeg;
       const args: ImpulseArgs = {
         angleDeg: kickAngle,
         radius,
         strength: preset.strength * scale,
         spin: preset.spin * sign * scale,
+        fov: (preset.fov || 0) * sign * scale,
         posKick: (preset.posKick || 0) * scale,
         angleKickDeg: (preset.angleKickDeg || 0) * sign * scale,
+        fovKickDeg: (preset.fovKickDeg || 0) * sign * scale,
       };
       if (i === 0) {
         this.impulse(args);
@@ -471,7 +526,12 @@ export class CmosScreenShake {
     const duration = Math.max(0, preset.durationMS || 0);
     if (duration <= 0) return;
     const freq = Math.max(0, preset.freqHz || 0);
-    if (freq <= 0 && (preset.amp || 0) === 0 && (preset.ampRotDeg || 0) === 0) {
+    if (
+      freq <= 0 &&
+      (preset.amp || 0) === 0 &&
+      (preset.ampRotDeg || 0) === 0 &&
+      (preset.ampFovDeg || 0) === 0
+    ) {
       return;
     }
     const { ux, uy } = polarToUnit(angleDeg, radius);
@@ -481,6 +541,7 @@ export class CmosScreenShake {
       freqHz: freq > 0 ? freq : 1,
       amp: preset.amp || 0,
       ampRotDeg: preset.ampRotDeg || 0,
+      ampFovDeg: preset.ampFovDeg || 0,
       ux,
       uy,
       decay: Math.max(0, preset.decay || 0),
@@ -504,13 +565,15 @@ export class CmosScreenShake {
     const cfg = CONFIG.cmosShake;
     const I = this.getIntensity();
     if (!cfg || !cfg.enabled || I <= 0) {
-      return { x: 0, y: 0, rotation: 0 };
+      return { x: 0, y: 0, rotation: 0, fov: 0 };
     }
     const maxA = degToRad(cfg.maxAngleDeg);
+    const maxF = cfg.maxFovDeg;
     return {
       x: clampNum(this.x.x, -cfg.maxOffsetX, cfg.maxOffsetX) * I,
       y: clampNum(this.y.x, -cfg.maxOffsetY, cfg.maxOffsetY) * I,
       rotation: clampNum(this.rot.x, -maxA, maxA) * I,
+      fov: clampNum(this.fov.x, -maxF, maxF) * I,
     };
   }
 
@@ -521,7 +584,8 @@ export class CmosScreenShake {
     return (
       this.x.isSettled(0, cfg.settlePosPx, cfg.settleVelPx) &&
       this.y.isSettled(0, cfg.settlePosPx, cfg.settleVelPx) &&
-      this.rot.isSettled(0, cfg.settleAngleRad, cfg.settleAngVel)
+      this.rot.isSettled(0, cfg.settleAngleRad, cfg.settleAngVel) &&
+      this.fov.isSettled(0, cfg.settleFovDeg, cfg.settleFovVel)
     );
   }
 }
@@ -541,13 +605,19 @@ export function __cmosScreenShakeSelfTest(): string[] {
     CONFIG.cmosShake.rotMass = 1;
     CONFIG.cmosShake.rotAngularFreq = 14;
     CONFIG.cmosShake.rotDampingRatio = 1;
+    CONFIG.cmosShake.fovMass = 1;
+    CONFIG.cmosShake.fovAngularFreq = 14;
+    CONFIG.cmosShake.fovDampingRatio = 1;
     CONFIG.cmosShake.maxOffsetX = 100;
     CONFIG.cmosShake.maxOffsetY = 100;
     CONFIG.cmosShake.maxAngleDeg = 10;
+    CONFIG.cmosShake.maxFovDeg = 20;
     CONFIG.cmosShake.strengthToVelocity = 900;
     CONFIG.cmosShake.spinToVelocity = 8;
+    CONFIG.cmosShake.fovToVelocity = 8;
     CONFIG.cmosShake.maxSpeedXY = 10000;
     CONFIG.cmosShake.maxSpeedRot = 100;
+    CONFIG.cmosShake.maxSpeedFov = 200;
     CONFIG.cmosShake.minImpulseIntervalMS = 0;
     CONFIG.cmosShake.maxDtSec = 1 / 30;
     CONFIG.cmosShake.substeps = 4;
@@ -555,6 +625,8 @@ export function __cmosScreenShakeSelfTest(): string[] {
     CONFIG.cmosShake.settleVelPx = 5;
     CONFIG.cmosShake.settleAngleRad = 0.01;
     CONFIG.cmosShake.settleAngVel = 0.1;
+    CONFIG.cmosShake.settleFovDeg = 0.05;
+    CONFIG.cmosShake.settleFovVel = 0.5;
 
     const a = new CmosScreenShake();
     a.impulse({ angleDeg: 90, radius: 1, strength: 0.5, spin: 0.05 });
@@ -565,6 +637,7 @@ export function __cmosScreenShakeSelfTest(): string[] {
 
     CONFIG.cmosShake.dampingRatio = 0.35;
     CONFIG.cmosShake.rotDampingRatio = 0.35;
+    CONFIG.cmosShake.fovDampingRatio = 0.35;
     const b = new CmosScreenShake();
     b.impulse({ x: 0, y: 600, rot: 0 });
     let crossed = false;
@@ -581,15 +654,17 @@ export function __cmosScreenShakeSelfTest(): string[] {
 
     CONFIG.cmosShake.intensity = 0;
     const c = new CmosScreenShake();
-    c.impulse({ angleDeg: 90, radius: 1, strength: 1, spin: 0.2 });
+    c.impulse({ angleDeg: 90, radius: 1, strength: 1, spin: 0.2, fov: 0.5 });
     const out = c.getOutput();
     if (
       Math.abs(c.x.v) > 1e-9 ||
       Math.abs(c.y.v) > 1e-9 ||
       Math.abs(c.rot.v) > 1e-9 ||
+      Math.abs(c.fov.v) > 1e-9 ||
       Math.abs(out.x) > 1e-9 ||
       Math.abs(out.y) > 1e-9 ||
-      Math.abs(out.rotation) > 1e-9
+      Math.abs(out.rotation) > 1e-9 ||
+      Math.abs(out.fov) > 1e-9
     ) {
       errors.push("intensity=0 must ignore impulse and output zero");
     }
@@ -597,10 +672,25 @@ export function __cmosScreenShakeSelfTest(): string[] {
     // posKick：瞬间位移（0° = +X）
     CONFIG.cmosShake.intensity = 1;
     CONFIG.cmosShake.dampingRatio = 1;
+    CONFIG.cmosShake.fovDampingRatio = 1;
     const d = new CmosScreenShake();
     d.impulse({ angleDeg: 0, radius: 1, strength: 0, spin: 0, posKick: 5 });
     if (Math.abs(d.x.x - 5) > 1e-6) {
       errors.push(`posKick should set x≈5, got ${d.x.x}`);
+    }
+
+    // fovKickDeg：瞬间 FOV 偏移（度）
+    const dFov = new CmosScreenShake();
+    dFov.impulse({
+      angleDeg: 90,
+      radius: 1,
+      strength: 0,
+      spin: 0,
+      fov: 0,
+      fovKickDeg: -1.5,
+    });
+    if (Math.abs(dFov.fov.x - -1.5) > 1e-6) {
+      errors.push(`fovKickDeg should set fov≈-1.5, got ${dFov.fov.x}`);
     }
 
     // pulse alternate：第二拍方向相反（0° 右 ↔ 180° 左）
@@ -653,6 +743,7 @@ export function __cmosScreenShakeSelfTest(): string[] {
     };
     CONFIG.cmosShake.dampingRatio = 0.8;
     CONFIG.cmosShake.rotDampingRatio = 0.8;
+    CONFIG.cmosShake.fovDampingRatio = 0.8;
     const f = new CmosScreenShake();
     f.play("__testOsc");
     if (f.isSettled()) {
@@ -669,6 +760,30 @@ export function __cmosScreenShakeSelfTest(): string[] {
     for (let i = 0; i < 180; i += 1) f.step(1 / 60);
     if (!f.isSettled()) {
       errors.push("oscillate should settle after duration + spring return");
+    }
+
+    // FOV 欠阻尼过冲
+    CONFIG.cmosShake.fovDampingRatio = 0.3;
+    CONFIG.cmosShake.fovAngularFreq = 14;
+    const g = new CmosScreenShake();
+    g.impulse({
+      angleDeg: 90,
+      radius: 1,
+      strength: 0,
+      spin: 0,
+      fov: 0,
+      fovKickDeg: 2,
+    });
+    let fovCrossed = false;
+    let prevFov = g.fov.x;
+    for (let i = 0; i < 90; i += 1) {
+      g.step(1 / 60);
+      if (prevFov > 0 && g.fov.x < 0) fovCrossed = true;
+      if (prevFov < 0 && g.fov.x > 0) fovCrossed = true;
+      prevFov = g.fov.x;
+    }
+    if (!fovCrossed) {
+      errors.push("underdamped FOV should overshoot past zero at least once");
     }
   } finally {
     Object.assign(CONFIG.cmosShake, backup);

@@ -80,6 +80,39 @@ describe('cmosShake config merge / persist shape', () => {
     expect(Math.abs(out.y)).toBeLessThan(1e-9);
   });
 
+  it('FOV channel: kick + spring settle, merge fills fov defaults', () => {
+    const base = createDefaultRuntimeConfig();
+    expect(base.cmosShake.fovAngularFreq).toBeGreaterThan(0);
+    expect(base.cmosShake.maxFovDeg).toBeGreaterThan(0);
+    const merged = mergeConfig(base, {
+      cmosShake: { fovDampingRatio: 0.9 },
+    });
+    expect(merged.cmosShake.fovDampingRatio).toBeCloseTo(0.9);
+    expect(merged.cmosShake.fovMass).toBe(base.cmosShake.fovMass);
+
+    CONFIG.cmosShake = {
+      ...createDefaultCmosShakeConfig(),
+      intensity: 1,
+      enabled: true,
+      fovDampingRatio: 1,
+      fovAngularFreq: 16,
+    };
+    const s = new CmosScreenShake();
+    s.impulse({
+      angleDeg: 90,
+      radius: 1,
+      strength: 0,
+      spin: 0,
+      fov: 0,
+      fovKickDeg: -1.2,
+    });
+    expect(s.fov.x).toBeCloseTo(-1.2, 5);
+    expect(s.getOutput().fov).toBeCloseTo(-1.2, 5);
+    for (let i = 0; i < 180; i += 1) s.step(1 / 60);
+    expect(s.isSettled()).toBe(true);
+    expect(Math.abs(s.getOutput().fov)).toBeLessThan(0.05);
+  });
+
   it('maps Capcom L/M/H to S/M/L_impact presets', () => {
     const cfg = createDefaultCmosShakeConfig();
     expect(guardStrengthToShakeBand('L')).toBe('S');

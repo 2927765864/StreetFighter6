@@ -12,6 +12,8 @@ export type SfxSlotStatus = 'accepted' | 'missing';
 
 export type SfxSlotEntry = {
   file: string | null;
+  /** Optional multi-variant list (plan §3.1). Falls back to `file`. */
+  files?: string[] | null;
   status: SfxSlotStatus;
   source?: { bank: string; wemId: number };
   error?: string;
@@ -48,11 +50,54 @@ export function sfxCacheToken(manifest: SfxManifest | null, entry: SfxSlotEntry)
   return parts.length > 0 ? parts.join('_') : String(Date.now());
 }
 
+/** All accepted file paths for a slot (primary first, then optional variants). */
+export function sfxFilesForSlot(
+  manifest: SfxManifest | null,
+  slotId: string,
+): string[] {
+  const entry = manifest?.slots?.[slotId];
+  if (!entry || entry.status !== 'accepted') return [];
+  const out: string[] = [];
+  const pushUnique = (f: string) => {
+    const n = f.replace(/^\/+/, '');
+    if (n && !out.includes(n)) out.push(n);
+  };
+  if (entry.file) pushUnique(entry.file);
+  if (entry.files && entry.files.length > 0) {
+    for (const f of entry.files) {
+      if (f) pushUnique(f);
+    }
+  }
+  return out;
+}
+
+function fileToUrl(
+  manifest: SfxManifest | null,
+  entry: SfxSlotEntry,
+  file: string,
+): string {
+  const path = `/private-runtime/sfx/${file.replace(/^\/+/, '')}`;
+  const v = encodeURIComponent(sfxCacheToken(manifest, entry));
+  return `${path}?v=${v}`;
+}
+
 /** Resolve a playable URL for an accepted slot, or null if missing. */
 export function sfxUrl(manifest: SfxManifest | null, slotId: string): string | null {
   const entry = manifest?.slots?.[slotId];
-  if (!entry || entry.status !== 'accepted' || !entry.file) return null;
-  const path = `/private-runtime/sfx/${entry.file.replace(/^\/+/, '')}`;
-  const v = encodeURIComponent(sfxCacheToken(manifest, entry));
-  return `${path}?v=${v}`;
+  if (!entry || entry.status !== 'accepted') return null;
+  const files = sfxFilesForSlot(manifest, slotId);
+  if (files.length === 0) return null;
+  return fileToUrl(manifest, entry, files[0]!);
+}
+
+/** URLs for every variant of a slot (empty if missing). */
+export function sfxUrlsForSlot(
+  manifest: SfxManifest | null,
+  slotId: string,
+): string[] {
+  const entry = manifest?.slots?.[slotId];
+  if (!entry || entry.status !== 'accepted') return [];
+  return sfxFilesForSlot(manifest, slotId).map((f) =>
+    fileToUrl(manifest, entry, f),
+  );
 }

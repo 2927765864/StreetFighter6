@@ -71,10 +71,12 @@ sbnk.1.x64 → extract_bnk_wem → .wem
 
 ## 4. 主项目读取约定
 
-- URL（dev）：`/private-runtime/sfx/<相对路径>`（现有 `ryuAnimAssets` 插件）
+- 磁盘原料：`private/runtime/sfx/`（gitignore）
+- URL（dev / Habby）：`/private-runtime/sfx/<相对路径>`（注意连字符；dev 靠 `ryuAnimAssets` 插件映射）
 - 清单：`/private-runtime/sfx/manifest.json`
 - 槽位 `status`：`accepted` | `missing` |（工具内还有 candidate/rejected，导出后以 accepted/missing 为主）
 - **运行时**：`CombatSfxPlayer`（`app/src/combat/sfx/`）读清单；`MatchSim.onCombatSfx` 在出招破风 / 命中·格挡 / dash·jump·**jump_cloth（prejump→airborne）**·land / **走路脚触地 L/R（loop 等分交替）** / body_fall·wakeup 触发。`missing` 槽静默跳过。
+- **Habby 出包**：`npm run package:habby` 会把本目录整树拷进 `dist/private-runtime/sfx/` 并校验 accepted 文件齐全。只 zip `vite build` 的 dist 会无声。路径对照见 [`habby-web-export.md`](../guides/habby-web-export.md) §2 / §4.5。
 
 ## 5. 法务
 

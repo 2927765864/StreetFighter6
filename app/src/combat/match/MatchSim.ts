@@ -637,6 +637,7 @@ export class MatchSim {
       moveId: mv.moveId || mv.id,
       guardStrength: mv.guardStrength,
       hitstopOnHit: mv.hitstopOnHit,
+      sourceSide: 'p1',
     });
   }
 
@@ -689,7 +690,7 @@ export class MatchSim {
       );
       this.actionBuffer.clear();
       this.skipP1Advance = true;
-      this.emitSfx({ kind: 'dash', forward: true });
+      this.emitSfx({ kind: 'dash', forward: true, sourceSide: 'p1' });
       return true;
     }
     if (intent.kind === 'dash_back') {
@@ -700,7 +701,7 @@ export class MatchSim {
       );
       this.actionBuffer.clear();
       this.skipP1Advance = true;
-      this.emitSfx({ kind: 'dash', forward: false });
+      this.emitSfx({ kind: 'dash', forward: false, sourceSide: 'p1' });
       return true;
     }
     if (intent.kind === 'jump') {
@@ -713,7 +714,7 @@ export class MatchSim {
       );
       this.actionBuffer.clear();
       this.skipP1Advance = true;
-      this.emitSfx({ kind: 'jump' });
+      this.emitSfx({ kind: 'jump', sourceSide: 'p1' });
       return true;
     }
     if (intent.kind === 'crouch') {
@@ -774,7 +775,7 @@ export class MatchSim {
     });
     this.walkFootClock = clock;
     if (side) {
-      this.emitSfx({ kind: 'footstep', side });
+      this.emitSfx({ kind: 'footstep', side, sourceSide: 'p1' });
     }
   }
 
@@ -1128,6 +1129,7 @@ export class MatchSim {
             guardStrength: mv.guardStrength,
             hitstopOnHit: mv.hitstopOnHit,
             hitstopOnBlock: mv.hitstopOnBlock,
+            sourceSide: 'p2',
           });
           this.opts.onHitVfx?.({
             kind: 'onBlock',
@@ -1181,7 +1183,7 @@ export class MatchSim {
                 this.dummy.wakeupStyle === 'back' ? this.opts.wakeupBackDxTotal : 0,
               downHoldOverride: this.opts.knockdownDownHoldOverride,
             });
-            this.emitSfx({ kind: 'body_fall' });
+            this.emitSfx({ kind: 'body_fall', sourceSide: 'p2' });
           } else {
             this.p2.applyHitstun(hr.hitstun, hr.damage, { reactClipId });
           }
@@ -1210,6 +1212,7 @@ export class MatchSim {
             guardStrength: mv.guardStrength,
             hitstopOnHit: mv.hitstopOnHit,
             hitstopOnBlock: mv.hitstopOnBlock,
+            sourceSide: 'p2',
           });
           this.opts.onHitVfx?.({
             kind: 'onHit',
@@ -1274,14 +1277,14 @@ export class MatchSim {
   /** Land / jump cloth / wakeup edges after fighter advance. */
   private emitLocoKnockdownSfxEdges(): void {
     if (this.prevP1Phase !== 'landing' && this.p1.phase === 'landing') {
-      this.emitSfx({ kind: 'land' });
+      this.emitSfx({ kind: 'land', sourceSide: 'p1' });
     }
     // Cloth / wind whoosh when leaving the ground (prejump → airborne).
     if (this.prevP1Phase === 'prejump' && this.p1.phase === 'airborne') {
-      this.emitSfx({ kind: 'jump_cloth' });
+      this.emitSfx({ kind: 'jump_cloth', sourceSide: 'p1' });
     }
     if (this.prevP2KdPhase !== 'rise' && this.p2.kdPhase === 'rise') {
-      this.emitSfx({ kind: 'wakeup' });
+      this.emitSfx({ kind: 'wakeup', sourceSide: 'p2' });
     }
     this.prevP1Phase = this.p1.phase;
     this.prevP2KdPhase = this.p2.kdPhase;

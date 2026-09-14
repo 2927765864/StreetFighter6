@@ -5,6 +5,7 @@ import { cloneConfig, CONFIG, setActiveDefaultConfig } from './config/store';
 import { loadSavedConfig, loadShippingConfig } from './config/persist';
 import { hydrateFlipbookFactory } from './hitVfxEditor/flipbook2d/persist';
 import { FrameClock } from './combat/frameClock';
+import { resolvePresentDt } from './combat/presentDt';
 import { parseMoveDefinition } from './combat/move/MoveDefinition';
 import { MatchSim } from './combat/match/MatchSim';
 import { KeyboardSource } from './combat/input/KeyboardSource';
@@ -212,7 +213,10 @@ async function boot(): Promise<void> {
   const match = new MatchSim(move, catalog, applyConfigToMatchOpts(cfg));
   const combatSfx = new CombatSfxPlayer();
   void combatSfx.init().catch((e) => console.warn('[sfx] init failed', e));
-  match.opts.onCombatSfx = (ev) => combatSfx.handle(ev);
+  match.opts.onCombatSfx = (ev) => {
+    combatSfx.setPlayContext({ p1x: match.p1.x, p2x: match.p2.x });
+    combatSfx.handle(ev);
+  };
   const unlockSfx = () => combatSfx.unlock();
   window.addEventListener('pointerdown', unlockSfx, { once: true });
   window.addEventListener('keydown', unlockSfx, { once: true });
@@ -882,13 +886,14 @@ async function boot(): Promise<void> {
     boxEditor.stop();
     boxEditor = null;
     match.reset();
-    hooks.paused = false;
+    setPaused(false);
   };
 
   const enterBoxEdit = (): void => {
     if (boxEditor) return;
     hooks.boxEditActive = true;
     hooks.paused = true;
+    clearPresentResidue();
     cfg.showOpponentBoxes = false;
     boxEditor = new BoxEditorApp({
       getMatch: () => match,
@@ -896,6 +901,7 @@ async function boot(): Promise<void> {
       getCanvas: () => renderer.domElement,
       setMatchPaused: (paused) => {
         hooks.paused = paused;
+        clearPresentResidue();
       },
       setShowOpponentBoxes: (show) => {
         cfg.showOpponentBoxes = show;
@@ -922,15 +928,49 @@ async function boot(): Promise<void> {
     if (b) snaps.push(b);
     return snaps;
   };
+  let last = performance.now();
+  let presentAccum = 0;
+  let logicStepsSincePresent = 0;
+  /** Queued authored logic steps while paused (frame-step / 单帧步进). */
+  let pendingLogicSteps = 0;
+  let panelFlash: (msg: string) => void = () => {};
+
+  const clearPresentResidue = (): void => {
+    presentAccum = 0;
+    logicStepsSincePresent = 0;
+    clock.accumulator = 0;
+    pendingLogicSteps = 0;
+    last = performance.now();
+  };
+
+  const setPaused = (paused: boolean, flash?: string): void => {
+    if (hooks.boxEditActive && paused) return;
+    hooks.paused = paused;
+    // Always drop wall-clock residue on pause transitions / re-entry so
+    // cloth/VFX/camera cannot leak time (also covers lil-gui writing paused first).
+    clearPresentResidue();
+    if (flash) panelFlash(flash);
+  };
+
   const hooks = {
     paused: false,
     boxEditActive: false,
     enterBoxEdit,
     exitBoxEdit,
+    setPaused: (paused: boolean) => {
+      setPaused(
+        paused,
+        paused
+          ? '逐帧查看已开启（N 下一帧 · P 退出）'
+          : '继续运行',
+      );
+    },
     stepOnce: () => {
       if (hooks.boxEditActive) return;
-      match.pendingInput = keys.sample();
-      match.step();
+      if (!hooks.paused) {
+        setPaused(true, '逐帧查看已开启（N 下一帧 · P 退出）');
+      }
+      pendingLogicSteps += 1;
     },
     reloadMoveJson: async () => {
       await reloadMoveFromPublic(match);
@@ -975,8 +1015,8 @@ async function boot(): Promise<void> {
       a.click();
       URL.revokeObjectURL(a.href);
     },
+    combatSfx,
   };
-  let panelFlash: (msg: string) => void = () => {};
   const panelApi = setupControlPanel(match, clock, hooks, {
     onChange: (key) => {
       if (typeof key === 'string' && key.startsWith('action:cmosShake:')) {
@@ -1068,22 +1108,39 @@ async function boot(): Promise<void> {
   refreshLightPanel = () => panelApi.refresh();
   panelFlash = panelApi.setFlash;
 
-  /** R: return both fighters to start positions / idle state (training reset). */
+  const isTypingTarget = (t: EventTarget | null): boolean => {
+    const el = t as HTMLElement | null;
+    return !!(
+      el &&
+      (el.tagName === 'INPUT' ||
+        el.tagName === 'TEXTAREA' ||
+        el.isContentEditable)
+    );
+  };
+
+  /** R: training reset. P: pause/frame-step. N: advance one authored frame. */
   window.addEventListener('keydown', (e) => {
-    if (e.code !== 'KeyR' || e.repeat) return;
     if (hooks.boxEditActive) return;
-    const t = e.target as HTMLElement | null;
-    if (
-      t &&
-      (t.tagName === 'INPUT' ||
-        t.tagName === 'TEXTAREA' ||
-        t.isContentEditable)
-    ) {
+    if (isTypingTarget(e.target)) return;
+
+    if (e.code === 'KeyR') {
+      if (e.repeat) return;
+      e.preventDefault();
+      keys.clear();
+      match.reset();
       return;
     }
-    e.preventDefault();
-    keys.clear();
-    match.reset();
+    if (e.code === 'KeyP') {
+      if (e.repeat) return;
+      e.preventDefault();
+      hooks.setPaused(!hooks.paused);
+      return;
+    }
+    if (e.code === 'KeyN') {
+      // Allow key-repeat for scrubbing through frames.
+      e.preventDefault();
+      hooks.stepOnce();
+    }
   });
 
   window.addEventListener('resize', () => {
@@ -1099,9 +1156,6 @@ async function boot(): Promise<void> {
     updatePipChrome();
   });
 
-  let last = performance.now();
-  let presentAccum = 0;
-  let logicStepsSincePresent = 0;
   let loggedFrame = false;
   function frame(now: number): void {
     const wallDt = (now - last) / 1000;
@@ -1131,6 +1185,12 @@ async function boot(): Promise<void> {
         match.pendingInput = keys.sample();
         match.step();
       }
+    } else if (pendingLogicSteps > 0) {
+      // One authored frame per present so cloth/VFX integrate like stable 60Hz play.
+      pendingLogicSteps -= 1;
+      match.pendingInput = keys.sample();
+      match.step();
+      logicSteps = 1;
     }
     perf.end('logic');
     logicStepsSincePresent += logicSteps;
@@ -1148,9 +1208,13 @@ async function boot(): Promise<void> {
       return;
     }
 
-    const presentDt = presentAccum;
-    presentAccum = 0;
     const presentLogicSteps = logicStepsSincePresent;
+    const presentDt = resolvePresentDt({
+      paused: hooks.paused && !hooks.boxEditActive,
+      logicSteps: presentLogicSteps,
+      presentAccum,
+    });
+    presentAccum = 0;
     logicStepsSincePresent = 0;
     perf.beginPresent(now);
     perf.armRenderer(renderer);

@@ -1,0 +1,64 @@
+{
+  "wwiseDir": "/Users/yangjianlin/Documents/SF6_export/stm/product/sound/wwise",
+  "streamingWwiseDir": "/Users/yangjianlin/Documents/SF6_export/stm/streaming/product/sound/wwise",
+  "workDir": "work",
+  "runtimeSfxDir": "../private/runtime/sfx",
+  "banks": [
+    {
+      "id": "esf001_sfx_cmn_m",
+      "file": "esf001_sfx_cmn_m.sbnk.1.x64",
+      "layerHint": "swing_confirmed",
+      "note": "Ryu character whoosh \u2014 ear-confirmed match for punch/kick swing L/M/H"
+    },
+    {
+      "id": "dmg_human_m",
+      "file": "dmg_human_m.sbnk.1.x64",
+      "layerHint": "contact_candidate",
+      "note": "Likely hit body impacts; may still need streaming WEMs (HIRC>>embedded)"
+    },
+    {
+      "id": "dmg_cmn_m",
+      "file": "dmg_cmn_m.sbnk.1.x64",
+      "layerHint": "contact_candidate",
+      "note": "Common damage/impact; may need streaming"
+    },
+    {
+      "id": "battle_cmn_m",
+      "file": "battle_cmn_m.sbnk.1.x64",
+      "layerHint": "contact_incomplete",
+      "note": "Bundled in btl_human_cmn but embedded media incomplete vs HIRC \u2014 prefer streaming"
+    },
+    {
+      "id": "act_cmn_m",
+      "file": "act_cmn_m.sbnk.1.x64",
+      "layerHint": "loco_incomplete",
+      "note": "Action common; whoosh NOT here (use esf001_sfx_cmn). Dash/jump/land may need streaming"
+    },
+    {
+      "id": "foot_steps_m",
+      "file": "foot_steps_m.sbnk.1.x64",
+      "layerHint": "loco_footsteps_heavy",
+      "note": "SF6 foot_steps media (~2689 WEM). Prefer Smash-named steps for QA; extract on demand \u2014 huge for full convert"
+    },
+    {
+      "id": "down_human_m",
+      "file": "down_human_m.sbnk.1.x64",
+      "layerHint": "knockdown_incomplete",
+      "note": "Knockdown/down events; embedded subset may not match FG knockdown SFX \u2014 prefer streaming"
+    },
+    {
+      "id": "esf001_cos_000_m",
+      "file": "esf001_cos_000_m.sbnk.1.x64",
+      "layerHint": "loco_jump_cloth_candidate",
+      "note": "Ryu C1 costume foley \u2014 cloth/move candidates for jump_cloth"
+    },
+    {
+      "id": "esf001_cos_001_m",
+      "file": "esf001_cos_001_m.sbnk.1.x64",
+      "layerHint": "loco_jump_cloth_candidate",
+      "note": "Ryu C2 costume foley"
+    }
+  ],
+  "previewFormat": "ogg",
+  "exportFormat": "ogg"
+}

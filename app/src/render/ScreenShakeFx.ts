@@ -54,13 +54,18 @@ export class ScreenShakeFx {
   /**
    * Absolute camera offset after fight pose is applied.
    * +X → camera local right; +Y (screen-down) → camera local −up; roll on local Z.
+   * FOV：相对基础 fov 的度偏移（正=变宽）；需在 applyFightCamera 写完基础 fov 之后调用。
    */
   applyToCamera(camera: PerspectiveCamera): void {
-    const { x, y, rotation } = this.model.getOutput();
-    if (x === 0 && y === 0 && rotation === 0) return;
-    camera.translateX(x);
-    camera.translateY(-y);
-    camera.rotateZ(-rotation);
+    const { x, y, rotation, fov } = this.model.getOutput();
+    if (x === 0 && y === 0 && rotation === 0 && fov === 0) return;
+    if (fov !== 0) {
+      camera.fov += fov;
+      camera.updateProjectionMatrix();
+    }
+    if (x !== 0) camera.translateX(x);
+    if (y !== 0) camera.translateY(-y);
+    if (rotation !== 0) camera.rotateZ(-rotation);
     camera.updateMatrixWorld(true);
   }
 
@@ -110,6 +115,7 @@ export class ScreenShakeFx {
           radius: d.dirRadius,
           strength: d.strength,
           spin: d.spin,
+          fov: d.fov,
         });
         break;
       }

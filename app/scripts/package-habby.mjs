@@ -308,6 +308,67 @@ for (const name of fs.readdirSync(texSrcRoot)) {
 }
 console.info(`[habby] textures ${texCount} → ${bytesLabel(texBytes)}`);
 
+// --- combat SFX (manifest + accepted oggs under private/runtime/sfx) ---
+// Dev serves these via /private-runtime/sfx; vite build does not copy private/.
+const sfxSrcRoot = path.join(privateRuntime, 'sfx');
+const sfxDestRoot = path.join(runtimeDest, 'sfx');
+const sfxManifestSrc = path.join(sfxSrcRoot, 'manifest.json');
+if (!fs.existsSync(sfxManifestSrc)) {
+  console.error('[habby] missing', sfxManifestSrc);
+  process.exit(1);
+}
+function copyDirRecursive(src, dest) {
+  ensureDir(dest);
+  for (const e of fs.readdirSync(src, { withFileTypes: true })) {
+    if (e.name.startsWith('.')) continue;
+    const from = path.join(src, e.name);
+    const to = path.join(dest, e.name);
+    if (e.isDirectory()) copyDirRecursive(from, to);
+    else if (e.isFile()) copyFile(from, to);
+  }
+}
+copyDirRecursive(sfxSrcRoot, sfxDestRoot);
+const sfxManifest = JSON.parse(fs.readFileSync(sfxManifestSrc, 'utf8'));
+/** Collect primary `file` + optional variant `files[]` (SfxCatalog.sfxFilesForSlot). */
+function sfxRelFilesForEntry(entry) {
+  const out = [];
+  const push = (f) => {
+    if (typeof f !== 'string' || !f) return;
+    const n = f.replace(/^\/+/, '');
+    if (n && !out.includes(n)) out.push(n);
+  };
+  push(entry?.file);
+  if (Array.isArray(entry?.files)) {
+    for (const f of entry.files) push(f);
+  }
+  return out;
+}
+const sfxAccepted = Object.entries(sfxManifest.slots ?? {}).filter(
+  ([, e]) => e && e.status === 'accepted' && sfxRelFilesForEntry(e).length > 0,
+);
+const sfxAcceptedRels = [];
+let sfxMissingFiles = 0;
+for (const [slotId, entry] of sfxAccepted) {
+  const rels = sfxRelFilesForEntry(entry);
+  for (const rel of rels) {
+    sfxAcceptedRels.push(rel);
+    const onDisk = path.join(sfxDestRoot, rel);
+    if (!fs.existsSync(onDisk) || !fs.statSync(onDisk).isFile()) {
+      sfxMissingFiles += 1;
+      console.warn('[habby] missing accepted SFX file', slotId, rel);
+    }
+  }
+}
+const sfxBytes = dirSize(sfxDestRoot);
+console.info(
+  `[habby] sfx ${sfxAccepted.length} accepted slots / ${sfxAcceptedRels.length} files → ${bytesLabel(sfxBytes)}` +
+    (sfxMissingFiles ? ` (missing files=${sfxMissingFiles})` : ''),
+);
+if (sfxAccepted.length === 0 || sfxMissingFiles > 0) {
+  console.error('[habby] SFX pack incomplete — abort');
+  process.exit(1);
+}
+
 // --- strip mapped anim glbs ---
 const animPaths = collectMappedAnimPaths(logicMapPath);
 const animsRoot = path.join(privateAssets, 'ryu/anims');
@@ -394,6 +455,16 @@ const simple = [
   [
     '2D VFX L/M/H recipes',
     listing.includes('vfx/hit_ref_v1/recipes.json'),
+  ],
+  [
+    'SFX manifest',
+    listing.includes('private-runtime/sfx/manifest.json'),
+  ],
+  [
+    `SFX accepted files (${sfxAcceptedRels.length})`,
+    sfxAcceptedRels.every((rel) =>
+      listing.includes(`private-runtime/sfx/${rel}`),
+    ),
   ],
   [
     `zip ≤ 200 MiB (${bytesLabel(zipStat.size)})`,

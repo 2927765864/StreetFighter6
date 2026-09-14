@@ -1,0 +1,21 @@
+{
+  "name": "sf6-sfx-lab",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "extract": "node scripts/extract_bnk_wem.mjs",
+    "convert": "node scripts/convert_wem.mjs",
+    "resolve-events": "python3 scripts/resolve_events.py",
+    "export": "node scripts/export_runtime_sfx.mjs",
+    "import-community-smash": "node scripts/import_community_smash_ryu.mjs",
+    "pipeline": "node scripts/extract_bnk_wem.mjs && node scripts/convert_wem.mjs && python3 scripts/resolve_events.py"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2",
+    "vite": "^6.2.0"
+  }
+}

@@ -127,6 +127,10 @@ export function cmosShakeSectionHtml(): string {
               <input id="inp-cmosEffectSpin" type="number" min="-1" max="1" step="0.005" />
             </div>
             <div class="panel-row">
+              ${paramLabel('FOV 冲击', '调大→视野弹性伸缩更猛（经全局 fovToVelocity）；正=变宽，负=变窄', 'val-cmosEffectFov')}
+              <input id="inp-cmosEffectFov" type="number" min="-2" max="2" step="0.01" />
+            </div>
+            <div class="panel-row">
               ${paramLabel('冲击方向角 (°)', '0=右 · 90=下 · 180=左 · 270=上；改角度换震动方向', 'val-cmosEffectDirAngle')}
               <input id="inp-cmosEffectDirAngle" type="number" min="0" max="360" step="1" />
             </div>
@@ -153,6 +157,10 @@ export function cmosShakeSectionHtml(): string {
             <div class="panel-row">
               ${paramLabel('角度踢 (°)', '调大→瞬间扭转更大', 'val-cmosEffectAngleKick')}
               <input id="inp-cmosEffectAngleKick" type="number" min="-5" max="5" step="0.05" />
+            </div>
+            <div class="panel-row">
+              ${paramLabel('FOV 踢 (°)', '瞬间视野偏移；正=变宽，负=变窄（冲击感常用负值）', 'val-cmosEffectFovKick')}
+              <input id="inp-cmosEffectFovKick" type="number" min="-5" max="5" step="0.05" />
             </div>
 
             <p class="panel-hint" style="font-weight:600">脉冲串参数（播放模式=脉冲串时）</p>
@@ -189,6 +197,10 @@ export function cmosShakeSectionHtml(): string {
             <div class="panel-row">
               ${paramLabel('旋转振幅 (°)', '调大→扭角晃幅更大', 'val-cmosEffectAmpRotDeg')}
               <input id="inp-cmosEffectAmpRotDeg" type="number" min="0" max="5" step="0.05" />
+            </div>
+            <div class="panel-row">
+              ${paramLabel('FOV 振幅 (°)', '调大→视野伸缩晃幅更大', 'val-cmosEffectAmpFovDeg')}
+              <input id="inp-cmosEffectAmpFovDeg" type="number" min="0" max="8" step="0.05" />
             </div>
             <div class="panel-row">
               ${paramLabel('包络衰减', '调大→更快收住；0=全程不衰减', 'val-cmosEffectDecay')}
@@ -242,8 +254,13 @@ export function cmosShakeSectionHtml(): string {
               ${paramLabel('旋转冲击', '调大→这一脚扭得更狠', 'val-cmosDebugSpin')}
               <input id="inp-cmosDebugSpin" type="number" min="0" max="1" step="0.01" />
             </div>
+            <div class="panel-row">
+              ${paramLabel('FOV 冲击', '调大→这一脚视野伸缩更猛；可负（变窄）', 'val-cmosDebugFov')}
+              <input id="inp-cmosDebugFov" type="number" min="-2" max="2" step="0.01" />
+            </div>
 
             <p class="panel-hint" style="font-weight:600;margin-top:8px">全局动力学（所有预设共用）</p>
+            <p class="panel-hint">三类通道各自一根 MSMD 弹簧：平移 / 旋转 / FOV。调参先频率定脆度，再阻尼定过冲。</p>
             <div class="panel-row">
               ${paramLabel('平移自然频率', '调大→回正更快更脆；调小→更肉、晃得久', 'val-cmosAngularFreq')}
               <input id="inp-cmosAngularFreq" type="number" min="4" max="40" step="0.5" />
@@ -261,6 +278,14 @@ export function cmosShakeSectionHtml(): string {
               <input id="inp-cmosRotDampingRatio" type="number" min="0.2" max="1.5" step="0.02" />
             </div>
             <div class="panel-row">
+              ${paramLabel('FOV 自然频率', '调大→视野回弹更快更脆', 'val-cmosFovAngularFreq')}
+              <input id="inp-cmosFovAngularFreq" type="number" min="4" max="40" step="0.5" />
+            </div>
+            <div class="panel-row">
+              ${paramLabel('FOV 阻尼比', '调大→少过冲；调小→视野来回伸缩更弹', 'val-cmosFovDampingRatio')}
+              <input id="inp-cmosFovDampingRatio" type="number" min="0.2" max="1.5" step="0.02" />
+            </div>
+            <div class="panel-row">
               ${paramLabel('水平最大偏移', '调大→允许晃得更远（易晕）；超过会软夹持', 'val-cmosMaxOffsetX')}
               <input id="inp-cmosMaxOffsetX" type="number" min="0" max="2" step="0.01" />
             </div>
@@ -273,6 +298,10 @@ export function cmosShakeSectionHtml(): string {
               <input id="inp-cmosMaxAngleDeg" type="number" min="0" max="5" step="0.1" />
             </div>
             <div class="panel-row">
+              ${paramLabel('最大 FOV 偏移 (°)', '调大→允许视野伸缩更大；建议 ≤2.5', 'val-cmosMaxFovDeg')}
+              <input id="inp-cmosMaxFovDeg" type="number" min="0" max="8" step="0.1" />
+            </div>
+            <div class="panel-row">
               ${paramLabel('强度→平移速度', '调大→同样「冲击强度」实际踢得更猛（全局灵敏度）', 'val-cmosStrengthToVelocity')}
               <input id="inp-cmosStrengthToVelocity" type="number" min="0.5" max="80" step="0.5" />
             </div>
@@ -281,12 +310,20 @@ export function cmosShakeSectionHtml(): string {
               <input id="inp-cmosSpinToVelocity" type="number" min="0" max="40" step="0.5" />
             </div>
             <div class="panel-row">
+              ${paramLabel('FOV 冲击→速度', '调大→同样「FOV 冲击」伸缩更快', 'val-cmosFovToVelocity')}
+              <input id="inp-cmosFovToVelocity" type="number" min="0" max="40" step="0.5" />
+            </div>
+            <div class="panel-row">
               ${paramLabel('平移速度上限', '调大→连击可叠得更猛；防「振动马达」可调小', 'val-cmosMaxSpeedXY')}
               <input id="inp-cmosMaxSpeedXY" type="number" min="1" max="200" step="1" />
             </div>
             <div class="panel-row">
               ${paramLabel('旋转速度上限', '调大→扭角速度可叠更高', 'val-cmosMaxSpeedRot')}
               <input id="inp-cmosMaxSpeedRot" type="number" min="1" max="100" step="1" />
+            </div>
+            <div class="panel-row">
+              ${paramLabel('FOV 速度上限', '调大→FOV 冲量可叠更高', 'val-cmosMaxSpeedFov')}
+              <input id="inp-cmosMaxSpeedFov" type="number" min="1" max="200" step="1" />
             </div>
             <div class="panel-row">
               ${paramLabel('最小冲量间隔 (毫秒)', '调大→连打时后几下自动减弱（防马达）；0=不限制', 'val-cmosMinImpulseIntervalMS')}
@@ -308,6 +345,10 @@ export function cmosShakeSectionHtml(): string {
               ${paramLabel('旋转质量', '同平移质量；一般保持 1', 'val-cmosRotMass')}
               <input id="inp-cmosRotMass" type="number" min="0.1" max="5" step="0.1" />
             </div>
+            <div class="panel-row">
+              ${paramLabel('FOV 质量', '同平移质量；一般保持 1', 'val-cmosFovMass')}
+              <input id="inp-cmosFovMass" type="number" min="0.1" max="5" step="0.1" />
+            </div>
           </div>
         </div>
       </details>
@@ -320,24 +361,31 @@ const CMOS_NUM_BINDS: Array<{ id: string; path: string }> = [
   { id: 'cmosDampingRatio', path: 'cmosShake.dampingRatio' },
   { id: 'cmosRotAngularFreq', path: 'cmosShake.rotAngularFreq' },
   { id: 'cmosRotDampingRatio', path: 'cmosShake.rotDampingRatio' },
+  { id: 'cmosFovAngularFreq', path: 'cmosShake.fovAngularFreq' },
+  { id: 'cmosFovDampingRatio', path: 'cmosShake.fovDampingRatio' },
   { id: 'cmosMaxOffsetX', path: 'cmosShake.maxOffsetX' },
   { id: 'cmosMaxOffsetY', path: 'cmosShake.maxOffsetY' },
   { id: 'cmosMaxAngleDeg', path: 'cmosShake.maxAngleDeg' },
+  { id: 'cmosMaxFovDeg', path: 'cmosShake.maxFovDeg' },
   { id: 'cmosStrengthToVelocity', path: 'cmosShake.strengthToVelocity' },
   { id: 'cmosSpinToVelocity', path: 'cmosShake.spinToVelocity' },
+  { id: 'cmosFovToVelocity', path: 'cmosShake.fovToVelocity' },
   { id: 'cmosMaxSpeedXY', path: 'cmosShake.maxSpeedXY' },
   { id: 'cmosMaxSpeedRot', path: 'cmosShake.maxSpeedRot' },
+  { id: 'cmosMaxSpeedFov', path: 'cmosShake.maxSpeedFov' },
   { id: 'cmosMinImpulseIntervalMS', path: 'cmosShake.minImpulseIntervalMS' },
   { id: 'cmosMaxDtSec', path: 'cmosShake.maxDtSec' },
   { id: 'cmosSubsteps', path: 'cmosShake.substeps' },
   { id: 'cmosMass', path: 'cmosShake.mass' },
   { id: 'cmosRotMass', path: 'cmosShake.rotMass' },
+  { id: 'cmosFovMass', path: 'cmosShake.fovMass' },
   { id: 'cmosDebugDirAngle', path: 'cmosShake.debugImpulse.dirAngleDeg' },
   { id: 'cmosDebugDirRadius', path: 'cmosShake.debugImpulse.dirRadius' },
   { id: 'cmosDebugDirAngleMin', path: 'cmosShake.debugImpulse.dirAngleMin' },
   { id: 'cmosDebugDirAngleMax', path: 'cmosShake.debugImpulse.dirAngleMax' },
   { id: 'cmosDebugStrength', path: 'cmosShake.debugImpulse.strength' },
   { id: 'cmosDebugSpin', path: 'cmosShake.debugImpulse.spin' },
+  { id: 'cmosDebugFov', path: 'cmosShake.debugImpulse.fov' },
 ];
 
 export function bindCmosShakePanel(opts: {
@@ -469,6 +517,7 @@ export function bindCmosShakePanel(opts: {
       '#inp-cmosEffectStrength',
     ) as HTMLInputElement | null;
     const spinInput = root.querySelector('#inp-cmosEffectSpin') as HTMLInputElement | null;
+    const fovInput = root.querySelector('#inp-cmosEffectFov') as HTMLInputElement | null;
     const dirAngleInput = root.querySelector(
       '#inp-cmosEffectDirAngle',
     ) as HTMLInputElement | null;
@@ -489,6 +538,9 @@ export function bindCmosShakePanel(opts: {
     ) as HTMLInputElement | null;
     const angleKickInput = root.querySelector(
       '#inp-cmosEffectAngleKick',
+    ) as HTMLInputElement | null;
+    const fovKickInput = root.querySelector(
+      '#inp-cmosEffectFovKick',
     ) as HTMLInputElement | null;
     const countInput = root.querySelector(
       '#inp-cmosEffectCount',
@@ -512,6 +564,9 @@ export function bindCmosShakePanel(opts: {
     const ampRotInput = root.querySelector(
       '#inp-cmosEffectAmpRotDeg',
     ) as HTMLInputElement | null;
+    const ampFovInput = root.querySelector(
+      '#inp-cmosEffectAmpFovDeg',
+    ) as HTMLInputElement | null;
     const decayInput = root.querySelector(
       '#inp-cmosEffectDecay',
     ) as HTMLInputElement | null;
@@ -521,12 +576,14 @@ export function bindCmosShakePanel(opts: {
 
     const strengthVal = root.querySelector('#val-cmosEffectStrength');
     const spinVal = root.querySelector('#val-cmosEffectSpin');
+    const fovVal = root.querySelector('#val-cmosEffectFov');
     const dirAngleVal = root.querySelector('#val-cmosEffectDirAngle');
     const dirRadiusVal = root.querySelector('#val-cmosEffectDirRadius');
     const dirRandomVal = root.querySelector('#val-cmosEffectDirRandom');
     const dirAngleRangeVal = root.querySelector('#val-cmosEffectDirAngleRange');
     const posKickVal = root.querySelector('#val-cmosEffectPosKick');
     const angleKickVal = root.querySelector('#val-cmosEffectAngleKick');
+    const fovKickVal = root.querySelector('#val-cmosEffectFovKick');
     const countVal = root.querySelector('#val-cmosEffectCount');
     const intervalVal = root.querySelector('#val-cmosEffectIntervalMS');
     const alternateVal = root.querySelector('#val-cmosEffectAlternate');
@@ -535,6 +592,7 @@ export function bindCmosShakePanel(opts: {
     const freqVal = root.querySelector('#val-cmosEffectFreqHz');
     const ampVal = root.querySelector('#val-cmosEffectAmp');
     const ampRotVal = root.querySelector('#val-cmosEffectAmpRotDeg');
+    const ampFovVal = root.querySelector('#val-cmosEffectAmpFovDeg');
     const decayVal = root.querySelector('#val-cmosEffectDecay');
     const phaseVal = root.querySelector('#val-cmosEffectPhaseDeg');
     const quickHost = root.querySelector('#cmos-effect-quick-btns');
@@ -561,6 +619,7 @@ export function bindCmosShakePanel(opts: {
         mode,
         strength: num(strengthInput, 0.3),
         spin: num(spinInput, 0),
+        fov: num(fovInput, 0),
         dirAngleDeg: num(dirAngleInput, 90),
         dirRadius: num(dirRadiusInput, 1),
         dirRandom: !!dirRandomInput?.checked,
@@ -568,6 +627,7 @@ export function bindCmosShakePanel(opts: {
         dirAngleMax: num(dirAngleMaxInput, 360),
         posKick: num(posKickInput, 0),
         angleKickDeg: num(angleKickInput, 0),
+        fovKickDeg: num(fovKickInput, 0),
         count: num(countInput, 1),
         intervalMS: num(intervalInput, 50),
         alternate: !!alternateInput?.checked,
@@ -576,6 +636,7 @@ export function bindCmosShakePanel(opts: {
         freqHz: num(freqInput, 12),
         amp: num(ampInput, 0),
         ampRotDeg: num(ampRotInput, 0),
+        ampFovDeg: num(ampFovInput, 0),
         decay: num(decayInput, 4),
         phaseDeg: num(phaseInput, 0),
       };
@@ -590,6 +651,7 @@ export function bindCmosShakePanel(opts: {
       if (modeSelect) modeSelect.value = n.mode;
       if (strengthInput) strengthInput.value = formatNumber(n.strength, 2);
       if (spinInput) spinInput.value = formatNumber(n.spin, 3);
+      if (fovInput) fovInput.value = formatNumber(n.fov, 2);
       if (dirAngleInput) dirAngleInput.value = formatNumber(n.dirAngleDeg, 0);
       if (dirRadiusInput) dirRadiusInput.value = formatNumber(n.dirRadius, 2);
       if (dirRandomInput) dirRandomInput.checked = !!n.dirRandom;
@@ -597,6 +659,7 @@ export function bindCmosShakePanel(opts: {
       if (dirAngleMaxInput) dirAngleMaxInput.value = formatNumber(n.dirAngleMax, 0);
       if (posKickInput) posKickInput.value = formatNumber(n.posKick, 3);
       if (angleKickInput) angleKickInput.value = formatNumber(n.angleKickDeg, 2);
+      if (fovKickInput) fovKickInput.value = formatNumber(n.fovKickDeg, 2);
       if (countInput) countInput.value = String(n.count);
       if (intervalInput) intervalInput.value = formatNumber(n.intervalMS, 0);
       if (alternateInput) alternateInput.checked = !!n.alternate;
@@ -605,11 +668,13 @@ export function bindCmosShakePanel(opts: {
       if (freqInput) freqInput.value = formatNumber(n.freqHz, 1);
       if (ampInput) ampInput.value = formatNumber(n.amp, 3);
       if (ampRotInput) ampRotInput.value = formatNumber(n.ampRotDeg, 2);
+      if (ampFovInput) ampFovInput.value = formatNumber(n.ampFovDeg, 2);
       if (decayInput) decayInput.value = formatNumber(n.decay, 2);
       if (phaseInput) phaseInput.value = formatNumber(n.phaseDeg, 0);
 
       if (strengthVal) strengthVal.textContent = formatNumber(n.strength, 2);
       if (spinVal) spinVal.textContent = formatNumber(n.spin, 3);
+      if (fovVal) fovVal.textContent = formatNumber(n.fov, 2);
       if (dirAngleVal) dirAngleVal.textContent = formatNumber(n.dirAngleDeg, 0);
       if (dirRadiusVal) dirRadiusVal.textContent = formatNumber(n.dirRadius, 2);
       if (dirRandomVal) dirRandomVal.textContent = n.dirRandom ? '开' : '关';
@@ -620,6 +685,7 @@ export function bindCmosShakePanel(opts: {
       if (rowAngle) rowAngle.style.display = n.dirRandom ? '' : 'none';
       if (posKickVal) posKickVal.textContent = formatNumber(n.posKick, 3);
       if (angleKickVal) angleKickVal.textContent = formatNumber(n.angleKickDeg, 2);
+      if (fovKickVal) fovKickVal.textContent = formatNumber(n.fovKickDeg, 2);
       if (countVal) countVal.textContent = String(n.count);
       if (intervalVal) intervalVal.textContent = formatNumber(n.intervalMS, 0);
       if (alternateVal) alternateVal.textContent = n.alternate ? '开' : '关';
@@ -628,6 +694,7 @@ export function bindCmosShakePanel(opts: {
       if (freqVal) freqVal.textContent = formatNumber(n.freqHz, 1);
       if (ampVal) ampVal.textContent = formatNumber(n.amp, 3);
       if (ampRotVal) ampRotVal.textContent = formatNumber(n.ampRotDeg, 2);
+      if (ampFovVal) ampFovVal.textContent = formatNumber(n.ampFovDeg, 2);
       if (decayVal) decayVal.textContent = formatNumber(n.decay, 2);
       if (phaseVal) phaseVal.textContent = formatNumber(n.phaseDeg, 0);
     };
@@ -718,10 +785,12 @@ export function bindCmosShakePanel(opts: {
     };
     bindValLabel(strengthInput, strengthVal, 2);
     bindValLabel(spinInput, spinVal, 3);
+    bindValLabel(fovInput, fovVal, 2);
     bindValLabel(dirAngleInput, dirAngleVal, 0);
     bindValLabel(dirRadiusInput, dirRadiusVal, 2);
     bindValLabel(posKickInput, posKickVal, 3);
     bindValLabel(angleKickInput, angleKickVal, 2);
+    bindValLabel(fovKickInput, fovKickVal, 2);
     bindValLabel(countInput, countVal, 0);
     bindValLabel(intervalInput, intervalVal, 0);
     bindValLabel(falloffInput, falloffVal, 2);
@@ -729,6 +798,7 @@ export function bindCmosShakePanel(opts: {
     bindValLabel(freqInput, freqVal, 1);
     bindValLabel(ampInput, ampVal, 3);
     bindValLabel(ampRotInput, ampRotVal, 2);
+    bindValLabel(ampFovInput, ampFovVal, 2);
     bindValLabel(decayInput, decayVal, 2);
     bindValLabel(phaseInput, phaseVal, 0);
 
@@ -868,6 +938,7 @@ export function bindCmosShakePanel(opts: {
       const d = CONFIG.cmosShake.debugImpulse;
       if (strengthInput) strengthInput.value = formatNumber(d.strength, 2);
       if (spinInput) spinInput.value = formatNumber(d.spin, 3);
+      if (fovInput) fovInput.value = formatNumber(d.fov ?? 0, 2);
       if (dirAngleInput) dirAngleInput.value = formatNumber(d.dirAngleDeg, 0);
       if (dirRadiusInput) dirRadiusInput.value = formatNumber(d.dirRadius, 2);
       if (dirRandomInput) dirRandomInput.checked = !!d.dirRandom;
@@ -876,6 +947,7 @@ export function bindCmosShakePanel(opts: {
       if (modeSelect) modeSelect.value = 'impulse' satisfies CmosShakePresetMode;
       if (strengthVal) strengthVal.textContent = formatNumber(d.strength, 2);
       if (spinVal) spinVal.textContent = formatNumber(d.spin, 3);
+      if (fovVal) fovVal.textContent = formatNumber(d.fov ?? 0, 2);
       if (dirAngleVal) dirAngleVal.textContent = formatNumber(d.dirAngleDeg, 0);
       if (dirRadiusVal) dirRadiusVal.textContent = formatNumber(d.dirRadius, 2);
       syncEffectDirRandomUi();
