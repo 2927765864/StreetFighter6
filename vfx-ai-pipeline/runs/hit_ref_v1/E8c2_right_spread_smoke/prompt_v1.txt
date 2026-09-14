@@ -1,0 +1,9 @@
+Fighting-game VFX still on a tall portrait canvas. Solid flat #FF00FF magenta background, no gradient, no vignette, no scene, no character, no text.
+
+ONLY one piece of thin translucent white fibrous smoke, same material as the reference: torn gauze / shredded silk fibers, semi-transparent, wispy, no solid blob, no fire, no sparks.
+
+Keep the same overall recipe as the reference: a tall vertical smoke mass, denser on the left-center, tearing open toward the right, ragged torn edges, a few brighter white fiber clumps.
+
+CHANGE THE SILHOUETTE: make it a more hooked C-shape. The top should split into two longer jagged tongues reaching upper-right. The mid-body should be a narrower vertical column with a visible gap / hole on the right side. The bottom should sweep more strongly down-right as a single curved torn skirt, not a wide block.
+
+Keep the effect in the middle of the frame with generous magenta padding. Orthographic game-VFX look, white-to-pale-grey smoke only.

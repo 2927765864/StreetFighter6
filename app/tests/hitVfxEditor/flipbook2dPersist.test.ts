@@ -45,7 +45,13 @@ describe('flipbook 2d L/M/H recipes', () => {
       'E6_narrow_long_smoke_rtl',
       'E7_sweat_spray',
       'E7b_sweat_scatter',
+      'E7c_sweat_chunks',
+      'E8b1_arc_smoke',
+      'E8b2_arc_smoke',
+      'E8c1_right_spread_smoke',
+      'E8c2_right_spread_smoke',
       'E2_near_sparks',
+      'E2b_hit_sparks',
       'E1_core_flash',
     ]);
     const e5 = (s: 'L' | 'M' | 'H') =>

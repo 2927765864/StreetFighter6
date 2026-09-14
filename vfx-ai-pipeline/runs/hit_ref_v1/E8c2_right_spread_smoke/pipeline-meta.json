@@ -1,0 +1,31 @@
+{
+  "element": "E8c2_right_spread_smoke",
+  "strategy": "single_master_aniso_scale_translate_fade",
+  "master": "master_ccw90.jpg",
+  "generator": "grok_imagine_then_pil",
+  "frames": 28,
+  "fps": 30,
+  "cell": 640,
+  "master_frame_1based": 10,
+  "fade_from_frame_1based": 11,
+  "base_fit_scale": 0.56675,
+  "axes": {
+    "f1": [
+      0.2,
+      0.11
+    ],
+    "f10": [
+      1.0,
+      1.0
+    ],
+    "f20": [
+      1.0,
+      1.32
+    ],
+    "f28": [
+      1.22,
+      1.55
+    ]
+  },
+  "motion": "f1 scale 0.2 + V-squash; f1\u2013f10 ease-out to 1 + V-unstretch + fast right; f11\u2013f28 fade while V-stretch + slow right + enlarge"
+}

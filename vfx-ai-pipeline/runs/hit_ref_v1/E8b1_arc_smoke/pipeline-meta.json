@@ -1,0 +1,20 @@
+{
+  "element": "E8b1_arc_smoke",
+  "strategy": "two_masters_crossfade_scale_stretch_down_fade",
+  "master_01": "master_01.jpg",
+  "master_02": "master_02.jpg",
+  "frames": 12,
+  "fps": 30,
+  "cell": 384,
+  "anchors_1based": {
+    "master_01": 4,
+    "master_02_1_2x": 8
+  },
+  "crossfade_1based": [
+    3,
+    6
+  ],
+  "fade_from_frame_1based": 9,
+  "base_fit_scale": 0.37566,
+  "motion": "f1 master01@0.7 H-compress; f1\u2013f4 scale\u21921 + H-stretch + down; f3\u2013f6 overlapping crossfade m1\u2192m2 (m2 starts @0.9); f5\u2013f8 enlarge\u21921.2 + down; f9\u2013f12 H-stretch + fade + down"
+}

@@ -1,0 +1,9 @@
+Fighting-game VFX still on a tall portrait canvas. Solid flat #FF00FF magenta background, no gradient, no vignette, no scene, no character, no text.
+
+ONLY thin translucent white fibrous smoke like torn gauze, matching the reference material: wispy fibers, shredded edges, semi-transparent white over magenta.
+
+Keep the same family: tall vertical mass, tear-open to the right, fibrous not cloudy.
+
+CHANGE THE SILHOUETTE: more diagonal. Lean the whole mass from upper-left to lower-right. Break the right edge into three staggered torn flaps at different heights (high, mid, low) like ripped cloth layers. Make the left edge smoother and denser. Add a few isolated thin strands drifting off the right tips. Mid-body thinner than the reference, less filled, more see-through magenta holes.
+
+Effect centered with padding. White-grey smoke only, no magenta inside the smoke itself.

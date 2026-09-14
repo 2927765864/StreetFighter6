@@ -5,7 +5,7 @@ import {
   DEFAULT_FLIPBOOK_RECIPE,
   recipeForStrength,
 } from './defaults';
-import { parseBlend } from './layerLook';
+import { parseBlend, parseTint } from './layerLook';
 import type {
   FlipbookLayer,
   FlipbookLayerId,
@@ -26,12 +26,18 @@ let factoryState: FlipbookPersistState = {
 const LAYER_IDS: FlipbookLayerId[] = [
   'E1_core_flash',
   'E2_near_sparks',
+  'E2b_hit_sparks',
   'E3_ring_smoke',
   'E4_wide_short_smoke',
   'E5_narrow_long_smoke',
   'E6_narrow_long_smoke_rtl',
   'E7_sweat_spray',
   'E7b_sweat_scatter',
+  'E7c_sweat_chunks',
+  'E8b1_arc_smoke',
+  'E8b2_arc_smoke',
+  'E8c1_right_spread_smoke',
+  'E8c2_right_spread_smoke',
 ];
 
 function isLayerId(s: string): s is FlipbookLayerId {
@@ -53,7 +59,9 @@ function hasLookFields(raw: Partial<FlipbookLayer>): boolean {
     raw.brightness != null ||
     raw.lift != null ||
     raw.despill != null ||
-    raw.blend === 'screen'
+    raw.blend === 'screen' ||
+    raw.blend === 'steam' ||
+    raw.tint != null
   );
 }
 
@@ -100,7 +108,10 @@ function sanitizeLayer(raw: Partial<FlipbookLayer>, fallback: FlipbookLayer): Fl
       : fallback.opacity,
     brightness: look ? num(raw.brightness, fallback.brightness, 0, 8) : fallback.brightness,
     lift: look ? num(raw.lift, fallback.lift, 0, 2) : fallback.lift,
+    liftDark: num(raw.liftDark, fallback.liftDark ?? 0, 0, 12),
+    liftBright: num(raw.liftBright, fallback.liftBright ?? 0, 0, 2),
     despill: look ? num(raw.despill, fallback.despill, 0, 1) : fallback.despill,
+    tint: parseTint(raw.tint ?? fallback.tint),
     startFrame: Math.max(0, Math.floor(Number(raw.startFrame) || 0)),
     duration: Math.max(1, Math.floor(Number(raw.duration) || fallback.duration)),
     blend: look ? parseBlend(raw.blend) : fallback.blend,

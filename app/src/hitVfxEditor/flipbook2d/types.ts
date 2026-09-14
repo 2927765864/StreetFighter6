@@ -1,16 +1,22 @@
-export type FlipbookBlend = 'normal' | 'add' | 'screen';
+export type FlipbookBlend = 'normal' | 'add' | 'screen' | 'steam';
 
 export type FlipbookStrength = 'L' | 'M' | 'H';
 
 export type FlipbookLayerId =
   | 'E1_core_flash'
   | 'E2_near_sparks'
+  | 'E2b_hit_sparks'
   | 'E3_ring_smoke'
   | 'E4_wide_short_smoke'
   | 'E5_narrow_long_smoke'
   | 'E6_narrow_long_smoke_rtl'
   | 'E7_sweat_spray'
-  | 'E7b_sweat_scatter';
+  | 'E7b_sweat_scatter'
+  | 'E7c_sweat_chunks'
+  | 'E8b1_arc_smoke'
+  | 'E8b2_arc_smoke'
+  | 'E8c1_right_spread_smoke'
+  | 'E8c2_right_spread_smoke';
 
 export type FlipbookLayer = {
   id: FlipbookLayerId;
@@ -40,10 +46,19 @@ export type FlipbookLayer = {
   opacity: number;
   /** RGB multiply. 1 = authored. */
   brightness: number;
-  /** Add white (0–2). Raises mid-grey smoke off a bright stage. */
+  /** Add white (0–2). Raises mid-grey smoke off a bright stage. Non-steam. */
   lift: number;
+  /** Steam: lift authored dark wisps (0–12). */
+  liftDark: number;
+  /** Steam: thicken / punch authored bright cores (0–2). */
+  liftBright: number;
   /** 0 = keep authored edges; 1 = strip dark key fringe. */
   despill: number;
+  /**
+   * Steam multiply colour as `#rrggbb`. White = no hue.
+   * Ignored by 普通 / 滤色 / 加法.
+   */
+  tint: string;
   /** Inclusive start on the shared timeline (0-based). */
   startFrame: number;
   /** How many timeline frames this layer occupies. */

@@ -41,12 +41,18 @@ const logicMapPath = path.join(
 const VFX_LAYERS = [
   'E1_core_flash',
   'E2_near_sparks',
+  'E2b_hit_sparks',
   'E3_ring_smoke',
   'E4_wide_short_smoke',
   'E5_narrow_long_smoke',
   'E6_narrow_long_smoke_rtl',
   'E7_sweat_spray',
   'E7b_sweat_scatter',
+  'E7c_sweat_chunks',
+  'E8b1_arc_smoke',
+  'E8b2_arc_smoke',
+  'E8c1_right_spread_smoke',
+  'E8c2_right_spread_smoke',
 ];
 const vfxPipelineRoot = path.join(
   repoRoot,
@@ -56,12 +62,18 @@ const vfxPublicRoot = path.join(appRoot, 'public/vfx/hit_ref_v1');
 const CATALOG_FRAME_COUNTS = {
   E1_core_flash: 10,
   E2_near_sparks: 10,
+  E2b_hit_sparks: 12,
   E3_ring_smoke: 14,
   E4_wide_short_smoke: 14,
   E5_narrow_long_smoke: 14,
   E6_narrow_long_smoke_rtl: 14,
   E7_sweat_spray: 16,
   E7b_sweat_scatter: 14,
+  E7c_sweat_chunks: 16,
+  E8b1_arc_smoke: 12,
+  E8b2_arc_smoke: 12,
+  E8c1_right_spread_smoke: 28,
+  E8c2_right_spread_smoke: 28,
 };
 
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);

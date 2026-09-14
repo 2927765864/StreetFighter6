@@ -1,0 +1,1 @@
+E8b2 12f from E8-b1 masters flipped top-bottom. f4=m1, f8=m2@1.2. f3–f6 overlapping crossfade, m2 enters at 0.9. Upward drift entire clip (opposite of E8-b1 down); same scale/stretch/fade.

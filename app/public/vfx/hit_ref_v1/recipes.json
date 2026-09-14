@@ -7,7 +7,7 @@
       "name": "命中参考 v1 · 轻",
       "strength": "L",
       "fps": 50,
-      "length": 20,
+      "length": 29,
       "layers": [
         {
           "id": "E3_ring_smoke",
@@ -23,7 +23,8 @@
           "despill": 0.45,
           "startFrame": 1,
           "duration": 14,
-          "blend": "screen"
+          "blend": "screen",
+          "tint": "#ffffff"
         },
         {
           "id": "E4_wide_short_smoke",
@@ -39,7 +40,8 @@
           "despill": 0.5,
           "startFrame": 1,
           "duration": 14,
-          "blend": "screen"
+          "blend": "screen",
+          "tint": "#ffffff"
         },
         {
           "id": "E5_narrow_long_smoke",
@@ -55,7 +57,8 @@
           "despill": 0.45,
           "startFrame": 1,
           "duration": 14,
-          "blend": "screen"
+          "blend": "screen",
+          "tint": "#ffffff"
         },
         {
           "id": "E6_narrow_long_smoke_rtl",
@@ -71,7 +74,8 @@
           "despill": 0.45,
           "startFrame": 1,
           "duration": 14,
-          "blend": "screen"
+          "blend": "screen",
+          "tint": "#ffffff"
         },
         {
           "id": "E7_sweat_spray",
@@ -87,7 +91,8 @@
           "despill": 0.25,
           "startFrame": 1,
           "duration": 16,
-          "blend": "screen"
+          "blend": "screen",
+          "tint": "#ffffff"
         },
         {
           "id": "E7b_sweat_scatter",
@@ -103,7 +108,93 @@
           "despill": 0.25,
           "startFrame": 1,
           "duration": 14,
-          "blend": "screen"
+          "blend": "screen",
+          "tint": "#ffffff"
+        },
+        {
+          "id": "E7c_sweat_chunks",
+          "name": "E7-c 块状飞汗",
+          "enabled": true,
+          "z": 4.6,
+          "offsetX": 0,
+          "offsetY": 0,
+          "scale": 0.85,
+          "opacity": 0.95,
+          "brightness": 1.1,
+          "lift": 0,
+          "despill": 0.25,
+          "startFrame": 1,
+          "duration": 16,
+          "blend": "screen",
+          "tint": "#ffffff"
+        },
+        {
+          "id": "E8b1_arc_smoke",
+          "name": "E8-b1 弧状烟",
+          "enabled": true,
+          "z": 3.2,
+          "offsetX": 0,
+          "offsetY": 0,
+          "scale": 1.0,
+          "opacity": 0.85,
+          "brightness": 1.2,
+          "lift": 0.15,
+          "despill": 0.4,
+          "startFrame": 1,
+          "duration": 12,
+          "blend": "screen",
+          "tint": "#ffffff"
+        },
+        {
+          "id": "E8b2_arc_smoke",
+          "name": "E8-b2 弧状烟(反向)",
+          "enabled": true,
+          "z": 3.25,
+          "offsetX": 0,
+          "offsetY": 0,
+          "scale": 1.0,
+          "opacity": 0.85,
+          "brightness": 1.2,
+          "lift": 0.15,
+          "despill": 0.4,
+          "startFrame": 1,
+          "duration": 12,
+          "blend": "screen",
+          "tint": "#ffffff"
+        },
+        {
+          "id": "E8c1_right_spread_smoke",
+          "name": "E8-c1 向右扩散烟",
+          "enabled": true,
+          "z": 3.15,
+          "offsetX": 0,
+          "offsetY": 0,
+          "scale": 1.0,
+          "opacity": 0.85,
+          "brightness": 1.2,
+          "lift": 0.15,
+          "despill": 0.4,
+          "startFrame": 1,
+          "duration": 28,
+          "blend": "steam",
+          "tint": "#ffffff"
+        },
+        {
+          "id": "E8c2_right_spread_smoke",
+          "name": "E8-c2 向右扩散烟",
+          "enabled": true,
+          "z": 3.12,
+          "offsetX": 0,
+          "offsetY": 0,
+          "scale": 1.0,
+          "opacity": 0.85,
+          "brightness": 1.2,
+          "lift": 0.15,
+          "despill": 0.4,
+          "startFrame": 1,
+          "duration": 28,
+          "blend": "steam",
+          "tint": "#ffffff"
         },
         {
           "id": "E2_near_sparks",
@@ -119,7 +210,29 @@
           "despill": 0.35,
           "startFrame": 1,
           "duration": 10,
-          "blend": "add"
+          "blend": "add",
+          "tint": "#ffffff"
+        },
+        {
+          "id": "E2b_hit_sparks",
+          "name": "E2-b 击中火星",
+          "enabled": true,
+          "z": 5.5,
+          "offsetX": 0,
+          "offsetY": 0,
+          "rotation": 0,
+          "randomRotation": false,
+          "randomRotationMinDeg": -15,
+          "randomRotationMaxDeg": 15,
+          "scale": 0.85,
+          "opacity": 1,
+          "brightness": 1,
+          "lift": 0,
+          "despill": 0.3,
+          "startFrame": 1,
+          "duration": 12,
+          "blend": "add",
+          "tint": "#ffffff"
         },
         {
           "id": "E1_core_flash",
@@ -135,7 +248,8 @@
           "despill": 0.35,
           "startFrame": 1,
           "duration": 10,
-          "blend": "add"
+          "blend": "add",
+          "tint": "#ffffff"
         }
       ]
     },
@@ -144,7 +258,7 @@
       "name": "命中参考 v1 · E1–E5",
       "strength": "M",
       "fps": 45,
-      "length": 20,
+      "length": 29,
       "layers": [
         {
           "id": "E3_ring_smoke",
@@ -160,7 +274,8 @@
           "despill": 0.45,
           "startFrame": 1,
           "duration": 14,
-          "blend": "screen"
+          "blend": "screen",
+          "tint": "#ffffff"
         },
         {
           "id": "E4_wide_short_smoke",
@@ -176,7 +291,8 @@
           "despill": 0.5,
           "startFrame": 1,
           "duration": 14,
-          "blend": "screen"
+          "blend": "screen",
+          "tint": "#ffffff"
         },
         {
           "id": "E5_narrow_long_smoke",
@@ -192,7 +308,8 @@
           "despill": 0.45,
           "startFrame": 1,
           "duration": 14,
-          "blend": "screen"
+          "blend": "screen",
+          "tint": "#ffffff"
         },
         {
           "id": "E6_narrow_long_smoke_rtl",
@@ -208,7 +325,8 @@
           "despill": 0.45,
           "startFrame": 2,
           "duration": 14,
-          "blend": "screen"
+          "blend": "screen",
+          "tint": "#ffffff"
         },
         {
           "id": "E7_sweat_spray",
@@ -224,7 +342,8 @@
           "despill": 0.25,
           "startFrame": 1,
           "duration": 16,
-          "blend": "screen"
+          "blend": "screen",
+          "tint": "#ffffff"
         },
         {
           "id": "E7b_sweat_scatter",
@@ -240,7 +359,93 @@
           "despill": 0.25,
           "startFrame": 1,
           "duration": 14,
-          "blend": "screen"
+          "blend": "screen",
+          "tint": "#ffffff"
+        },
+        {
+          "id": "E7c_sweat_chunks",
+          "name": "E7-c 块状飞汗",
+          "enabled": true,
+          "z": 4.6,
+          "offsetX": 0,
+          "offsetY": 0,
+          "scale": 1.0,
+          "opacity": 0.95,
+          "brightness": 1.1,
+          "lift": 0,
+          "despill": 0.25,
+          "startFrame": 1,
+          "duration": 16,
+          "blend": "screen",
+          "tint": "#ffffff"
+        },
+        {
+          "id": "E8b1_arc_smoke",
+          "name": "E8-b1 弧状烟",
+          "enabled": true,
+          "z": 3.2,
+          "offsetX": 0,
+          "offsetY": 0,
+          "scale": 1.0,
+          "opacity": 0.85,
+          "brightness": 1.2,
+          "lift": 0.15,
+          "despill": 0.4,
+          "startFrame": 1,
+          "duration": 12,
+          "blend": "screen",
+          "tint": "#ffffff"
+        },
+        {
+          "id": "E8b2_arc_smoke",
+          "name": "E8-b2 弧状烟(反向)",
+          "enabled": true,
+          "z": 3.25,
+          "offsetX": 0,
+          "offsetY": 0,
+          "scale": 1.0,
+          "opacity": 0.85,
+          "brightness": 1.2,
+          "lift": 0.15,
+          "despill": 0.4,
+          "startFrame": 1,
+          "duration": 12,
+          "blend": "screen",
+          "tint": "#ffffff"
+        },
+        {
+          "id": "E8c1_right_spread_smoke",
+          "name": "E8-c1 向右扩散烟",
+          "enabled": true,
+          "z": 3.15,
+          "offsetX": 0,
+          "offsetY": 0,
+          "scale": 1.0,
+          "opacity": 0.85,
+          "brightness": 1.2,
+          "lift": 0.15,
+          "despill": 0.4,
+          "startFrame": 1,
+          "duration": 28,
+          "blend": "steam",
+          "tint": "#ffffff"
+        },
+        {
+          "id": "E8c2_right_spread_smoke",
+          "name": "E8-c2 向右扩散烟",
+          "enabled": true,
+          "z": 3.12,
+          "offsetX": 0,
+          "offsetY": 0,
+          "scale": 1.0,
+          "opacity": 0.85,
+          "brightness": 1.2,
+          "lift": 0.15,
+          "despill": 0.4,
+          "startFrame": 1,
+          "duration": 28,
+          "blend": "steam",
+          "tint": "#ffffff"
         },
         {
           "id": "E2_near_sparks",
@@ -256,7 +461,29 @@
           "despill": 0.35,
           "startFrame": 1,
           "duration": 10,
-          "blend": "add"
+          "blend": "add",
+          "tint": "#ffffff"
+        },
+        {
+          "id": "E2b_hit_sparks",
+          "name": "E2-b 击中火星",
+          "enabled": true,
+          "z": 5.5,
+          "offsetX": 0,
+          "offsetY": 0,
+          "rotation": 0,
+          "randomRotation": false,
+          "randomRotationMinDeg": -15,
+          "randomRotationMaxDeg": 15,
+          "scale": 1.0,
+          "opacity": 1,
+          "brightness": 1,
+          "lift": 0,
+          "despill": 0.3,
+          "startFrame": 1,
+          "duration": 12,
+          "blend": "add",
+          "tint": "#ffffff"
         },
         {
           "id": "E1_core_flash",
@@ -272,7 +499,8 @@
           "despill": 0.35,
           "startFrame": 1,
           "duration": 10,
-          "blend": "add"
+          "blend": "add",
+          "tint": "#ffffff"
         }
       ]
     },
@@ -281,7 +509,7 @@
       "name": "命中参考 v1 · 重",
       "strength": "H",
       "fps": 40,
-      "length": 20,
+      "length": 29,
       "layers": [
         {
           "id": "E3_ring_smoke",
@@ -297,7 +525,8 @@
           "despill": 0.45,
           "startFrame": 1,
           "duration": 14,
-          "blend": "screen"
+          "blend": "screen",
+          "tint": "#ffffff"
         },
         {
           "id": "E4_wide_short_smoke",
@@ -313,7 +542,8 @@
           "despill": 0.5,
           "startFrame": 1,
           "duration": 14,
-          "blend": "screen"
+          "blend": "screen",
+          "tint": "#ffffff"
         },
         {
           "id": "E5_narrow_long_smoke",
@@ -329,7 +559,8 @@
           "despill": 0.45,
           "startFrame": 1,
           "duration": 14,
-          "blend": "screen"
+          "blend": "screen",
+          "tint": "#ffffff"
         },
         {
           "id": "E6_narrow_long_smoke_rtl",
@@ -345,7 +576,8 @@
           "despill": 0.45,
           "startFrame": 2,
           "duration": 14,
-          "blend": "screen"
+          "blend": "screen",
+          "tint": "#ffffff"
         },
         {
           "id": "E7_sweat_spray",
@@ -361,7 +593,8 @@
           "despill": 0.25,
           "startFrame": 1,
           "duration": 16,
-          "blend": "screen"
+          "blend": "screen",
+          "tint": "#ffffff"
         },
         {
           "id": "E7b_sweat_scatter",
@@ -377,7 +610,93 @@
           "despill": 0.25,
           "startFrame": 1,
           "duration": 14,
-          "blend": "screen"
+          "blend": "screen",
+          "tint": "#ffffff"
+        },
+        {
+          "id": "E7c_sweat_chunks",
+          "name": "E7-c 块状飞汗",
+          "enabled": true,
+          "z": 4.6,
+          "offsetX": 0,
+          "offsetY": 0,
+          "scale": 1.15,
+          "opacity": 0.95,
+          "brightness": 1.1,
+          "lift": 0,
+          "despill": 0.25,
+          "startFrame": 1,
+          "duration": 16,
+          "blend": "screen",
+          "tint": "#ffffff"
+        },
+        {
+          "id": "E8b1_arc_smoke",
+          "name": "E8-b1 弧状烟",
+          "enabled": true,
+          "z": 3.2,
+          "offsetX": 0,
+          "offsetY": 0,
+          "scale": 1.0,
+          "opacity": 0.85,
+          "brightness": 1.2,
+          "lift": 0.15,
+          "despill": 0.4,
+          "startFrame": 1,
+          "duration": 12,
+          "blend": "screen",
+          "tint": "#ffffff"
+        },
+        {
+          "id": "E8b2_arc_smoke",
+          "name": "E8-b2 弧状烟(反向)",
+          "enabled": true,
+          "z": 3.25,
+          "offsetX": 0,
+          "offsetY": 0,
+          "scale": 1.0,
+          "opacity": 0.85,
+          "brightness": 1.2,
+          "lift": 0.15,
+          "despill": 0.4,
+          "startFrame": 1,
+          "duration": 12,
+          "blend": "screen",
+          "tint": "#ffffff"
+        },
+        {
+          "id": "E8c1_right_spread_smoke",
+          "name": "E8-c1 向右扩散烟",
+          "enabled": true,
+          "z": 3.15,
+          "offsetX": 0,
+          "offsetY": 0,
+          "scale": 1.0,
+          "opacity": 0.85,
+          "brightness": 1.2,
+          "lift": 0.15,
+          "despill": 0.4,
+          "startFrame": 1,
+          "duration": 28,
+          "blend": "steam",
+          "tint": "#ffffff"
+        },
+        {
+          "id": "E8c2_right_spread_smoke",
+          "name": "E8-c2 向右扩散烟",
+          "enabled": true,
+          "z": 3.12,
+          "offsetX": 0,
+          "offsetY": 0,
+          "scale": 1.0,
+          "opacity": 0.85,
+          "brightness": 1.2,
+          "lift": 0.15,
+          "despill": 0.4,
+          "startFrame": 1,
+          "duration": 28,
+          "blend": "steam",
+          "tint": "#ffffff"
         },
         {
           "id": "E2_near_sparks",
@@ -393,7 +712,29 @@
           "despill": 0.35,
           "startFrame": 1,
           "duration": 10,
-          "blend": "add"
+          "blend": "add",
+          "tint": "#ffffff"
+        },
+        {
+          "id": "E2b_hit_sparks",
+          "name": "E2-b 击中火星",
+          "enabled": true,
+          "z": 5.5,
+          "offsetX": 0,
+          "offsetY": 0,
+          "rotation": 0,
+          "randomRotation": false,
+          "randomRotationMinDeg": -15,
+          "randomRotationMaxDeg": 15,
+          "scale": 1.15,
+          "opacity": 1,
+          "brightness": 1,
+          "lift": 0,
+          "despill": 0.3,
+          "startFrame": 1,
+          "duration": 12,
+          "blend": "add",
+          "tint": "#ffffff"
         },
         {
           "id": "E1_core_flash",
@@ -409,7 +750,8 @@
           "despill": 0.35,
           "startFrame": 1,
           "duration": 10,
-          "blend": "add"
+          "blend": "add",
+          "tint": "#ffffff"
         }
       ]
     }

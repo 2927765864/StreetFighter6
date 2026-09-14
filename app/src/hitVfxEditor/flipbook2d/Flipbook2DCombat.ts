@@ -11,7 +11,13 @@ import {
   layerRotationRad,
   sampleLayerRotationJitterDeg,
 } from './layerRotation';
-import { flipbookWorldSize, prepImage } from './texturePrep';
+import {
+  flipbookWorldSize,
+  prepImage,
+  prepLookForBlend,
+  steamLiftsFromLayer,
+  type FlipbookPrepLook,
+} from './texturePrep';
 import {
   firstVisiblePlayhead,
   sourceFrameAt,
@@ -51,19 +57,28 @@ const texCache = new Map<string, THREE.Texture>();
 /** Shared unit quad; scale per mesh. Faces +Z so camera-quat parents billboard correctly. */
 const planeGeo = new THREE.PlaneGeometry(1, 1);
 
-function cacheKey(url: string, despill: number): string {
-  return `${url}|d=${despill.toFixed(2)}`;
+function cacheKey(
+  url: string,
+  despill: number,
+  look: FlipbookPrepLook,
+  liftDark = 0,
+  liftBright = 0,
+): string {
+  return `${url}|d=${despill.toFixed(2)}|${look}|ld=${liftDark.toFixed(2)}|lb=${liftBright.toFixed(2)}|v9`;
 }
 
 async function textureFor(
   url: string,
   despill: number,
+  look: FlipbookPrepLook = 'premul',
+  liftDark = 0,
+  liftBright = 0,
 ): Promise<THREE.Texture> {
-  const key = cacheKey(url, despill);
+  const key = cacheKey(url, despill, look, liftDark, liftBright);
   const hit = texCache.get(key);
   if (hit) return hit;
   const img = await loadImage(url);
-  const canvas = prepImage(img, despill);
+  const canvas = prepImage(img, despill, look, { dark: liftDark, bright: liftBright });
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.premultiplyAlpha = true;
@@ -80,6 +95,12 @@ function applyMaterialLook(
   mat.blending = blend.blending as THREE.Blending;
   if (blend.blendSrc != null) mat.blendSrc = blend.blendSrc as THREE.BlendingDstFactor;
   if (blend.blendDst != null) mat.blendDst = blend.blendDst as THREE.BlendingDstFactor;
+  if (blend.blendSrcAlpha != null) {
+    mat.blendSrcAlpha = blend.blendSrcAlpha as THREE.BlendingSrcFactor;
+  }
+  if (blend.blendDstAlpha != null) {
+    mat.blendDstAlpha = blend.blendDstAlpha as THREE.BlendingDstFactor;
+  }
   if (blend.blendEquation != null) {
     mat.blendEquation = blend.blendEquation as THREE.BlendingEquation;
   }
@@ -90,7 +111,7 @@ function applyMaterialLook(
   mat.transparent = true;
   mat.depthTest = false;
   mat.depthWrite = false;
-  mat.toneMapped = true;
+  mat.toneMapped = blend.toneMapped !== false;
   // Parent scale.x = -1 mirrors the shot; double-side keeps the flipped plane visible.
   mat.side = THREE.DoubleSide;
   mat.needsUpdate = true;
@@ -434,7 +455,7 @@ export class Flipbook2DCombat {
     shot.behindSpin.rotation.z = spin;
   }
 
-  private applyFrame(shot: Shot, forceLook = false): void {
+  private applyFrame(shot: Shot, _forceLook = false): void {
     const size = flipbookWorldSize(CONFIG.hitVfxFlipbookSize);
     for (const item of shot.layers) {
       const over = layerOverCharacter(item.layer);
@@ -453,9 +474,19 @@ export class Flipbook2DCombat {
         item.mesh.visible = false;
         continue;
       }
-      const tex = texCache.get(cacheKey(url, item.layer.despill));
+      const look = prepLookForBlend(item.layer.blend);
+      const lifts = steamLiftsFromLayer(item.layer);
+      const tex = texCache.get(
+        cacheKey(url, item.layer.despill, look, lifts.dark, lifts.bright),
+      );
       if (!tex) {
-        void textureFor(url, item.layer.despill).then(() => this.applyFrame(shot));
+        void textureFor(
+          url,
+          item.layer.despill,
+          look,
+          lifts.dark,
+          lifts.bright,
+        ).then(() => this.applyFrame(shot));
         item.mesh.visible = false;
         continue;
       }
@@ -474,10 +505,8 @@ export class Flipbook2DCombat {
       item.mesh.rotation.z = layerRotationRad(item.layer, item.rotJitterDeg);
       item.mesh.renderOrder = 20 + item.layer.z;
       if (item.material.map !== tex) item.material.map = tex;
-      if (forceLook || !item.lookApplied) {
-        applyMaterialLook(item.material, item.layer);
-        item.lookApplied = true;
-      }
+      applyMaterialLook(item.material, item.layer);
+      item.lookApplied = true;
       item.mesh.visible = item.layer.enabled;
     }
   }
@@ -498,10 +527,16 @@ export class Flipbook2DCombat {
       const recipe = this.bank[strength] ?? this.recipe;
       for (const layer of recipe.layers) {
         for (const url of FLIPBOOK_SHEETS[layer.id] ?? []) {
-          const key = cacheKey(url, layer.despill);
+          const look = prepLookForBlend(layer.blend);
+          const lifts = steamLiftsFromLayer(layer);
+          const key = cacheKey(url, layer.despill, look, lifts.dark, lifts.bright);
           if (seen.has(key)) continue;
           seen.add(key);
-          jobs.push(textureFor(url, layer.despill).catch(() => undefined));
+          jobs.push(
+            textureFor(url, layer.despill, look, lifts.dark, lifts.bright).catch(
+              () => undefined,
+            ),
+          );
         }
       }
     }

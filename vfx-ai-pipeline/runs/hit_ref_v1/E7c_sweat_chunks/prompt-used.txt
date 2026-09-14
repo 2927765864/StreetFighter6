@@ -1,0 +1,1 @@
+E7-c locked splash master = frame 7 of 16. PIL-only: f1 aniso birth, f1–f6 right + squash morph, f7–f16 right+gravity + uniform scale to 1.15, fade from f10.

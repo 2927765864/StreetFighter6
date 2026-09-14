@@ -1,0 +1,9 @@
+Fighting-game VFX still on a tall portrait canvas. Solid flat #FF00FF magenta background, no gradient, no vignette, no scene, no character, no text.
+
+ONLY thin translucent white fibrous smoke matching the reference: shredded silk, torn gauze, wispy fibers, not a solid cloud.
+
+Keep the same family: vertical torn smoke, denser core, ragged right tear.
+
+CHANGE THE SILHOUETTE: more compact and chunky at the core, with a thicker upper shoulder on the left and a shorter overall height. The right side should burst into many small needle-like fiber spikes instead of a few large flaps. Bottom edge more horizontal and frayed, like a torn banner, with a small detached puff sitting slightly apart on the lower-right.
+
+Centered, padding around. White-grey only.

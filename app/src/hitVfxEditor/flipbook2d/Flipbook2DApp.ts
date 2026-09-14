@@ -7,7 +7,7 @@ import {
   FLIPBOOK_STRENGTH_LABEL,
 } from './defaults';
 import './flipbook2d.css';
-import { parseBlend } from './layerLook';
+import { blendLabel, parseBlend, parseTint } from './layerLook';
 import { loadFlipbookState, saveFlipbookBank } from './persist';
 import { Flipbook2DCombat } from './Flipbook2DCombat';
 import {
@@ -24,12 +24,18 @@ import { CONFIG } from '../../config/store';
 const TRACK_COLORS: Record<FlipbookLayerId, string> = {
   E1_core_flash: '#e8a040',
   E2_near_sparks: '#f0d060',
+  E2b_hit_sparks: '#f5c050',
   E3_ring_smoke: '#8aa0b8',
   E4_wide_short_smoke: '#6a9bb8',
   E5_narrow_long_smoke: '#7ab8a0',
   E6_narrow_long_smoke_rtl: '#9ab07a',
   E7_sweat_spray: '#d8e8f0',
   E7b_sweat_scatter: '#c0d8e8',
+  E7c_sweat_chunks: '#b8d0e0',
+  E8b1_arc_smoke: '#a8b8c8',
+  E8b2_arc_smoke: '#98a8b8',
+  E8c1_right_spread_smoke: '#98a8c0',
+  E8c2_right_spread_smoke: '#a0b0c8',
 };
 
 export type Flipbook2DHost = {
@@ -403,7 +409,7 @@ export class Flipbook2DApp {
       <div style="padding:12px">
         <h3 style="margin:0 0 10px">${layer.name}</h3>
         <p style="opacity:.7;font-size:12px">素材 ${srcN} 帧 · 混合 ${
-          layer.blend === 'add' ? '加法' : layer.blend === 'screen' ? '滤色' : '普通'
+          blendLabel(layer.blend)
         }</p>
         <div class="fb2d-insp-row"><label>显示层级 z</label><input type="number" data-f="z" step="1" value="${layer.z}" /></div>
         <div class="fb2d-insp-row"><label>盖在角色上</label>
@@ -426,17 +432,28 @@ export class Flipbook2DApp {
         <div class="fb2d-insp-row"><label>缩放</label><input type="number" data-f="scale" step="0.05" min="0.05" value="${layer.scale}" /></div>
         <div class="fb2d-insp-row"><label>透明度</label><input type="number" data-f="opacity" step="0.05" min="0" max="1" value="${layer.opacity}" /></div>
         <div class="fb2d-insp-row"><label>亮度</label><input type="number" data-f="brightness" step="0.05" min="0" max="8" value="${layer.brightness}" /></div>
-        <div class="fb2d-insp-row"><label>提亮</label><input type="number" data-f="lift" step="0.05" min="0" max="2" value="${layer.lift}" /></div>
+        ${
+          layer.blend === 'steam'
+            ? `<div class="fb2d-insp-row"><label>暗部提亮</label><input type="number" data-f="liftDark" step="0.1" min="0" max="12" value="${layer.liftDark ?? 0}" /></div>
+        <div class="fb2d-insp-row"><label>亮部提亮</label><input type="number" data-f="liftBright" step="0.05" min="0" max="2" value="${layer.liftBright ?? 0}" /></div>`
+            : `<div class="fb2d-insp-row"><label>提亮</label><input type="number" data-f="lift" step="0.05" min="0" max="2" value="${layer.lift}" /></div>`
+        }
         <div class="fb2d-insp-row"><label>去黑边</label><input type="number" data-f="despill" step="0.05" min="0" max="1" value="${layer.despill}" /></div>
         <div class="fb2d-insp-row"><label>出现帧</label><input type="number" data-f="startFrame" step="1" min="0" value="${layer.startFrame}" /></div>
         <div class="fb2d-insp-row"><label>持续帧数</label><input type="number" data-f="duration" step="1" min="1" value="${layer.duration}" /></div>
         <div class="fb2d-insp-row"><label>混合</label>
           <select data-f="blend">
             <option value="normal" ${layer.blend === 'normal' ? 'selected' : ''}>普通（挡光）</option>
-            <option value="screen" ${layer.blend === 'screen' ? 'selected' : ''}>滤色（蒸汽）</option>
+            <option value="screen" ${layer.blend === 'screen' ? 'selected' : ''}>滤色（旧蒸汽）</option>
+            <option value="steam" ${layer.blend === 'steam' ? 'selected' : ''}>蒸汽（有色雾）</option>
             <option value="add" ${layer.blend === 'add' ? 'selected' : ''}>加法（火/火花）</option>
           </select>
         </div>
+        ${
+          layer.blend === 'steam'
+            ? `<div class="fb2d-insp-row"><label>蒸汽颜色</label><input type="color" data-f="tint" value="${parseTint(layer.tint)}" /></div>`
+            : ''
+        }
         <p style="opacity:.65;font-size:12px;line-height:1.45">预览就是训练场 3D 场景（同一套光照）。「盖在角色上」选否时整层画在假人/角色背后。「随机旋转」打开后，每次命中生成会在「旋转°」基础上叠加 [下限°, 上限°] 的随机偏移。勾选工具栏「显示假人」可对照。Shift+拖画面改本层位置；左键拖仍是转镜头。时间线改出现时机。</p>
       </div>
     `;
@@ -457,6 +474,9 @@ export class Flipbook2DApp {
     let rebuildInsp = false;
     if (f === 'blend') {
       layer.blend = parseBlend(el.value);
+      rebuildInsp = true;
+    } else if (f === 'tint') {
+      layer.tint = parseTint(el.value);
     } else if (f === 'overCharacter') {
       layer.overCharacter = el.value !== 'no';
     } else if (f === 'randomRotation') {
@@ -470,6 +490,8 @@ export class Flipbook2DApp {
       if (f === 'opacity') layer.opacity = Math.max(0, Math.min(1, n));
       else if (f === 'brightness') layer.brightness = Math.max(0, n);
       else if (f === 'lift') layer.lift = Math.max(0, Math.min(2, n));
+      else if (f === 'liftDark') layer.liftDark = Math.max(0, Math.min(12, n));
+      else if (f === 'liftBright') layer.liftBright = Math.max(0, Math.min(2, n));
       else if (f === 'despill') layer.despill = Math.max(0, Math.min(1, n));
       else if (f === 'duration') layer.duration = Math.max(1, Math.floor(n));
       else if (f === 'startFrame') layer.startFrame = Math.max(0, Math.floor(n));

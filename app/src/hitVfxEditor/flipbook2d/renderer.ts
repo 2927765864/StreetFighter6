@@ -1,8 +1,50 @@
 import { FLIPBOOK_SHEETS } from './catalog';
 import { getCachedImage, loadImage } from './imageCache';
-import { canvasComposite } from './layerLook';
+import { canvasComposite, parseTint, tintRgb } from './layerLook';
 import { layerRotationRad } from './layerRotation';
+import { prepImage, prepLookForBlend, steamLiftsFromLayer } from './texturePrep';
 import { sortedByZ, sourceFrameAt, type FlipbookRecipe } from './types';
+
+const steamSpriteCache = new Map<string, HTMLCanvasElement>();
+
+function steamSprite(
+  img: HTMLImageElement,
+  despill: number,
+  tintHex: string,
+  gain: number,
+  liftDark: number,
+  liftBright: number,
+): HTMLCanvasElement {
+  const tint = parseTint(tintHex);
+  const g = Math.max(0, gain);
+  const key = `${img.src}|${despill.toFixed(2)}|${tint}|g=${g.toFixed(2)}|ld=${liftDark.toFixed(2)}|lb=${liftBright.toFixed(2)}|v9`;
+  const hit = steamSpriteCache.get(key);
+  if (hit) return hit;
+  const grey = prepImage(img, despill, 'steam', {
+    dark: liftDark,
+    bright: liftBright,
+  });
+  const c = tintRgb(tint);
+  const fr = Math.max(0, Math.min(255, Math.round(c.r * g * 255)));
+  const fg = Math.max(0, Math.min(255, Math.round(c.g * g * 255)));
+  const fb = Math.max(0, Math.min(255, Math.round(c.b * g * 255)));
+  if (fr === 255 && fg === 255 && fb === 255) {
+    steamSpriteCache.set(key, grey);
+    return grey;
+  }
+  const canvas = document.createElement('canvas');
+  canvas.width = grey.width;
+  canvas.height = grey.height;
+  const ctx = canvas.getContext('2d')!;
+  ctx.drawImage(grey, 0, 0);
+  ctx.globalCompositeOperation = 'multiply';
+  ctx.fillStyle = `rgb(${fr},${fg},${fb})`;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.globalCompositeOperation = 'destination-in';
+  ctx.drawImage(grey, 0, 0);
+  steamSpriteCache.set(key, canvas);
+  return canvas;
+}
 
 export type FlipbookDrawOpts = {
   playhead: number;
@@ -83,8 +125,21 @@ export function drawFlipbook(
     ctx.globalAlpha = layer.opacity;
     ctx.globalCompositeOperation = canvasComposite(layer.blend);
     const bright = Math.max(0.05, layer.brightness + layer.lift);
-    ctx.filter = `brightness(${bright})`;
-    ctx.drawImage(cached, x, y, dw, dh);
+    const look = prepLookForBlend(layer.blend);
+    const lifts = steamLiftsFromLayer(layer);
+    const sprite =
+      look === 'steam'
+        ? steamSprite(
+            cached,
+            layer.despill,
+            layer.tint,
+            layer.brightness,
+            lifts.dark,
+            lifts.bright,
+          )
+        : cached;
+    if (look !== 'steam') ctx.filter = `brightness(${bright})`;
+    ctx.drawImage(sprite, x, y, dw, dh);
     ctx.filter = 'none';
     if (layer.id === opts.selectedId) {
       ctx.globalAlpha = 1;

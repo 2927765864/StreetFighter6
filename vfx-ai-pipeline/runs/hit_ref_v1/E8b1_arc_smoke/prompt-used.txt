@@ -1,0 +1,1 @@
+E8b1 12f from two masters. f4=m1, f8=m2@1.2. f3–f6 overlapping crossfade, m2 enters at 0.9 (not mid-blend washout). Downward drift entire clip; H-compress→stretch then H-stretch+fade.

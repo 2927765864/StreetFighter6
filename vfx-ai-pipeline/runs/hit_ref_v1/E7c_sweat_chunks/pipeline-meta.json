@@ -1,0 +1,27 @@
+{
+  "element": "E7c_sweat_chunks",
+  "strategy": "single_master_aniso_then_uniform_gravity",
+  "master": "master.jpg",
+  "frames": 16,
+  "fps": 30,
+  "cell": 384,
+  "master_frame_1based": 7,
+  "fade_from_frame_1based": 10,
+  "base_fit_scale": 0.10707,
+  "axes": {
+    "f1": [
+      1.45,
+      0.62
+    ],
+    "f6": [
+      0.88,
+      1.18
+    ],
+    "f7": [
+      1.0,
+      1.0
+    ],
+    "f16_uniform": 1.15
+  },
+  "motion": "f1 H-stretch/V-compress; f1\u2013f6 right + H-compress/V-stretch; f7 master; f7\u2013f16 right+gravity + uniform\u21921.15; f10\u2013f16 fade"
+}

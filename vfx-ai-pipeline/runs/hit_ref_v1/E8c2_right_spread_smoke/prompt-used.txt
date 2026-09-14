@@ -1,0 +1,1 @@
+E8-c2 CCW90 master = frame 10 of 28. PIL-only sequence: f1 0.2+V-squash, f1-10 snap scale/V-stretch + fast right, f11-28 fade while V-stretch + slow right + enlarge.

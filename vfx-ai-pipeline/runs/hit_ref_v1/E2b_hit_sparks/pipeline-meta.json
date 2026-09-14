@@ -1,0 +1,19 @@
+{
+  "element": "E2b_hit_sparks",
+  "strategy": "two_masters_pulse_scale_drift_fade",
+  "masters": [
+    "master.jpg",
+    "master_v2.jpg"
+  ],
+  "frames": 12,
+  "fps": 30,
+  "cell": 384,
+  "switch_frame_1based": 7,
+  "fade_from_frame_1based": 10,
+  "pulse": "1.0 \u2192 1.02/0.98 reciprocating",
+  "drift_x": "-6.0 \u2192 18.0",
+  "base_fit": {
+    "A": 0.30593,
+    "B": 0.30593
+  }
+}
