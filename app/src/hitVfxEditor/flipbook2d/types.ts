@@ -8,7 +8,9 @@ export type FlipbookLayerId =
   | 'E3_ring_smoke'
   | 'E4_wide_short_smoke'
   | 'E5_narrow_long_smoke'
-  | 'E6_narrow_long_smoke_rtl';
+  | 'E6_narrow_long_smoke_rtl'
+  | 'E7_sweat_spray'
+  | 'E7b_sweat_scatter';
 
 export type FlipbookLayer = {
   id: FlipbookLayerId;
@@ -23,6 +25,17 @@ export type FlipbookLayer = {
   overCharacter: boolean;
   offsetX: number;
   offsetY: number;
+  /** Authored Z rotation in degrees (billboard local). */
+  rotation: number;
+  /**
+   * When true, each spawn adds a one-shot uniform offset in
+   * [randomRotationMinDeg, randomRotationMaxDeg] on top of `rotation`.
+   */
+  randomRotation: boolean;
+  /** Inclusive lower bound of random rotation offset (degrees). */
+  randomRotationMinDeg: number;
+  /** Inclusive upper bound of random rotation offset (degrees). */
+  randomRotationMaxDeg: number;
   scale: number;
   opacity: number;
   /** RGB multiply. 1 = authored. */
@@ -41,7 +54,7 @@ export type FlipbookLayer = {
 export type FlipbookRecipe = {
   id: string;
   name: string;
-  /** Light / medium / heavy hit; same E1–E6 layers, independently tuned. */
+  /** Light / medium / heavy hit; same E1–E7 / E7-b layers, independently tuned. */
   strength: FlipbookStrength;
   fps: number;
   length: number;

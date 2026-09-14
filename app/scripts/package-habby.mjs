@@ -45,6 +45,8 @@ const VFX_LAYERS = [
   'E4_wide_short_smoke',
   'E5_narrow_long_smoke',
   'E6_narrow_long_smoke_rtl',
+  'E7_sweat_spray',
+  'E7b_sweat_scatter',
 ];
 const vfxPipelineRoot = path.join(
   repoRoot,
@@ -58,6 +60,8 @@ const CATALOG_FRAME_COUNTS = {
   E4_wide_short_smoke: 14,
   E5_narrow_long_smoke: 14,
   E6_narrow_long_smoke_rtl: 14,
+  E7_sweat_spray: 16,
+  E7b_sweat_scatter: 14,
 };
 
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);

@@ -11,6 +11,8 @@ const LAYER_FRAME_COUNTS: Record<FlipbookLayerId, number> = {
   E4_wide_short_smoke: 14,
   E5_narrow_long_smoke: 14,
   E6_narrow_long_smoke_rtl: 14,
+  E7_sweat_spray: 16,
+  E7b_sweat_scatter: 14,
 };
 
 function padFrame(i: number): string {
@@ -33,6 +35,8 @@ export const FLIPBOOK_SHEETS: Record<FlipbookLayerId, string[]> = {
   E4_wide_short_smoke: urlsFor('E4_wide_short_smoke'),
   E5_narrow_long_smoke: urlsFor('E5_narrow_long_smoke'),
   E6_narrow_long_smoke_rtl: urlsFor('E6_narrow_long_smoke_rtl'),
+  E7_sweat_spray: urlsFor('E7_sweat_spray'),
+  E7b_sweat_scatter: urlsFor('E7b_sweat_scatter'),
 };
 
 export function sheetCount(id: FlipbookLayerId): number {

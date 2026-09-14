@@ -206,7 +206,36 @@ The whole band translates right-to-left (opposite of E5). Not a ring, not a fat 
 
 **推荐文件名**：`E6_narrow_long_smoke_rtl`
 
-汗水不在本契约内（程序化）。
+---
+
+### E7 · 击中飞出汗水（单张 master + 变换）
+
+**中文要点**  
+只表现从接触点甩出的 **白色随机点状汗滴**：针尖大小的圆点为主，夹少量沿飞行方向拉长的短白划，疏密不均、无网格。不是橙金火花、不是闪光碎条、不是烟。  
+**生成策略（与 E1–E6 不同）**：AI 只出 **一张** 完整 master（洋红底 + 仅汗点）；序列帧 **禁止** 再文生。用确定性后处理做透明度 / 均匀缩放 / 沿打击轴位移。
+
+**C. ELEMENT BODY**
+
+```text
+Subject: ONLY flying sweat droplets from a punch impact.
+Tiny irregular pure-white pinhead specks plus a few short thin white dashes,
+random scatter, uneven sizes, no grid. Not sparks, not flash, not smoke, not character.
+Solid #FF00FF background. Single still image, not a sprite sheet.
+```
+
+**D. FRAMES**  
+**16 帧 @30fps**。master v1 对应约第 10 帧自然尺寸：第 1 帧缩放小，全程逐渐变大并向左下（更偏下，模拟重力）移动；第 10 帧起透明度递减至消失。禁止再生成每帧图。
+
+**推荐文件名**：`E7_sweat_spray`
+
+---
+
+### E7-b · 四散飞汗（单张 master + 弹道变换）
+
+**中文要点**  
+与 E7 同族白色汗点，但 **铺开四散**、不收成一团。AI 只出一张 master（`master.jpg` = 约第 6 帧）；**14 帧**序列用弹道位移（先左上抛溅，过顶点后左下受重力）+ 全程放大 + 末 4 帧淡出。禁止再文生每帧。
+
+**推荐文件名**：`E7b_sweat_scatter`
 
 ---
 

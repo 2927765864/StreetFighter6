@@ -1,0 +1,1 @@
+Master v1 (master.jpg) = look at frame 10 of 16. Master is fit into the cell so scale+drift never clips droplets. PIL-only: grow from small, drift bottom-left, fade from frame 10.

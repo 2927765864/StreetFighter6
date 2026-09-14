@@ -23,6 +23,10 @@ const layer = (over: Partial<FlipbookLayer> = {}): FlipbookLayer => ({
   overCharacter: true,
   offsetX: 0,
   offsetY: 0,
+  rotation: 0,
+  randomRotation: false,
+  randomRotationMinDeg: -15,
+  randomRotationMaxDeg: 15,
   scale: 1,
   opacity: 1,
   brightness: 1,
@@ -139,7 +143,7 @@ describe('layerOverCharacter', () => {
 });
 
 describe('editor shot rebind across L/M/H', () => {
-  it('rebuilds when strength changes even if E1–E6 ids match', () => {
+  it('rebuilds when strength changes even if E1–E7 ids match', () => {
     const bank = defaultFlipbookBank();
     const shot = {
       recipe: bank.L,

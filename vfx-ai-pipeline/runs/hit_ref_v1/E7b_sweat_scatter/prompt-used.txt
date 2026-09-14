@@ -1,0 +1,1 @@
+E7-b master v1 (master.jpg) = natural look at frame 6 of 14. Sequence is PIL-only: ballistic up-left then left-down (inertia+gravity), continuous scale-up, alpha fades on the last 4 frames. Fit-to-cell prevents clipping.

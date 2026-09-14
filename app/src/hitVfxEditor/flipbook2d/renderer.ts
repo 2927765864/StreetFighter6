@@ -1,6 +1,7 @@
 import { FLIPBOOK_SHEETS } from './catalog';
 import { getCachedImage, loadImage } from './imageCache';
 import { canvasComposite } from './layerLook';
+import { layerRotationRad } from './layerRotation';
 import { sortedByZ, sourceFrameAt, type FlipbookRecipe } from './types';
 
 export type FlipbookDrawOpts = {
@@ -14,6 +15,11 @@ export type FlipbookDrawOpts = {
   fillBackground?: boolean;
   showGuides?: boolean;
   showHud?: boolean;
+  /**
+   * Per-layer Z rotation jitter in degrees (spawn sample).
+   * Missing ids → 0; canvas preview does not re-roll each frame.
+   */
+  rotationJitterDegById?: Readonly<Record<string, number>>;
 };
 
 export function drawFlipbook(
@@ -68,6 +74,12 @@ export function drawFlipbook(
     const dh = cached.naturalHeight * base;
     const x = layer.offsetX - dw / 2;
     const y = layer.offsetY - dh / 2;
+    const jitter = opts.rotationJitterDegById?.[layer.id] ?? 0;
+    const rot = layerRotationRad(layer, jitter);
+    ctx.save();
+    ctx.translate(layer.offsetX, layer.offsetY);
+    if (rot !== 0) ctx.rotate(rot);
+    ctx.translate(-layer.offsetX, -layer.offsetY);
     ctx.globalAlpha = layer.opacity;
     ctx.globalCompositeOperation = canvasComposite(layer.blend);
     const bright = Math.max(0.05, layer.brightness + layer.lift);
@@ -81,6 +93,7 @@ export function drawFlipbook(
       ctx.lineWidth = 2;
       ctx.strokeRect(x - 1, y - 1, dw + 2, dh + 2);
     }
+    ctx.restore();
   }
   ctx.restore();
 

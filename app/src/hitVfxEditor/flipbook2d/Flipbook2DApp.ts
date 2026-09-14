@@ -28,6 +28,8 @@ const TRACK_COLORS: Record<FlipbookLayerId, string> = {
   E4_wide_short_smoke: '#6a9bb8',
   E5_narrow_long_smoke: '#7ab8a0',
   E6_narrow_long_smoke_rtl: '#9ab07a',
+  E7_sweat_spray: '#d8e8f0',
+  E7b_sweat_scatter: '#c0d8e8',
 };
 
 export type Flipbook2DHost = {
@@ -412,6 +414,15 @@ export class Flipbook2DApp {
         </div>
         <div class="fb2d-insp-row"><label>位置 X</label><input type="number" data-f="offsetX" step="1" value="${layer.offsetX}" /></div>
         <div class="fb2d-insp-row"><label>位置 Y</label><input type="number" data-f="offsetY" step="1" value="${layer.offsetY}" /></div>
+        <div class="fb2d-insp-row"><label>旋转°</label><input type="number" data-f="rotation" step="1" value="${layer.rotation}" /></div>
+        <div class="fb2d-insp-row"><label>随机旋转</label>
+          <select data-f="randomRotation">
+            <option value="off" ${layer.randomRotation ? '' : 'selected'}>关</option>
+            <option value="on" ${layer.randomRotation ? 'selected' : ''}>开（每次生成）</option>
+          </select>
+        </div>
+        <div class="fb2d-insp-row"><label>随机下限°</label><input type="number" data-f="randomRotationMinDeg" step="1" value="${layer.randomRotationMinDeg}" ${layer.randomRotation ? '' : 'disabled'} /></div>
+        <div class="fb2d-insp-row"><label>随机上限°</label><input type="number" data-f="randomRotationMaxDeg" step="1" value="${layer.randomRotationMaxDeg}" ${layer.randomRotation ? '' : 'disabled'} /></div>
         <div class="fb2d-insp-row"><label>缩放</label><input type="number" data-f="scale" step="0.05" min="0.05" value="${layer.scale}" /></div>
         <div class="fb2d-insp-row"><label>透明度</label><input type="number" data-f="opacity" step="0.05" min="0" max="1" value="${layer.opacity}" /></div>
         <div class="fb2d-insp-row"><label>亮度</label><input type="number" data-f="brightness" step="0.05" min="0" max="8" value="${layer.brightness}" /></div>
@@ -426,7 +437,7 @@ export class Flipbook2DApp {
             <option value="add" ${layer.blend === 'add' ? 'selected' : ''}>加法（火/火花）</option>
           </select>
         </div>
-        <p style="opacity:.65;font-size:12px;line-height:1.45">预览就是训练场 3D 场景（同一套光照）。「盖在角色上」选否时整层画在假人/角色背后。勾选工具栏「显示假人」可对照。Shift+拖画面改本层位置；左键拖仍是转镜头。时间线改出现时机。</p>
+        <p style="opacity:.65;font-size:12px;line-height:1.45">预览就是训练场 3D 场景（同一套光照）。「盖在角色上」选否时整层画在假人/角色背后。「随机旋转」打开后，每次命中生成会在「旋转°」基础上叠加 [下限°, 上限°] 的随机偏移。勾选工具栏「显示假人」可对照。Shift+拖画面改本层位置；左键拖仍是转镜头。时间线改出现时机。</p>
       </div>
     `;
     attachDragScrubAll(this.host.inspectorBody);
@@ -443,10 +454,14 @@ export class Flipbook2DApp {
     const layer = findLayer(this.recipe, this.selectedId);
     if (!layer) return;
     const f = el.dataset.f as keyof FlipbookLayer;
+    let rebuildInsp = false;
     if (f === 'blend') {
       layer.blend = parseBlend(el.value);
     } else if (f === 'overCharacter') {
       layer.overCharacter = el.value !== 'no';
+    } else if (f === 'randomRotation') {
+      layer.randomRotation = el.value === 'on';
+      rebuildInsp = true;
     } else if (f === 'enabled') {
       /* n/a */
     } else if (typeof layer[f] === 'number') {
@@ -462,11 +477,15 @@ export class Flipbook2DApp {
       else if (f === 'scale') layer.scale = Math.max(0.05, n);
       else if (f === 'offsetX') layer.offsetX = n;
       else if (f === 'offsetY') layer.offsetY = n;
+      else if (f === 'rotation') layer.rotation = n;
+      else if (f === 'randomRotationMinDeg') layer.randomRotationMinDeg = n;
+      else if (f === 'randomRotationMaxDeg') layer.randomRotationMaxDeg = n;
     }
     if (persist) this.persist();
     this.suppressInsp = true;
     this.refreshTimeline();
     this.refreshTree();
+    if (rebuildInsp) this.refreshInspector();
     this.suppressInsp = false;
     this.syncWorld();
   }

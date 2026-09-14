@@ -1,0 +1,20 @@
+{
+  "element": "E7b_sweat_scatter",
+  "strategy": "single_master_then_ballistic_transform",
+  "master": "master.jpg",
+  "frames": 14,
+  "fps": 30,
+  "cell": 384,
+  "peak_frame_1based": 6,
+  "fade_from_frame_1based": 11,
+  "base_fit_scale": 0.19967,
+  "rel_scale": "0.75 \u2192 1.0 @f6 \u2192 1.24",
+  "ballistic": {
+    "vx0": -0.135,
+    "vy0": -0.4590000000000001,
+    "g": 0.085,
+    "t_apex": 5.4,
+    "note": "screen +y down; left impulse + up then gravity"
+  },
+  "motion": "f1\u2013f6 mild up-left; f7\u2013f14 left-down arc; grow throughout; fade last 4"
+}

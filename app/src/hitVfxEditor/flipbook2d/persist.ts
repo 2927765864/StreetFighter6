@@ -30,6 +30,8 @@ const LAYER_IDS: FlipbookLayerId[] = [
   'E4_wide_short_smoke',
   'E5_narrow_long_smoke',
   'E6_narrow_long_smoke_rtl',
+  'E7_sweat_spray',
+  'E7b_sweat_scatter',
 ];
 
 function isLayerId(s: string): s is FlipbookLayerId {
@@ -55,6 +57,28 @@ function hasLookFields(raw: Partial<FlipbookLayer>): boolean {
   );
 }
 
+/** New min/max fields; migrate legacy ±randomRotationDeg when present. */
+function sanitizeRandomRotationRange(raw: Partial<FlipbookLayer> & {
+  randomRotationDeg?: unknown;
+}): Pick<FlipbookLayer, 'randomRotationMinDeg' | 'randomRotationMaxDeg'> {
+  const hasMin = Number.isFinite(Number(raw.randomRotationMinDeg));
+  const hasMax = Number.isFinite(Number(raw.randomRotationMaxDeg));
+  if (hasMin || hasMax) {
+    return {
+      randomRotationMinDeg: hasMin ? Number(raw.randomRotationMinDeg) : -15,
+      randomRotationMaxDeg: hasMax ? Number(raw.randomRotationMaxDeg) : 15,
+    };
+  }
+  const legacy = Number(
+    (raw as { randomRotationDeg?: unknown }).randomRotationDeg,
+  );
+  if (Number.isFinite(legacy)) {
+    const amp = Math.max(0, Math.min(180, legacy));
+    return { randomRotationMinDeg: -amp, randomRotationMaxDeg: amp };
+  }
+  return { randomRotationMinDeg: -15, randomRotationMaxDeg: 15 };
+}
+
 function sanitizeLayer(raw: Partial<FlipbookLayer>, fallback: FlipbookLayer): FlipbookLayer {
   const id = isLayerId(String(raw.id ?? '')) ? (raw.id as FlipbookLayerId) : fallback.id;
   const look = hasLookFields(raw);
@@ -67,6 +91,9 @@ function sanitizeLayer(raw: Partial<FlipbookLayer>, fallback: FlipbookLayer): Fl
     overCharacter: raw.overCharacter !== false,
     offsetX: Number.isFinite(Number(raw.offsetX)) ? Number(raw.offsetX) : 0,
     offsetY: Number.isFinite(Number(raw.offsetY)) ? Number(raw.offsetY) : 0,
+    rotation: Number.isFinite(Number(raw.rotation)) ? Number(raw.rotation) : 0,
+    randomRotation: raw.randomRotation === true,
+    ...sanitizeRandomRotationRange(raw),
     scale: num(raw.scale, 1, 0.05, 8),
     opacity: look
       ? num(raw.opacity, fallback.opacity, 0, 1)

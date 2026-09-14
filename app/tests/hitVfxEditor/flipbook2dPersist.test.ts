@@ -43,6 +43,8 @@ describe('flipbook 2d L/M/H recipes', () => {
       'E4_wide_short_smoke',
       'E5_narrow_long_smoke',
       'E6_narrow_long_smoke_rtl',
+      'E7_sweat_spray',
+      'E7b_sweat_scatter',
       'E2_near_sparks',
       'E1_core_flash',
     ]);
@@ -125,5 +127,77 @@ describe('flipbook 2d L/M/H recipes', () => {
       }),
     );
     expect(loadFlipbookRecipe('M').layers[0]!.overCharacter).toBe(true);
+  });
+
+  it('persists rotation / randomRotation min-max and defaults missing fields', () => {
+    const bank = defaultFlipbookBank();
+    bank.M.layers[0]!.rotation = 25;
+    bank.M.layers[0]!.randomRotation = true;
+    bank.M.layers[0]!.randomRotationMinDeg = -5;
+    bank.M.layers[0]!.randomRotationMaxDeg = 40;
+    saveFlipbookBank(bank, 'M');
+    const loaded = loadFlipbookRecipe('M').layers[0]!;
+    expect(loaded.rotation).toBe(25);
+    expect(loaded.randomRotation).toBe(true);
+    expect(loaded.randomRotationMinDeg).toBe(-5);
+    expect(loaded.randomRotationMaxDeg).toBe(40);
+
+    localStorage.setItem(
+      KEY,
+      JSON.stringify({
+        v: 2,
+        selected: 'M',
+        recipes: {
+          L: bank.L,
+          M: {
+            ...bank.M,
+            layers: bank.M.layers.map(
+              ({
+                rotation: _r,
+                randomRotation: _rr,
+                randomRotationMinDeg: _min,
+                randomRotationMaxDeg: _max,
+                ...rest
+              }) => rest,
+            ),
+          },
+          H: bank.H,
+        },
+      }),
+    );
+    const migrated = loadFlipbookRecipe('M').layers[0]!;
+    expect(migrated.rotation).toBe(0);
+    expect(migrated.randomRotation).toBe(false);
+    expect(migrated.randomRotationMinDeg).toBe(-15);
+    expect(migrated.randomRotationMaxDeg).toBe(15);
+  });
+
+  it('migrates legacy ±randomRotationDeg into min/max', () => {
+    const bank = defaultFlipbookBank();
+    localStorage.setItem(
+      KEY,
+      JSON.stringify({
+        v: 2,
+        selected: 'M',
+        recipes: {
+          L: bank.L,
+          M: {
+            ...bank.M,
+            layers: bank.M.layers.map(
+              ({ randomRotationMinDeg: _a, randomRotationMaxDeg: _b, ...rest }) => ({
+                ...rest,
+                randomRotation: true,
+                randomRotationDeg: 22,
+              }),
+            ),
+          },
+          H: bank.H,
+        },
+      }),
+    );
+    const layer = loadFlipbookRecipe('M').layers[0]!;
+    expect(layer.randomRotation).toBe(true);
+    expect(layer.randomRotationMinDeg).toBe(-22);
+    expect(layer.randomRotationMaxDeg).toBe(22);
   });
 });

@@ -6,6 +6,11 @@ import { FLIPBOOK_SHEETS } from './catalog';
 import { loadImage } from './imageCache';
 import { loadFlipbookBank, loadFlipbookRecipe } from './persist';
 import { threeBlendParams, tintFromLayer } from './layerLook';
+import {
+  layerRandomRotationKey,
+  layerRotationRad,
+  sampleLayerRotationJitterDeg,
+} from './layerRotation';
 import { flipbookWorldSize, prepImage } from './texturePrep';
 import {
   firstVisiblePlayhead,
@@ -23,6 +28,10 @@ type LayerBillboard = {
   lookApplied: boolean;
   /** Last parent spin used; reparent when overCharacter flips. */
   overCharacter: boolean;
+  /** One-shot ±degrees sampled at spawn / when random controls change. */
+  rotJitterDeg: number;
+  /** Fingerprint of randomRotation + min/max; mismatch → re-sample. */
+  randomRotKey: string;
 };
 
 type Shot = {
@@ -136,7 +145,7 @@ export function layerOverCharacter(layer: Pick<FlipbookLayer, 'overCharacter'>):
   return layer.overCharacter !== false;
 }
 
-/** L/M/H share E1–E6 ids; rebuild when the strength (or layer set) changes. */
+/** L/M/H share E1–E7 / E7-b ids; rebuild when the strength (or layer set) changes. */
 export function editorShotNeedsRebuild(
   shot: { recipe: FlipbookRecipe; layers: { layer: { id: string } }[] },
   recipe: FlipbookRecipe,
@@ -366,6 +375,8 @@ export class Flipbook2DCombat {
       mesh.renderOrder = 20 + layer.z;
       mesh.visible = false;
       mesh.position.copy(layerLocalOffset(layer, size));
+      const rotJitterDeg = sampleLayerRotationJitterDeg(layer);
+      mesh.rotation.z = layerRotationRad(layer, rotJitterDeg);
       const over = layerOverCharacter(layer);
       (over ? frontSpin : behindSpin).add(mesh);
       layers.push({
@@ -374,6 +385,8 @@ export class Flipbook2DCombat {
         layer,
         lookApplied: true,
         overCharacter: over,
+        rotJitterDeg,
+        randomRotKey: layerRandomRotationKey(layer),
       });
     }
     this.frontPool.add(frontRoot);
@@ -453,6 +466,12 @@ export class Flipbook2DCombat {
       const s = size * item.layer.scale;
       item.mesh.scale.set((w / maxSide) * s, (h / maxSide) * s, 1);
       item.mesh.position.copy(layerLocalOffset(item.layer, size, _layerOff));
+      const rotKey = layerRandomRotationKey(item.layer);
+      if (rotKey !== item.randomRotKey) {
+        item.randomRotKey = rotKey;
+        item.rotJitterDeg = sampleLayerRotationJitterDeg(item.layer);
+      }
+      item.mesh.rotation.z = layerRotationRad(item.layer, item.rotJitterDeg);
       item.mesh.renderOrder = 20 + item.layer.z;
       if (item.material.map !== tex) item.material.map = tex;
       if (forceLook || !item.lookApplied) {

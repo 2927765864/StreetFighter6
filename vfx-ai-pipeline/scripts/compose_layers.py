@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Preview-only stack of E1–E6 onto a dark canvas (not a runtime recipe).
+"""Preview-only stack of E1–E7 onto a dark canvas (not a runtime recipe).
 
 Timeline matches the 17-frame @30fps reference:
   t=0 empty
@@ -7,7 +7,7 @@ Timeline matches the 17-frame @30fps reference:
   t=11..14 smoke remnant only
   t=15..16 empty
 
-Layer order: E3, E4, E5, E6 (alpha over) then E2, E1 (additive).
+Layer order: E3, E4, E5, E6, E7 (alpha over) then E2, E1 (additive).
 """
 from __future__ import annotations
 
@@ -64,11 +64,12 @@ def main() -> None:
     e4 = load_seq("E4_wide_short_smoke")
     e5 = load_seq("E5_narrow_long_smoke")
     e6 = load_seq("E6_narrow_long_smoke_rtl")
+    e7 = load_seq("E7_sweat_spray")
 
     pal = []
     for t in range(N):
         canvas = Image.new("RGBA", (CANVAS, CANVAS), BG)
-        for seq in (e3, e4, e5, e6):
+        for seq in (e3, e4, e5, e6, e7):
             im = layer_at(seq, t)
             if im is not None:
                 canvas = Image.alpha_composite(canvas, fit_center(im, CANVAS))
@@ -76,7 +77,7 @@ def main() -> None:
             im = layer_at(seq, t)
             if im is not None:
                 canvas = additive(canvas, fit_center(im, CANVAS))
-        names = [n for n, s in (("E1", e1), ("E2", e2), ("E3", e3), ("E4", e4), ("E5", e5), ("E6", e6)) if layer_at(s, t)]
+        names = [n for n, s in (("E1", e1), ("E2", e2), ("E3", e3), ("E4", e4), ("E5", e5), ("E6", e6), ("E7", e7)) if layer_at(s, t)]
         tag = f"t={t:02d}  " + ("+".join(names) if names else "empty")
         draw = ImageDraw.Draw(canvas)
         draw.rectangle((6, CANVAS - 28, 250, CANVAS - 6), fill=(0, 0, 0, 160))

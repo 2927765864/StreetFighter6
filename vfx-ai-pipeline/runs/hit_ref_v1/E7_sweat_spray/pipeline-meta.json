@@ -1,0 +1,21 @@
+{
+  "element": "E7_sweat_spray",
+  "strategy": "single_master_then_transform",
+  "master": "master.jpg",
+  "frames": 16,
+  "fps": 30,
+  "cell": 384,
+  "master_crop": [
+    551,
+    608
+  ],
+  "base_fit_scale": 0.29523,
+  "peak_frame_1based": 10,
+  "peak_px": [
+    163,
+    180
+  ],
+  "rel_scale": "0.42 \u2192 1.0 @f10 \u2192 1.28",
+  "motion": "fit-to-cell first (no clip); bottom-left drift (gravity-biased); alpha full until f10 then fade",
+  "chroma_tol": 95.0
+}
