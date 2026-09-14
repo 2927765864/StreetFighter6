@@ -17,9 +17,10 @@ import {
 import { AnimClipLibrary } from './AnimClipLibrary';
 import { ProceduralRyuAnim } from './ProceduralRyuAnim';
 import {
+  accumulateHitstopPresentOffsetSec,
   clampHitstopAnimRate,
   freeRunAnimDtSecWithHitstop,
-  hitstopPresentDtSec,
+  shouldClearHitstopPresentOffset,
   logicFrameToClipTime,
   remapLogicToClipTime,
   resolveAnimSequenceFrame,
@@ -174,9 +175,15 @@ export class FighterView {
   } | null = null;
   /**
    * Presentation-only clip seconds beyond frozen logic scrub during hitstop.
-   * Cleared when leaving hitstop (snap back to logic frame).
+   * Kept after hitstop ends so scrub continues from the slow-play head (no
+   * snap-back). Cleared on logic clip switch / soft blend / force restart so
+   * crossfades do not double-apply the lead.
    */
   private hitstopPresentOffsetSec = 0;
+
+  private clearHitstopPresentOffset(): void {
+    this.hitstopPresentOffsetSec = 0;
+  }
   /**
    * When true, ignore logic clipId and only advance the preview mixer
    * (used by the animation test panel).
@@ -1491,7 +1498,7 @@ export class FighterView {
   ): void {
     if (!this.mixer) return;
     const clip = action.getClip();
-    // Hit-slow: creep past frozen logic scrub; cleared when hitstop ends.
+    // Hit-slow lead: creep during hitstop; may persist until clip switch.
     const withSlow = timeSec + this.hitstopPresentOffsetSec;
     const t = THREE.MathUtils.clamp(
       withSlow,
@@ -1785,6 +1792,8 @@ export class FighterView {
     this.nextPoseBlendMode = null;
 
     if (soft && prev) {
+      // Capture from.time while it still includes any hitstop lead, then clear
+      // so stepPoseBlend/scrubActionTo do not add the lead a second time.
       this.beginPoseBlend(
         prev,
         action,
@@ -1794,11 +1803,31 @@ export class FighterView {
         blendSec,
         blendMode,
       );
+      if (
+        shouldClearHitstopPresentOffset({
+          softBlend: true,
+          prevCanon,
+          nextCanon: canon,
+        })
+      ) {
+        this.clearHitstopPresentOffset();
+      }
       if (isJumpLandBinding(bind)) {
         this.resetModelGroundOffset();
         this.pendingLandPlant = true;
       }
     } else {
+      // Hard cut: drop lead when leaving this clip. Same-clip role swaps
+      // (animSequence) keep the lead so mid-move segments stay continuous.
+      if (
+        shouldClearHitstopPresentOffset({
+          softBlend: false,
+          prevCanon,
+          nextCanon: canon,
+        })
+      ) {
+        this.clearHitstopPresentOffset();
+      }
       this.clearPoseBlend(true);
       this.mixer?.stopAllAction();
       action.reset();
@@ -1834,6 +1863,16 @@ export class FighterView {
     role: string,
     action: THREE.AnimationAction,
   ): void {
+    if (
+      shouldClearHitstopPresentOffset({
+        softBlend: false,
+        prevCanon: canon,
+        nextCanon: canon,
+        forceRestart: true,
+      })
+    ) {
+      this.clearHitstopPresentOffset();
+    }
     this.clearPoseBlend(true);
     this.mixer?.stopAllAction();
     action.reset();
@@ -1906,12 +1945,14 @@ export class FighterView {
 
     if (this.useProcedural) {
       if (this.currentClip === clipId) return;
+      this.clearHitstopPresentOffset();
       this.procedural.setMode(clipId);
       this.currentClip = clipId;
       return;
     }
 
     if (this.currentClip === clipId) return;
+    this.clearHitstopPresentOffset();
     const action = this.resolveAction(clipId, role);
     if (!action) return;
     this.mixer?.stopAllAction();
@@ -1958,6 +1999,7 @@ export class FighterView {
     this.previewStatus = 'idle';
     this.currentClip = '';
     this.currentBinding = '';
+    this.clearHitstopPresentOffset();
     this.clearPoseBlend(true);
 
     if (this.previewActionKey && this.mixer) {
@@ -2114,7 +2156,7 @@ export class FighterView {
    * @param opts.hitstopPresentTicks MatchSim steps that froze on hitstop this
    *   present; drives presentation hit-slow.
    * @param opts.inHitstop true while logic hitstop is active (or ticks>0 this
-   *   present). When false, presentation offset snaps back to logic scrub.
+   *   present). Hit-slow lead is kept after hitstop; cleared on clip switch.
    */
   syncFromLogic(
     fighter: Fighter,
@@ -2144,16 +2186,16 @@ export class FighterView {
     const hitstopRate = clampHitstopAnimRate(cfg.hitstopAnimRate);
     const inHitstop = opts?.inHitstop === true || hitstopTicks > 0;
     this.wudaInHitstop = inHitstop;
+    // Accumulate lead during hitstop only; do not clear when hitstop ends
+    // (avoids snap-back / replaying the slow segment). Clear happens on
+    // switchToLogicAction / restartLogicAction / preview exit.
     if (!this.previewMode) {
-      if (hitstopTicks > 0 && hitstopRate > 0) {
-        this.hitstopPresentOffsetSec += hitstopPresentDtSec(
-          hitstopTicks,
-          hitstopRate,
-          cfg.timeScaleAnim || 1,
-        );
-      } else if (!inHitstop) {
-        this.hitstopPresentOffsetSec = 0;
-      }
+      this.hitstopPresentOffsetSec = accumulateHitstopPresentOffsetSec(
+        this.hitstopPresentOffsetSec,
+        hitstopTicks,
+        hitstopRate,
+        cfg.timeScaleAnim || 1,
+      );
     }
     const freeRunDt = freeRunAnimDtSecWithHitstop(
       logicSteps,
@@ -2187,7 +2229,12 @@ export class FighterView {
     if (this.useProcedural) {
       if (fighter.phase === 'attack' && fighter.mover.move) {
         this.clearPoseBlend(true);
-        this.playBest(fighter.clipId, role, HARD_CUT);
+        const restart = fighter.clipRestartSeq !== this.lastClipRestartSeq;
+        if (restart) {
+          this.lastClipRestartSeq = fighter.clipRestartSeq;
+          this.clearHitstopPresentOffset();
+        }
+        this.playBest(fighter.clipId, role, HARD_CUT, restart);
         const total = Math.max(1, fighter.mover.total);
         const slowFrames = this.hitstopPresentOffsetSec * 60;
         this.procedural.setAttackProgress(
@@ -2229,6 +2276,13 @@ export class FighterView {
     // (or Capcom-style animRemap / multi-clip animSequence).
     if (fighter.phase === 'attack' && fighter.mover.move) {
       this.clearPoseBlend(true);
+      // New startMove accept: drop hitstop lead + forceRestart even if same clip
+      // (same-move mash). Mid-move role swaps keep the same clipRestartSeq.
+      const restart = fighter.clipRestartSeq !== this.lastClipRestartSeq;
+      if (restart) {
+        this.lastClipRestartSeq = fighter.clipRestartSeq;
+        this.clearHitstopPresentOffset();
+      }
       const vf = fighter.mover.moveFrame;
       const attackSeq =
         fighter.attackAnimSequence?.length
@@ -2237,7 +2291,7 @@ export class FighterView {
       const seq = resolveAnimSequenceFrame(vf, attackSeq);
       const attackRole = seq?.role || role;
       if (seq) fighter.animRole = seq.role;
-      this.playBest(fighter.clipId, attackRole, HARD_CUT);
+      this.playBest(fighter.clipId, attackRole, HARD_CUT, restart);
       const action = this.resolveAction(fighter.clipId, attackRole);
       if (action && this.mixer) {
         const rem = fighter.mover.move.animRemap;

@@ -8,7 +8,11 @@ import {
   layerLocalOffset,
 } from '../../src/hitVfxEditor/flipbook2d/Flipbook2DCombat';
 import { defaultFlipbookBank } from '../../src/hitVfxEditor/flipbook2d/defaults';
-import { sourceFrameAt, type FlipbookLayer } from '../../src/hitVfxEditor/flipbook2d/types';
+import {
+  firstVisiblePlayhead,
+  sourceFrameAt,
+  type FlipbookLayer,
+} from '../../src/hitVfxEditor/flipbook2d/types';
 
 const layer = (over: Partial<FlipbookLayer> = {}): FlipbookLayer => ({
   id: 'E1_core_flash',
@@ -41,6 +45,34 @@ describe('sourceFrameAt', () => {
     expect(sourceFrameAt(layer({ enabled: false }), 2, 10)).toBeNull();
     expect(sourceFrameAt(layer({ duration: 14 }), 12, 10)).toBeNull();
     expect(sourceFrameAt(layer({ duration: 14 }), 10, 14)).toBe(9);
+  });
+});
+
+describe('firstVisiblePlayhead', () => {
+  it('skips empty lead-in used by shipping recipes (startFrame=1)', () => {
+    expect(
+      firstVisiblePlayhead({
+        layers: [layer({ startFrame: 1 }), layer({ id: 'E2_near_sparks', startFrame: 1 })],
+      }),
+    ).toBe(1);
+  });
+
+  it('uses the earliest enabled layer and ignores disabled ones', () => {
+    expect(
+      firstVisiblePlayhead({
+        layers: [
+          layer({ enabled: false, startFrame: 0 }),
+          layer({ id: 'E2_near_sparks', startFrame: 3 }),
+          layer({ id: 'E3_ring_smoke', startFrame: 2 }),
+        ],
+      }),
+    ).toBe(2);
+  });
+
+  it('returns 0 when nothing is enabled', () => {
+    expect(
+      firstVisiblePlayhead({ layers: [layer({ enabled: false, startFrame: 4 })] }),
+    ).toBe(0);
   });
 });
 

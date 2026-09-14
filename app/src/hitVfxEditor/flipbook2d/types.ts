@@ -65,6 +65,21 @@ export function sourceFrameAt(
   return i;
 }
 
+/**
+ * Earliest timeline frame where any enabled layer draws.
+ * Combat spawn jumps here so contact matches post-process (skip empty lead-in).
+ */
+export function firstVisiblePlayhead(
+  recipe: Pick<FlipbookRecipe, 'layers'>,
+): number {
+  let min = Infinity;
+  for (const layer of recipe.layers) {
+    if (!layer.enabled) continue;
+    if (layer.startFrame < min) min = layer.startFrame;
+  }
+  return Number.isFinite(min) ? Math.max(0, Math.floor(min)) : 0;
+}
+
 export function sortedByZ(layers: FlipbookLayer[]): FlipbookLayer[] {
   return [...layers].sort((a, b) => a.z - b.z || a.id.localeCompare(b.id));
 }

@@ -1317,6 +1317,9 @@ async function boot(): Promise<void> {
     perf.end('syncView');
 
     perf.begin('vfxCpu');
+    // Age existing flipbook shots before spawning new ones so the contact frame
+    // keeps the first visible sheet (not age-advanced away on the same present).
+    flipbookCombat.tick(presentDt, match.hitstopTimer > 0);
     if (pendingHitVfx.length > 0) {
       for (const ev of pendingHitVfx) {
         const args = applyLimbLock(ev);
@@ -1361,7 +1364,6 @@ async function boot(): Promise<void> {
     hitShockwave.step(presentDt, camera);
     hitGlow.step(presentDt, camera);
     hitCloudShadow.step(presentDt, camera);
-    flipbookCombat.tick(presentDt, match.hitstopTimer > 0);
     perf.end('vfxCpu');
 
     pantsHealthReporter.tick(collectPantsHealth(), cfg);

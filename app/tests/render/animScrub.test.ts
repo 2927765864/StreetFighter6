@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
+  accumulateHitstopPresentOffsetSec,
   clampHitstopAnimRate,
   freeRunAnimDtSec,
   freeRunAnimDtSecWithHitstop,
@@ -9,6 +10,7 @@ import {
   logicFrameToClipTime,
   remapLogicToClipTime,
   remapLogicToMotionFrame,
+  shouldClearHitstopPresentOffset,
   visualFrameToClipTime,
 } from '../../src/render/AnimScrub';
 import { parseMoveDefinition } from '../../src/combat/move/MoveDefinition';
@@ -87,6 +89,57 @@ describe('hitstop presentation slow', () => {
     expect(freeRunAnimDtSecWithHitstop(4, 4, 0)).toBe(0);
     expect(freeRunAnimDtSecWithHitstop(4, 4, 1)).toBeCloseTo(4 / 60, 5);
     expect(freeRunAnimDtSecWithHitstop(4, 0, 0.08)).toBeCloseTo(4 / 60, 5);
+  });
+
+  it('accumulateHitstopPresentOffsetSec grows in hitstop and keeps after', () => {
+    let lead = 0;
+    lead = accumulateHitstopPresentOffsetSec(lead, 1, 0.08);
+    lead = accumulateHitstopPresentOffsetSec(lead, 1, 0.08);
+    expect(lead).toBeCloseTo((2 / 60) * 0.08, 5);
+    // Leaving hitstop (0 ticks) must not snap lead back to 0.
+    lead = accumulateHitstopPresentOffsetSec(lead, 0, 0.08);
+    expect(lead).toBeCloseTo((2 / 60) * 0.08, 5);
+  });
+
+  it('shouldClearHitstopPresentOffset: soft/restart/clip change vs same-clip hard', () => {
+    expect(
+      shouldClearHitstopPresentOffset({
+        softBlend: true,
+        prevCanon: 'ryu_5hp',
+        nextCanon: 'idle',
+      }),
+    ).toBe(true);
+    expect(
+      shouldClearHitstopPresentOffset({
+        softBlend: false,
+        prevCanon: 'ryu_5hp',
+        nextCanon: 'idle',
+      }),
+    ).toBe(true);
+    expect(
+      shouldClearHitstopPresentOffset({
+        softBlend: false,
+        prevCanon: 'ryu_tatsu',
+        nextCanon: 'ryu_tatsu',
+      }),
+    ).toBe(false);
+    expect(
+      shouldClearHitstopPresentOffset({
+        softBlend: false,
+        prevCanon: 'hitstun_light',
+        nextCanon: 'hitstun_light',
+        forceRestart: true,
+      }),
+    ).toBe(true);
+    // Same-move mash: view passes forceRestart after startMove bumps seq.
+    expect(
+      shouldClearHitstopPresentOffset({
+        softBlend: false,
+        prevCanon: 'ryu_5lp',
+        nextCanon: 'ryu_5lp',
+        forceRestart: true,
+      }),
+    ).toBe(true);
   });
 });
 

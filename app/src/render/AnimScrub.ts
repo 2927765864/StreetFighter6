@@ -116,6 +116,45 @@ export function freeRunAnimDtSecWithHitstop(
 }
 
 /**
+ * Grow presentation hitstop lead while logic is frozen.
+ * Does not reset when ticks are 0 — keep the lead after hitstop so scrub
+ * continues from the slow-play head (no snap-back). Clear via
+ * {@link shouldClearHitstopPresentOffset} on clip switch / blend / restart.
+ */
+export function accumulateHitstopPresentOffsetSec(
+  currentSec: number,
+  hitstopPresentTicks: number,
+  hitstopAnimRate: number,
+  timeScaleAnim = 1,
+): number {
+  const cur = Number.isFinite(currentSec) ? Math.max(0, currentSec) : 0;
+  const ticks = Math.max(0, hitstopPresentTicks);
+  if (ticks <= 0) return cur;
+  const rate = clampHitstopAnimRate(hitstopAnimRate);
+  if (rate <= 0) return cur;
+  return cur + hitstopPresentDtSec(ticks, rate, timeScaleAnim);
+}
+
+/**
+ * When to drop the hitstop presentation lead on a logic action change.
+ * Soft blends always clear (after capturing from.time) so scrub does not
+ * double-apply the lead. Hard cuts clear only when the canonical clip changes
+ * so same-clip role swaps (animSequence) stay continuous.
+ * New attack accepts also clear via forceRestart / FighterView restart stamp
+ * (`startMove` bumps clipRestartSeq) — same-move mash must not keep the lead.
+ */
+export function shouldClearHitstopPresentOffset(args: {
+  softBlend: boolean;
+  prevCanon: string;
+  nextCanon: string;
+  forceRestart?: boolean;
+}): boolean {
+  if (args.forceRestart) return true;
+  if (args.softBlend) return true;
+  return args.prevCanon !== args.nextCanon;
+}
+
+/**
  * Map an action-timeline frame through animRemap segments to a motion frame.
  * Empty / invalid tables fall back to the logic frame itself.
  */

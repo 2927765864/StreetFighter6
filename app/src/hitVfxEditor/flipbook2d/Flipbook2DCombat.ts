@@ -8,6 +8,7 @@ import { loadFlipbookBank, loadFlipbookRecipe } from './persist';
 import { threeBlendParams, tintFromLayer } from './layerLook';
 import { flipbookWorldSize, prepImage } from './texturePrep';
 import {
+  firstVisiblePlayhead,
   sourceFrameAt,
   type FlipbookLayer,
   type FlipbookRecipe,
@@ -249,6 +250,12 @@ export class Flipbook2DCombat {
       if (old) this.disposeShot(old);
     }
     const shot = this.spawnShot(world, args);
+    // Recipes often leave timeline t=0 empty (startFrame=1) for scrub alignment.
+    // Combat contact is the impact: jump to the first drawable frame so 2D and
+    // screen post-process appear together (tick runs before trigger in main).
+    const start = firstVisiblePlayhead(this.recipe);
+    shot.age = start;
+    shot.playhead = start;
     this.shots.push(shot);
     this.billboardShot(shot);
     this.applyFrame(shot);
@@ -388,9 +395,16 @@ export class Flipbook2DCombat {
 
   private async warmTextures(): Promise<void> {
     const jobs: Promise<unknown>[] = [];
-    for (const layer of this.recipe.layers) {
-      for (const url of FLIPBOOK_SHEETS[layer.id] ?? []) {
-        jobs.push(textureFor(url, layer.despill).catch(() => undefined));
+    const seen = new Set<string>();
+    for (const strength of ['L', 'M', 'H'] as const) {
+      const recipe = this.bank[strength] ?? this.recipe;
+      for (const layer of recipe.layers) {
+        for (const url of FLIPBOOK_SHEETS[layer.id] ?? []) {
+          const key = cacheKey(url, layer.despill);
+          if (seen.has(key)) continue;
+          seen.add(key);
+          jobs.push(textureFor(url, layer.despill).catch(() => undefined));
+        }
       }
     }
     await Promise.all(jobs);

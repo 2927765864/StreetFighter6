@@ -79,6 +79,21 @@ describe('anim residual tail §3.7.1', () => {
     expect(f.clipId).toBe('5lp');
   });
 
+  it('startMove bumps clipRestartSeq so same-move mash can force-restart view', () => {
+    const f = new Fighter('p1', 0, 1, 10000);
+    expect(f.clipRestartSeq).toBe(0);
+    f.startMove(baseMove());
+    const afterFirst = f.clipRestartSeq;
+    expect(afterFirst).toBeGreaterThan(0);
+    for (let i = 0; i < 18; i++) f.advance(adv);
+    expect(f.hasAnimTail).toBe(true);
+    f.startMove(baseMove());
+    expect(f.clipRestartSeq).toBe(afterFirst + 1);
+    expect(f.phase).toBe('attack');
+    expect(f.clipId).toBe('5lk');
+    expect(f.hasAnimTail).toBe(false);
+  });
+
   it('animFrameCount <= total means no residual', () => {
     const f = new Fighter('p1', 0, 1, 10000);
     f.startMove(baseMove({ animFrameCount: 18 }));

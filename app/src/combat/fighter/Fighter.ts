@@ -1223,6 +1223,9 @@ export class Fighter {
     }
     this.lastSelfDx = 0;
     this.lastAttackAcceptSeq = nextAttackAcceptSeq++;
+    // Same-move mash shares clip binding — bump so the view force-restarts
+    // and drops any leftover hitstop presentation lead.
+    this.clipRestartSeq += 1;
   }
 
   /**
@@ -1460,7 +1463,10 @@ export class Fighter {
 
   /** After blockstun, rest clip (idle / crouch) — not guard loop. */
   holdGuardLoopClipId: string | null = null;
-  /** Bumped on each block/hit react so the view hard-cuts even if clipId repeats. */
+  /**
+   * Bumped on each attack accept (`startMove`) and block/hit react so the view
+   * force-restarts even when clipId/role repeat (same-move mash, multi-hit react).
+   */
   clipRestartSeq = 0;
 
   applyBlockstun(
