@@ -1,0 +1,1 @@
+E4-c master = frame 1 of 18 (user-locked). PIL-only: f1-10 grow 1.18 + V-compress 0.88 + right travel 2× sprite width; f11-18 H-stretch 1.34, fade, slow right.

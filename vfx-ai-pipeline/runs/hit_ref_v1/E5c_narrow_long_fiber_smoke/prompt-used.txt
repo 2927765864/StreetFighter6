@@ -1,0 +1,1 @@
+E5-c master = frame 8 of 28. PIL-only sequence: f1 0.5 scale alpha 0.2, f1-8 scale/alpha to 1 + fast right, f9-28 slow horizontal stretch + slow right + fade.

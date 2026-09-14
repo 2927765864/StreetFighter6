@@ -1,0 +1,30 @@
+{
+  "element": "E4c_wide_short_fiber_smoke",
+  "strategy": "single_master_aniso_scale_translate_fade",
+  "master": "master.jpg",
+  "master_frame_1based": 1,
+  "generator": "locked_master_then_pil",
+  "frames": 18,
+  "fps": 30,
+  "cell": 640,
+  "fade_from_frame_1based": 11,
+  "base_fit_scale": 0.30327,
+  "axes": {
+    "f1": [
+      1.0,
+      1.0
+    ],
+    "f10": [
+      1.18,
+      1.0384
+    ],
+    "f18": [
+      1.5812,
+      1.0384
+    ]
+  },
+  "grow_f10": 1.18,
+  "v_compress": 0.88,
+  "h_stretch_f18": 1.34,
+  "motion": "f1 = locked master. f1\u2013f10 slight grow + V-squash (grow > squash) + right travel = 2\u00d7 f1 sprite width. f11\u2013f18 H-stretch + fade + slow right."
+}

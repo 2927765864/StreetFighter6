@@ -1,0 +1,28 @@
+{
+  "element": "E5b_narrow_long_fiber_smoke",
+  "strategy": "single_master_scale_translate_hstretch_fade",
+  "master": "master.jpg",
+  "generator": "grok_imagine_then_pil",
+  "frames": 16,
+  "fps": 30,
+  "cell": 640,
+  "master_frame_1based": 8,
+  "fade_from_frame_1based": 9,
+  "base_fit_scale": 0.34013,
+  "axes": {
+    "f1": [
+      0.5,
+      0.5
+    ],
+    "f8": [
+      1.0,
+      1.0
+    ],
+    "f16": [
+      1.42,
+      1.0
+    ]
+  },
+  "alpha_f1": 0.2,
+  "motion": "f1 scale 0.5 alpha 0.2; f1\u2013f8 ease-out to 1 + fast right; f9\u2013f16 slow H-stretch + slow right + fade"
+}

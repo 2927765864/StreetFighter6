@@ -179,6 +179,24 @@ No flash, no sparks, no character.
 
 ---
 
+### E4-c · 宽短纤维烟（单张 master = 第 1 帧，18 帧 PIL）
+
+**中文要点**  
+材质同 E8-c 族：洋红底、白色半透明撕边淡烟，轮廓更宽更短。锁定 master = **第 1 帧**。**18 帧**后处理：f1–f10 整体略放大并竖直压缩（放大幅度略大于压缩）、大幅右移；f11–f18 水平拉伸、渐隐、缓慢右移。禁止一次文生整序列。脚本：`compose_e4c_from_master.py`。
+
+**推荐文件名**：`E4c_wide_short_fiber_smoke`
+
+---
+
+### E4-b · 宽短纤维烟（单张 master = 第 1 帧，14 帧 PIL）
+
+**中文要点**  
+与 **E4-c** 同一张 master 与同一套变换，但 **14 帧**，转折在 **第 7 帧**：f1–f7 略放大并竖直压缩（放大幅度略大于压缩）、大幅右移（约 2× 第 1 帧宽度）；f8–f14 水平拉伸、渐隐、缓慢右移。脚本：`compose_e4b_from_master.py`。
+
+**推荐文件名**：`E4b_wide_short_fiber_smoke`
+
+---
+
 ### E5 · 较窄较长冲击烟雾
 
 **中文要点**  
@@ -195,6 +213,24 @@ The whole band translates forward; leading edge travels farther than the wide pu
 短细条 → 前缘右伸拉长 → 远端残带。禁止 4/6 帧终稿。
 
 **推荐文件名**：`E5_narrow_long_smoke`
+
+---
+
+### E5-b · 窄长纤维烟（16 帧，规律同 E5-c）
+
+**中文要点**  
+与 **E5-c** 同一张 master、同一套变换：f1 整体 0.5 / 透明度 0.2；f1–f8 缩放到 1、透明度到 1 并大幅右移；f9 起水平缓慢拉伸、持续缓慢右移并渐隐。仅总帧数为 **16**（渐隐与拉伸在 f9–f16 走完）。禁止一次文生整序列。脚本：`compose_e5b_from_master.py`。
+
+**推荐文件名**：`E5b_narrow_long_fiber_smoke`
+
+---
+
+### E5-c · 窄长纤维烟（单张 master + 变换）
+
+**中文要点**  
+材质对齐 E8-c 族：洋红底、白色半透明撕边淡烟，轮廓为朝右的扁长冲击条。AI 只出一张 master（`master.jpg` = **第 8 帧**）。**28 帧**后处理：f1 为该图整体 0.5、透明度 0.2；f1–f8 缩放到 1、透明度到 1，并大幅右移；f9 起水平缓慢拉伸、持续缓慢右移并渐隐至 f28。禁止一次文生整序列。脚本：`compose_e5c_from_master.py`。
+
+**推荐文件名**：`E5c_narrow_long_fiber_smoke`
 
 ---
 

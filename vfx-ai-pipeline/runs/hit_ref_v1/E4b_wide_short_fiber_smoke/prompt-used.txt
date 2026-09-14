@@ -1,0 +1,1 @@
+E4-b master = E4-c frame 1, 14 frames. Pivot f7. f1-7 grow 1.18 + V-compress 0.88 + right travel 2× sprite width; f8-14 H-stretch 1.34, fade, slow right.
