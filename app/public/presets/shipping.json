@@ -1547,7 +1547,7 @@
       "maxFovDeg": 2.5,
       "posMass": 1,
       "posAngularFreq": 90,
-      "posDampingRatio": 0.4,
+      "posDampingRatio": 0.32,
       "maxPosM": 0.6,
       "posAzimuthDeg": 0,
       "posTiltDeg": 0,
@@ -1585,7 +1585,7 @@
           "impulseVelDeg": 0,
           "fov": 0,
           "fovKickDeg": 0,
-          "impulsePosM": 0.19,
+          "impulsePosM": 0.27,
           "impulseVelM": -4,
           "posAzimuthDeg": 270,
           "posTiltDeg": 0
@@ -1596,7 +1596,7 @@
           "impulseVelDeg": 0,
           "fov": 0,
           "fovKickDeg": 0,
-          "impulsePosM": 0.22,
+          "impulsePosM": 0.31,
           "impulseVelM": -5,
           "posAzimuthDeg": 90,
           "posTiltDeg": 12
