@@ -335,6 +335,23 @@
           "duration": 10,
           "blend": "add",
           "tint": "#ffffff"
+        },
+        {
+          "id": "E1a_core_flash",
+          "name": "E1-a 核心闪光",
+          "enabled": true,
+          "z": 4.1,
+          "offsetX": 43,
+          "offsetY": 8.9375,
+          "scale": 0.55,
+          "opacity": 1,
+          "brightness": 0.6,
+          "lift": 0,
+          "despill": 0.35,
+          "startFrame": 1,
+          "duration": 13,
+          "blend": "add",
+          "tint": "#ffffff"
         }
       ]
     },
@@ -671,6 +688,23 @@
           "duration": 10,
           "blend": "add",
           "tint": "#ffffff"
+        },
+        {
+          "id": "E1a_core_flash",
+          "name": "E1-a 核心闪光",
+          "enabled": true,
+          "z": 4.1,
+          "offsetX": 43,
+          "offsetY": 8.9375,
+          "scale": 0.65,
+          "opacity": 1,
+          "brightness": 0.6,
+          "lift": 0,
+          "despill": 0.35,
+          "startFrame": 1,
+          "duration": 13,
+          "blend": "add",
+          "tint": "#ffffff"
         }
       ]
     },
@@ -1005,6 +1039,23 @@
           "despill": 0.35,
           "startFrame": 1,
           "duration": 10,
+          "blend": "add",
+          "tint": "#ffffff"
+        },
+        {
+          "id": "E1a_core_flash",
+          "name": "E1-a 核心闪光",
+          "enabled": true,
+          "z": 4.1,
+          "offsetX": 43,
+          "offsetY": 8.9375,
+          "scale": 0.7,
+          "opacity": 1,
+          "brightness": 0.6,
+          "lift": 0,
+          "despill": 0.35,
+          "startFrame": 1,
+          "duration": 13,
           "blend": "add",
           "tint": "#ffffff"
         }

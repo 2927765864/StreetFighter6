@@ -455,8 +455,8 @@ export type MutableSimConfig = {
   /** 控制面板当前编辑的预设 id。 */
   wudaActiveLayerPresetId: string;
   /**
-   * CMOS 屏幕震动（三轴弹簧 + 速度冲量）。
-   * 偏移单位：世界单位；输出写到 fight camera 视平面。
+   * CMOS 屏幕震动（仅 FOV 弹簧 + 速度冲量）。
+   * 输出为相对基础 cameraFov 的度偏移。
    */
   cmosShake: CmosShakeConfig;
   /**

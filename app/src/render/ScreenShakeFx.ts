@@ -1,9 +1,8 @@
 /**
  * CMOS screen-shake — Three.js camera adapter.
  *
- * Kernel stays engine-free; this layer steps the model and applies absolute
- * view-plane offsets onto the fight camera after `applyFightCamera`.
- * Screen convention matches the CMOS contract: +X right, +Y down.
+ * Kernel stays engine-free; this layer steps the model and applies FOV
+ * offset onto the fight camera after `applyFightCamera`.
  */
 
 import type { PerspectiveCamera } from 'three';
@@ -52,21 +51,14 @@ export class ScreenShakeFx {
   }
 
   /**
-   * Absolute camera offset after fight pose is applied.
-   * +X → camera local right; +Y (screen-down) → camera local −up; roll on local Z.
-   * FOV：相对基础 fov 的度偏移（正=变宽）；需在 applyFightCamera 写完基础 fov 之后调用。
+   * FOV offset after fight pose is applied.
+   * 相对基础 fov 的度偏移（正=变宽）；需在 applyFightCamera 写完基础 fov 之后调用。
    */
   applyToCamera(camera: PerspectiveCamera): void {
-    const { x, y, rotation, fov } = this.model.getOutput();
-    if (x === 0 && y === 0 && rotation === 0 && fov === 0) return;
-    if (fov !== 0) {
-      camera.fov += fov;
-      camera.updateProjectionMatrix();
-    }
-    if (x !== 0) camera.translateX(x);
-    if (y !== 0) camera.translateY(-y);
-    if (rotation !== 0) camera.rotateZ(-rotation);
-    camera.updateMatrixWorld(true);
+    const { fov } = this.model.getOutput();
+    if (fov === 0) return;
+    camera.fov += fov;
+    camera.updateProjectionMatrix();
   }
 
   /** ControlPanel `action:cmosShake:*` handler. */
@@ -100,22 +92,9 @@ export class ScreenShakeFx {
       }
       case 'action:cmosShake:custom': {
         const d = CONFIG.cmosShake.debugImpulse;
-        const sample = (a: number, b: number): number => {
-          const lo = Math.min(a, b);
-          const hi = Math.max(a, b);
-          if (!Number.isFinite(lo) || !Number.isFinite(hi)) return 0;
-          if (hi <= lo) return lo;
-          return lo + Math.random() * (hi - lo);
-        };
-        const angleDeg = d.dirRandom
-          ? sample(d.dirAngleMin, d.dirAngleMax)
-          : d.dirAngleDeg;
         this.impulse({
-          angleDeg,
-          radius: d.dirRadius,
-          strength: d.strength,
-          spin: d.spin,
-          fov: d.fov,
+          impulseVelDeg: d.impulseVelDeg,
+          impulsePosDeg: d.impulsePosDeg,
         });
         break;
       }

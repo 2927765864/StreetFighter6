@@ -4,6 +4,7 @@ export type FlipbookStrength = 'L' | 'M' | 'H';
 
 export type FlipbookLayerId =
   | 'E1_core_flash'
+  | 'E1a_core_flash'
   | 'E2_near_sparks'
   | 'E2b_hit_sparks'
   | 'E3_ring_smoke'

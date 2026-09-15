@@ -204,6 +204,7 @@ SFX 体积可忽略；漏拷会导致「看起来一切正常但完全无声」�
 | 层 | 帧数 |
 |----|------|
 | E1_core_flash | 10 |
+| E1a_core_flash | 13 |
 | E2_near_sparks | 10 |
 | E3_ring_smoke | 14 |
 | E4_wide_short_smoke | 14 |

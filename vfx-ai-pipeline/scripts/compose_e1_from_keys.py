@@ -15,7 +15,8 @@ Timeline (30fps, E1 lives on t=1..10 of the 17-frame hit):
 
 Anchor is the LEFT content edge (fist contact), not bbox center.
 Scale is applied around that contact so mass shrinks toward the punch.
-Drift is to the RIGHT (strike direction).
+Drift is a slow LEFT→RIGHT pan of the whole mass (strike direction),
+with extra pixels so shrink-toward-contact does not cancel the pan.
 """
 from __future__ import annotations
 
@@ -37,15 +38,23 @@ FPS = 30
 
 # Fit the peak sprite so its bbox width is this fraction of the cell.
 PEAK_WIDTH_FRAC = 0.62
-CONTACT_X = 72
+# Start a bit left so the 10-frame pan can read left → right inside the cell.
+CONTACT_X = 48
 CONTACT_Y = CELL // 2
 
 # Per output frame (index 0 = ref frame 1).
 # Extra scale on top of each key's native size (A is authored at ~peak).
 SCALE = [1.00, 0.97, 1.00, 0.90, 0.78, 0.70, 0.66, 0.58, 0.48, 0.40]
 OPACITY = [1.00, 0.96, 1.00, 0.88, 0.78, 0.72, 0.68, 0.52, 0.36, 0.22]
-# Rightward drift in pixels.
-DRIFT = [0, 6, 14, 24, 36, 50, 64, 80, 96, 112]
+# Slow linear rightward pan of the whole flash.
+# Left-edge + shrink would otherwise pull the centroid left; SHRINK_COMP cancels that
+# so the mass itself walks right instead of dissolving in place.
+DRIFT_PER_FRAME = 10.0
+SHRINK_COMP = 110.0
+DRIFT = [
+    round(i * DRIFT_PER_FRAME + (1.0 - SCALE[i]) * SHRINK_COMP)
+    for i in range(N)
+]
 # Mix of A, B, C (must sum to 1).
 MIX = [
     (1.00, 0.00, 0.00),

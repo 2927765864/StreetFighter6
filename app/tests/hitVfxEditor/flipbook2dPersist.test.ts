@@ -58,6 +58,7 @@ describe('flipbook 2d L/M/H recipes', () => {
       'E2_near_sparks',
       'E2b_hit_sparks',
       'E1_core_flash',
+      'E1a_core_flash',
     ]);
     const e5 = (s: 'L' | 'M' | 'H') =>
       bank[s].layers.find((l) => l.id === 'E5_narrow_long_smoke')!;

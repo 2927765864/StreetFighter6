@@ -25,6 +25,7 @@ let factoryState: FlipbookPersistState = {
 
 const LAYER_IDS: FlipbookLayerId[] = [
   'E1_core_flash',
+  'E1a_core_flash',
   'E2_near_sparks',
   'E2b_hit_sparks',
   'E3_ring_smoke',

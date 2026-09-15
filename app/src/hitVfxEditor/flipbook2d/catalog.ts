@@ -6,6 +6,7 @@ export const FLIPBOOK_PUBLIC_BASE = '/vfx/hit_ref_v1';
 /** Keep in sync with app/public/vfx/hit_ref_v1/manifest.json (package:habby verifies). */
 const LAYER_FRAME_COUNTS: Record<FlipbookLayerId, number> = {
   E1_core_flash: 10,
+  E1a_core_flash: 13,
   E2_near_sparks: 10,
   E2b_hit_sparks: 12,
   E3_ring_smoke: 14,
@@ -41,6 +42,7 @@ function urlsFor(id: FlipbookLayerId): string[] {
 
 export const FLIPBOOK_SHEETS: Record<FlipbookLayerId, string[]> = {
   E1_core_flash: urlsFor('E1_core_flash'),
+  E1a_core_flash: urlsFor('E1a_core_flash'),
   E2_near_sparks: urlsFor('E2_near_sparks'),
   E2b_hit_sparks: urlsFor('E2b_hit_sparks'),
   E3_ring_smoke: urlsFor('E3_ring_smoke'),

@@ -265,20 +265,9 @@ export function createDebugGui(
   shake.add(cfg.cmosShake, 'enabled').name('启用震动');
   shake.add(cfg.cmosShake, 'intensity', 0, 1, 0.01).name('全局强度↑更猛');
   shake.add(cfg.cmosShake, 'useGameSpeed').name('跟随游戏倍速');
-  shake.add(cfg.cmosShake, 'angularFreq', 4, 40, 0.5).name('平移频率↑更脆');
-  shake.add(cfg.cmosShake, 'dampingRatio', 0.2, 1.5, 0.02).name('平移阻尼↑少过冲');
-  shake.add(cfg.cmosShake, 'rotAngularFreq', 4, 40, 0.5).name('旋转频率↑更快回');
-  shake.add(cfg.cmosShake, 'rotDampingRatio', 0.2, 1.5, 0.02).name('旋转阻尼↑少扭晃');
   shake.add(cfg.cmosShake, 'fovAngularFreq', 4, 40, 0.5).name('FOV频率↑更快回');
   shake.add(cfg.cmosShake, 'fovDampingRatio', 0.2, 1.5, 0.02).name('FOV阻尼↑少过冲');
-  shake.add(cfg.cmosShake, 'maxOffsetX', 0, 2, 0.01).name('水平最大偏移↑');
-  shake.add(cfg.cmosShake, 'maxOffsetY', 0, 2, 0.01).name('垂直最大偏移↑');
-  shake.add(cfg.cmosShake, 'maxAngleDeg', 0, 5, 0.1).name('最大转角↑更斜');
   shake.add(cfg.cmosShake, 'maxFovDeg', 0, 8, 0.1).name('最大FOV偏移↑更猛');
-  shake.add(cfg.cmosShake, 'fovToVelocity', 0, 40, 0.5).name('FOV冲击→速度↑');
-  shake
-    .add(cfg.cmosShake, 'strengthToVelocity', 0.5, 80, 0.5)
-    .name('强度灵敏度↑更猛');
   shake.add(cfg.cmosShake.presetOnHitByStrength, 'S').name('轻命中→S_impact');
   shake.add(cfg.cmosShake.presetOnHitByStrength, 'M').name('中命中→M_impact');
   shake.add(cfg.cmosShake.presetOnHitByStrength, 'L').name('重命中→L_impact');

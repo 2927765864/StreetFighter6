@@ -1,132 +1,68 @@
 /**
- * CMOS screen-shake config types, normalization, and factory defaults.
- * Spec: GameDevelopmentCognitiveBase/网页开发常用/屏幕震动/CMOS屏幕震动-弹簧悬挂.md
+ * CMOS screen-shake config.
  *
- * Offsets are in world units (Three.js). Defaults are scaled for a ~2m fighter
- * and camera Z≈11 (not Balatro pixel units).
+ * Runtime FOV uses spring.1d.msmd numbers: impulsePosDeg + impulseVelDeg
+ * plus mass / ωn / ζ. The old CMOS mapping (`fov` × `fovToVelocity`,
+ * `fovKickDeg`, `maxSpeedFov`, `minImpulseIntervalMS`) is persist-only:
+ * read on load, written back on clone/export, never used by the kernel.
  */
 
-export type CmosShakePresetMode = 'impulse' | 'pulse' | 'oscillate';
-
-/**
- * Screen-space polar angle (deg): 0° = +X (right), 90° = +Y (down),
- * 180° = left, 270° = up. Normalized to [0, 360).
- */
-export function normalizeDirAngleDeg(deg: number): number {
-  if (!Number.isFinite(deg)) return 90;
-  let a = deg % 360;
-  if (a < 0) a += 360;
-  if (a >= 360) a = 0;
-  return a;
-}
-
-export function dirCartToPolar(
-  dirX: number,
-  dirY: number,
-): { dirAngleDeg: number; dirRadius: number } {
-  const x = Number.isFinite(dirX) ? dirX : 0;
-  const y = Number.isFinite(dirY) ? dirY : 0;
-  const r = Math.hypot(x, y);
-  if (r <= 1e-6) {
-    return { dirAngleDeg: 90, dirRadius: 0 };
-  }
-  return {
-    dirAngleDeg: normalizeDirAngleDeg((Math.atan2(y, x) * 180) / Math.PI),
-    dirRadius: r,
-  };
-}
+/** Default used only when hydrating old archives that store dimensionless `fov`. */
+export const CMOS_SHAKE_LEGACY_FOV_TO_VELOCITY = 8;
 
 export interface CmosShakeEffectPreset {
   label: string;
-  mode: CmosShakePresetMode;
-  strength: number;
-  spin: number;
-  /** FOV 速度冲量（无量纲；经 fovToVelocity 映射为 °/s） */
+  /** MSMD 位置阶跃 (°); 正=变宽，负=变窄 */
+  impulsePosDeg: number;
+  /** MSMD 速度冲量 (°/s) */
+  impulseVelDeg: number;
+  /**
+   * Persist alias of dimensionless FOV impulse (`impulseVelDeg / fovToVelocity`).
+   * Not read by the kernel after normalize.
+   */
   fov: number;
-  dirAngleDeg: number;
-  dirRadius: number;
-  dirRandom: boolean;
-  dirAngleMin: number;
-  dirAngleMax: number;
-  count: number;
-  intervalMS: number;
-  alternate: boolean;
-  falloff: number;
-  posKick: number;
-  angleKickDeg: number;
-  /** 瞬间 FOV 位移踢（度）；正=视野变宽，负=变窄（冲击感常用负） */
+  /**
+   * Persist alias of `impulsePosDeg`. Not read by the kernel after normalize.
+   */
   fovKickDeg: number;
-  durationMS: number;
-  freqHz: number;
-  amp: number;
-  ampRotDeg: number;
-  /** 衰减摆动：FOV 振幅（度） */
-  ampFovDeg: number;
-  decay: number;
-  phaseDeg: number;
 }
 
 export type CmosDebugImpulse = {
-  dirAngleDeg: number;
-  dirRadius: number;
-  dirRandom: boolean;
-  dirAngleMin: number;
-  dirAngleMax: number;
-  strength: number;
-  spin: number;
+  impulsePosDeg: number;
+  impulseVelDeg: number;
+  /** Persist alias */
   fov: number;
+  /** Persist alias */
+  fovKickDeg: number;
 };
 
 export type CmosShakeConfig = {
   enabled: boolean;
   intensity: number;
   useGameSpeed: boolean;
-  mass: number;
-  angularFreq: number;
-  dampingRatio: number;
-  rotMass: number;
-  rotAngularFreq: number;
-  rotDampingRatio: number;
-  /** FOV 通道质量（MSMD；默认 1） */
   fovMass: number;
-  /** FOV 自然频率 ωn (rad/s) */
   fovAngularFreq: number;
-  /** FOV 阻尼比 ζ */
   fovDampingRatio: number;
-  maxOffsetX: number;
-  maxOffsetY: number;
-  maxAngleDeg: number;
-  /** FOV 偏移软夹持上限（度，相对基础 cameraFov） */
   maxFovDeg: number;
-  strengthToVelocity: number;
-  spinToVelocity: number;
-  /** 预设/冲量 `fov` → FOV 弹簧速度 (°/s) */
-  fovToVelocity: number;
-  maxSpeedXY: number;
-  maxSpeedRot: number;
-  /** FOV 速度上限 (°/s) */
-  maxSpeedFov: number;
-  minImpulseIntervalMS: number;
   maxDtSec: number;
   substeps: number;
-  settlePosPx: number;
-  settleVelPx: number;
-  settleAngleRad: number;
-  settleAngVel: number;
   settleFovDeg: number;
   settleFovVel: number;
-  /**
-   * 命中震动按轻/中/重（S/M/L）选预设 id。
-   * 对应招式 guardStrength L→S、M→M、H→L。空字符串=该档不震。
-   */
   presetOnHitByStrength: CmosShakeStrengthPresets;
-  /** 防御震动按轻/中/重（S/M/L）。 */
   presetOnBlockByStrength: CmosShakeStrengthPresets;
   presets: Record<string, CmosShakeEffectPreset>;
   debugImpulse: CmosDebugImpulse;
+  /**
+   * Persist-only. Old archives map `preset.fov * fovToVelocity → impulseVelDeg`.
+   * Kernel does not multiply by this.
+   */
+  fovToVelocity: number;
+  /** Persist-only. Kernel no longer clamps speed with this. */
+  maxSpeedFov: number;
+  /** Persist-only. Kernel no longer scales stacked impulses with this. */
+  minImpulseIntervalMS: number;
 };
 
-/** 面板/存档用：S=轻、M=中、L=重（与预设 id `S_impact` 等一致）。 */
 export type CmosShakeStrengthBand = 'S' | 'M' | 'L';
 
 export type CmosShakeStrengthPresets = {
@@ -135,7 +71,6 @@ export type CmosShakeStrengthPresets = {
   L: string;
 };
 
-/** Capcom 招式强度 L/M/H → 震动档 S/M/L。 */
 export function guardStrengthToShakeBand(
   strength: 'L' | 'M' | 'H',
 ): CmosShakeStrengthBand {
@@ -147,16 +82,13 @@ export function guardStrengthToShakeBand(
 export function createDefaultStrengthPresets(
   kind: 'hit' | 'block',
 ): CmosShakeStrengthPresets {
-  if (kind === 'block') {
-    return { S: 'S_impact', M: 'M_impact', L: 'L_impact' };
-  }
+  void kind;
   return { S: 'S_impact', M: 'M_impact', L: 'L_impact' };
 }
 
 export function normalizeStrengthPresets(
   raw: unknown,
   fallback: CmosShakeStrengthPresets,
-  /** 旧档单一 presetOnHit / presetOnBlock 兜底到三档。 */
   legacySingle?: unknown,
 ): CmosShakeStrengthPresets {
   const legacy =
@@ -188,42 +120,71 @@ export function resolveCmosShakePresetId(
   return typeof id === 'string' ? id : '';
 }
 
-const CMOS_SHAKE_MODES = new Set<CmosShakePresetMode>([
-  'impulse',
-  'pulse',
-  'oscillate',
-]);
-
-export function normalizeCmosShakeMode(v: unknown): CmosShakePresetMode {
-  if (typeof v === 'string' && CMOS_SHAKE_MODES.has(v as CmosShakePresetMode)) {
-    return v as CmosShakePresetMode;
-  }
-  return 'impulse';
+function finiteNum(v: unknown): number | undefined {
+  return typeof v === 'number' && Number.isFinite(v) ? v : undefined;
 }
 
-type LegacyDirFields = {
-  dirX?: number;
-  dirY?: number;
-  dirXMin?: number;
-  dirXMax?: number;
-  dirYMin?: number;
-  dirYMax?: number;
-};
+function numOr(v: unknown, fb: number): number {
+  const n = finiteNum(v);
+  return n != null ? n : fb;
+}
+
+/** Hydrate MSMD impulse from new fields, else old persist aliases. */
+export function hydrateImpulseFromPersist(
+  raw: {
+    impulsePosDeg?: unknown;
+    impulseVelDeg?: unknown;
+    fov?: unknown;
+    fovKickDeg?: unknown;
+    /** Old oscillate persist: treat as position step. */
+    ampFovDeg?: unknown;
+  } | null | undefined,
+  fallback: { impulsePosDeg: number; impulseVelDeg: number },
+  fovToVelocity: number,
+): { impulsePosDeg: number; impulseVelDeg: number } {
+  const src = raw && typeof raw === 'object' ? raw : {};
+  const toV =
+    Number.isFinite(fovToVelocity) && fovToVelocity !== 0
+      ? fovToVelocity
+      : CMOS_SHAKE_LEGACY_FOV_TO_VELOCITY;
+
+  const pos =
+    finiteNum(src.impulsePosDeg) ??
+    finiteNum(src.fovKickDeg) ??
+    finiteNum(src.ampFovDeg) ??
+    fallback.impulsePosDeg;
+
+  const velDirect = finiteNum(src.impulseVelDeg);
+  const velFromFov = finiteNum(src.fov);
+  const vel =
+    velDirect ??
+    (velFromFov != null ? velFromFov * toV : fallback.impulseVelDeg);
+
+  return { impulsePosDeg: pos, impulseVelDeg: vel };
+}
+
+function persistAliases(
+  impulsePosDeg: number,
+  impulseVelDeg: number,
+  fovToVelocity: number,
+): { fov: number; fovKickDeg: number } {
+  const toV =
+    Number.isFinite(fovToVelocity) && fovToVelocity !== 0
+      ? fovToVelocity
+      : CMOS_SHAKE_LEGACY_FOV_TO_VELOCITY;
+  return {
+    fovKickDeg: impulsePosDeg,
+    fov: impulseVelDeg / toV,
+  };
+}
 
 export function normalizeCmosShakeEffectPreset(
   id: string,
-  raw:
-    | (Partial<CmosShakeEffectPreset> & LegacyDirFields)
-    | CmosShakeEffectPreset
-    | null
-    | undefined,
-  fallback?: (Partial<CmosShakeEffectPreset> & LegacyDirFields) | null,
+  raw: Partial<CmosShakeEffectPreset> | CmosShakeEffectPreset | null | undefined,
+  fallback?: Partial<CmosShakeEffectPreset> | null,
+  fovToVelocity: number = CMOS_SHAKE_LEGACY_FOV_TO_VELOCITY,
 ): CmosShakeEffectPreset {
   const f = fallback ?? {};
-  const num = (v: unknown, fb: number): number =>
-    typeof v === 'number' && Number.isFinite(v) ? v : fb;
-  const bool = (v: unknown, fb: boolean): boolean =>
-    typeof v === 'boolean' ? v : fb;
   const labelRaw = raw && typeof raw === 'object' ? raw.label : undefined;
   const label =
     typeof labelRaw === 'string' && labelRaw.length > 0
@@ -231,142 +192,54 @@ export function normalizeCmosShakeEffectPreset(
       : typeof f.label === 'string' && f.label.length > 0
         ? f.label
         : id;
-  const src = (raw && typeof raw === 'object' ? raw : {}) as Partial<CmosShakeEffectPreset> &
-    LegacyDirFields;
-  const fb = f as Partial<CmosShakeEffectPreset> & LegacyDirFields;
-
-  const hasNewAngle =
-    typeof src.dirAngleDeg === 'number' && Number.isFinite(src.dirAngleDeg);
-  const hasNewRadius =
-    typeof src.dirRadius === 'number' && Number.isFinite(src.dirRadius);
-  const hasLegacyDir =
-    (typeof src.dirX === 'number' && Number.isFinite(src.dirX)) ||
-    (typeof src.dirY === 'number' && Number.isFinite(src.dirY));
-  const legacyPolar = hasLegacyDir
-    ? dirCartToPolar(num(src.dirX, 0), num(src.dirY, 1))
-    : null;
-  const fbHasLegacy =
-    (typeof fb.dirX === 'number' && Number.isFinite(fb.dirX)) ||
-    (typeof fb.dirY === 'number' && Number.isFinite(fb.dirY));
-  const fbPolar = fbHasLegacy
-    ? dirCartToPolar(num(fb.dirX, 0), num(fb.dirY, 1))
-    : null;
-
-  const dirAngleDeg = normalizeDirAngleDeg(
-    hasNewAngle
-      ? (src.dirAngleDeg as number)
-      : legacyPolar
-        ? legacyPolar.dirAngleDeg
-        : num(f.dirAngleDeg, fbPolar?.dirAngleDeg ?? 90),
+  const src = (raw && typeof raw === 'object' ? raw : {}) as Partial<CmosShakeEffectPreset>;
+  const fbHydrate = hydrateImpulseFromPersist(
+    f,
+    { impulsePosDeg: 0, impulseVelDeg: 0 },
+    fovToVelocity,
   );
-  const dirRadius = Math.max(
-    0,
-    hasNewRadius
-      ? (src.dirRadius as number)
-      : legacyPolar
-        ? legacyPolar.dirRadius
-        : num(f.dirRadius, fbPolar?.dirRadius ?? 1),
-  );
-
-  const clampAngleRange = (v: number): number => {
-    if (!Number.isFinite(v)) return 0;
-    if (v === 360) return 360;
-    return normalizeDirAngleDeg(v);
-  };
+  const hyd = hydrateImpulseFromPersist(src, fbHydrate, fovToVelocity);
+  const aliases = persistAliases(hyd.impulsePosDeg, hyd.impulseVelDeg, fovToVelocity);
 
   return {
     label,
-    mode: normalizeCmosShakeMode(src.mode ?? f.mode),
-    strength: num(src.strength, num(f.strength, 0.3)),
-    spin: num(src.spin, num(f.spin, 0)),
-    fov: num(src.fov, num(f.fov, 0)),
-    dirAngleDeg,
-    dirRadius,
-    dirRandom: bool(src.dirRandom, f.dirRandom === true),
-    dirAngleMin: clampAngleRange(num(src.dirAngleMin, num(f.dirAngleMin, 0))),
-    dirAngleMax: clampAngleRange(num(src.dirAngleMax, num(f.dirAngleMax, 360))),
-    count: Math.max(1, Math.floor(num(src.count, num(f.count, 1)))),
-    intervalMS: Math.max(0, num(src.intervalMS, num(f.intervalMS, 50))),
-    alternate: bool(src.alternate, f.alternate === true),
-    falloff: Math.max(0, num(src.falloff, num(f.falloff, 1))),
-    posKick: num(src.posKick, num(f.posKick, 0)),
-    angleKickDeg: num(src.angleKickDeg, num(f.angleKickDeg, 0)),
-    fovKickDeg: num(src.fovKickDeg, num(f.fovKickDeg, 0)),
-    durationMS: Math.max(0, num(src.durationMS, num(f.durationMS, 300))),
-    freqHz: Math.max(0, num(src.freqHz, num(f.freqHz, 12))),
-    amp: num(src.amp, num(f.amp, 0)),
-    ampRotDeg: num(src.ampRotDeg, num(f.ampRotDeg, 0)),
-    ampFovDeg: num(src.ampFovDeg, num(f.ampFovDeg, 0)),
-    decay: Math.max(0, num(src.decay, num(f.decay, 4))),
-    phaseDeg: num(src.phaseDeg, num(f.phaseDeg, 0)),
+    impulsePosDeg: hyd.impulsePosDeg,
+    impulseVelDeg: hyd.impulseVelDeg,
+    fov: aliases.fov,
+    fovKickDeg: aliases.fovKickDeg,
   };
 }
 
 export function cloneCmosShakePresets(
   src: Record<string, CmosShakeEffectPreset>,
+  fovToVelocity: number = CMOS_SHAKE_LEGACY_FOV_TO_VELOCITY,
 ): Record<string, CmosShakeEffectPreset> {
   const out: Record<string, CmosShakeEffectPreset> = {};
   for (const [id, p] of Object.entries(src ?? {})) {
     if (!p || typeof p !== 'object') continue;
-    out[id] = normalizeCmosShakeEffectPreset(id, p);
+    out[id] = normalizeCmosShakeEffectPreset(id, p, null, fovToVelocity);
   }
   return out;
 }
 
 export function normalizeCmosDebugImpulse(
-  raw: (Partial<CmosDebugImpulse> & LegacyDirFields) | null | undefined,
+  raw: Partial<CmosDebugImpulse> | null | undefined,
   fallback?: CmosDebugImpulse | null,
+  fovToVelocity: number = CMOS_SHAKE_LEGACY_FOV_TO_VELOCITY,
 ): CmosDebugImpulse {
-  const f: CmosDebugImpulse = fallback ?? {
-    dirAngleDeg: 90,
-    dirRadius: 1,
-    dirRandom: false,
-    dirAngleMin: 0,
-    dirAngleMax: 360,
-    strength: 0.45,
-    spin: 0.05,
+  const f = fallback ?? {
+    impulsePosDeg: 0,
+    impulseVelDeg: 0,
     fov: 0,
+    fovKickDeg: 0,
   };
-  const src = raw && typeof raw === 'object' ? raw : {};
-  const num = (v: unknown, fb: number): number =>
-    typeof v === 'number' && Number.isFinite(v) ? v : fb;
-  const bool = (v: unknown, fb: boolean): boolean =>
-    typeof v === 'boolean' ? v : fb;
-
-  const hasNewAngle =
-    typeof src.dirAngleDeg === 'number' && Number.isFinite(src.dirAngleDeg);
-  const hasNewRadius =
-    typeof src.dirRadius === 'number' && Number.isFinite(src.dirRadius);
-  const hasLegacy =
-    (typeof src.dirX === 'number' && Number.isFinite(src.dirX)) ||
-    (typeof src.dirY === 'number' && Number.isFinite(src.dirY));
-  const polar =
-    !hasNewAngle && !hasNewRadius && hasLegacy
-      ? dirCartToPolar(num(src.dirX, 0), num(src.dirY, 1))
-      : null;
-
-  const clampAngleRange = (v: number): number => {
-    if (!Number.isFinite(v)) return 0;
-    if (v === 360) return 360;
-    return normalizeDirAngleDeg(v);
-  };
-
+  const hyd = hydrateImpulseFromPersist(raw, f, fovToVelocity);
+  const aliases = persistAliases(hyd.impulsePosDeg, hyd.impulseVelDeg, fovToVelocity);
   return {
-    dirAngleDeg: normalizeDirAngleDeg(
-      hasNewAngle
-        ? (src.dirAngleDeg as number)
-        : (polar?.dirAngleDeg ?? f.dirAngleDeg),
-    ),
-    dirRadius: Math.max(
-      0,
-      hasNewRadius ? (src.dirRadius as number) : (polar?.dirRadius ?? f.dirRadius),
-    ),
-    dirRandom: bool(src.dirRandom, f.dirRandom),
-    dirAngleMin: clampAngleRange(num(src.dirAngleMin, f.dirAngleMin)),
-    dirAngleMax: clampAngleRange(num(src.dirAngleMax, f.dirAngleMax)),
-    strength: num(src.strength, f.strength),
-    spin: num(src.spin, f.spin),
-    fov: num(src.fov, f.fov),
+    impulsePosDeg: hyd.impulsePosDeg,
+    impulseVelDeg: hyd.impulseVelDeg,
+    fov: aliases.fov,
+    fovKickDeg: aliases.fovKickDeg,
   };
 }
 
@@ -375,22 +248,22 @@ export function mergeCmosShakePresets(
   incoming?:
     | Record<string, Partial<CmosShakeEffectPreset> | CmosShakeEffectPreset>
     | null,
+  fovToVelocity: number = CMOS_SHAKE_LEGACY_FOV_TO_VELOCITY,
 ): Record<string, CmosShakeEffectPreset> {
   if (!incoming || typeof incoming !== 'object') {
-    return cloneCmosShakePresets(base);
+    return cloneCmosShakePresets(base, fovToVelocity);
   }
   const keys = Object.keys(incoming);
   if (keys.length === 0) {
-    return cloneCmosShakePresets(base);
+    return cloneCmosShakePresets(base, fovToVelocity);
   }
   const out: Record<string, CmosShakeEffectPreset> = {};
   for (const id of keys) {
     const raw = incoming[id];
     if (!raw || typeof raw !== 'object') continue;
-    out[id] = normalizeCmosShakeEffectPreset(id, raw, base[id]);
+    out[id] = normalizeCmosShakeEffectPreset(id, raw, base[id], fovToVelocity);
   }
-  // 旧存档缺轻中重冲击预设时补上，避免映射到空 id。
-  const factory = createDefaultCmosShakePresets();
+  const factory = createDefaultCmosShakePresets(fovToVelocity);
   for (const id of ['S_impact', 'M_impact', 'L_impact'] as const) {
     if (!out[id] && factory[id]) out[id] = factory[id]!;
   }
@@ -400,205 +273,83 @@ export function mergeCmosShakePresets(
 function impulsePreset(
   label: string,
   partial: Partial<CmosShakeEffectPreset>,
+  fovToVelocity: number,
 ): CmosShakeEffectPreset {
-  return normalizeCmosShakeEffectPreset(label, {
+  return normalizeCmosShakeEffectPreset(
     label,
-    mode: 'impulse',
-    strength: 0.3,
-    spin: 0,
-    dirAngleDeg: 90,
-    dirRadius: 1,
-    ...partial,
-  });
+    {
+      label,
+      ...partial,
+    },
+    null,
+    fovToVelocity,
+  );
 }
 
-/** Fighting-game starter presets (world-unit scaled). */
-export function createDefaultCmosShakePresets(): Record<
-  string,
-  CmosShakeEffectPreset
-> {
+export function createDefaultCmosShakePresets(
+  fovToVelocity: number = CMOS_SHAKE_LEGACY_FOV_TO_VELOCITY,
+): Record<string, CmosShakeEffectPreset> {
+  const p = (label: string, vel: number, pos: number) =>
+    impulsePreset(label, { impulseVelDeg: vel, impulsePosDeg: pos }, fovToVelocity);
   return {
-    tap: impulsePreset('轻点', { strength: 0.12, spin: 0 }),
-    tick: impulsePreset('轻击', { strength: 0.22, spin: 0.015 }),
-    /** 轻攻击命中（对应招式强度 L） */
-    S_impact: impulsePreset('轻攻击冲击', {
-      strength: 0.22,
-      spin: 0.02,
-      posKick: 0.006,
-    }),
-    /** 中攻击命中（对应招式强度 M） */
-    M_impact: impulsePreset('中攻击冲击', {
-      strength: 0.4,
-      spin: 0.05,
-      posKick: 0.012,
-    }),
-    /** 重攻击命中（对应招式强度 H） */
-    L_impact: impulsePreset('重攻击冲击', {
-      strength: 0.7,
-      spin: 0.09,
-      posKick: 0.022,
-      angleKickDeg: 0.15,
-      fov: -0.25,
-      fovKickDeg: -0.6,
-    }),
-    impact: impulsePreset('主冲击', { strength: 0.4, spin: 0.05 }),
-    heavy: impulsePreset('重击', {
-      strength: 0.7,
-      spin: 0.09,
-      posKick: 0.02,
-      angleKickDeg: 0.15,
-      fov: -0.25,
-      fovKickDeg: -0.6,
-    }),
-    error: impulsePreset('错误', {
-      strength: 0.28,
-      spin: 0.07,
-      dirAngleDeg: 0,
-      posKick: 0.015,
-    }),
-    nudge: impulsePreset('轻推', { strength: 0.16, spin: 0.02, posKick: 0.008 }),
-    settle: impulsePreset('落定', {
-      strength: 0.2,
-      spin: 0.02,
-      posKick: 0.01,
-      angleKickDeg: 0.06,
-    }),
-    thud: impulsePreset('顿挫', {
-      strength: 0.18,
-      spin: 0.02,
-      posKick: 0.035,
-      angleKickDeg: 0.2,
-    }),
-    swayLR: normalizeCmosShakeEffectPreset('swayLR', {
-      label: '左右平移',
-      mode: 'pulse',
-      strength: 0.35,
-      spin: 0,
-      dirAngleDeg: 0,
-      dirRadius: 1,
-      count: 4,
-      intervalMS: 55,
-      alternate: true,
-      falloff: 0.85,
-      posKick: 0.012,
-    }),
-    bounceUD: normalizeCmosShakeEffectPreset('bounceUD', {
-      label: '上下来回',
-      mode: 'pulse',
-      strength: 0.4,
-      spin: 0,
-      dirAngleDeg: 90,
-      dirRadius: 1,
-      count: 3,
-      intervalMS: 60,
-      alternate: true,
-      falloff: 0.8,
-      posKick: 0.015,
-    }),
-    doubleKick: normalizeCmosShakeEffectPreset('doubleKick', {
-      label: '双重冲击',
-      mode: 'pulse',
-      strength: 0.55,
-      spin: 0.04,
-      dirAngleDeg: 90,
-      dirRadius: 1,
-      count: 2,
-      intervalMS: 70,
-      alternate: true,
-      falloff: 0.9,
-      posKick: 0.02,
-      angleKickDeg: 0.1,
-    }),
-    swayAngle: normalizeCmosShakeEffectPreset('swayAngle', {
-      label: '左右摆角',
-      mode: 'oscillate',
-      strength: 0,
-      spin: 0,
-      dirAngleDeg: 0,
-      dirRadius: 1,
-      durationMS: 420,
-      freqHz: 6,
-      amp: 0,
-      ampRotDeg: 0.9,
-      decay: 3.5,
-    }),
-    rumble: normalizeCmosShakeEffectPreset('rumble', {
-      label: '持续微抖',
-      mode: 'oscillate',
-      strength: 0,
-      spin: 0,
-      dirAngleDeg: 55,
-      dirRadius: 1,
-      durationMS: 550,
-      freqHz: 18,
-      amp: 0.02,
-      ampRotDeg: 0.25,
-      decay: 2.2,
-      phaseDeg: 30,
-    }),
+    tap: p('轻点', -0.64, -0.12),
+    tick: p('轻击', -1.12, -0.22),
+    S_impact: p('轻攻击冲击', -1.28, -0.28),
+    M_impact: p('中攻击冲击', -1.76, -0.42),
+    L_impact: p('重攻击冲击', -2.56, -0.7),
+    impact: p('主冲击', -1.76, -0.42),
+    heavy: p('重击', -2.56, -0.7),
+    error: p('错误', 1.6, 0.35),
+    nudge: p('轻推', -0.8, -0.16),
+    settle: p('落定', -0.96, -0.2),
+    thud: p('顿挫', -1.44, -0.4),
+    swayLR: p('FOV 来回', -1.44, -0.12),
+    bounceUD: p('FOV 脉冲', -1.76, -0.18),
+    doubleKick: p('双重冲击', -2.24, -0.35),
+    swayAngle: p('FOV 摆动', 0, 0.55),
+    rumble: p('持续微抖', 0, 0.22),
   };
 }
 
 export function createDefaultCmosShakeConfig(): CmosShakeConfig {
+  const fovToVelocity = CMOS_SHAKE_LEGACY_FOV_TO_VELOCITY;
   return {
     enabled: true,
     intensity: 1,
     useGameSpeed: false,
-    mass: 1,
-    angularFreq: 18,
-    dampingRatio: 0.62,
-    rotMass: 1,
-    rotAngularFreq: 22,
-    rotDampingRatio: 0.72,
     fovMass: 1,
     fovAngularFreq: 20,
     fovDampingRatio: 0.68,
-    maxOffsetX: 0.12,
-    maxOffsetY: 0.12,
-    maxAngleDeg: 1.2,
     maxFovDeg: 2.5,
-    strengthToVelocity: 8,
-    spinToVelocity: 8,
-    fovToVelocity: 8,
-    maxSpeedXY: 24,
-    maxSpeedRot: 20,
-    maxSpeedFov: 40,
-    minImpulseIntervalMS: 0,
     maxDtSec: 0.05,
     substeps: 4,
-    settlePosPx: 0.001,
-    settleVelPx: 0.02,
-    settleAngleRad: 0.0005,
-    settleAngVel: 0.01,
     settleFovDeg: 0.02,
     settleFovVel: 0.2,
     presetOnHitByStrength: createDefaultStrengthPresets('hit'),
     presetOnBlockByStrength: createDefaultStrengthPresets('block'),
-    presets: createDefaultCmosShakePresets(),
-    debugImpulse: {
-      dirAngleDeg: 90,
-      dirRadius: 1,
-      dirRandom: false,
-      dirAngleMin: 0,
-      dirAngleMax: 360,
-      strength: 0.45,
-      spin: 0.05,
-      fov: 0.2,
-    },
+    presets: createDefaultCmosShakePresets(fovToVelocity),
+    debugImpulse: normalizeCmosDebugImpulse(
+      { impulseVelDeg: -2, impulsePosDeg: 0 },
+      null,
+      fovToVelocity,
+    ),
+    fovToVelocity,
+    maxSpeedFov: 40,
+    minImpulseIntervalMS: 0,
   };
 }
 
 export function cloneCmosShakeConfig(src: CmosShakeConfig): CmosShakeConfig {
+  const toV = src.fovToVelocity ?? CMOS_SHAKE_LEGACY_FOV_TO_VELOCITY;
   return {
     ...src,
     presetOnHitByStrength: { ...src.presetOnHitByStrength },
     presetOnBlockByStrength: { ...src.presetOnBlockByStrength },
-    presets: cloneCmosShakePresets(src.presets),
-    debugImpulse: { ...src.debugImpulse },
+    presets: cloneCmosShakePresets(src.presets, toV),
+    debugImpulse: normalizeCmosDebugImpulse(src.debugImpulse, null, toV),
   };
 }
 
-/** Deep-merge incoming onto base (presets: incoming key set wins when non-empty). */
 export function mergeCmosShakeConfig(
   base: CmosShakeConfig,
   incoming: Partial<CmosShakeConfig> | Record<string, unknown> | null | undefined,
@@ -606,50 +357,29 @@ export function mergeCmosShakeConfig(
   if (!incoming || typeof incoming !== 'object') {
     return cloneCmosShakeConfig(base);
   }
-  const num = (v: unknown, fb: number): number =>
-    typeof v === 'number' && Number.isFinite(v) ? v : fb;
   const bool = (v: unknown, fb: boolean): boolean =>
     typeof v === 'boolean' ? v : fb;
 
+  const fovToVelocity = numOr(
+    incoming.fovToVelocity,
+    base.fovToVelocity ?? CMOS_SHAKE_LEGACY_FOV_TO_VELOCITY,
+  );
+
   return {
     enabled: bool(incoming.enabled, base.enabled),
-    intensity: Math.max(0, Math.min(1, num(incoming.intensity, base.intensity))),
+    intensity: Math.max(0, Math.min(1, numOr(incoming.intensity, base.intensity))),
     useGameSpeed: bool(incoming.useGameSpeed, base.useGameSpeed),
-    mass: num(incoming.mass, base.mass),
-    angularFreq: num(incoming.angularFreq, base.angularFreq),
-    dampingRatio: num(incoming.dampingRatio, base.dampingRatio),
-    rotMass: num(incoming.rotMass, base.rotMass),
-    rotAngularFreq: num(incoming.rotAngularFreq, base.rotAngularFreq),
-    rotDampingRatio: num(incoming.rotDampingRatio, base.rotDampingRatio),
-    fovMass: num(incoming.fovMass, base.fovMass),
-    fovAngularFreq: num(incoming.fovAngularFreq, base.fovAngularFreq),
-    fovDampingRatio: num(incoming.fovDampingRatio, base.fovDampingRatio),
-    maxOffsetX: num(incoming.maxOffsetX, base.maxOffsetX),
-    maxOffsetY: num(incoming.maxOffsetY, base.maxOffsetY),
-    maxAngleDeg: num(incoming.maxAngleDeg, base.maxAngleDeg),
-    maxFovDeg: num(incoming.maxFovDeg, base.maxFovDeg),
-    strengthToVelocity: num(incoming.strengthToVelocity, base.strengthToVelocity),
-    spinToVelocity: num(incoming.spinToVelocity, base.spinToVelocity),
-    fovToVelocity: num(incoming.fovToVelocity, base.fovToVelocity),
-    maxSpeedXY: num(incoming.maxSpeedXY, base.maxSpeedXY),
-    maxSpeedRot: num(incoming.maxSpeedRot, base.maxSpeedRot),
-    maxSpeedFov: num(incoming.maxSpeedFov, base.maxSpeedFov),
-    minImpulseIntervalMS: num(
-      incoming.minImpulseIntervalMS,
-      base.minImpulseIntervalMS,
-    ),
-    maxDtSec: num(incoming.maxDtSec, base.maxDtSec),
-    substeps: Math.max(1, Math.floor(num(incoming.substeps, base.substeps))),
-    settlePosPx: num(incoming.settlePosPx, base.settlePosPx),
-    settleVelPx: num(incoming.settleVelPx, base.settleVelPx),
-    settleAngleRad: num(incoming.settleAngleRad, base.settleAngleRad),
-    settleAngVel: num(incoming.settleAngVel, base.settleAngVel),
-    settleFovDeg: num(incoming.settleFovDeg, base.settleFovDeg),
-    settleFovVel: num(incoming.settleFovVel, base.settleFovVel),
+    fovMass: numOr(incoming.fovMass, base.fovMass),
+    fovAngularFreq: numOr(incoming.fovAngularFreq, base.fovAngularFreq),
+    fovDampingRatio: numOr(incoming.fovDampingRatio, base.fovDampingRatio),
+    maxFovDeg: numOr(incoming.maxFovDeg, base.maxFovDeg),
+    maxDtSec: numOr(incoming.maxDtSec, base.maxDtSec),
+    substeps: Math.max(1, Math.floor(numOr(incoming.substeps, base.substeps))),
+    settleFovDeg: numOr(incoming.settleFovDeg, base.settleFovDeg),
+    settleFovVel: numOr(incoming.settleFovVel, base.settleFovVel),
     presetOnHitByStrength: normalizeStrengthPresets(
       incoming.presetOnHitByStrength,
       base.presetOnHitByStrength,
-      // 旧档单一字段 → 三档同 id
       (incoming as { presetOnHit?: unknown }).presetOnHit,
     ),
     presetOnBlockByStrength: normalizeStrengthPresets(
@@ -662,10 +392,18 @@ export function mergeCmosShakeConfig(
       incoming.presets as
         | Record<string, Partial<CmosShakeEffectPreset> | CmosShakeEffectPreset>
         | undefined,
+      fovToVelocity,
     ),
     debugImpulse: normalizeCmosDebugImpulse(
       incoming.debugImpulse as Partial<CmosDebugImpulse> | undefined,
       base.debugImpulse,
+      fovToVelocity,
+    ),
+    fovToVelocity,
+    maxSpeedFov: numOr(incoming.maxSpeedFov, base.maxSpeedFov),
+    minImpulseIntervalMS: numOr(
+      incoming.minImpulseIntervalMS,
+      base.minImpulseIntervalMS,
     ),
   };
 }

@@ -40,6 +40,7 @@ const logicMapPath = path.join(
 
 const VFX_LAYERS = [
   'E1_core_flash',
+  'E1a_core_flash',
   'E2_near_sparks',
   'E2b_hit_sparks',
   'E3_ring_smoke',
@@ -66,6 +67,7 @@ const vfxPipelineRoot = path.join(
 const vfxPublicRoot = path.join(appRoot, 'public/vfx/hit_ref_v1');
 const CATALOG_FRAME_COUNTS = {
   E1_core_flash: 10,
+  E1a_core_flash: 13,
   E2_near_sparks: 10,
   E2b_hit_sparks: 12,
   E3_ring_smoke: 14,
@@ -471,7 +473,7 @@ const simple = [
   ],
   [
     `2D VFX frames (${vfxCopied.total})`,
-    (listing.match(/vfx\/hit_ref_v1\/E\d_[^/]+\/frame-\d+\.png/g) ?? [])
+    (listing.match(/vfx\/hit_ref_v1\/[^/]+\/frame-\d+\.png/g) ?? [])
       .length === vfxCopied.total,
   ],
   [

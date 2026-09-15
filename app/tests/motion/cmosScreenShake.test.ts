@@ -45,7 +45,7 @@ describe('cmosShake config merge / persist shape', () => {
     expect(merged.cmosShake.enabled).toBe(false);
     expect(merged.cmosShake.intensity).toBe(0.5);
     expect(merged.cmosShake.presets.impact).toBeTruthy();
-    expect(merged.cmosShake.presets.impact.strength).toBeGreaterThan(0);
+    expect(Math.abs(merged.cmosShake.presets.impact.impulseVelDeg)).toBeGreaterThan(0);
   });
 
   it('incoming presets key set replaces (supports delete)', () => {
@@ -55,12 +55,12 @@ describe('cmosShake config merge / persist shape', () => {
         presets: {
           onlyMine: normalizeCmosShakeEffectPreset('onlyMine', {
             label: '仅此',
-            strength: 0.33,
+            impulseVelDeg: -2.64,
           }),
         },
       },
     });
-    expect(merged.cmosShake.presets.onlyMine.strength).toBeCloseTo(0.33);
+    expect(merged.cmosShake.presets.onlyMine.impulseVelDeg).toBeCloseTo(-2.64);
     // 轻中重冲击预设始终补齐，避免映射悬空。
     expect(merged.cmosShake.presets.S_impact).toBeTruthy();
     expect(merged.cmosShake.presets.M_impact).toBeTruthy();
@@ -74,10 +74,10 @@ describe('cmosShake config merge / persist shape', () => {
     const cfg = createDefaultCmosShakeConfig();
     CONFIG.cmosShake = { ...cfg, intensity: 0, enabled: true };
     const s = new CmosScreenShake();
-    s.impulse({ angleDeg: 90, radius: 1, strength: 1, spin: 0.2 });
+    s.impulse({ impulseVelDeg: 8, impulsePosDeg: 0.2 });
     const out = s.getOutput();
-    expect(Math.abs(s.y.v)).toBeLessThan(1e-9);
-    expect(Math.abs(out.y)).toBeLessThan(1e-9);
+    expect(Math.abs(s.fov.v)).toBeLessThan(1e-9);
+    expect(Math.abs(out.fov)).toBeLessThan(1e-9);
   });
 
   it('FOV channel: kick + spring settle, merge fills fov defaults', () => {
@@ -99,12 +99,8 @@ describe('cmosShake config merge / persist shape', () => {
     };
     const s = new CmosScreenShake();
     s.impulse({
-      angleDeg: 90,
-      radius: 1,
-      strength: 0,
-      spin: 0,
-      fov: 0,
-      fovKickDeg: -1.2,
+      impulseVelDeg: 0,
+      impulsePosDeg: -1.2,
     });
     expect(s.fov.x).toBeCloseTo(-1.2, 5);
     expect(s.getOutput().fov).toBeCloseTo(-1.2, 5);
@@ -121,8 +117,28 @@ describe('cmosShake config merge / persist shape', () => {
     expect(resolveCmosShakePresetId(cfg, 'onHit', 'L')).toBe('S_impact');
     expect(resolveCmosShakePresetId(cfg, 'onHit', 'M')).toBe('M_impact');
     expect(resolveCmosShakePresetId(cfg, 'onHit', 'H')).toBe('L_impact');
-    expect(cfg.presets.S_impact.strength).toBeLessThan(cfg.presets.M_impact.strength);
-    expect(cfg.presets.M_impact.strength).toBeLessThan(cfg.presets.L_impact.strength);
+    expect(Math.abs(cfg.presets.S_impact.impulsePosDeg)).toBeLessThan(
+      Math.abs(cfg.presets.M_impact.impulsePosDeg),
+    );
+    expect(Math.abs(cfg.presets.M_impact.impulsePosDeg)).toBeLessThan(
+      Math.abs(cfg.presets.L_impact.impulsePosDeg),
+    );
+  });
+
+  it('hydrates old fov × fovToVelocity persist into impulseVelDeg', () => {
+    const base = createDefaultRuntimeConfig();
+    const merged = mergeConfig(base, {
+      cmosShake: {
+        fovToVelocity: 8,
+        presets: {
+          onlyMine: { label: '旧档', fov: -0.33, fovKickDeg: -0.5 },
+        },
+      },
+    });
+    expect(merged.cmosShake.presets.onlyMine.impulseVelDeg).toBeCloseTo(-2.64);
+    expect(merged.cmosShake.presets.onlyMine.impulsePosDeg).toBeCloseTo(-0.5);
+    expect(merged.cmosShake.presets.onlyMine.fov).toBeCloseTo(-0.33);
+    expect(merged.cmosShake.presets.onlyMine.fovKickDeg).toBeCloseTo(-0.5);
   });
 
   it('migrates legacy presetOnHit into all strength bands', () => {

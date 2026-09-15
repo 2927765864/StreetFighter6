@@ -23,6 +23,7 @@ import { CONFIG } from '../../config/store';
 
 const TRACK_COLORS: Record<FlipbookLayerId, string> = {
   E1_core_flash: '#e8a040',
+  E1a_core_flash: '#f0b050',
   E2_near_sparks: '#f0d060',
   E2b_hit_sparks: '#f5c050',
   E3_ring_smoke: '#8aa0b8',
