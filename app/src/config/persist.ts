@@ -174,17 +174,20 @@ export function loadSavedConfig(): boolean {
     const raw = localStorage.getItem(STORAGE_KEYS.config);
     if (!raw) return false;
     const parsed = JSON.parse(raw) as Record<string, unknown>;
-    if (parsed.__version !== CONFIG_VERSION) {
-      backupLocal(raw, parsed.__version);
+    const body = isPresetEnvelope(parsed)
+      ? (parsed.config as Record<string, unknown>)
+      : parsed;
+    if (body.__version !== CONFIG_VERSION) {
+      backupLocal(raw, body.__version ?? parsed.__version);
       console.warn(
         '[config] local version mismatch',
-        parsed.__version,
+        body.__version,
         '→',
         CONFIG_VERSION,
         '(backed up)',
       );
     }
-    applyConfig(migrateSavedConfig(parsed));
+    applyConfig(migrateSavedConfig(body));
     console.info('[config] local default applied');
     return true;
   } catch (e) {

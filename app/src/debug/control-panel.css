@@ -210,6 +210,9 @@
 .section-body.is-collapsed {
   display: none;
 }
+.section-body > .section-block {
+  margin-top: 8px;
+}
 
 .panel-row {
   margin-bottom: 8px;

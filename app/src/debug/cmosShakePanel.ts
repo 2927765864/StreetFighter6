@@ -1,14 +1,15 @@
 /**
  * CMOS screen-shake ControlPanel section: DOM + bindings + preset CRUD.
- * FOV-only: translation / rotation channels are not exposed.
+ * Two MSMD channels: FOV and camera-local position, each in a collapsible fold.
  */
 
 import {
   normalizeCmosShakeEffectPreset,
   type CmosShakeEffectPreset,
 } from '../config/cmosShake';
+import { saveCurrentConfig } from '../config/persist';
 import { CONFIG, getPath, setPath } from '../config/store';
-import type { RuntimeConfig } from '../config/types';
+import type { ExpandedSections, RuntimeConfig } from '../config/types';
 import { attachDragScrub } from './dragScrub';
 
 type OnChange = (key: string, value: unknown, config: RuntimeConfig) => void;
@@ -36,20 +37,20 @@ export function cmosShakeSectionHtml(): string {
         <summary>屏幕震动</summary>
         <div class="section-block">
           <div class="section-header">
-            <span class="section-title">【屏幕震动】FOV 弹簧悬挂</span>
+            <span class="section-title">【屏幕震动】FOV + 相机位移</span>
             <label>展开 <span id="val-expandCmosShake">展开</span>
               <input id="inp-expandCmosShake" type="checkbox" />
             </label>
           </div>
           <div class="section-body" id="sect-cmosShake">
-            <p class="panel-hint">FOV 按弹簧阻尼 MSMD：一次位置阶跃 + 速度冲量，目标回 0。业务 play(预设id)。</p>
+            <p class="panel-hint">两根 MSMD 弹簧（目标回 0）：FOV 伸缩 + 沿指定方向的相机位移。业务 play(预设id)。</p>
 
             <div class="panel-row row-toggle">
               ${paramLabel('启用震动', '关=完全不抖（无障碍）；开=允许冲量与输出', 'val-cmosShakeEnabled')}
               <input id="inp-cmosShakeEnabled" type="checkbox" />
             </div>
             <div class="panel-row">
-              ${paramLabel('全局强度', '调大→FOV 伸缩更猛；0=等同关闭（推荐无障碍开关）', 'val-cmosShakeIntensity')}
+              ${paramLabel('全局强度', '调大→FOV 与位移一起更猛；0=等同关闭', 'val-cmosShakeIntensity')}
               <input id="inp-cmosShakeIntensity" type="number" min="0" max="1" step="0.01" />
             </div>
             <div class="panel-row row-toggle">
@@ -84,7 +85,7 @@ export function cmosShakeSectionHtml(): string {
             </div>
 
             <p class="panel-hint" style="font-weight:600;margin-top:8px">震动效果预设</p>
-            <p class="panel-hint">单次 MSMD 激励（不是下方全局弹簧）。用稳定 id 调用 play(id)。</p>
+            <p class="panel-hint">单次激励。FOV 与位移冲量分别在下方两个折叠里编。</p>
             <div class="panel-row">
               ${paramLabel('选择预设', '从已存列表载入到下方编辑器')}
               <select id="sel-cmos-effect-preset" style="width:100%"></select>
@@ -96,14 +97,6 @@ export function cmosShakeSectionHtml(): string {
             <div class="panel-row">
               ${paramLabel('显示名称', '面板上给人看的中文名，不影响调用')}
               <input id="inp-cmosEffectLabel" type="text" placeholder="例如 主冲击" />
-            </div>
-            <div class="panel-row">
-              ${paramLabel('位置阶跃 (°)', '开始时 x+=Δ；正=变宽，负=变窄（冲击感常用负）', 'val-cmosEffectImpulsePos')}
-              <input id="inp-cmosEffectImpulsePos" type="number" min="-5" max="5" step="0.05" />
-            </div>
-            <div class="panel-row">
-              ${paramLabel('速度冲量 (°/s)', '开始时 v+=v0', 'val-cmosEffectImpulseVel')}
-              <input id="inp-cmosEffectImpulseVel" type="number" min="-40" max="40" step="0.1" />
             </div>
             <div class="panel-actions-row">
               <button type="button" id="btn-cmosEffect-new">新建</button>
@@ -120,30 +113,98 @@ export function cmosShakeSectionHtml(): string {
               <button type="button" id="btn-cmosShake-reset">硬复位回中</button>
             </div>
 
-            <p class="panel-hint" style="font-weight:600;margin-top:8px">自定义冲量（草稿试射）</p>
-            <div class="panel-row">
-              ${paramLabel('位置阶跃 (°)', '这一脚瞬间 FOV 偏移', 'val-cmosDebugImpulsePos')}
-              <input id="inp-cmosDebugImpulsePos" type="number" min="-5" max="5" step="0.05" />
-            </div>
-            <div class="panel-row">
-              ${paramLabel('速度冲量 (°/s)', '这一脚 FOV 速度', 'val-cmosDebugImpulseVel')}
-              <input id="inp-cmosDebugImpulseVel" type="number" min="-40" max="40" step="0.1" />
+            <div class="section-block">
+              <div class="section-header">
+                <span class="section-title">FOV 通道</span>
+                <label>展开 <span id="val-expandCmosShakeFov">展开</span>
+                  <input id="inp-expandCmosShakeFov" type="checkbox" />
+                </label>
+              </div>
+              <div class="section-body" id="sect-cmosShakeFov">
+                <p class="panel-hint">视野角弹簧。正=变宽，负=变窄（冲击感常用负）。</p>
+                <div class="panel-row">
+                  ${paramLabel('预设·位置阶跃 (°)', '开始时 FOV x+=Δ', 'val-cmosEffectImpulsePos')}
+                  <input id="inp-cmosEffectImpulsePos" type="number" min="-5" max="5" step="0.05" />
+                </div>
+                <div class="panel-row">
+                  ${paramLabel('预设·速度冲量 (°/s)', '开始时 FOV v+=v0', 'val-cmosEffectImpulseVel')}
+                  <input id="inp-cmosEffectImpulseVel" type="number" min="-40" max="40" step="0.1" />
+                </div>
+                <p class="panel-hint" style="font-weight:600;margin-top:8px">自定义冲量（草稿试射）</p>
+                <div class="panel-row">
+                  ${paramLabel('位置阶跃 (°)', '这一脚瞬间 FOV 偏移', 'val-cmosDebugImpulsePos')}
+                  <input id="inp-cmosDebugImpulsePos" type="number" min="-5" max="5" step="0.05" />
+                </div>
+                <div class="panel-row">
+                  ${paramLabel('速度冲量 (°/s)', '这一脚 FOV 速度', 'val-cmosDebugImpulseVel')}
+                  <input id="inp-cmosDebugImpulseVel" type="number" min="-40" max="40" step="0.1" />
+                </div>
+                <p class="panel-hint" style="font-weight:600;margin-top:8px">FOV 全局动力学（所有预设共用）</p>
+                <div class="panel-row">
+                  ${paramLabel('自然频率 ωn', '调大→回弹更快更脆（rad/s）', 'val-cmosFovAngularFreq')}
+                  <input id="inp-cmosFovAngularFreq" type="number" min="4" max="120" step="0.5" />
+                </div>
+                <div class="panel-row">
+                  ${paramLabel('阻尼比 ζ', '调大→少过冲；调小→来回伸缩更弹', 'val-cmosFovDampingRatio')}
+                  <input id="inp-cmosFovDampingRatio" type="number" min="0.2" max="1.5" step="0.02" />
+                </div>
+                <div class="panel-row">
+                  ${paramLabel('最大 FOV 偏移 (°)', '软夹持上限；建议 ≤2.5', 'val-cmosMaxFovDeg')}
+                  <input id="inp-cmosMaxFovDeg" type="number" min="0" max="8" step="0.1" />
+                </div>
+                <div class="panel-row">
+                  ${paramLabel('质量 mass', '与刚度同比例；ωn/ζ 固定时手感几乎不变，一般保持 1', 'val-cmosFovMass')}
+                  <input id="inp-cmosFovMass" type="number" min="0.1" max="5" step="0.1" />
+                </div>
+              </div>
             </div>
 
-            <p class="panel-hint" style="font-weight:600;margin-top:8px">全局动力学（所有预设共用）</p>
-            <p class="panel-hint">一根 MSMD 弹簧。先 ωn 定脆度，再 ζ 定过冲；mass 默认 1。</p>
-            <div class="panel-row">
-              ${paramLabel('自然频率 ωn', '调大→回弹更快更脆（rad/s）', 'val-cmosFovAngularFreq')}
-              <input id="inp-cmosFovAngularFreq" type="number" min="4" max="40" step="0.5" />
+            <div class="section-block">
+              <div class="section-header">
+                <span class="section-title">相机位移通道</span>
+                <label>展开 <span id="val-expandCmosShakePos">展开</span>
+                  <input id="inp-expandCmosShakePos" type="checkbox" />
+                </label>
+              </div>
+              <div class="section-body" id="sect-cmosShakePos">
+                <p class="panel-hint">冲量按该预设自己的方向分解到相机局部 XYZ（三根弹簧可叠加）。用「试射此预设」或快捷按钮播放。</p>
+                <div class="panel-row">
+                  ${paramLabel('预设·XY 方位角 (°)', '仅此预设。0=正右，90=正上。试射/命中走这里，不改别的预设', 'val-cmosEffectPosAzimuth')}
+                  <input id="inp-cmosEffectPosAzimuth" type="number" min="0" max="360" step="1" />
+                </div>
+                <div class="panel-row">
+                  ${paramLabel('预设·相对 Z 倾角 (°)', '仅此预设。0=纯相机 Z，90=纯 XY 方位', 'val-cmosEffectPosTilt')}
+                  <input id="inp-cmosEffectPosTilt" type="number" min="0" max="90" step="1" />
+                </div>
+                <div class="panel-row">
+                  ${paramLabel('预设·位置阶跃 (m)', '开始时位移 x+=Δ；正=沿方向推出', 'val-cmosEffectImpulsePosM')}
+                  <input id="inp-cmosEffectImpulsePosM" type="number" min="-1" max="1" step="0.01" />
+                </div>
+                <div class="panel-row">
+                  ${paramLabel('预设·速度冲量 (m/s)', '开始时位移 v+=v0', 'val-cmosEffectImpulseVelM')}
+                  <input id="inp-cmosEffectImpulseVelM" type="number" min="-8" max="8" step="0.05" />
+                </div>
+                <p class="panel-hint" style="font-weight:600;margin-top:8px">位移全局动力学（所有预设共用）</p>
+                <div class="panel-row">
+                  ${paramLabel('自然频率 ωn', '调大→回弹更快更脆（rad/s）', 'val-cmosPosAngularFreq')}
+                  <input id="inp-cmosPosAngularFreq" type="number" min="4" max="120" step="0.5" />
+                </div>
+                <div class="panel-row">
+                  ${paramLabel('阻尼比 ζ', '调大→少过冲；调小→来回晃更弹', 'val-cmosPosDampingRatio')}
+                  <input id="inp-cmosPosDampingRatio" type="number" min="0.2" max="1.5" step="0.02" />
+                </div>
+                <div class="panel-row">
+                  ${paramLabel('最大位移 (m)', '软夹持上限', 'val-cmosMaxPosM')}
+                  <input id="inp-cmosMaxPosM" type="number" min="0" max="1.5" step="0.01" />
+                </div>
+                <div class="panel-row">
+                  ${paramLabel('质量 mass', '一般保持 1', 'val-cmosPosMass')}
+                  <input id="inp-cmosPosMass" type="number" min="0.1" max="5" step="0.1" />
+                </div>
+              </div>
             </div>
-            <div class="panel-row">
-              ${paramLabel('阻尼比 ζ', '调大→少过冲；调小→来回伸缩更弹', 'val-cmosFovDampingRatio')}
-              <input id="inp-cmosFovDampingRatio" type="number" min="0.2" max="1.5" step="0.02" />
-            </div>
-            <div class="panel-row">
-              ${paramLabel('最大 FOV 偏移 (°)', '软夹持上限；建议 ≤2.5', 'val-cmosMaxFovDeg')}
-              <input id="inp-cmosMaxFovDeg" type="number" min="0" max="8" step="0.1" />
-            </div>
+
+            <p class="panel-hint" style="font-weight:600;margin-top:8px">共用积分器</p>
             <div class="panel-row">
               ${paramLabel('单帧积分时间上限 (秒)', '调大→掉帧时一步走更远（易飞）；一般保持 0.05', 'val-cmosMaxDtSec')}
               <input id="inp-cmosMaxDtSec" type="number" min="0.01" max="0.1" step="0.005" />
@@ -151,10 +212,6 @@ export function cmosShakeSectionHtml(): string {
             <div class="panel-row">
               ${paramLabel('积分子步数', '调大→更稳更准、略耗 CPU；通常 4', 'val-cmosSubsteps')}
               <input id="inp-cmosSubsteps" type="number" min="1" max="8" step="1" />
-            </div>
-            <div class="panel-row">
-              ${paramLabel('质量 mass', '与刚度同比例；ωn/ζ 固定时手感几乎不变，一般保持 1', 'val-cmosFovMass')}
-              <input id="inp-cmosFovMass" type="number" min="0.1" max="5" step="0.1" />
             </div>
           </div>
         </div>
@@ -167,9 +224,13 @@ const CMOS_NUM_BINDS: Array<{ id: string; path: string }> = [
   { id: 'cmosFovAngularFreq', path: 'cmosShake.fovAngularFreq' },
   { id: 'cmosFovDampingRatio', path: 'cmosShake.fovDampingRatio' },
   { id: 'cmosMaxFovDeg', path: 'cmosShake.maxFovDeg' },
+  { id: 'cmosFovMass', path: 'cmosShake.fovMass' },
+  { id: 'cmosPosAngularFreq', path: 'cmosShake.posAngularFreq' },
+  { id: 'cmosPosDampingRatio', path: 'cmosShake.posDampingRatio' },
+  { id: 'cmosMaxPosM', path: 'cmosShake.maxPosM' },
+  { id: 'cmosPosMass', path: 'cmosShake.posMass' },
   { id: 'cmosMaxDtSec', path: 'cmosShake.maxDtSec' },
   { id: 'cmosSubsteps', path: 'cmosShake.substeps' },
-  { id: 'cmosFovMass', path: 'cmosShake.fovMass' },
   { id: 'cmosDebugImpulsePos', path: 'cmosShake.debugImpulse.impulsePosDeg' },
   { id: 'cmosDebugImpulseVel', path: 'cmosShake.debugImpulse.impulseVelDeg' },
 ];
@@ -189,11 +250,22 @@ export function bindCmosShakePanel(opts: {
   bindSectionExpand: (
     inputId: string,
     valueId: string,
-    sectionKey: 'cmosShake',
+    sectionKey: keyof ExpandedSections,
     bodyId: string,
   ) => void;
+  /** 存为本地默认前把编辑器里未提交的预设字段写入 CONFIG。 */
+  registerFlush?: (flush: () => void) => void;
 }): void {
-  const { root, syncers, onChange, setFlash, bindNumber, bindToggle, bindSectionExpand } =
+  const {
+    root,
+    syncers,
+    onChange,
+    setFlash,
+    bindNumber,
+    bindToggle,
+    bindSectionExpand,
+    registerFlush,
+  } =
     opts;
 
   bindSectionExpand(
@@ -201,6 +273,18 @@ export function bindCmosShakePanel(opts: {
     'val-expandCmosShake',
     'cmosShake',
     'sect-cmosShake',
+  );
+  bindSectionExpand(
+    'inp-expandCmosShakeFov',
+    'val-expandCmosShakeFov',
+    'cmosShakeFov',
+    'sect-cmosShakeFov',
+  );
+  bindSectionExpand(
+    'inp-expandCmosShakePos',
+    'val-expandCmosShakePos',
+    'cmosShakePos',
+    'sect-cmosShakePos',
   );
   bindToggle('inp-cmosShakeEnabled', 'cmosShake.enabled', ['关', '开'], 'val-cmosShakeEnabled');
   bindToggle(
@@ -273,9 +357,25 @@ export function bindCmosShakePanel(opts: {
     const velInput = root.querySelector(
       '#inp-cmosEffectImpulseVel',
     ) as HTMLInputElement | null;
+    const posMInput = root.querySelector(
+      '#inp-cmosEffectImpulsePosM',
+    ) as HTMLInputElement | null;
+    const velMInput = root.querySelector(
+      '#inp-cmosEffectImpulseVelM',
+    ) as HTMLInputElement | null;
+    const azInput = root.querySelector(
+      '#inp-cmosEffectPosAzimuth',
+    ) as HTMLInputElement | null;
+    const tiltInput = root.querySelector(
+      '#inp-cmosEffectPosTilt',
+    ) as HTMLInputElement | null;
 
     const posVal = root.querySelector('#val-cmosEffectImpulsePos');
     const velVal = root.querySelector('#val-cmosEffectImpulseVel');
+    const posMVal = root.querySelector('#val-cmosEffectImpulsePosM');
+    const velMVal = root.querySelector('#val-cmosEffectImpulseVelM');
+    const azVal = root.querySelector('#val-cmosEffectPosAzimuth');
+    const tiltVal = root.querySelector('#val-cmosEffectPosTilt');
     const quickHost = root.querySelector('#cmos-effect-quick-btns');
 
     const CMOS_ID_RE = /^[A-Za-z_][A-Za-z0-9_]*$/;
@@ -299,6 +399,10 @@ export function bindCmosShakePanel(opts: {
         label,
         impulsePosDeg: num(posInput, 0),
         impulseVelDeg: num(velInput, 0),
+        impulsePosM: num(posMInput, 0),
+        impulseVelM: num(velMInput, 0),
+        posAzimuthDeg: num(azInput, 0),
+        posTiltDeg: num(tiltInput, 0),
       };
       const normalized = normalizeCmosShakeEffectPreset(
         id || 'draft',
@@ -308,6 +412,31 @@ export function bindCmosShakePanel(opts: {
       );
       return { id, ...normalized };
     };
+
+    const flushEditorToSelectedPreset = (): void => {
+      const editor = readEditor();
+      const id =
+        (select?.value && CONFIG.cmosShake.presets[select.value]
+          ? select.value
+          : editor.id) || '';
+      if (!id || !CMOS_ID_RE.test(id)) return;
+      const presets = ensurePresetsMutable();
+      if (!presets[id] && !editor.id) return;
+      const { id: _drop, ...fields } = editor;
+      void _drop;
+      presets[id] = normalizeCmosShakeEffectPreset(
+        id,
+        {
+          ...presets[id],
+          ...fields,
+          label: editor.label || id,
+        },
+        null,
+        CONFIG.cmosShake.fovToVelocity,
+      );
+    };
+
+    registerFlush?.(flushEditorToSelectedPreset);
 
     const writeEditor = (id: string, p: CmosShakeEffectPreset): void => {
       const n = normalizeCmosShakeEffectPreset(
@@ -320,9 +449,17 @@ export function bindCmosShakePanel(opts: {
       if (labelInput) labelInput.value = n.label ?? id;
       if (posInput) posInput.value = formatNumber(n.impulsePosDeg, 2);
       if (velInput) velInput.value = formatNumber(n.impulseVelDeg, 2);
+      if (posMInput) posMInput.value = formatNumber(n.impulsePosM, 3);
+      if (velMInput) velMInput.value = formatNumber(n.impulseVelM, 3);
+      if (azInput) azInput.value = formatNumber(n.posAzimuthDeg, 1);
+      if (tiltInput) tiltInput.value = formatNumber(n.posTiltDeg, 1);
 
       if (posVal) posVal.textContent = formatNumber(n.impulsePosDeg, 2);
       if (velVal) velVal.textContent = formatNumber(n.impulseVelDeg, 2);
+      if (posMVal) posMVal.textContent = formatNumber(n.impulsePosM, 3);
+      if (velMVal) velMVal.textContent = formatNumber(n.impulseVelM, 3);
+      if (azVal) azVal.textContent = formatNumber(n.posAzimuthDeg, 1);
+      if (tiltVal) tiltVal.textContent = formatNumber(n.posTiltDeg, 1);
     };
 
     const refreshQuickButtons = (): void => {
@@ -406,6 +543,20 @@ export function bindCmosShakePanel(opts: {
     };
     bindValLabel(posInput, posVal, 2);
     bindValLabel(velInput, velVal, 2);
+    bindValLabel(posMInput, posMVal, 3);
+    bindValLabel(velMInput, velMVal, 3);
+    bindValLabel(azInput, azVal, 1);
+    bindValLabel(tiltInput, tiltVal, 1);
+
+    const liveFlushOnInput = (el: HTMLInputElement | null) => {
+      if (!el) return;
+      el.addEventListener('input', flushEditorToSelectedPreset);
+      el.addEventListener('change', flushEditorToSelectedPreset);
+    };
+    liveFlushOnInput(azInput);
+    liveFlushOnInput(tiltInput);
+    liveFlushOnInput(posMInput);
+    liveFlushOnInput(velMInput);
 
     root.querySelector('#btn-cmosEffect-new')?.addEventListener('click', () => {
       const editor = readEditor();
@@ -478,7 +629,8 @@ export function bindCmosShakePanel(opts: {
       presets[newId] = next;
       refreshSelect(newId);
       onChange('cmosShake.presets', presets, CONFIG);
-      setFlash(`已保存震动预设 ${newId}（记得点「存为本地默认」）`);
+      saveCurrentConfig();
+      setFlash(`已保存震动预设 ${newId}，并写入本地默认`);
     });
 
     root.querySelector('#btn-cmosEffect-delete')?.addEventListener('click', () => {
@@ -532,7 +684,7 @@ export function bindCmosShakePanel(opts: {
       if (velInput) velInput.value = formatNumber(d.impulseVelDeg, 2);
       if (posVal) posVal.textContent = formatNumber(d.impulsePosDeg, 2);
       if (velVal) velVal.textContent = formatNumber(d.impulseVelDeg, 2);
-      setFlash('已从自定义冲量填入编辑器（需点保存写入预设）');
+      setFlash('已从自定义冲量填入 FOV 编辑器（需点保存写入预设）');
     });
   }
 }

@@ -489,6 +489,8 @@
     "lightUseDynamicLighting": true,
     "shadowMapEnabled": true,
     "shadowMapSize": 2048,
+    "antialias": false,
+    "fighterMeshLod": "high",
     "maxPixelRatio": 1,
     "shadowCameraExtent": 20,
     "shadowCameraNear": 0.5,
@@ -1541,12 +1543,20 @@
       "useGameSpeed": false,
       "fovMass": 1,
       "fovAngularFreq": 40,
-      "fovDampingRatio": 0.36,
+      "fovDampingRatio": 0.5,
       "maxFovDeg": 2.5,
+      "posMass": 1,
+      "posAngularFreq": 90,
+      "posDampingRatio": 0.4,
+      "maxPosM": 0.6,
+      "posAzimuthDeg": 0,
+      "posTiltDeg": 0,
       "maxDtSec": 0.05,
       "substeps": 4,
       "settleFovDeg": 0.02,
       "settleFovVel": 0.2,
+      "settlePosM": 0.002,
+      "settlePosVel": 0.02,
       "presetOnHitByStrength": {
         "S": "S_impact",
         "M": "M_impact",
@@ -1558,117 +1568,47 @@
         "L": "tap"
       },
       "presets": {
-        "tap": {
-          "label": "轻点",
-          "impulsePosDeg": 0,
-          "impulseVelDeg": 0,
-          "fov": 0,
-          "fovKickDeg": 0
-        },
-        "tick": {
-          "label": "轻击",
-          "impulsePosDeg": 0,
-          "impulseVelDeg": 0,
-          "fov": 0,
-          "fovKickDeg": 0
-        },
-        "heavy": {
-          "label": "重击",
-          "impulsePosDeg": -0.6,
-          "impulseVelDeg": -2,
-          "fov": -0.25,
-          "fovKickDeg": -0.6
-        },
-        "error": {
-          "label": "错误",
-          "impulsePosDeg": 0,
-          "impulseVelDeg": 0,
-          "fov": 0,
-          "fovKickDeg": 0
-        },
-        "nudge": {
-          "label": "轻推",
-          "impulsePosDeg": 0,
-          "impulseVelDeg": 0,
-          "fov": 0,
-          "fovKickDeg": 0
-        },
-        "settle": {
-          "label": "落定",
-          "impulsePosDeg": 0,
-          "impulseVelDeg": 0,
-          "fov": 0,
-          "fovKickDeg": 0
-        },
-        "thud": {
-          "label": "顿挫",
-          "impulsePosDeg": 0,
-          "impulseVelDeg": 0,
-          "fov": 0,
-          "fovKickDeg": 0
-        },
-        "swayLR": {
-          "label": "左右平移",
-          "impulsePosDeg": 0,
-          "impulseVelDeg": 0,
-          "fov": 0,
-          "fovKickDeg": 0
-        },
-        "bounceUD": {
-          "label": "上下来回",
-          "impulsePosDeg": 0,
-          "impulseVelDeg": 0,
-          "fov": 0,
-          "fovKickDeg": 0
-        },
-        "doubleKick": {
-          "label": "双重冲击",
-          "impulsePosDeg": 0,
-          "impulseVelDeg": 0,
-          "fov": 0,
-          "fovKickDeg": 0
-        },
-        "swayAngle": {
-          "label": "左右摆角",
-          "impulsePosDeg": 0,
-          "impulseVelDeg": 0,
-          "fov": 0,
-          "fovKickDeg": 0
-        },
-        "rumble": {
-          "label": "持续微抖",
-          "impulsePosDeg": 0,
-          "impulseVelDeg": 0,
-          "fov": 0,
-          "fovKickDeg": 0
-        },
         "S_impact": {
           "label": "轻-冲击",
           "impulsePosDeg": 0,
           "impulseVelDeg": 0,
           "fov": 0,
-          "fovKickDeg": 0
+          "fovKickDeg": 0,
+          "impulsePosM": 0.05,
+          "impulseVelM": 0.28,
+          "posAzimuthDeg": 0,
+          "posTiltDeg": 0
         },
         "M_impact": {
           "label": "中-冲击",
-          "impulsePosDeg": 0.3,
-          "impulseVelDeg": -10,
-          "fov": -1.25,
-          "fovKickDeg": 0.3
+          "impulsePosDeg": 0,
+          "impulseVelDeg": 0,
+          "fov": 0,
+          "fovKickDeg": 0,
+          "impulsePosM": 0.19,
+          "impulseVelM": -4,
+          "posAzimuthDeg": 270,
+          "posTiltDeg": 0
         },
         "L_impact": {
           "label": "重-冲击",
-          "impulsePosDeg": 0.55,
-          "impulseVelDeg": -18.2,
-          "fov": -2.275,
-          "fovKickDeg": 0.55
+          "impulsePosDeg": 0,
+          "impulseVelDeg": 0,
+          "fov": 0,
+          "fovKickDeg": 0,
+          "impulsePosM": 0.22,
+          "impulseVelM": -5,
+          "posAzimuthDeg": 90,
+          "posTiltDeg": 12
         }
       },
       "debugImpulse": {
         "impulsePosDeg": 0,
-        "impulseVelDeg": 1.2,
-        "fov": 0.15,
-        "fovKickDeg": 0
+        "impulseVelDeg": 0,
+        "fov": 0,
+        "fovKickDeg": 0,
+        "impulsePosM": 0,
+        "impulseVelM": 0
       },
       "fovToVelocity": 8,
       "maxSpeedFov": 40,
@@ -1744,6 +1684,8 @@
       "renderBoxes": true,
       "camera": true,
       "cmosShake": true,
+      "cmosShakeFov": false,
+      "cmosShakePos": true,
       "lighting": true,
       "animDrive": false,
       "commandProbe": true,

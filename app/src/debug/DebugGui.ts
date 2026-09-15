@@ -265,9 +265,12 @@ export function createDebugGui(
   shake.add(cfg.cmosShake, 'enabled').name('启用震动');
   shake.add(cfg.cmosShake, 'intensity', 0, 1, 0.01).name('全局强度↑更猛');
   shake.add(cfg.cmosShake, 'useGameSpeed').name('跟随游戏倍速');
-  shake.add(cfg.cmosShake, 'fovAngularFreq', 4, 40, 0.5).name('FOV频率↑更快回');
+  shake.add(cfg.cmosShake, 'fovAngularFreq', 4, 120, 0.5).name('FOV频率↑更快回');
   shake.add(cfg.cmosShake, 'fovDampingRatio', 0.2, 1.5, 0.02).name('FOV阻尼↑少过冲');
   shake.add(cfg.cmosShake, 'maxFovDeg', 0, 8, 0.1).name('最大FOV偏移↑更猛');
+  shake.add(cfg.cmosShake, 'posAngularFreq', 4, 120, 0.5).name('位移频率↑更快回');
+  shake.add(cfg.cmosShake, 'posDampingRatio', 0.2, 1.5, 0.02).name('位移阻尼↑少过冲');
+  shake.add(cfg.cmosShake, 'maxPosM', 0, 1.5, 0.01).name('最大位移(米)↑更猛');
   shake.add(cfg.cmosShake.presetOnHitByStrength, 'S').name('轻命中→S_impact');
   shake.add(cfg.cmosShake.presetOnHitByStrength, 'M').name('中命中→M_impact');
   shake.add(cfg.cmosShake.presetOnHitByStrength, 'L').name('重命中→L_impact');

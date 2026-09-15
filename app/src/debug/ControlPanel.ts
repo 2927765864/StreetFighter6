@@ -1742,6 +1742,7 @@ export function setupControlPanel(
   bindSelect(ctx, 'sel-fighterMeshLod', 'fighterMeshLod');
   bindSelect(ctx, 'sel-perfOverlayPosition', 'perfOverlayPosition');
 
+  let flushCmosShakeEditor: () => void = () => {};
   bindCmosShakePanel({
     root: host,
     syncers,
@@ -1752,6 +1753,9 @@ export function setupControlPanel(
       bindToggle(ctx, inputId, path, labels ?? ['关', '开'], valueId),
     bindSectionExpand: (inputId, valueId, sectionKey, bodyId) =>
       bindSectionExpand(ctx, inputId, valueId, sectionKey, bodyId),
+    registerFlush: (fn) => {
+      flushCmosShakeEditor = fn;
+    },
   });
   bindSfxPanel(host, hooks.combatSfx, syncers);
 
@@ -3294,6 +3298,7 @@ export function setupControlPanel(
   );
 
   byId<HTMLButtonElement>(host, 'btn-save-local').addEventListener('click', () => {
+    flushCmosShakeEditor();
     saveCurrentConfig();
     setFlash('已存为本地默认（刷新后保留）');
   });
@@ -3308,6 +3313,7 @@ export function setupControlPanel(
     setFlash('已恢复出厂默认');
   });
   byId<HTMLButtonElement>(host, 'btn-export-shipping').addEventListener('click', () => {
+    flushCmosShakeEditor();
     exportShippingJson();
     setFlash(
       wudaClipHub.clip

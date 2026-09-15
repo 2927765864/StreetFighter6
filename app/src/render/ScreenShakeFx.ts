@@ -2,7 +2,7 @@
  * CMOS screen-shake — Three.js camera adapter.
  *
  * Kernel stays engine-free; this layer steps the model and applies FOV
- * offset onto the fight camera after `applyFightCamera`.
+ * plus camera-local position offset after `applyFightCamera`.
  */
 
 import type { PerspectiveCamera } from 'three';
@@ -51,14 +51,21 @@ export class ScreenShakeFx {
   }
 
   /**
-   * FOV offset after fight pose is applied.
-   * 相对基础 fov 的度偏移（正=变宽）；需在 applyFightCamera 写完基础 fov 之后调用。
+   * FOV + 相机局部位移。需在 applyFightCamera 写完基础 pose/fov 之后调用。
+   * 位移沿相机局部轴：+X 右、+Y 上、+Z 相机后方（Three.js 约定）。
    */
   applyToCamera(camera: PerspectiveCamera): void {
-    const { fov } = this.model.getOutput();
-    if (fov === 0) return;
-    camera.fov += fov;
-    camera.updateProjectionMatrix();
+    const { fov, offset } = this.model.getOutput();
+    if (fov !== 0) {
+      camera.fov += fov;
+      camera.updateProjectionMatrix();
+    }
+    if (offset.x !== 0 || offset.y !== 0 || offset.z !== 0) {
+      camera.translateX(offset.x);
+      camera.translateY(offset.y);
+      camera.translateZ(offset.z);
+      camera.updateMatrixWorld();
+    }
   }
 
   /** ControlPanel `action:cmosShake:*` handler. */

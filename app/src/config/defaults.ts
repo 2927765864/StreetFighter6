@@ -13,6 +13,8 @@ export function defaultExpandedSections(): ExpandedSections {
     renderBoxes: true,
     camera: true,
     cmosShake: true,
+    cmosShakeFov: true,
+    cmosShakePos: true,
     lighting: true,
     animDrive: false,
     commandProbe: false,
