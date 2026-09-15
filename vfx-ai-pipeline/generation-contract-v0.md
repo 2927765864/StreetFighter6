@@ -197,6 +197,15 @@ No flash, no sparks, no character.
 
 ---
 
+### E6-c · 宽短纤维烟向左（E4-c 镜像，14 帧 PIL）
+
+**中文要点**  
+E4-c master **水平翻转**朝左。**14 帧**，转折 **第 7 帧**：f1–f7 略放大并竖直压缩、大幅**左移**（约 2× 第 1 帧宽度）；f8–f14 水平拉伸、渐隐、缓慢左移。脚本：`compose_e6c_from_master.py`。
+
+**推荐文件名**：`E6c_wide_short_fiber_smoke`
+
+---
+
 ### E5 · 较窄较长冲击烟雾
 
 **中文要点**  

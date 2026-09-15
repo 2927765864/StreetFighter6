@@ -363,6 +363,8 @@ export type HitVfxTriggerArgs = {
    * 2D flipbook faces the camera; depth is not part of the spin.
    */
   impulse?: [number, number, number];
+  /** Attacker move id at contact (e.g. ryu_5hp). */
+  moveId?: string;
 };
 
 const ELEMENT_TYPES: HitVfxElementType[] = [

@@ -183,6 +183,11 @@ export type MutableSimConfig = {
   enableSpecials: boolean;
   /** Gameplay gate: throw command usage (definitions stay loaded). */
   enableThrows: boolean;
+  /**
+   * Training gate: only standing LP/MP/HP normals.
+   * Blocks kicks, 6MP/6HP/4HP uniques, crouch normals, and jump attacks.
+   */
+  standingPunchOnly: boolean;
   enableActionBuffer: boolean;
   dashFrames: number;
   dashBackFrames: number;
@@ -631,6 +636,7 @@ export function createDefaultSimConfig(): MutableSimConfig {
     enableCancel: true,
     enableSpecials: false,
     enableThrows: false,
+    standingPunchOnly: false,
     enableActionBuffer: true,
     dashFrames: dashFwdFrames,
     dashBackFrames,
@@ -910,6 +916,7 @@ export function applyConfigToMatchOpts(cfg: MutableSimConfig) {
     enableCancel: cfg.enableCancel,
     enableSpecials: cfg.enableSpecials,
     enableThrows: cfg.enableThrows,
+    standingPunchOnly: cfg.standingPunchOnly,
     enableActionBuffer: cfg.enableActionBuffer,
     dashFrames: cfg.dashFrames,
     dashBackFrames: cfg.dashBackFrames,

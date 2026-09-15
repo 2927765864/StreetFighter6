@@ -1,0 +1,1 @@
+E6-c = E4-c master flipped. 14 frames, pivot f7, travel left. f1-7 grow 1.18 + V-compress 0.88 + left 2× sprite width; f8-14 H-stretch 1.34, fade, slow left.

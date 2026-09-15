@@ -72,6 +72,7 @@ describe('wuda CONFIG defaults', () => {
       expect(layer.freeColor).toBe(0xbfb399);
       expect(layer.detachOnlyOnActiveHit).toBe(false);
       expect(layer.detachOnlyOnHitstun).toBe(false);
+      expect(layer.detachOnlyOnStandHP).toBe(false);
       expect(layer.detachInstantRefill).toBe(false);
       expect(layer.detachRefillDelay).toBeCloseTo(0.05);
       expect(layer.freePoolCapacity).toBe(128);
@@ -384,6 +385,43 @@ describe('wudaCoatMath', () => {
     expect(
       resolveWudaAllowDetach(neither, hitstunMid, { inHitstop: true }),
     ).toBe(false);
+  });
+
+  it('stand-HP lock only allows 5HP attack or being hit by 5HP', () => {
+    const standHp = {
+      wudaDetachOnlyOnActiveHit: false,
+      wudaDetachOnlyOnHitstun: false,
+      wudaDetachOnlyOnStandHP: true,
+    };
+    const attackHp = {
+      phase: 'attack',
+      stunTimer: 0,
+      hitstunDetachPulseFrames: 0,
+      mover: { currentHitBoxesLocal: () => [{ x: 0 }] },
+      moveId: 'ryu_5hp',
+    };
+    const attackLp = { ...attackHp, moveId: 'ryu_5lp' };
+    const hitByHp = {
+      phase: 'hitstun',
+      stunTimer: 10,
+      hitstunDetachPulseFrames: 3,
+      mover: { currentHitBoxesLocal: () => [] as unknown[] },
+      lastHitByMoveId: 'ryu_5hp',
+    };
+    const hitByLp = { ...hitByHp, lastHitByMoveId: 'ryu_5lp' };
+
+    expect(resolveWudaAllowDetach(standHp, attackHp)).toBe(true);
+    expect(resolveWudaAllowDetach(standHp, attackLp)).toBe(false);
+    expect(resolveWudaAllowDetach(standHp, hitByHp)).toBe(true);
+    expect(resolveWudaAllowDetach(standHp, hitByLp)).toBe(false);
+
+    const attackAndHp = {
+      wudaDetachOnlyOnActiveHit: true,
+      wudaDetachOnlyOnHitstun: false,
+      wudaDetachOnlyOnStandHP: true,
+    };
+    expect(resolveWudaAllowDetach(attackAndHp, attackHp)).toBe(true);
+    expect(resolveWudaAllowDetach(attackAndHp, attackLp)).toBe(false);
   });
 
   it('armWudaDetachLatch keeps the gate open after a short pulse', () => {

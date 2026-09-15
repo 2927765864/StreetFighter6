@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  billboardFlightSpin,
+  flightCompressAspect,
+  normalizeWudaGraphicKind,
   resolveWudaEllipseShape,
   resolveWudaEllipseShapeFromIndex,
+  resolveWudaFlightRingShape,
   sampleWudaFreeSize,
   wudaFreeSizeOverLife,
   wudaHash01,
@@ -41,5 +45,24 @@ describe('wudaParticleShape', () => {
   it('fades free size over life with prior curve', () => {
     expect(wudaFreeSizeOverLife(0.01, 1)).toBeCloseTo(0.01);
     expect(wudaFreeSizeOverLife(0.01, 0)).toBeCloseTo(0.0035);
+  });
+
+  it('normalizes graphic kind', () => {
+    expect(normalizeWudaGraphicKind('ring')).toBe('ring');
+    expect(normalizeWudaGraphicKind('disc')).toBe('disc');
+    expect(normalizeWudaGraphicKind('nope')).toBe('disc');
+  });
+
+  it('compresses aspect across flight and aligns local X to billboard velocity', () => {
+    expect(flightCompressAspect(0)).toBeCloseTo(1);
+    expect(flightCompressAspect(0.5)).toBeGreaterThan(1.5);
+    // Camera looking -Z: right=+X, up=+Y. Velocity +X → local X along right → spin 0.
+    const alongRight = billboardFlightSpin(1, 0, 0, 1, 0, 0, 0, 1, 0);
+    expect(alongRight).toBeCloseTo(0);
+    const alongUp = billboardFlightSpin(0, 1, 0, 1, 0, 0, 0, 1, 0);
+    expect(alongUp).toBeCloseTo(Math.PI * 0.5);
+    const ring = resolveWudaFlightRingShape(1, 0, 0, 1, 0, 0, 0, 1, 0, 0.55);
+    expect(ring.aspect).toBeGreaterThan(1.5);
+    expect(ring.spin).toBeCloseTo(0);
   });
 });

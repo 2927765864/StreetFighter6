@@ -60,6 +60,7 @@ export function matchEventToTriggerArgs(
     height,
     x: ev.defenderX,
     facing: ev.defenderFacing,
+    moveId: ev.moveId,
   };
 }
 

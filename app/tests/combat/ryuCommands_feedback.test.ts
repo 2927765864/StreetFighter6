@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { resolveIntent } from '../../src/combat/command/IntentResolver';
 import { tryMatchCommand } from '../../src/combat/command/MotionMatcher';
-import { RYU_FEEDBACK_COMMANDS } from '../../src/combat/command/ryuCommands';
+import {
+  isStandingPunchOnlyCommand,
+  RYU_FEEDBACK_COMMANDS,
+} from '../../src/combat/command/ryuCommands';
 import type { HistoryEntry } from '../../src/combat/input/InputHistory';
 import {
   BTN_HK,
@@ -95,6 +98,39 @@ describe('RYU_FEEDBACK_COMMANDS', () => {
     const intent = resolveIntent(entries, 4, cfg, { phase: 'idle' });
     expect(intent.kind).toBe('special');
     expect(intent.moveId).toBe('ryu_hadoken_lp');
+  });
+
+  it('standingPunchOnly keeps 5LP/5MP/5HP and remaps unique/kick/air', () => {
+    const table = RYU_FEEDBACK_COMMANDS.filter(
+      (c) => c.kind !== 'normal' || isStandingPunchOnlyCommand(c.id),
+    );
+    const ctx = { phase: 'idle' as const, commands: table };
+
+    expect(resolveIntent([entry(5, BTN_LP, 1)], 1, cfg, ctx).moveId).toBe(
+      'ryu_5lp',
+    );
+    expect(resolveIntent([entry(5, BTN_MP, 1)], 1, cfg, ctx).moveId).toBe(
+      'ryu_5mp',
+    );
+    expect(resolveIntent([entry(5, BTN_HP, 1)], 1, cfg, ctx).moveId).toBe(
+      'ryu_5hp',
+    );
+    expect(resolveIntent([entry(5, BTN_LK, 1)], 1, cfg, ctx).kind).toBe('none');
+    expect(resolveIntent([entry(6, BTN_MP, 1)], 1, cfg, ctx).moveId).toBe(
+      'ryu_5mp',
+    );
+    expect(resolveIntent([entry(4, BTN_HP, 1)], 1, cfg, ctx).moveId).toBe(
+      'ryu_5hp',
+    );
+    expect(resolveIntent([entry(4, BTN_MP, 1)], 1, cfg, ctx).moveId).toBe(
+      'ryu_5mp',
+    );
+    expect(
+      resolveIntent([entry(5, BTN_LP, 1)], 1, cfg, {
+        phase: 'airborne',
+        commands: table,
+      }).kind,
+    ).toBe('none');
   });
 
   it('6+MP → unique ryu_6mp over 5mp', () => {

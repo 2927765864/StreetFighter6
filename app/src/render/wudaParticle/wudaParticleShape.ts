@@ -3,12 +3,78 @@
  * Shape variation rides the existing instance matrix (no extra buffers/draws).
  */
 
+export type WudaGraphicKind = 'disc' | 'ring';
+
 export type WudaEllipseShape = {
   /** Applied as scaleX = size * aspect, scaleY = size / aspect. */
   aspect: number;
   /** Radians, spin around the billboard normal (camera forward). */
   spin: number;
 };
+
+export function normalizeWudaGraphicKind(v: unknown): WudaGraphicKind {
+  return v === 'ring' ? 'ring' : 'disc';
+}
+
+/**
+ * Billboard squash perpendicular to the projected flight direction.
+ * compress 0 → circle; 0.55 → oval ring flattened across the track
+ * (major axis along flight, minor axis across it).
+ * aspect > 1 makes scaleY (local, after spin) the minor axis.
+ */
+export function flightCompressAspect(compress: number): number {
+  const c = compress > 0 ? (compress < 0.9 ? compress : 0.9) : 0;
+  return 1 / Math.max(0.12, 1 - c);
+}
+
+/**
+ * Spin so local +X aligns with velocity projected onto the camera plane.
+ * Compressing Y then flattens the ring perpendicular to the flight track.
+ */
+export function billboardFlightSpin(
+  velX: number,
+  velY: number,
+  velZ: number,
+  camRightX: number,
+  camRightY: number,
+  camRightZ: number,
+  camUpX: number,
+  camUpY: number,
+  camUpZ: number,
+): number {
+  const vx = velX * camRightX + velY * camRightY + velZ * camRightZ;
+  const vy = velX * camUpX + velY * camUpY + velZ * camUpZ;
+  if (vx * vx + vy * vy < 1e-10) return 0;
+  return Math.atan2(vy, vx);
+}
+
+export function resolveWudaFlightRingShape(
+  velX: number,
+  velY: number,
+  velZ: number,
+  camRightX: number,
+  camRightY: number,
+  camRightZ: number,
+  camUpX: number,
+  camUpY: number,
+  camUpZ: number,
+  compress: number,
+): WudaEllipseShape {
+  return {
+    aspect: flightCompressAspect(compress),
+    spin: billboardFlightSpin(
+      velX,
+      velY,
+      velZ,
+      camRightX,
+      camRightY,
+      camRightZ,
+      camUpX,
+      camUpY,
+      camUpZ,
+    ),
+  };
+}
 
 /** Deterministic 0..1 hash from index + salt (no allocation). */
 export function wudaHash01(index: number, salt: number): number {

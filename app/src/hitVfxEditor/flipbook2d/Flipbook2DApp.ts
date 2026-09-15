@@ -33,6 +33,7 @@ const TRACK_COLORS: Record<FlipbookLayerId, string> = {
   E5b_narrow_long_fiber_smoke: '#5aa888',
   E5c_narrow_long_fiber_smoke: '#6aac98',
   E6_narrow_long_smoke_rtl: '#9ab07a',
+  E6c_wide_short_fiber_smoke: '#8aa890',
   E7_sweat_spray: '#d8e8f0',
   E7b_sweat_scatter: '#c0d8e8',
   E7c_sweat_chunks: '#b8d0e0',

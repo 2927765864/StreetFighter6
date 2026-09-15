@@ -37,6 +37,7 @@ import {
   type WudaFreePoolParticle,
 } from './wudaFreePool';
 import {
+  applyWudaGraphicKind,
   createWudaInstanceAppearance,
   resolveWudaInstanceColor,
   setWudaInstanceOpacity,
@@ -44,9 +45,11 @@ import {
 import {
   resolveWudaEllipseShape,
   resolveWudaEllipseShapeFromIndex,
+  resolveWudaFlightRingShape,
   sampleWudaFreeSize,
   wudaFreeSizeOverLife,
   type WudaEllipseShape,
+  type WudaGraphicKind,
 } from './wudaParticleShape';
 import type { MeshBasicNodeMaterial } from 'three/webgpu';
 
@@ -79,6 +82,8 @@ const _quat = new THREE.Quaternion();
 const _spinQuat = new THREE.Quaternion();
 const _scale = new THREE.Vector3();
 const _camQuat = new THREE.Quaternion();
+const _camRight = new THREE.Vector3();
+const _camUp = new THREE.Vector3();
 const _zAxis = new THREE.Vector3(0, 0, 1);
 const _tmpPos = new THREE.Vector3();
 const _unitShape: WudaEllipseShape = { aspect: 1, spin: 0 };
@@ -150,6 +155,7 @@ export class WudaVertexCoatRuntime {
   /** True after the first successful GPU commit — hold stream, never mix CPU. */
   private gpuStreamActive = false;
   private lastStatsLogMs = 0;
+  private appliedGraphicKind: WudaGraphicKind | null = null;
   private degradedLogged = false;
   private stalePendingDiscardCount = 0;
 
@@ -303,7 +309,9 @@ export class WudaVertexCoatRuntime {
       geo,
       instanceCap,
       !!cfg.wudaBlendAdditive,
+      cfg.wudaGraphicKind,
     );
+    this.appliedGraphicKind = cfg.wudaGraphicKind;
     this.opacityAttr = appearance.opacityAttr;
     this.instanced = new THREE.InstancedMesh(geo, appearance.material, instanceCap);
     this.instanced.frustumCulled = false;
@@ -392,11 +400,17 @@ export class WudaVertexCoatRuntime {
 
     if (this.camera) this.camera.getWorldQuaternion(_camQuat);
     else _camQuat.identity();
+    _camRight.set(1, 0, 0).applyQuaternion(_camQuat);
+    _camUp.set(0, 1, 0).applyQuaternion(_camQuat);
 
     const blendMat = this.instanced!.material as MeshBasicNodeMaterial;
     blendMat.blending = cfg.wudaBlendAdditive
       ? THREE.AdditiveBlending
       : THREE.NormalBlending;
+    if (this.opacityAttr && this.appliedGraphicKind !== cfg.wudaGraphicKind) {
+      applyWudaGraphicKind(blendMat, this.opacityAttr, cfg.wudaGraphicKind);
+      this.appliedGraphicKind = cfg.wudaGraphicKind;
+    }
 
     const forceCpuSense =
       cfg.wudaBakeAwaitReadback === true ||
@@ -897,6 +911,7 @@ export class WudaVertexCoatRuntime {
               false,
               undefined,
               freeShape,
+              _flyVel,
             );
           }
         } else {
@@ -950,6 +965,7 @@ export class WudaVertexCoatRuntime {
         false,
         cfg.wudaFreeOpacity * lifeT,
         { aspect: s.aspect, spin: s.spin },
+        s.vel,
       );
     }
 
@@ -979,6 +995,7 @@ export class WudaVertexCoatRuntime {
         false,
         cfg.wudaFreeOpacity * lifeT,
         { aspect: p.aspect, spin: p.spin },
+        p.vel,
       );
     }
     this.freeHighWater = high;
@@ -1027,18 +1044,32 @@ export class WudaVertexCoatRuntime {
     stuck: boolean,
     opacityOverride?: number,
     shape?: WudaEllipseShape,
+    vel?: THREE.Vector3,
   ): void {
     if (!this.instanced || !this.opacityAttr) return;
     const base = Math.max(0, size);
     const ellipse =
-      shape ??
-      (base > 0
-        ? resolveWudaEllipseShapeFromIndex(
-            index,
-            cfg.wudaSeed,
-            cfg.wudaEllipseAspectJitter,
+      cfg.wudaGraphicKind === 'ring' && vel && vel.lengthSq() > 1e-8
+        ? resolveWudaFlightRingShape(
+            vel.x,
+            vel.y,
+            vel.z,
+            _camRight.x,
+            _camRight.y,
+            _camRight.z,
+            _camUp.x,
+            _camUp.y,
+            _camUp.z,
+            cfg.wudaFlightCompress,
           )
-        : _unitShape);
+        : (shape ??
+          (base > 0
+            ? resolveWudaEllipseShapeFromIndex(
+                index,
+                cfg.wudaSeed,
+                cfg.wudaEllipseAspectJitter,
+              )
+            : _unitShape));
     const aspect = ellipse.aspect > 0.05 ? ellipse.aspect : 1;
     _scale.set(base * aspect, base / aspect, base > 0 ? 1 : 0);
     _quat.copy(_camQuat);
@@ -1069,6 +1100,7 @@ export class WudaVertexCoatRuntime {
       (this.instanced.material as THREE.Material).dispose();
       this.instanced = null;
     }
+    this.appliedGraphicKind = null;
     this.opacityAttr = null;
     this.slots = [];
     this.freePool = [];

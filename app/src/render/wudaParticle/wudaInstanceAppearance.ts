@@ -23,16 +23,47 @@ import {
   uv,
 } from 'three/tsl';
 import type { WudaCoatCfgShim } from './wudaLayerPreset';
+import type { WudaGraphicKind } from './wudaParticleShape';
+import { normalizeWudaGraphicKind } from './wudaParticleShape';
 
 export type WudaInstanceAppearance = {
   material: MeshBasicNodeMaterial;
   opacityAttr: THREE.InstancedBufferAttribute;
 };
 
+function wudaSoftMask(kind: WudaGraphicKind) {
+  const coord = uv().sub(0.5).mul(2);
+  const ang = atan(coord.y, coord.x);
+  const h = fract(sin(float(instanceIndex).mul(127.1)).mul(43758.5453));
+  const warp = float(1)
+    .add(sin(ang.mul(3).add(h.mul(6.2831853))).mul(0.12))
+    .add(sin(ang.mul(5).add(h.mul(4.1))).mul(0.06));
+  const r = length(coord).div(warp);
+  if (kind === 'ring') {
+    const outer = smoothstep(1.0, 0.78, r);
+    const inner = smoothstep(0.36, 0.56, r);
+    return outer.mul(inner);
+  }
+  return smoothstep(1.0, 0.45, r);
+}
+
+export function applyWudaGraphicKind(
+  material: MeshBasicNodeMaterial,
+  opacityAttr: THREE.InstancedBufferAttribute,
+  kind: WudaGraphicKind,
+): void {
+  const instanceOpacity = instancedDynamicBufferAttribute(opacityAttr, 'float');
+  material.opacityNode = mul(
+    instanceOpacity as ReturnType<typeof float>,
+    wudaSoftMask(normalizeWudaGraphicKind(kind)),
+  );
+}
+
 export function createWudaInstanceAppearance(
   geometry: THREE.BufferGeometry,
   instanceCap: number,
   additive: boolean,
+  graphicKind: WudaGraphicKind = 'disc',
 ): WudaInstanceAppearance {
   const opacityArray = new Float32Array(instanceCap);
   opacityArray.fill(1);
@@ -49,17 +80,7 @@ export function createWudaInstanceAppearance(
     side: THREE.DoubleSide,
   });
 
-  const instanceOpacity = instancedDynamicBufferAttribute(opacityAttr, 'float');
-  // Soft irregular disc from plane UVs — replaces hard square silhouette.
-  const coord = uv().sub(0.5).mul(2);
-  const ang = atan(coord.y, coord.x);
-  const h = fract(sin(float(instanceIndex).mul(127.1)).mul(43758.5453));
-  const warp = float(1)
-    .add(sin(ang.mul(3).add(h.mul(6.2831853))).mul(0.12))
-    .add(sin(ang.mul(5).add(h.mul(4.1))).mul(0.06));
-  const soft = smoothstep(1.0, 0.45, length(coord).div(warp));
-  // instancedDynamicBufferAttribute is typed as Node<string>; cast for TSL mul.
-  material.opacityNode = mul(instanceOpacity as ReturnType<typeof float>, soft);
+  applyWudaGraphicKind(material, opacityAttr, graphicKind);
   return { material, opacityAttr };
 }
 

@@ -448,6 +448,7 @@ function buildDom(): HTMLElement {
           ${rowToggle('enableCancel', '启用 Cancel')}
           ${rowToggle('enableSpecials', '启用必杀指令')}
           ${rowToggle('enableThrows', '启用投技指令')}
+          ${rowToggle('standingPunchOnly', '仅站立轻/中/重拳')}
           ${rowNumber('hitstopFramesOnHit', 'Hitstop 命中 (f)', 0, 30, 1)}
           ${rowNumber('hitstopFramesOnBlock', 'Hitstop 防御 (f)', 0, 30, 1)}
           ${rowNumber('hitstopAnimRate', '卡帧表现倍率', 0, 1, 0.01)}
@@ -894,6 +895,7 @@ function buildDom(): HTMLElement {
           ${rowToggle('wudaLayer_showBakeStats', 'C 显示烘焙统计')}
           ${rowToggle('wudaLayer_detachOnlyOnActiveHit', '仅攻击发生帧可脱落（锁）')}
           ${rowToggle('wudaLayer_detachOnlyOnHitstun', '仅受击瞬间可脱落（锁）')}
+          ${rowToggle('wudaLayer_detachOnlyOnStandHP', '仅站重拳可脱落')}
           ${rowNumber('wudaLayer_particleCount', '粘着粒子数', 64, 2048, 64)}
           ${rowToggle('wudaLayer_detachInstantRefill', '脱落立刻补充粘着')}
           ${rowNumber('wudaLayer_detachRefillDelay', '补充延迟(秒)', 0, 1, 0.01)}
@@ -918,6 +920,14 @@ function buildDom(): HTMLElement {
           ${rowNumber('wudaLayer_stuckSize', '粘着尺寸', 0.001, 0.05, 0.001)}
           ${rowNumber('wudaLayer_freeSizeMin', '自由尺寸最小', 0.001, 0.08, 0.001)}
           ${rowNumber('wudaLayer_freeSize', '自由尺寸最大', 0.001, 0.08, 0.001)}
+          <div class="panel-row">
+            <div class="panel-row-header"><span>粒子图形</span></div>
+            <select id="sel-wudaLayerGraphicKind">
+              <option value="disc">软圆盘</option>
+              <option value="ring">飞行圆环（垂直于轨迹压扁）</option>
+            </select>
+          </div>
+          ${rowNumber('wudaLayer_flightCompress', '圆环垂直压缩', 0, 0.9, 0.01)}
           ${rowNumber('wudaLayer_ellipseAspectJitter', '椭圆长宽抖动', 0, 0.85, 0.01)}
           ${rowNumber('wudaLayer_stuckOpacity', '粘着不透明度', 0, 1, 0.01)}
           ${rowNumber('wudaLayer_freeOpacity', '自由不透明度', 0, 1, 0.01)}
@@ -1133,6 +1143,7 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'dashNeutralMax', path: 'dashNeutralMax' },
   { id: 'enableActionBuffer', path: 'enableActionBuffer' },
   { id: 'showBuffer', path: 'showBuffer' },
+  { id: 'standingPunchOnly', path: 'standingPunchOnly' },
   { id: 'enableCancel', path: 'enableCancel' },
   { id: 'enableSpecials', path: 'enableSpecials' },
   { id: 'enableThrows', path: 'enableThrows' },
@@ -1406,6 +1417,7 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
 const TOGGLE_IDS = new Set([
   'enableActionBuffer',
   'showBuffer',
+  'standingPunchOnly',
   'enableCancel',
   'enableSpecials',
   'enableThrows',
@@ -1739,6 +1751,7 @@ export function setupControlPanel(
     'freeSizeMin',
     'freeSize',
     'ellipseAspectJitter',
+    'flightCompress',
     'stuckOpacity',
     'freeOpacity',
   ];
@@ -1748,6 +1761,7 @@ export function setupControlPanel(
     'showBakeStats',
     'detachOnlyOnActiveHit',
     'detachOnlyOnHitstun',
+    'detachOnlyOnStandHP',
     'detachInstantRefill',
     'blendAdditive',
     'respawnStuck',
@@ -1758,6 +1772,10 @@ export function setupControlPanel(
   const wudaLayerSel = byId<HTMLSelectElement>(host, 'sel-wudaLayerPreset');
   const wudaLayerNameInp = byId<HTMLInputElement>(host, 'inp-wudaLayerName');
   const wudaLayerSideSel = byId<HTMLSelectElement>(host, 'sel-wudaLayerSide');
+  const wudaLayerGraphicSel = byId<HTMLSelectElement>(
+    host,
+    'sel-wudaLayerGraphicKind',
+  );
 
   const refreshWudaLayerSelect = () => {
     const presets = CONFIG.wudaLayerPresets ?? [];
@@ -1783,6 +1801,8 @@ export function setupControlPanel(
       wudaLayerNameInp.value = layer.name;
     }
     wudaLayerSideSel.value = layer.side;
+    wudaLayerGraphicSel.value =
+      layer.graphicKind === 'ring' ? 'ring' : 'disc';
   };
 
   const bindWudaLayerNumber = (key: keyof WudaLayerPreset) => {
@@ -1858,6 +1878,17 @@ export function setupControlPanel(
     layer.side = wudaLayerSideSel.value === 'p2' ? 'p2' : 'p1';
     notify(`wudaLayerPresets.${layer.id}.side`, layer.side, CONFIG);
     refreshWudaLayerSelect();
+  });
+  wudaLayerGraphicSel.addEventListener('change', () => {
+    const layer = getActiveWudaLayer(CONFIG);
+    if (!layer) return;
+    layer.graphicKind =
+      wudaLayerGraphicSel.value === 'ring' ? 'ring' : 'disc';
+    notify(
+      `wudaLayerPresets.${layer.id}.graphicKind`,
+      layer.graphicKind,
+      CONFIG,
+    );
   });
   byId<HTMLButtonElement>(host, 'btn-wuda-layer-add').addEventListener(
     'click',

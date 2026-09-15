@@ -90,6 +90,8 @@ export class Fighter {
    * open detach. Set in applyHitstun; ticked down once per MatchSim.step.
    */
   hitstunDetachPulseFrames = 0;
+  /** Move that last put this fighter in hit/block/KD (for wuda stand-HP lock). */
+  lastHitByMoveId: string | null = null;
   kdPhase: KnockdownPhase = 'none';
   kdTimer = 0;
   knockdownFrames = 0;
@@ -1345,9 +1347,10 @@ export class Fighter {
   applyHitstun(
     frames: number,
     damage: number,
-    opts?: { reactClipId?: string },
+    opts?: { reactClipId?: string; sourceMoveId?: string },
   ): void {
     if (frames <= 0) return;
+    if (opts?.sourceMoveId) this.lastHitByMoveId = opts.sourceMoveId;
     this.clearAnimTail();
     this.clearAttackResidual();
     this.clearBlockPush();
@@ -1387,8 +1390,10 @@ export class Fighter {
       riseClipId: string;
       backDx?: number;
       downHoldOverride?: number;
+      sourceMoveId?: string;
     },
   ): void {
+    if (opts.sourceMoveId) this.lastHitByMoveId = opts.sourceMoveId;
     const parts = splitKnockdown(frames, opts.downHoldOverride ?? -1);
     this.clearAnimTail();
     this.clearAttackResidual();
@@ -1475,8 +1480,10 @@ export class Fighter {
       crouching?: boolean;
       reactClipId?: string;
       holdLoopClipId?: string;
+      sourceMoveId?: string;
     },
   ): void {
+    if (opts?.sourceMoveId) this.lastHitByMoveId = opts.sourceMoveId;
     this.clearAnimTail();
     this.clearAttackResidual();
     const crouching = !!opts?.crouching;

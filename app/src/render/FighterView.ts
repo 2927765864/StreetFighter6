@@ -1396,9 +1396,20 @@ export class FighterView {
       }
       this.ensureWudaCoatCamera(coat);
       const shim = this.shimForWudaLayer(cfg, layer);
-      const allowDetach = resolveWudaAllowDetach(shim, fighter, {
-        inHitstop: this.wudaInHitstop,
-      });
+      const allowDetach = resolveWudaAllowDetach(
+        shim,
+        {
+          phase: fighter.phase,
+          stunTimer: fighter.stunTimer,
+          hitstunDetachPulseFrames: fighter.hitstunDetachPulseFrames,
+          mover: fighter.mover,
+          moveId: fighter.mover.moveId,
+          lastHitByMoveId: fighter.lastHitByMoveId,
+        },
+        {
+          inHitstop: this.wudaInHitstop,
+        },
+      );
       void coat.update(wallDtSec, shim, { allowDetach, side });
     }
   }

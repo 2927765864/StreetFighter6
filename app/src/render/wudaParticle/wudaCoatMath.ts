@@ -110,6 +110,28 @@ export function isHitstunDetachPulse(fighter: {
   return (fighter.hitstunDetachPulseFrames ?? 0) > 0;
 }
 
+const STAND_HP_MOVE_IDS = new Set(['ryu_5hp', 'n_5hp', '5hp']);
+
+export function isWudaStandHeavyPunch(moveId?: string | null): boolean {
+  if (!moveId) return false;
+  return STAND_HP_MOVE_IDS.has(moveId.trim().toLowerCase());
+}
+
+function relevantWudaAttackMoveId(fighter: {
+  phase: string;
+  hitstunDetachPulseFrames?: number;
+  moveId?: string | null;
+  lastHitByMoveId?: string | null;
+}): string | null {
+  const hitReact =
+    fighter.phase === 'hitstun' ||
+    fighter.phase === 'blockstun' ||
+    fighter.phase === 'knockdown' ||
+    isHitstunDetachPulse(fighter);
+  if (hitReact) return fighter.lastHitByMoveId ?? fighter.moveId ?? null;
+  return fighter.moveId ?? fighter.lastHitByMoveId ?? null;
+}
+
 /**
  * Resolve per-fighter detach permission from optional timing locks.
  * - `wudaDetachOnlyOnHitstun`: only the hitstun **entry pulse** (impact), not
@@ -117,35 +139,42 @@ export function isHitstunDetachPulse(fighter: {
  * - Hitstop otherwise locks new detach (presentation creep must not shed).
  * - Neither timing lock → allow (legacy), except during hitstop.
  * - Both locks → OR (attack active-hit OR hitstun entry pulse).
+ * - `wudaDetachOnlyOnStandHP`: also require the attack to be standing HP.
  * Always evaluated against *this* fighter so P1/P2 never leak.
  */
 export function resolveWudaAllowDetach(
   cfg: {
     wudaDetachOnlyOnActiveHit: boolean;
     wudaDetachOnlyOnHitstun: boolean;
+    wudaDetachOnlyOnStandHP?: boolean;
   },
   fighter: {
     phase: string;
     stunTimer?: number;
     hitstunDetachPulseFrames?: number;
     mover: { currentHitBoxesLocal: () => unknown[] };
+    moveId?: string | null;
+    lastHitByMoveId?: string | null;
   },
   opts?: { inHitstop?: boolean },
 ): boolean {
   const attackLock = cfg.wudaDetachOnlyOnActiveHit;
   const hitstunLock = cfg.wudaDetachOnlyOnHitstun;
+  const standHpLock = cfg.wudaDetachOnlyOnStandHP === true;
+  const moveOk =
+    !standHpLock || isWudaStandHeavyPunch(relevantWudaAttackMoveId(fighter));
 
   // Impact pulse must fire on the hit present (already inside hitstop).
-  if (hitstunLock && isHitstunDetachPulse(fighter)) return true;
+  if (hitstunLock && isHitstunDetachPulse(fighter)) return moveOk;
 
   // Hitstop freezes logic but presentation may creep; do not treat that as detach.
   if (opts?.inHitstop) return false;
 
-  if (!attackLock && !hitstunLock) return true;
+  if (!attackLock && !hitstunLock) return moveOk;
   let allow = false;
   if (attackLock && isAttackActiveHitFrame(fighter)) allow = true;
   // Hitstun lock is entry-pulse only (handled above).
-  return allow;
+  return allow && moveOk;
 }
 
 export function integrateFreeParticle(

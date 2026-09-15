@@ -6,6 +6,10 @@
 
 import type { WudaFighterSide } from './wudaBodyRegions';
 import { DEFAULT_WUDA_REGION_WEIGHTS } from './wudaBodyRegions';
+import {
+  normalizeWudaGraphicKind,
+  type WudaGraphicKind,
+} from './wudaParticleShape';
 
 export type WudaLayerPreset = {
   id: string;
@@ -39,6 +43,10 @@ export type WudaLayerPreset = {
   freeSize: number;
   /** 0 = circle; ~0.35 = mild irregular ellipses via instance scale. */
   ellipseAspectJitter: number;
+  /** Soft filled disc, or annulus squashed perpendicular to flight. */
+  graphicKind: WudaGraphicKind;
+  /** 0 = round ring; ~0.55 = flattened across the flight track. */
+  flightCompress: number;
   stuckOpacity: number;
   freeOpacity: number;
   stuckColor: number;
@@ -52,6 +60,8 @@ export type WudaLayerPreset = {
   alsoPlumeBurst: boolean;
   detachOnlyOnActiveHit: boolean;
   detachOnlyOnHitstun: boolean;
+  /** When true, this layer only sheds if the attack is standing HP (5HP). */
+  detachOnlyOnStandHP: boolean;
   regionWeightHead: number;
   regionWeightTorso: number;
   regionWeightLimbRoot: number;
@@ -99,6 +109,8 @@ export type WudaCoatCfgShim = {
   /** Upper bound / nominal free size (plume burst + legacy). */
   wudaFreeSize: number;
   wudaEllipseAspectJitter: number;
+  wudaGraphicKind: WudaGraphicKind;
+  wudaFlightCompress: number;
   wudaStuckOpacity: number;
   wudaFreeOpacity: number;
   wudaStuckColor: number;
@@ -112,6 +124,7 @@ export type WudaCoatCfgShim = {
   wudaAlsoPlumeBurst: boolean;
   wudaDetachOnlyOnActiveHit: boolean;
   wudaDetachOnlyOnHitstun: boolean;
+  wudaDetachOnlyOnStandHP: boolean;
 };
 
 export type WudaGlobalCoatFields = {
@@ -147,6 +160,8 @@ const DEFAULT_LAYER_PARAMS = {
   freeSizeMin: 0.006,
   freeSize: 0.012,
   ellipseAspectJitter: 0.35,
+  graphicKind: 'disc' as WudaGraphicKind,
+  flightCompress: 0.55,
   stuckOpacity: 0.55,
   freeOpacity: 0.85,
   stuckColor: 0xa69980,
@@ -160,6 +175,7 @@ const DEFAULT_LAYER_PARAMS = {
   alsoPlumeBurst: false,
   detachOnlyOnActiveHit: false,
   detachOnlyOnHitstun: false,
+  detachOnlyOnStandHP: false,
   regionWeightHead: DEFAULT_WUDA_REGION_WEIGHTS.head,
   regionWeightTorso: DEFAULT_WUDA_REGION_WEIGHTS.torso,
   regionWeightLimbRoot: DEFAULT_WUDA_REGION_WEIGHTS.limbRoot,
@@ -264,6 +280,8 @@ export function normalizeWudaLayerPreset(
       'ellipseAspectJitter',
       base.ellipseAspectJitter,
     ),
+    graphicKind: normalizeWudaGraphicKind(o.graphicKind),
+    flightCompress: pickNum(o, 'flightCompress', base.flightCompress),
     stuckOpacity: pickNum(o, 'stuckOpacity', base.stuckOpacity),
     freeOpacity: pickNum(o, 'freeOpacity', base.freeOpacity),
     stuckColor: Math.floor(pickNum(o, 'stuckColor', base.stuckColor)) >>> 0,
@@ -283,6 +301,7 @@ export function normalizeWudaLayerPreset(
       base.detachOnlyOnActiveHit,
     ),
     detachOnlyOnHitstun: asBool(o.detachOnlyOnHitstun, base.detachOnlyOnHitstun),
+    detachOnlyOnStandHP: asBool(o.detachOnlyOnStandHP, base.detachOnlyOnStandHP),
     regionWeightHead: pickNum(o, 'regionWeightHead', base.regionWeightHead),
     regionWeightTorso: pickNum(o, 'regionWeightTorso', base.regionWeightTorso),
     regionWeightLimbRoot: pickNum(
@@ -346,6 +365,8 @@ export function buildWudaCoatCfgShim(
     wudaFreeSizeMin: layer.freeSizeMin,
     wudaFreeSize: layer.freeSize,
     wudaEllipseAspectJitter: layer.ellipseAspectJitter,
+    wudaGraphicKind: layer.graphicKind,
+    wudaFlightCompress: layer.flightCompress,
     wudaStuckOpacity: layer.stuckOpacity,
     wudaFreeOpacity: layer.freeOpacity,
     wudaStuckColor: layer.stuckColor,
@@ -359,6 +380,7 @@ export function buildWudaCoatCfgShim(
     wudaAlsoPlumeBurst: layer.alsoPlumeBurst,
     wudaDetachOnlyOnActiveHit: layer.detachOnlyOnActiveHit,
     wudaDetachOnlyOnHitstun: layer.detachOnlyOnHitstun,
+    wudaDetachOnlyOnStandHP: layer.detachOnlyOnStandHP,
   };
 }
 
@@ -490,6 +512,8 @@ export function migrateFlatWudaToLayerPresets(
       'wudaEllipseAspectJitter',
       layer.ellipseAspectJitter,
     );
+    layer.graphicKind = normalizeWudaGraphicKind(incoming.wudaGraphicKind);
+    layer.flightCompress = n('wudaFlightCompress', layer.flightCompress);
     layer.stuckOpacity = n('wudaStuckOpacity', layer.stuckOpacity);
     layer.freeOpacity = n('wudaFreeOpacity', layer.freeOpacity);
     layer.stuckColor =
@@ -518,6 +542,10 @@ export function migrateFlatWudaToLayerPresets(
     layer.detachOnlyOnHitstun = b(
       'wudaDetachOnlyOnHitstun',
       layer.detachOnlyOnHitstun,
+    );
+    layer.detachOnlyOnStandHP = b(
+      'wudaDetachOnlyOnStandHP',
+      layer.detachOnlyOnStandHP,
     );
   };
 

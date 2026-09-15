@@ -9,7 +9,10 @@ import { ActionBuffer } from '../input/ActionBuffer';
 import { tryCommitLogicalFacing, toFacingRelative } from '../input/facing';
 import { heldPostureFromRelDir } from '../anim/AnimResidual';
 import { resolveIntent } from '../command/IntentResolver';
-import { RYU_FEEDBACK_COMMANDS } from '../command/ryuCommands';
+import {
+  isStandingPunchOnlyCommand,
+  RYU_FEEDBACK_COMMANDS,
+} from '../command/ryuCommands';
 import type { CommandDef } from '../command/CommandDef';
 import { DriveStub } from '../systems/DriveStub';
 import type {
@@ -75,6 +78,8 @@ export type MatchSimOptions = {
   enableSpecials: boolean;
   /** When false, throw command inputs never resolve/execute (data stays loaded). */
   enableThrows: boolean;
+  /** When true, only standing LP/MP/HP normals resolve/execute. */
+  standingPunchOnly: boolean;
   enableActionBuffer: boolean;
   dashFrames: number;
   dashBackFrames: number;
@@ -193,6 +198,7 @@ const DEFAULT_OPTS: MatchSimOptions = {
   enableCancel: true,
   enableSpecials: false,
   enableThrows: false,
+  standingPunchOnly: false,
   enableActionBuffer: true,
   dashFrames: 19,
   dashBackFrames: 23,
@@ -559,12 +565,16 @@ export class MatchSim {
 
   /** Command rows allowed for input resolution (usage gate only). */
   private activeCommands(): readonly CommandDef[] {
-    if (this.opts.enableSpecials && this.opts.enableThrows) {
-      return RYU_FEEDBACK_COMMANDS;
-    }
     return RYU_FEEDBACK_COMMANDS.filter((c) => {
       if (c.kind === 'special' && !this.opts.enableSpecials) return false;
       if (c.kind === 'throw' && !this.opts.enableThrows) return false;
+      if (
+        this.opts.standingPunchOnly &&
+        c.kind === 'normal' &&
+        !isStandingPunchOnlyCommand(c.id)
+      ) {
+        return false;
+      }
       return true;
     });
   }
@@ -587,6 +597,12 @@ export class MatchSim {
       return this.p1.canAct() || this.p1.canLandingAttack();
     }
     if (intent.kind === 'normal') {
+      if (
+        this.opts.standingPunchOnly &&
+        !isStandingPunchOnlyCommand(intent.commandId)
+      ) {
+        return false;
+      }
       if (intent.airOnly) return this.p1.canAirAct();
       return (
         this.p1.canAct() ||
@@ -644,6 +660,13 @@ export class MatchSim {
   private executeIntent(intent: Intent): boolean {
     if (intent.kind === 'special' && !this.opts.enableSpecials) return false;
     if (intent.kind === 'throw' && !this.opts.enableThrows) return false;
+    if (
+      intent.kind === 'normal' &&
+      this.opts.standingPunchOnly &&
+      !isStandingPunchOnlyCommand(intent.commandId)
+    ) {
+      return false;
+    }
     if (
       intent.kind === 'special' ||
       intent.kind === 'normal' ||
@@ -1107,6 +1130,7 @@ export class MatchSim {
             reactClipId,
             // Rest is idle (not guard loop). crouch_block dummy still stands idle between hits.
             holdLoopClipId: 'idle',
+            sourceMoveId: mv.moveId || mv.id,
           });
           if (this.opts.enableBlockPush && br.pushbackTotal !== 0) {
             let away: Facing = this.p1.facing;
@@ -1182,10 +1206,14 @@ export class MatchSim {
               backDx:
                 this.dummy.wakeupStyle === 'back' ? this.opts.wakeupBackDxTotal : 0,
               downHoldOverride: this.opts.knockdownDownHoldOverride,
+              sourceMoveId: mv.moveId || mv.id,
             });
             this.emitSfx({ kind: 'body_fall', sourceSide: 'p2' });
           } else {
-            this.p2.applyHitstun(hr.hitstun, hr.damage, { reactClipId });
+            this.p2.applyHitstun(hr.hitstun, hr.damage, {
+              reactClipId,
+              sourceMoveId: mv.moveId || mv.id,
+            });
           }
           if (this.opts.enableHitPush && hr.pushbackTotal !== 0) {
             let away: Facing = this.p1.facing;

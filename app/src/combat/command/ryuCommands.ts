@@ -232,3 +232,10 @@ export const RYU_FEEDBACK_COMMANDS: CommandDef[] = [
 
 /** @deprecated alias — use RYU_FEEDBACK_COMMANDS */
 export const RYU_P0_COMMANDS = RYU_FEEDBACK_COMMANDS;
+
+/** Training gate: standing LP/MP/HP only (no kicks, uniques, crouch, jump attacks). */
+export const STANDING_PUNCH_ONLY_IDS = new Set(['n_5lp', 'n_5mp', 'n_5hp']);
+
+export function isStandingPunchOnlyCommand(id: string | undefined): boolean {
+  return !!id && STANDING_PUNCH_ONLY_IDS.has(id);
+}

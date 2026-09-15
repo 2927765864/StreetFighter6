@@ -1,0 +1,31 @@
+{
+  "element": "E6c_wide_short_fiber_smoke",
+  "strategy": "single_master_aniso_scale_translate_fade",
+  "master": "master.jpg",
+  "master_frame_1based": 1,
+  "pivot_frame_1based": 7,
+  "generator": "e4c_master_hflip_then_pil",
+  "frames": 14,
+  "fps": 30,
+  "cell": 640,
+  "fade_from_frame_1based": 8,
+  "base_fit_scale": 0.30327,
+  "axes": {
+    "f1": [
+      1.0,
+      1.0
+    ],
+    "f7": [
+      1.18,
+      1.0384
+    ],
+    "f14": [
+      1.5812,
+      1.0384
+    ]
+  },
+  "grow_pivot": 1.18,
+  "v_compress": 0.88,
+  "h_stretch_end": 1.34,
+  "motion": "E4-c master H-flipped. f1\u2013f7 grow + V-squash + left travel 2\u00d7 f1 sprite width. f8\u2013f14 H-stretch + fade + slow left."
+}

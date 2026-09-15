@@ -402,6 +402,7 @@ export function createDebugGui(
   bindLayerBool('showBakeStats', 'C 显示烘焙统计');
   bindLayerBool('detachOnlyOnActiveHit', '仅攻击发生帧可脱落');
   bindLayerBool('detachOnlyOnHitstun', '仅受击瞬间可脱落');
+  bindLayerBool('detachOnlyOnStandHP', '仅站重拳可脱落');
   bindLayerNum('particleCount', 64, 2048, 64, '粘着粒子数');
   bindLayerBool('detachInstantRefill', '脱落立刻补充粘着');
   bindLayerNum('detachRefillDelay', 0, 1, 0.01, '补充延迟(秒)');
@@ -425,6 +426,17 @@ export function createDebugGui(
   bindLayerNum('stuckSize', 0.001, 0.05, 0.001, '粘着尺寸');
   bindLayerNum('freeSizeMin', 0.001, 0.08, 0.001, '自由尺寸最小');
   bindLayerNum('freeSize', 0.001, 0.08, 0.001, '自由尺寸最大');
+  wuda
+    .add(layerProxy, 'graphicKind', ['disc', 'ring'])
+    .name('粒子图形')
+    .onChange(() => {
+      const layer = getActiveWudaLayer(cfg);
+      if (layer) {
+        layer.graphicKind =
+          layerProxy.graphicKind === 'ring' ? 'ring' : 'disc';
+      }
+    });
+  bindLayerNum('flightCompress', 0, 0.9, 0.01, '圆环垂直压缩');
   bindLayerNum('ellipseAspectJitter', 0, 0.85, 0.01, '椭圆长宽抖动');
   bindLayerNum('stuckOpacity', 0, 1, 0.01, '粘着不透明度');
   bindLayerNum('freeOpacity', 0, 1, 0.01, '自由不透明度');
@@ -633,6 +645,7 @@ export function createDebugGui(
   cancelFolder.add(cfg, 'enableCancel').name('启用Cancel').onChange(syncOpts);
   cancelFolder.add(cfg, 'enableSpecials').name('启用必杀指令').onChange(syncOpts);
   cancelFolder.add(cfg, 'enableThrows').name('启用投技指令').onChange(syncOpts);
+  cancelFolder.add(cfg, 'standingPunchOnly').name('仅站立轻/中/重拳').onChange(syncOpts);
   cancelFolder
     .add(cfg, 'hitstopFramesOnHit', 0, 30, 1)
     .name('Hitstop命中(f)')

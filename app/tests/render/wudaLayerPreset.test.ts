@@ -54,6 +54,8 @@ describe('normalizeWudaLayerPreset', () => {
     expect(n!.particleCount).toBeGreaterThanOrEqual(0);
     expect(n!.freeSizeMin).toBeLessThanOrEqual(n!.freeSize);
     expect(n!.ellipseAspectJitter).toBeCloseTo(0.35);
+    expect(n!.graphicKind).toBe('disc');
+    expect(n!.flightCompress).toBeCloseTo(0.55);
   });
 
   it('derives freeSizeMin from freeSize when omitted', () => {
@@ -63,6 +65,15 @@ describe('normalizeWudaLayerPreset', () => {
     );
     expect(n!.freeSize).toBeCloseTo(0.02);
     expect(n!.freeSizeMin).toBeCloseTo(0.011);
+  });
+
+  it('accepts ring graphicKind', () => {
+    const n = normalizeWudaLayerPreset(
+      { id: 'ring', side: 'p1', graphicKind: 'ring', flightCompress: 0.7 },
+      0,
+    );
+    expect(n!.graphicKind).toBe('ring');
+    expect(n!.flightCompress).toBeCloseTo(0.7);
   });
 
   it('returns null for non-objects and synthesizes id/name when missing', () => {
@@ -111,6 +122,8 @@ describe('buildWudaCoatCfgShim', () => {
     expect(shim.wudaFreeSizeMin).toBeCloseTo(layer.freeSizeMin);
     expect(shim.wudaFreeSize).toBeCloseTo(layer.freeSize);
     expect(shim.wudaEllipseAspectJitter).toBeCloseTo(layer.ellipseAspectJitter);
+    expect(shim.wudaGraphicKind).toBe('disc');
+    expect(shim.wudaFlightCompress).toBeCloseTo(0.55);
     expect(shim.wudaP1RegionWeightHead).toBeCloseTo(0.5);
     expect(shim.wudaP2RegionWeightHead).toBeCloseTo(0.5);
 

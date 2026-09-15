@@ -17,7 +17,8 @@
     "E4c_wide_short_fiber_smoke": 18,
     "E5c_narrow_long_fiber_smoke": 28,
     "E4b_wide_short_fiber_smoke": 14,
-    "E5b_narrow_long_fiber_smoke": 16
+    "E5b_narrow_long_fiber_smoke": 16,
+    "E6c_wide_short_fiber_smoke": 14
   },
-  "total": 290
+  "total": 304
 }

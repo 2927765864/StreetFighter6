@@ -14,6 +14,7 @@ export type FlipbookLayerId =
   | 'E5b_narrow_long_fiber_smoke'
   | 'E5c_narrow_long_fiber_smoke'
   | 'E6_narrow_long_smoke_rtl'
+  | 'E6c_wide_short_fiber_smoke'
   | 'E7_sweat_spray'
   | 'E7b_sweat_scatter'
   | 'E7c_sweat_chunks'
