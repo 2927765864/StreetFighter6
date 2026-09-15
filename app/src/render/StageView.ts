@@ -1,10 +1,8 @@
 import * as THREE from 'three/webgpu';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { sanitizeObjectMaterials } from './materialUtils';
-import {
-  isStageLineOverlayName,
-  prepareStageLineOverlay,
-} from './stageLineOverlay';
+import { prepareStageLineOverlay } from './stageLineOverlay';
+import { applyStageDrawPolicy } from './stageDrawPolicy';
 
 export type StageLayout = {
   targetWidth: number;
@@ -33,14 +31,10 @@ export class StageView {
 
     sanitizeObjectMaterials(model);
     prepareStageLineOverlay(model);
-    model.traverse((o) => {
-      const mesh = o as THREE.Mesh;
-      if (!mesh.isMesh) return;
-      mesh.receiveShadow = true;
-      if (!isStageLineOverlayName(mesh.name)) {
-        mesh.castShadow = true;
-      }
-    });
+    const draw = applyStageDrawPolicy(model);
+    console.info(
+      `[StageView] drawPolicy meshes=${draw.meshes} tris=${Math.round(draw.triangles)} (stage is low-poly; fighters dominate triangle count)`,
+    );
     model.updateMatrixWorld(true);
 
     const box = new THREE.Box3().setFromObject(model);

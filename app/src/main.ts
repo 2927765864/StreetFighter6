@@ -13,11 +13,13 @@ import { loadJson } from './data/loadJson';
 import { FighterView } from './render/FighterView';
 import {
   enableFighterDisplayLayersOnLight,
-  LAYER_FIGHTER_BACK,
-  LAYER_FIGHTER_FRONT,
-  LAYER_SCENE,
   pickDisplayFrontId,
 } from './render/fighterDisplayOrder';
+import { renderFightDisplayLayers } from './render/fightDisplayPasses';
+import {
+  ensureFighterMeshLodReady,
+  normalizeFighterMeshLod,
+} from './render/fighterMeshLod';
 import { StageView } from './render/StageView';
 import {
   applyFightCamera,
@@ -255,7 +257,7 @@ async function boot(): Promise<void> {
   if (wantGpuTiming) cfg.perfGpuTimingEnabled = true;
 
   const renderer = new THREE.WebGPURenderer({
-    antialias: true,
+    antialias: cfg.antialias === true,
     alpha: false,
     trackTimestamp: wantGpuTiming,
   });
@@ -634,6 +636,31 @@ async function boot(): Promise<void> {
   p2View.setWudaPlumeBurst(wudaPlumeBurst);
   p1View.setWudaRenderer(renderer);
   p2View.setWudaRenderer(renderer);
+
+  let fighterMeshTemplate: THREE.Object3D | null = null;
+  let fighterLogicMap: LogicGlbMap | null = null;
+  let fighterClipLib: AnimClipLibrary | null = null;
+
+  const fighterInstallOpts = () => ({
+    targetHeight: 1.85,
+    meshLod: normalizeFighterMeshLod(cfg.fighterMeshLod),
+  });
+
+  const reinstallFightersFromTemplate = (): void => {
+    if (!fighterMeshTemplate) return;
+    p1View.installFromTemplate(fighterMeshTemplate, [], fighterInstallOpts());
+    p2View.installFromTemplate(fighterMeshTemplate, [], fighterInstallOpts());
+    if (!fighterLogicMap || !fighterClipLib) return;
+    p1View.setAnimsBackend(fighterLogicMap, fighterClipLib);
+    p2View.setAnimsBackend(fighterLogicMap, fighterClipLib);
+    void Promise.all([
+      p1View.preloadLogicClips(BOOT_PRELOAD_LOGIC_IDS),
+      p2View.preloadLogicClips(BOOT_PRELOAD_LOGIC_IDS),
+    ]).then(() => {
+      p1View.playBest('idle');
+      p2View.playBest('idle');
+    });
+  };
   // Prefer hips world Y so crouch animation and jump both drive follow lights.
   followOriginRef.get = (who) => {
     const f = who === 'p1' ? match.p1 : match.p2;
@@ -708,13 +735,15 @@ async function boot(): Promise<void> {
       }
       // cm→m + rebind once on the template, then clone for P1/P2 (do not bake per clone)
       bakeRyuMeshTemplate(meshScene);
+      await ensureFighterMeshLodReady();
+      fighterMeshTemplate = meshScene;
       console.info(
         `[boot] mesh ready in ${((performance.now() - t0) / 1000).toFixed(1)}s`,
       );
 
       // Combat clips come from private/assets/ryu/anims — never use c1 test tracks.
-      p1View.installFromTemplate(meshScene, [], { targetHeight: 1.85 });
-      p2View.installFromTemplate(meshScene, [], { targetHeight: 1.85 });
+      p1View.installFromTemplate(meshScene, [], fighterInstallOpts());
+      p2View.installFromTemplate(meshScene, [], fighterInstallOpts());
 
       const mapRaw = await loadJson<unknown>(
         '/data/clips/ryu_logic_to_glb_map.json',
@@ -728,6 +757,8 @@ async function boot(): Promise<void> {
         if (live5) match.move5lp = live5;
       }
       const clipLib = new AnimClipLibrary();
+      fighterLogicMap = logicMap;
+      fighterClipLib = clipLib;
       p1View.setAnimsBackend(logicMap, clipLib);
       p2View.setAnimsBackend(logicMap, clipLib);
 
@@ -1088,6 +1119,9 @@ async function boot(): Promise<void> {
       ) {
         refreshLighting();
       }
+      if (key === '*' || key === 'fighterMeshLod') {
+        reinstallFightersFromTemplate();
+      }
       if (key === '*' || key === 'maxPixelRatio') {
         const cap = Math.max(0.5, cfg.maxPixelRatio);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, cap));
@@ -1407,77 +1441,27 @@ async function boot(): Promise<void> {
 
     const gizmoHelper = lightEdit.transform.getHelper();
 
-    /**
-     * True 2.5D fighter priority + hit VFX:
-     * 1) stage only (LAYER_SCENE)
-     * 2) optional flipbook behind-character pass (overCharacter=false)
-     * 3) back fighter
-     * 4) clearDepth, then front fighter only
-     * 5) cloud-shadow mid-pass (darken fighters+stage; under front 2D FX)
-     * 6) clearDepth, then hitVfxScene overlay (front flipbook / plume / sparks)
-     *
-     * Important (WebGPU / three Background): a Color `scene.background` sets
-     * forceClear on every render, which would wipe pass 1 even when
-     * autoClear=false. Later passes must temporarily clear background + disable
-     * autoClearColor so the color buffer is loaded, not cleared.
-     */
-    const renderFightDisplayLayers = (
+    const presentFightLayers = (
       cam: THREE.Camera,
       autoClearFirst: boolean,
     ): void => {
-      cam.layers.set(LAYER_SCENE);
-      renderer.autoClear = autoClearFirst;
-      renderer.render(scene, cam);
-
-      const prevBackground = scene.background;
-      const prevAutoClear = renderer.autoClear;
-      const prevAutoClearColor = renderer.autoClearColor;
-      const prevAutoClearDepth = renderer.autoClearDepth;
-      scene.background = null;
-      renderer.autoClear = false;
-      renderer.autoClearColor = false;
-      renderer.autoClearDepth = false;
-
-      const flipbookBehind =
-        cfg.hitVfxPlayMode === 'flipbook2d' &&
-        flipbookCombat.hasBehindDrawable();
-      if (flipbookBehind) {
-        cam.layers.set(LAYER_SCENE);
-        renderer.render(hitVfxBehindScene, cam);
-      }
-
-      cam.layers.set(LAYER_FIGHTER_BACK);
-      renderer.render(scene, cam);
-
-      renderer.clearDepth();
-      cam.layers.set(LAYER_FIGHTER_FRONT);
-      renderer.render(scene, cam);
-
-      // Darken fighters+stage before front 2D / procedural hit VFX overlay.
-      hitCloudShadow.apply(renderer, cam);
-
-      const hitVfxFront =
-        (cfg.hitVfxPlayMode === 'flipbook2d' &&
-          flipbookCombat.hasFrontDrawable()) ||
-        (cfg.hitVfxPlayMode !== 'flipbook2d' &&
-          hitVfxRuntime.getActiveCount() > 0);
-      if (hitVfxFront) {
-        // Overlay uses its own scene (default layer 0). Restore SCENE on the
-        // camera so VFX meshes are visible; fighters are not in hitVfxScene.
-        renderer.clearDepth();
-        cam.layers.set(LAYER_SCENE);
-        renderer.render(hitVfxScene, cam);
-      }
-
-      scene.background = prevBackground;
-      renderer.autoClear = prevAutoClear;
-      renderer.autoClearColor = prevAutoClearColor;
-      renderer.autoClearDepth = prevAutoClearDepth;
-
-      cam.layers.set(LAYER_SCENE);
-      cam.layers.enable(LAYER_FIGHTER_BACK);
-      cam.layers.enable(LAYER_FIGHTER_FRONT);
-      renderer.autoClear = true;
+      const flipbook2d = cfg.hitVfxPlayMode === 'flipbook2d';
+      renderFightDisplayLayers({
+        renderer,
+        scene,
+        camera: cam,
+        hitVfxBehindScene,
+        hitVfxScene,
+        autoClearFirst,
+        behindVfx: flipbook2d && flipbookCombat.hasBehindDrawable(),
+        frontVfx:
+          (flipbook2d && flipbookCombat.hasFrontDrawable()) ||
+          (!flipbook2d && hitVfxRuntime.getActiveCount() > 0),
+        cloudShadow: {
+          hasActive: () => hitCloudShadow.hasActive(),
+          apply: (_r, cam) => hitCloudShadow.apply(renderer, cam),
+        },
+      });
     };
 
     const fullRender = (): void => {
@@ -1485,9 +1469,11 @@ async function boot(): Promise<void> {
       renderer.setViewport(0, 0, viewW, viewH);
       // One bake per present: layers / PIP share the light-space map.
       markShadowMapsNeedUpdate(lights);
-      renderFightDisplayLayers(camera, true);
-      // One fullscreen copy: UV warp then additive glow (was two viewportTexture passes).
-      hitScreenComposite.apply(renderer, camera);
+      presentFightLayers(camera, true);
+      // Shockwave UV warp + additive glow; no-ops when both idle.
+      if (hitScreenComposite.hasActive()) {
+        hitScreenComposite.apply(renderer, camera);
+      }
 
       if (!cfg.lightOrbitMode || hooks.boxEditActive) return;
 
@@ -1510,7 +1496,7 @@ async function boot(): Promise<void> {
       renderer.setScissorTest(true);
       renderer.setViewport(x, yTop, w, h);
       renderer.setScissor(x, yTop, w, h);
-      renderFightDisplayLayers(fightCamera, true);
+      presentFightLayers(fightCamera, true);
       renderer.setScissorTest(false);
       renderer.setViewport(0, 0, fullW, fullH);
 

@@ -94,13 +94,15 @@ export class HitScreenCompositeFx {
     this.quad.name = 'HitScreenCompositeQuad';
   }
 
+  hasActive(): boolean {
+    return this.shock.hasActive() || this.glow.hasActive();
+  }
+
   apply(
     renderer: THREE.WebGPURenderer,
     camera?: THREE.Camera | null,
   ): void {
-    const shockOn = this.shock.hasActive();
-    const glowOn = this.glow.hasActive();
-    if (!shockOn && !glowOn) return;
+    if (!this.hasActive()) return;
 
     if (camera) {
       this.shock.prepareForDraw(camera);

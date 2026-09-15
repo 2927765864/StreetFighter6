@@ -61,6 +61,8 @@ describe('FighterView displayFront layers', () => {
     expect(v1.isDisplayFront()).toBe(false);
     expect(v2.displayLayer()).toBe(LAYER_FIGHTER_FRONT);
     expect(v1.displayLayer()).toBe(LAYER_FIGHTER_BACK);
+    expect(v2.root.position.z).toBe(FIGHTER_DISPLAY_Z);
+    expect(v1.root.position.z).toBe(FIGHTER_DISPLAY_Z);
 
     p1.startMove(move());
     sync();

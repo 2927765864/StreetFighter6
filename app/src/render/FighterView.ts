@@ -17,6 +17,10 @@ import {
 import { AnimClipLibrary } from './AnimClipLibrary';
 import { ProceduralRyuAnim } from './ProceduralRyuAnim';
 import {
+  applyFighterMeshLod,
+  type FighterMeshLod,
+} from './fighterMeshLod';
+import {
   accumulateHitstopPresentOffsetSec,
   clampHitstopAnimRate,
   freeRunAnimDtSecWithHitstop,
@@ -283,7 +287,12 @@ export class FighterView {
 
   async loadGltf(
     url: string,
-    opts?: { unitScale?: number; targetHeight?: number; forceBakeSkin?: boolean },
+    opts?: {
+      unitScale?: number;
+      targetHeight?: number;
+      forceBakeSkin?: boolean;
+      meshLod?: FighterMeshLod;
+    },
   ): Promise<void> {
     const loader = new GLTFLoader();
     const gltf = await loader.loadAsync(url);
@@ -293,7 +302,12 @@ export class FighterView {
   installFromTemplate(
     templateScene: THREE.Object3D,
     animations: THREE.AnimationClip[],
-    opts?: { unitScale?: number; targetHeight?: number; forceBakeSkin?: boolean },
+    opts?: {
+      unitScale?: number;
+      targetHeight?: number;
+      forceBakeSkin?: boolean;
+      meshLod?: FighterMeshLod;
+    },
   ): void {
     // Clone full hierarchy + skins (required for second fighter)
     const cloned = cloneSkeleton(templateScene);
@@ -303,7 +317,12 @@ export class FighterView {
   private installModel(
     model: THREE.Object3D,
     animations: THREE.AnimationClip[],
-    opts?: { unitScale?: number; targetHeight?: number; forceBakeSkin?: boolean },
+    opts?: {
+      unitScale?: number;
+      targetHeight?: number;
+      forceBakeSkin?: boolean;
+      meshLod?: FighterMeshLod;
+    },
   ): void {
     if (this.placeholder.parent) {
       this.root.remove(this.placeholder);
@@ -363,6 +382,17 @@ export class FighterView {
 
     // 3) REMOVE absurd submeshes (Eye Tear etc.)
     let pruned = pruneOutlierMeshes(model);
+
+    // 3b) Display LOD (high = authored). Clone already happened; compact verts.
+    {
+      const lod = opts?.meshLod ?? 'high';
+      const lodStats = applyFighterMeshLod(model, lod);
+      if (lod !== 'high') {
+        console.info(
+          `[FighterView] meshLod=${lodStats.lod} tris ${Math.round(lodStats.trianglesBefore)} → ${Math.round(lodStats.trianglesAfter)} meshes=${lodStats.meshes}`,
+        );
+      }
+    }
 
     // 4) Keep skin by default so procedural / clips can drive bones.
     //    forceBakeSkin only for emergency static display.
@@ -929,9 +959,8 @@ export class FighterView {
   }
 
   /**
-   * Assign three.js Layers for the layered fight render in main.ts:
-   * pass1 = scene + back, clearDepth, pass2 = front only.
-   * Layers are per-object (not inherited), so every descendant is updated.
+   * Assign three.js Layers for fightDisplayPasses (BACK then clearDepth then
+   * FRONT). Layers are per-object (not inherited).
    */
   private applyDisplayOrder(displayFront: boolean): void {
     this.displayFront = displayFront;

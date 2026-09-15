@@ -618,6 +618,15 @@ function buildDom(): HTMLElement {
           ${rowToggle('shadowMapEnabled', '启用阴影总开关')}
           ${rowNumber('shadowMapSize', '阴影贴图边长', 256, 4096, 256)}
           ${rowNumber('maxPixelRatio', '像素比上限 (DPR)', 0.5, 2, 0.25)}
+          ${rowToggle('antialias', 'MSAA 抗锯齿 (改后需刷新)')}
+          <div class="panel-row">
+            <div class="panel-row-header"><span>角色网格档位</span></div>
+            <select id="sel-fighterMeshLod">
+              <option value="high">高（当前网格）</option>
+              <option value="medium">中</option>
+              <option value="low">低</option>
+            </select>
+          </div>
           ${rowNumber('shadowCameraExtent', '阴影范围 extent', 5, 80, 0.5)}
           ${rowNumber('shadowCameraNear', '阴影近裁', 0.01, 10, 0.01)}
           ${rowNumber('shadowCameraFar', '阴影远裁', 10, 200, 1)}
@@ -1246,6 +1255,7 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'shadowMapEnabled', path: 'shadowMapEnabled' },
   { id: 'shadowMapSize', path: 'shadowMapSize' },
   { id: 'maxPixelRatio', path: 'maxPixelRatio' },
+  { id: 'antialias', path: 'antialias' },
   { id: 'shadowCameraExtent', path: 'shadowCameraExtent' },
   { id: 'shadowCameraNear', path: 'shadowCameraNear' },
   { id: 'shadowCameraFar', path: 'shadowCameraFar' },
@@ -1553,6 +1563,8 @@ export function setupControlPanel(
     'shadowMapEnabled',
     'shadowMapSize',
     'maxPixelRatio',
+    'antialias',
+    'fighterMeshLod',
     'shadowCameraExtent',
     'shadowCameraNear',
     'shadowCameraFar',
@@ -1727,6 +1739,7 @@ export function setupControlPanel(
   bindSelect(ctx, 'sel-wudaPlayMode', 'wudaPlayMode');
   bindSelect(ctx, 'sel-wudaCoverMode', 'wudaCoverMode');
   bindSelect(ctx, 'sel-hitVfxPlayMode', 'hitVfxPlayMode');
+  bindSelect(ctx, 'sel-fighterMeshLod', 'fighterMeshLod');
   bindSelect(ctx, 'sel-perfOverlayPosition', 'perfOverlayPosition');
 
   bindCmosShakePanel({

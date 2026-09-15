@@ -70,7 +70,10 @@ export async function bootHitVfxEditor(): Promise<void> {
   const host = document.createElement('div');
   host.id = 'hitvfx-canvas-host';
 
-  const renderer = new THREE.WebGPURenderer({ antialias: true, alpha: false });
+  const renderer = new THREE.WebGPURenderer({
+    antialias: CONFIG.antialias === true,
+    alpha: false,
+  });
   await renderer.init();
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(1, 1, false);

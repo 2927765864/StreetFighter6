@@ -111,6 +111,16 @@ export type MutableSimConfig = {
   shadowMapEnabled: boolean;
   shadowMapSize: number;
   /**
+   * WebGPU MSAA. Applied only at renderer construct — toggle requires reload.
+   * Default false: fill-rate is the 60fps bottleneck (see perf rings).
+   */
+  antialias: boolean;
+  /**
+   * Skinned display mesh LOD. `high` is the authored mesh; medium/low run
+   * meshopt simplify + vertex compact at install (face/hair milder).
+   */
+  fighterMeshLod: 'high' | 'medium' | 'low';
+  /**
    * Cap on `devicePixelRatio` for the fight canvas (Retina often 2).
    * Lower values cut fill-rate cost; 1.5 is a good performance default.
    */
@@ -586,6 +596,8 @@ export function createDefaultSimConfig(): MutableSimConfig {
     lightUseDynamicLighting: true,
     shadowMapEnabled: true,
     shadowMapSize: 512,
+    antialias: false,
+    fighterMeshLod: 'high',
     maxPixelRatio: 1,
     shadowCameraExtent: 20,
     shadowCameraNear: 0.5,

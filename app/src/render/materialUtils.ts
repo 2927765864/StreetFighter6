@@ -152,9 +152,9 @@ export function sanitizeObjectMaterials(root: THREE.Object3D): void {
 
     mesh.frustumCulled = false;
     // Do NOT force visible=true — pruneOutlierMeshes relies on remove, but be safe
-    // Shadows: plan lighting-system-v0 §S4 — fighters must cast for key dir light.
-    mesh.castShadow = true;
+    // Shadows: visible fighters cast; hidden shells must not enter the shadow pass.
     mesh.receiveShadow = true;
+    mesh.castShadow = mesh.visible !== false;
 
     // Hide face shells + open-gi/cape (no clothing system — consensus: no cape).
     const mn = mesh.name.toLowerCase();
@@ -170,6 +170,7 @@ export function sanitizeObjectMaterials(root: THREE.Object3D): void {
       mn.includes('icosphere')
     ) {
       mesh.visible = false;
+      mesh.castShadow = false;
     }
 
     const list = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
