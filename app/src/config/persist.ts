@@ -11,6 +11,11 @@ import {
   applyFlipbookShipping,
   loadFlipbookState,
 } from '../hitVfxEditor/flipbook2d/persist';
+import {
+  parseWudaClip,
+  serializeWudaClip,
+  wudaClipHub,
+} from '../render/wudaParticle/wudaClip';
 
 export const STORAGE_KEYS = {
   config: 'sf6RuntimeConfig',
@@ -153,6 +158,9 @@ export async function loadShippingConfig(): Promise<boolean> {
     if (isPresetEnvelope(data) && data.flipbook2d != null) {
       applyFlipbookShipping(data.flipbook2d);
     }
+    if (isPresetEnvelope(data) && data.wudaClip != null) {
+      applyWudaClipShipping(data.wudaClip);
+    }
     console.info('[config] shipping preset loaded');
     return true;
   } catch (e) {
@@ -191,6 +199,7 @@ export function saveCurrentConfig(): void {
     __version: CONFIG_VERSION,
   };
   localStorage.setItem(STORAGE_KEYS.config, JSON.stringify(payload));
+  wudaClipHub.persist();
 }
 
 function pickHitVfxEditorDraft(): Record<string, unknown> {
@@ -258,6 +267,7 @@ export function clearSavedConfig(): void {
   }
   localStorage.removeItem(STORAGE_KEYS.config);
   localStorage.removeItem(STORAGE_KEYS.hitVfxEditor);
+  wudaClipHub.clearLocal();
 }
 
 export type NamedPresets = Record<string, RuntimeConfig>;
@@ -293,9 +303,34 @@ export function deleteNamedPreset(name: string): void {
   localStorage.setItem(STORAGE_KEYS.presets, JSON.stringify(map));
 }
 
+export function applyWudaClipShipping(raw: unknown): void {
+  const clip = parseWudaClip(raw);
+  if (!clip) return;
+  wudaClipHub.applyFactoryClip(clip);
+}
+
+/**
+ * Pretty-print the envelope but keep `wudaClip` as one compact JSON value
+ * (clip frames are large typed arrays; indenting every number blows up git).
+ */
+export function stringifyPresetEnvelope(data: unknown): string {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return JSON.stringify(data, null, 2);
+  }
+  const rec = data as Record<string, unknown>;
+  if (!('wudaClip' in rec) || rec.wudaClip == null) {
+    return JSON.stringify(data, null, 2);
+  }
+  const rest = { ...rec };
+  delete rest.wudaClip;
+  const pretty = JSON.stringify(rest, null, 2);
+  if (!pretty.endsWith('}')) return JSON.stringify(data);
+  return `${pretty.slice(0, -1)},\n  "wudaClip": ${JSON.stringify(rec.wudaClip)}\n}`;
+}
+
 export function exportShippingJson(): void {
   const fb = loadFlipbookState();
-  const data = {
+  const data: Record<string, unknown> = {
     type: 'runtime-control-preset' as const,
     version: CONFIG_VERSION,
     name: 'shipping',
@@ -306,7 +341,10 @@ export function exportShippingJson(): void {
       recipes: fb.recipes,
     },
   };
-  downloadJson('shipping.json', data);
+  if (wudaClipHub.clip) {
+    data.wudaClip = serializeWudaClip(wudaClipHub.clip);
+  }
+  downloadJson('shipping.json', data, stringifyPresetEnvelope(data));
 }
 
 export function exportNamedPresetJson(name: string): void {
@@ -326,14 +364,22 @@ export function importPresetFromObject(data: unknown): boolean {
     const body = isPresetEnvelope(data) ? data.config : data;
     if (!body || typeof body !== 'object') return false;
     applyConfig(migrateSavedConfig(body as Record<string, unknown>));
+    if (isPresetEnvelope(data) && data.wudaClip != null) {
+      const clip = parseWudaClip(data.wudaClip);
+      if (clip) wudaClipHub.setClip(clip, data.name || 'preset');
+    }
     return true;
   } catch {
     return false;
   }
 }
 
-export function downloadJson(filename: string, data: unknown): void {
-  const blob = new Blob([JSON.stringify(data, null, 2)], {
+export function downloadJson(
+  filename: string,
+  data: unknown,
+  textOverride?: string,
+): void {
+  const blob = new Blob([textOverride ?? JSON.stringify(data, null, 2)], {
     type: 'application/json',
   });
   const url = URL.createObjectURL(blob);

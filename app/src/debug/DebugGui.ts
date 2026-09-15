@@ -322,6 +322,7 @@ export function createDebugGui(
 
   const wuda = gui.addFolder('武打粒子');
   wuda.add(cfg, 'wudaEnabled').name('启用');
+  wuda.add(cfg, 'wudaPlayMode', ['live', 'clip']).name('实时 / clip');
   wuda
     .add(cfg, 'wudaAttachMode', ['surfaceBary', 'vertexGpuBake'])
     .name('附着模式 B/C');

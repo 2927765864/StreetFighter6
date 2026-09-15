@@ -433,6 +433,11 @@ export type MutableSimConfig = {
    * 表现与脱落参数在 `wudaLayerPresets` 多层预设中（可叠层、分 P1/P2）。
    */
   wudaEnabled: boolean;
+  /**
+   * `live` = 现有涂层实时仿真；`clip` = 播放预制武打 clip（站重拳触发）。
+   * 录制始终从 live 涂层的实际绘制采样，回放走同一套 instance 写入。
+   */
+  wudaPlayMode: 'live' | 'clip';
   /** `surfaceBary` = B；`vertexGpuBake` = C */
   wudaAttachMode: 'surfaceBary' | 'vertexGpuBake';
   /**
@@ -822,6 +827,7 @@ export function createDefaultSimConfig(): MutableSimConfig {
     hitVfxPlayMode: 'procedural3d',
     hitVfxFlipbookSize: 1.8,
     wudaEnabled: false,
+    wudaPlayMode: 'live',
     wudaAttachMode: 'surfaceBary',
     wudaCoverMode: 'allMeshes',
     wudaCoverMeshMinVerts: 256,

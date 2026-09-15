@@ -117,6 +117,24 @@ export function isWudaStandHeavyPunch(moveId?: string | null): boolean {
   return STAND_HP_MOVE_IDS.has(moveId.trim().toLowerCase());
 }
 
+/**
+ * Prefab clip / record start: only the fighter **being hit** by standing HP.
+ * Must not use `resolveWudaAllowDetach` — that function is also true for the
+ * attacker on 5HP active frames (stand-HP lock + no hitstun lock, or the
+ * fallback P1 layer), which spawned the clip on P1 at attack start.
+ */
+export function isWudaStandHpHitVictim(fighter: {
+  phase?: string;
+  hitstunDetachPulseFrames?: number;
+  moveId?: string | null;
+  lastHitByMoveId?: string | null;
+}): boolean {
+  if (!isHitstunDetachPulse(fighter)) return false;
+  return isWudaStandHeavyPunch(
+    fighter.lastHitByMoveId ?? fighter.moveId ?? null,
+  );
+}
+
 function relevantWudaAttackMoveId(fighter: {
   phase: string;
   hitstunDetachPulseFrames?: number;

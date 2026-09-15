@@ -47,6 +47,11 @@ import {
   removeWudaLayerPreset,
   type WudaLayerPreset,
 } from '../render/wudaParticle/wudaLayerPreset';
+import {
+  parseWudaClip,
+  serializeWudaClip,
+  wudaClipHub,
+} from '../render/wudaParticle/wudaClip';
 import { reloadMoveFromPublic } from './DebugGui';
 import { bindCmosShakePanel, cmosShakeSectionHtml } from './cmosShakePanel';
 import { bindSfxPanel, sfxSectionHtml } from './sfxPanel';
@@ -290,7 +295,7 @@ function buildDom(): HTMLElement {
     <div id="panel-content">
       <details class="panel-group" data-cat="存档" open>
         <summary>存档</summary>
-        <p class="panel-hint">本地默认仅本机浏览器；Shipping 导出后放入 public/presets/shipping.json 可跨设备。数字框可左右拖动调参（Shift 精细，Ctrl 加速）。</p>
+        <p class="panel-hint">本地默认仅本机浏览器；Shipping 导出后放入 public/presets/shipping.json 可跨设备（含当前武打粒子 clip）。数字框可左右拖动调参（Shift 精细，Ctrl 加速）。</p>
         <div class="panel-actions-col">
           <button type="button" class="btn-primary" id="btn-save-local">把当前参数存为本地默认</button>
           <button type="button" id="btn-reset-factory">恢复出厂默认</button>
@@ -848,6 +853,21 @@ function buildDom(): HTMLElement {
           '【表现】武打粒子',
           `
           ${rowToggle('wudaEnabled', '启用武打粒子涂层')}
+          <div class="panel-row">
+            <div class="panel-row-header"><span>使用模式</span></div>
+            <select id="sel-wudaPlayMode">
+              <option value="live">实时涂层仿真</option>
+              <option value="clip">预制 clip 回放</option>
+            </select>
+          </div>
+          <p class="panel-hint" id="wuda-clip-status">无 clip</p>
+          <p class="panel-hint">「一键导出 Shipping」会把当前 clip 写进 shipping.json，覆盖 public/presets/shipping.json 后即可随仓库存档。</p>
+          <div class="panel-actions-row">
+            <button type="button" id="btn-wuda-clip-arm">武装录制下一次站重拳</button>
+            <button type="button" id="btn-wuda-clip-download">下载 clip</button>
+            <button type="button" id="btn-wuda-clip-load">加载 clip</button>
+            <input id="inp-wuda-clip-file" type="file" accept="application/json,.json" hidden />
+          </div>
           <div class="panel-row">
             <div class="panel-row-header"><span>附着模式</span></div>
             <select id="sel-wudaAttachMode">
@@ -1704,6 +1724,7 @@ export function setupControlPanel(
   bindSelect(ctx, 'sel-plantMode', 'plantMode');
   bindSelect(ctx, 'sel-crossfadeAdvanceMode', 'crossfadeAdvanceMode');
   bindSelect(ctx, 'sel-wudaAttachMode', 'wudaAttachMode');
+  bindSelect(ctx, 'sel-wudaPlayMode', 'wudaPlayMode');
   bindSelect(ctx, 'sel-wudaCoverMode', 'wudaCoverMode');
   bindSelect(ctx, 'sel-hitVfxPlayMode', 'hitVfxPlayMode');
   bindSelect(ctx, 'sel-perfOverlayPosition', 'perfOverlayPosition');
@@ -1938,6 +1959,71 @@ export function setupControlPanel(
   });
   refreshWudaLayerSelect();
   syncWudaLayerMeta();
+
+  const wudaClipStatusEl = byId<HTMLElement>(host, 'wuda-clip-status');
+  const wudaClipFile = byId<HTMLInputElement>(host, 'inp-wuda-clip-file');
+  syncers.push(() => {
+    wudaClipStatusEl.textContent = wudaClipHub.status;
+  });
+  wudaClipStatusEl.textContent = wudaClipHub.status;
+  byId<HTMLButtonElement>(host, 'btn-wuda-clip-arm').addEventListener(
+    'click',
+    () => {
+      if (CONFIG.wudaPlayMode === 'clip') {
+        setFlash('请先切到「实时涂层仿真」再录制');
+        return;
+      }
+      if (!CONFIG.wudaEnabled) {
+        setFlash('请先启用武打粒子');
+        return;
+      }
+      wudaClipHub.arm();
+      wudaClipStatusEl.textContent = wudaClipHub.status;
+      setFlash(wudaClipHub.status);
+    },
+  );
+  byId<HTMLButtonElement>(host, 'btn-wuda-clip-download').addEventListener(
+    'click',
+    () => {
+      if (!wudaClipHub.clip) {
+        setFlash('还没有 clip，请先录制或加载');
+        return;
+      }
+      const blob = new Blob(
+        [JSON.stringify(serializeWudaClip(wudaClipHub.clip))],
+        { type: 'application/json' },
+      );
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `wuda-stand-hp-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      setFlash('已下载武打 clip');
+    },
+  );
+  byId<HTMLButtonElement>(host, 'btn-wuda-clip-load').addEventListener(
+    'click',
+    () => wudaClipFile.click(),
+  );
+  wudaClipFile.addEventListener('change', () => {
+    const file = wudaClipFile.files?.[0];
+    wudaClipFile.value = '';
+    if (!file) return;
+    void file.text().then((text) => {
+      try {
+        const clip = parseWudaClip(JSON.parse(text));
+        if (!clip) {
+          setFlash('clip 文件无效');
+          return;
+        }
+        wudaClipHub.setClip(clip, file.name);
+        wudaClipStatusEl.textContent = wudaClipHub.status;
+        setFlash(wudaClipHub.status);
+      } catch {
+        setFlash('无法解析 clip JSON');
+      }
+    });
+  });
 
   // --- Lights: accordion cards (all lights visible) ---
   const TYPE_LABEL: Record<LightType, string> = {
@@ -3210,7 +3296,11 @@ export function setupControlPanel(
   });
   byId<HTMLButtonElement>(host, 'btn-export-shipping').addEventListener('click', () => {
     exportShippingJson();
-    setFlash('已下载 shipping.json — 放入 public/presets/ 后提交仓库');
+    setFlash(
+      wudaClipHub.clip
+        ? '已下载 shipping.json（含武打 clip）— 放入 public/presets/ 后提交仓库'
+        : '已下载 shipping.json — 放入 public/presets/ 后提交仓库',
+    );
   });
   byId<HTMLButtonElement>(host, 'btn-clear-local').addEventListener('click', () => {
     if (!confirm('清除本机 localStorage 中的本地默认？')) return;

@@ -209,6 +209,12 @@ export function mergeConfig(
       }
       continue;
     }
+    if (key === 'wudaPlayMode') {
+      if (value === 'live' || value === 'clip') {
+        out.wudaPlayMode = value;
+      }
+      continue;
+    }
     if (key === 'wudaAttachMode') {
       if (value === 'surfaceBary' || value === 'vertexGpuBake') {
         out.wudaAttachMode = value;

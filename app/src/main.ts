@@ -96,6 +96,7 @@ import { AnimClipLibrary } from './render/AnimClipLibrary';
 import { loadFighterMeshFromUrl } from './render/loadFighterMesh';
 import { HitVfxRuntime } from './render/hitVfx/HitVfxRuntime';
 import { WudaPlumeBurst } from './render/wudaParticle/WudaPlumeBurst';
+import { wudaClipHub } from './render/wudaParticle/wudaClip';
 import {
   HitVfxDirector,
   matchEventToTriggerArgs,
@@ -406,6 +407,8 @@ async function boot(): Promise<void> {
     scene: hitVfxScene,
     camera,
   });
+  wudaClipHub.restoreLocal();
+  void wudaClipHub.restorePublic();
 
   /** Training-field keeps combat VFX only; editing lives on /hit-vfx.html. */
   const syncHitVfxFromConfig = (): void => {

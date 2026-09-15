@@ -47,6 +47,8 @@ export type PresetEnvelope = {
   config: Partial<RuntimeConfig> & Record<string, unknown>;
   /** 2D flipbook L/M/H recipes (editor bank). Optional for older shipping files. */
   flipbook2d?: unknown;
+  /** Prefab 武打粒子 clip（站重拳受击）。Optional for older shipping files. */
+  wudaClip?: unknown;
 };
 
 export function isPresetEnvelope(v: unknown): v is PresetEnvelope {

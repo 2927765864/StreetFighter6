@@ -66,12 +66,19 @@ import { WudaVertexCoatRuntime } from './wudaParticle/WudaVertexCoatRuntime';
 import type { WudaPlumeBurst } from './wudaParticle/WudaPlumeBurst';
 import { resolveWudaCoverMeshes } from './wudaParticle/evalSkinnedSurface';
 import { wudaFighterSideFromId } from './wudaParticle/wudaBodyRegions';
-import { resolveWudaAllowDetach } from './wudaParticle/wudaCoatMath';
+import {
+  isWudaStandHpHitVictim,
+  resolveWudaAllowDetach,
+} from './wudaParticle/wudaCoatMath';
 import {
   buildWudaCoatCfgShim,
   listActiveWudaLayersForSide,
   type WudaLayerPreset,
 } from './wudaParticle/wudaLayerPreset';
+import {
+  WudaClipPlayer,
+  wudaClipHub,
+} from './wudaParticle/wudaClip';
 import type { WebGPURenderer } from 'three/webgpu';
 import {
   isJumpLandBinding,
@@ -235,6 +242,9 @@ export class FighterView {
   private wudaPlumeBurst: WudaPlumeBurst | null = null;
   /** Latched from syncFromLogic — hitstop must not open detach gates. */
   private wudaInHitstop = false;
+  private readonly wudaClipPlayer = new WudaClipPlayer();
+  private wudaClipPlayerBound = false;
+  private wudaClipLoaded: typeof wudaClipHub.clip = null;
   /**
    * Whole-arm / lower-shin world history for hit-FX impulse.
    * Lookback of several presents (not adjacent-frame Δpos).
@@ -308,6 +318,9 @@ export class FighterView {
       this.pants?.dispose();
       this.pants = null;
       this.disposeAllWudaCoats();
+      this.wudaClipPlayer.dispose();
+      this.wudaClipPlayerBound = false;
+      this.wudaClipLoaded = null;
       this.wudaCoatMeshes = [];
       this.wudaModelRoot = null;
       this.root.remove(this.modelRoot);
@@ -1262,6 +1275,17 @@ export class FighterView {
     this.wudaShimByLayerId.clear();
   }
 
+  private ensureWudaClipPlayer(): void {
+    if (this.wudaClipPlayerBound) return;
+    this.wudaClipPlayer.bind({ parent: this.scene });
+    this.wudaClipPlayerBound = true;
+    this.scene.traverse((o) => {
+      if ((o as THREE.Camera).isCamera) {
+        this.wudaClipPlayer.setCamera(o as THREE.Camera);
+      }
+    });
+  }
+
   private shimForWudaLayer(
     cfg: MutableSimConfig,
     layer: WudaLayerPreset,
@@ -1329,6 +1353,44 @@ export class FighterView {
     cfg: MutableSimConfig,
     wallDtSec: number,
   ): void {
+    const playMode = cfg.wudaPlayMode === 'clip' ? 'clip' : 'live';
+    const viewKey = String(fighter.id);
+
+    if (playMode === 'clip') {
+      this.disposeAllWudaCoats();
+      if (!cfg.wudaEnabled) {
+        this.wudaClipPlayer.stop();
+        return;
+      }
+      this.ensureWudaClipPlayer();
+      if (this.wudaClipLoaded !== wudaClipHub.clip) {
+        this.wudaClipPlayer.loadClip(wudaClipHub.clip);
+        this.wudaClipLoaded = wudaClipHub.clip;
+      }
+      this.scene.traverse((o) => {
+        if ((o as THREE.Camera).isCamera) {
+          this.wudaClipPlayer.setCamera(o as THREE.Camera);
+        }
+      });
+      const victimHit = isWudaStandHpHitVictim({
+        phase: fighter.phase,
+        hitstunDetachPulseFrames: fighter.hitstunDetachPulseFrames,
+        moveId: fighter.mover.moveId,
+        lastHitByMoveId: fighter.lastHitByMoveId,
+      });
+      if (
+        wudaClipHub.risingAllowDetach(viewKey, victimHit) &&
+        this.wudaModelRoot
+      ) {
+        this.wudaModelRoot.updateMatrixWorld(true);
+        this.wudaClipPlayer.play(this.wudaModelRoot.matrixWorld);
+      }
+      this.wudaClipPlayer.tick(wallDtSec);
+      return;
+    }
+
+    this.wudaClipPlayer.stop();
+
     const wantMode =
       cfg.wudaAttachMode === 'vertexGpuBake' ? 'vertexGpuBake' : 'surfaceBary';
     const wantCover =
@@ -1374,6 +1436,11 @@ export class FighterView {
 
     if (this.wudaCoatMeshes.length === 0 || layers.length === 0) return;
 
+    const capturing =
+      wudaClipHub.recorder.state === 'armed' ||
+      wudaClipHub.recorder.state === 'recording';
+    let fed = false;
+
     for (const layer of layers) {
       let coat = this.wudaCoats.get(layer.id);
       if (!coat?.isBound) {
@@ -1410,7 +1477,33 @@ export class FighterView {
           inHitstop: this.wudaInHitstop,
         },
       );
+      if (capturing) coat.beginDrawCapture();
       void coat.update(wallDtSec, shim, { allowDetach, side });
+      if (capturing && this.wudaModelRoot) {
+        this.wudaModelRoot.updateMatrixWorld(true);
+        const victimHit = isWudaStandHpHitVictim({
+          phase: fighter.phase,
+          hitstunDetachPulseFrames: fighter.hitstunDetachPulseFrames,
+          moveId: fighter.mover.moveId,
+          lastHitByMoveId: fighter.lastHitByMoveId,
+        });
+        wudaClipHub.recorder.feed({
+          layerId: layer.id,
+          samples: coat.takeDrawCapture(),
+          instanceCap: coat.getInstanceCap(),
+          dt: wallDtSec,
+          originWorld: this.wudaModelRoot.matrixWorld,
+          cfg: shim,
+          allowDetach: victimHit,
+          viewKey,
+        });
+        fed = true;
+      }
+    }
+
+    if (fed) {
+      const done = wudaClipHub.recorder.endPresent(viewKey);
+      if (done) wudaClipHub.onRecorded(done);
     }
   }
 

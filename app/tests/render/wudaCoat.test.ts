@@ -16,6 +16,7 @@ import {
   isHitstunFrame,
   armWudaDetachLatch,
   resolveWudaAllowDetach,
+  isWudaStandHpHitVictim,
   WUDA_DETACH_LATCH_PRESENTS,
   shouldDetach,
   shouldDetachWithLock,
@@ -41,6 +42,7 @@ describe('wuda CONFIG defaults', () => {
     const cfg = createDefaultSimConfig();
     const globalKeys = [
       'wudaEnabled',
+      'wudaPlayMode',
       'wudaAttachMode',
       'wudaCoverMode',
       'wudaCoverMeshMinVerts',
@@ -51,6 +53,7 @@ describe('wuda CONFIG defaults', () => {
       expect(cfg).toHaveProperty(k);
     }
     expect(cfg.wudaEnabled).toBe(false);
+    expect(cfg.wudaPlayMode).toBe('live');
     expect(cfg.wudaAttachMode).toBe('surfaceBary');
     expect(cfg.wudaCoverMode).toBe('allMeshes');
     expect(cfg.wudaCoverMeshMinVerts).toBe(256);
@@ -422,6 +425,28 @@ describe('wudaCoatMath', () => {
     };
     expect(resolveWudaAllowDetach(attackAndHp, attackHp)).toBe(true);
     expect(resolveWudaAllowDetach(attackAndHp, attackLp)).toBe(false);
+  });
+
+  it('clip/record gate is only the stand-HP hit victim, never the attacker', () => {
+    const attacker = {
+      phase: 'attack',
+      hitstunDetachPulseFrames: 0,
+      moveId: 'ryu_5hp',
+      lastHitByMoveId: null as string | null,
+    };
+    const victimHp = {
+      phase: 'hitstun',
+      hitstunDetachPulseFrames: 3,
+      moveId: null as string | null,
+      lastHitByMoveId: 'ryu_5hp',
+    };
+    const victimLp = { ...victimHp, lastHitByMoveId: 'ryu_5lp' };
+    const victimNoPulse = { ...victimHp, hitstunDetachPulseFrames: 0 };
+
+    expect(isWudaStandHpHitVictim(attacker)).toBe(false);
+    expect(isWudaStandHpHitVictim(victimHp)).toBe(true);
+    expect(isWudaStandHpHitVictim(victimLp)).toBe(false);
+    expect(isWudaStandHpHitVictim(victimNoPulse)).toBe(false);
   });
 
   it('armWudaDetachLatch keeps the gate open after a short pulse', () => {
