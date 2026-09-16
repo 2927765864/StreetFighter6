@@ -46,6 +46,7 @@ import {
 import {
   distributePushback,
   resolveBlockOnHit,
+  tryStandPunchHitPushSteps,
 } from '../systems/BlockResolve';
 import {
   canGuard,
@@ -137,6 +138,15 @@ export type MatchSimOptions = {
   blockPushbackTotal: number;
   /** Ease-out power for block push (3 = cubic). Substitute for missing CurveTgtID table. */
   blockPushEasePower: number;
+  standLpHitPushEasePower: number;
+  standLpHitPushMoveTime: number;
+  standLpHitPushTotal: number;
+  standMpHitPushEasePower: number;
+  standMpHitPushMoveTime: number;
+  standMpHitPushTotal: number;
+  standHpHitPushEasePower: number;
+  standHpHitPushMoveTime: number;
+  standHpHitPushTotal: number;
   /** -1 = use move.blockstun */
   blockstunOverride: number;
   /** 0 = no chip on block path; 1 = full damage on hit path */
@@ -244,6 +254,15 @@ const DEFAULT_OPTS: MatchSimOptions = {
   enableBlockPush: true,
   blockPushbackTotal: 0.22,
   blockPushEasePower: 3,
+  standLpHitPushEasePower: 3,
+  standLpHitPushMoveTime: -1,
+  standLpHitPushTotal: -1,
+  standMpHitPushEasePower: 3,
+  standMpHitPushMoveTime: -1,
+  standMpHitPushTotal: -1,
+  standHpHitPushEasePower: 3,
+  standHpHitPushMoveTime: -1,
+  standHpHitPushTotal: -1,
   blockstunOverride: -1,
   damageScale: 1,
   stageWidth: 9,
@@ -1219,13 +1238,21 @@ export class MatchSim {
             let away: Facing = this.p1.facing;
             if (this.p2.x < this.p1.x) away = -1;
             else if (this.p2.x > this.p1.x) away = 1;
+            const punchSteps = tryStandPunchHitPushSteps(
+              mv.moveId || mv.id,
+              hr.pushbackTotal,
+              hr.moveTime,
+              hr.hitstun,
+              this.opts,
+            );
             const steps =
-              mv.hitPushback && mv.hitPushback.length > 0
+              punchSteps ??
+              (mv.hitPushback && mv.hitPushback.length > 0
                 ? mv.hitPushback.slice()
                 : distributePushback(hr.pushbackTotal, hr.hitstun, {
                     moveTime: hr.moveTime,
                     easePower: this.opts.blockPushEasePower,
-                  });
+                  }));
             if (hr.hitReaction === 'knockdown') {
               this.p2.addBlockPushFront(steps, away);
             } else {

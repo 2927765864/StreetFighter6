@@ -9,8 +9,8 @@ import { bootHitVfxEditor } from './HitVfxEditorApp';
 
 async function main(): Promise<void> {
   setActiveDefaultConfig(cloneConfig(CONFIG));
-  await loadShippingConfig();
   await hydrateFlipbookFactory();
+  await loadShippingConfig();
   loadSavedConfig();
   loadHitVfxEditorDraft();
   await bootHitVfxEditor();

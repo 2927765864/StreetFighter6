@@ -163,6 +163,18 @@ export type MutableSimConfig = {
   enableBlockPush: boolean;
   blockPushbackTotal: number;
   blockPushEasePower: number;
+  /** Standing LP hit-push ease-out power (only 5LP). */
+  standLpHitPushEasePower: number;
+  /** -1 = use move table MoveTime. */
+  standLpHitPushMoveTime: number;
+  /** -1 = use move table total. */
+  standLpHitPushTotal: number;
+  standMpHitPushEasePower: number;
+  standMpHitPushMoveTime: number;
+  standMpHitPushTotal: number;
+  standHpHitPushEasePower: number;
+  standHpHitPushMoveTime: number;
+  standHpHitPushTotal: number;
   blockstunOverride: number;
   damageScale: number;
   mmdkUnitScale: number;
@@ -635,6 +647,15 @@ export function createDefaultSimConfig(): MutableSimConfig {
     enableBlockPush: true,
     blockPushbackTotal: 0.22,
     blockPushEasePower: 3,
+    standLpHitPushEasePower: 3,
+    standLpHitPushMoveTime: -1,
+    standLpHitPushTotal: -1,
+    standMpHitPushEasePower: 3,
+    standMpHitPushMoveTime: -1,
+    standMpHitPushTotal: -1,
+    standHpHitPushEasePower: 3,
+    standHpHitPushMoveTime: -1,
+    standHpHitPushTotal: -1,
     blockstunOverride: -1,
     damageScale: 1,
     mmdkUnitScale: 1,
@@ -979,6 +1000,15 @@ export function applyConfigToMatchOpts(cfg: MutableSimConfig) {
     enableBlockPush: cfg.enableBlockPush,
     blockPushbackTotal: cfg.blockPushbackTotal,
     blockPushEasePower: cfg.blockPushEasePower,
+    standLpHitPushEasePower: cfg.standLpHitPushEasePower,
+    standLpHitPushMoveTime: cfg.standLpHitPushMoveTime,
+    standLpHitPushTotal: cfg.standLpHitPushTotal,
+    standMpHitPushEasePower: cfg.standMpHitPushEasePower,
+    standMpHitPushMoveTime: cfg.standMpHitPushMoveTime,
+    standMpHitPushTotal: cfg.standMpHitPushTotal,
+    standHpHitPushEasePower: cfg.standHpHitPushEasePower,
+    standHpHitPushMoveTime: cfg.standHpHitPushMoveTime,
+    standHpHitPushTotal: cfg.standHpHitPushTotal,
     blockstunOverride: cfg.blockstunOverride,
     damageScale: cfg.damageScale,
     stageWidth: cfg.stageWidth,

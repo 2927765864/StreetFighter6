@@ -186,7 +186,11 @@ export function applyFlipbookShipping(raw: unknown): FlipbookPersistState {
   };
 }
 
-/** Load packaged editor recipes (Habby has empty localStorage). */
+/**
+ * Load packaged editor recipes into factoryState.
+ * Call BEFORE loadShippingConfig so shipping.flipbook2d can overlay.
+ * Habby has empty localStorage; combat then reads factoryState.
+ */
 export async function hydrateFlipbookFactory(): Promise<boolean> {
   try {
     const res = await fetch(FLIPBOOK_RECIPES_URL, { cache: 'no-cache' });

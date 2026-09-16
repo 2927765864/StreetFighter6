@@ -506,6 +506,26 @@ function buildDom(): HTMLElement {
           `,
           'expandGuardPush',
         )}
+        ${sectionShell(
+          'standPunchHitPush',
+          '【战斗】站轻/中/重拳推挤曲线',
+          `
+          <p class="panel-hint">只作用于站立轻/中/重拳（5LP / 5MP / 5HP）的受击推开。幂越大越「一开始就推完」；帧数/总量填 -1 用招式表。</p>
+          <p class="panel-hint">站轻拳 5LP</p>
+          ${rowNumber('standLpHitPushEasePower', '轻拳 曲线幂', 1, 8, 0.1)}
+          ${rowNumber('standLpHitPushMoveTime', '轻拳 推开帧数 (-1=表)', -1, 60, 1)}
+          ${rowNumber('standLpHitPushTotal', '轻拳 推开总量 (-1=表)', -1, 1.5, 0.01)}
+          <p class="panel-hint">站中拳 5MP</p>
+          ${rowNumber('standMpHitPushEasePower', '中拳 曲线幂', 1, 8, 0.1)}
+          ${rowNumber('standMpHitPushMoveTime', '中拳 推开帧数 (-1=表)', -1, 60, 1)}
+          ${rowNumber('standMpHitPushTotal', '中拳 推开总量 (-1=表)', -1, 1.5, 0.01)}
+          <p class="panel-hint">站重拳 5HP</p>
+          ${rowNumber('standHpHitPushEasePower', '重拳 曲线幂', 1, 8, 0.1)}
+          ${rowNumber('standHpHitPushMoveTime', '重拳 推开帧数 (-1=表)', -1, 60, 1)}
+          ${rowNumber('standHpHitPushTotal', '重拳 推开总量 (-1=表)', -1, 1.5, 0.01)}
+          `,
+          'expandStandPunchHitPush',
+        )}
       </details>
 
       <details class="panel-group" data-cat="移动">
@@ -1184,6 +1204,15 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'enableBlockPush', path: 'enableBlockPush' },
   { id: 'blockPushbackTotal', path: 'blockPushbackTotal' },
   { id: 'blockPushEasePower', path: 'blockPushEasePower' },
+  { id: 'standLpHitPushEasePower', path: 'standLpHitPushEasePower' },
+  { id: 'standLpHitPushMoveTime', path: 'standLpHitPushMoveTime' },
+  { id: 'standLpHitPushTotal', path: 'standLpHitPushTotal' },
+  { id: 'standMpHitPushEasePower', path: 'standMpHitPushEasePower' },
+  { id: 'standMpHitPushMoveTime', path: 'standMpHitPushMoveTime' },
+  { id: 'standMpHitPushTotal', path: 'standMpHitPushTotal' },
+  { id: 'standHpHitPushEasePower', path: 'standHpHitPushEasePower' },
+  { id: 'standHpHitPushMoveTime', path: 'standHpHitPushMoveTime' },
+  { id: 'standHpHitPushTotal', path: 'standHpHitPushTotal' },
   { id: 'blockstunOverride', path: 'blockstunOverride' },
   { id: 'hitstunOverride', path: 'hitstunOverride' },
   { id: 'knockdownFramesOverride', path: 'knockdownFramesOverride' },
@@ -1681,6 +1710,7 @@ export function setupControlPanel(
     ['expandInputBuffer', 'inputBuffer', 'sect-inputBuffer'],
     ['expandCancelHitstop', 'cancelHitstop', 'sect-cancelHitstop'],
     ['expandGuardPush', 'guardPush', 'sect-guardPush'],
+    ['expandStandPunchHitPush', 'standPunchHitPush', 'sect-standPunchHitPush'],
     ['expandLocomotion', 'locomotion', 'sect-locomotion'],
     ['expandRenderBoxes', 'renderBoxes', 'sect-renderBoxes'],
     ['expandCamera', 'camera', 'sect-camera'],

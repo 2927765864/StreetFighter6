@@ -89,3 +89,66 @@ export function distributePushback(
   }
   return steps;
 }
+
+export type StandPunchHitPushOpts = {
+  standLpHitPushEasePower: number;
+  standLpHitPushMoveTime: number;
+  standLpHitPushTotal: number;
+  standMpHitPushEasePower: number;
+  standMpHitPushMoveTime: number;
+  standMpHitPushTotal: number;
+  standHpHitPushEasePower: number;
+  standHpHitPushMoveTime: number;
+  standHpHitPushTotal: number;
+};
+
+/** Only standing LP / MP / HP (5LP / 5MP / 5HP). */
+export function standPunchHitPushSlot(
+  moveId: string | undefined,
+): 'lp' | 'mp' | 'hp' | null {
+  if (!moveId) return null;
+  const id = moveId.toLowerCase().replace(/-/g, '_');
+  const tail = id.includes('_') ? id.slice(id.lastIndexOf('_') + 1) : id;
+  if (tail === '5lp' || id === '5lp') return 'lp';
+  if (tail === '5mp' || id === '5mp') return 'mp';
+  if (tail === '5hp' || id === '5hp') return 'hp';
+  return null;
+}
+
+/**
+ * Per-move ease-out for standing punches. Returns null for every other move
+ * so callers keep the baked table / global ease.
+ */
+export function tryStandPunchHitPushSteps(
+  moveId: string | undefined,
+  tableTotal: number,
+  tableMoveTime: number,
+  stunFrames: number,
+  opts: StandPunchHitPushOpts,
+): number[] | null {
+  const slot = standPunchHitPushSlot(moveId);
+  if (!slot) return null;
+  const ease =
+    slot === 'lp'
+      ? opts.standLpHitPushEasePower
+      : slot === 'mp'
+        ? opts.standMpHitPushEasePower
+        : opts.standHpHitPushEasePower;
+  const mtOver =
+    slot === 'lp'
+      ? opts.standLpHitPushMoveTime
+      : slot === 'mp'
+        ? opts.standMpHitPushMoveTime
+        : opts.standHpHitPushMoveTime;
+  const totOver =
+    slot === 'lp'
+      ? opts.standLpHitPushTotal
+      : slot === 'mp'
+        ? opts.standMpHitPushTotal
+        : opts.standHpHitPushTotal;
+  const total = totOver >= 0 && Number.isFinite(totOver) ? totOver : tableTotal;
+  const moveTime =
+    mtOver >= 0 && Number.isFinite(mtOver) ? mtOver : tableMoveTime;
+  const easePower = Number.isFinite(ease) && ease > 0 ? ease : 3;
+  return distributePushback(total, stunFrames, { moveTime, easePower });
+}

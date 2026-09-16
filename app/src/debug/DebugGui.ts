@@ -711,6 +711,43 @@ export function createDebugGui(
     .add(cfg, 'mmdkUnitScale', 0.001, 2, 0.001)
     .name('mmdkUnitScale')
     .onChange(syncOpts);
+  const punchPushFolder = gui.addFolder('站轻/中/重拳推挤曲线');
+  punchPushFolder
+    .add(cfg, 'standLpHitPushEasePower', 1, 8, 0.1)
+    .name('轻拳曲线幂')
+    .onChange(syncOpts);
+  punchPushFolder
+    .add(cfg, 'standLpHitPushMoveTime', -1, 60, 1)
+    .name('轻拳推开帧数')
+    .onChange(syncOpts);
+  punchPushFolder
+    .add(cfg, 'standLpHitPushTotal', -1, 1.5, 0.01)
+    .name('轻拳推开总量')
+    .onChange(syncOpts);
+  punchPushFolder
+    .add(cfg, 'standMpHitPushEasePower', 1, 8, 0.1)
+    .name('中拳曲线幂')
+    .onChange(syncOpts);
+  punchPushFolder
+    .add(cfg, 'standMpHitPushMoveTime', -1, 60, 1)
+    .name('中拳推开帧数')
+    .onChange(syncOpts);
+  punchPushFolder
+    .add(cfg, 'standMpHitPushTotal', -1, 1.5, 0.01)
+    .name('中拳推开总量')
+    .onChange(syncOpts);
+  punchPushFolder
+    .add(cfg, 'standHpHitPushEasePower', 1, 8, 0.1)
+    .name('重拳曲线幂')
+    .onChange(syncOpts);
+  punchPushFolder
+    .add(cfg, 'standHpHitPushMoveTime', -1, 60, 1)
+    .name('重拳推开帧数')
+    .onChange(syncOpts);
+  punchPushFolder
+    .add(cfg, 'standHpHitPushTotal', -1, 1.5, 0.01)
+    .name('重拳推开总量')
+    .onChange(syncOpts);
   const boxesFolder = gui.addFolder('框显示');
   boxesFolder.add(cfg, 'showHitboxes').name('显示 Hit');
   boxesFolder.add(cfg, 'showHurtboxes').name('显示 Hurt');

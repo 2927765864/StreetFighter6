@@ -10,6 +10,7 @@ export type ExpandedSections = {
   inputBuffer: boolean;
   cancelHitstop: boolean;
   guardPush: boolean;
+  standPunchHitPush: boolean;
   locomotion: boolean;
   renderBoxes: boolean;
   camera: boolean;

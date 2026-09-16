@@ -183,6 +183,20 @@ function copyVfxFrames(destRoot) {
   return { counts, total };
 }
 
+/** Editor "保存工程" writes shipping.flipbook2d; recipes.json often lags. */
+function syncRecipesFromShipping() {
+  const shippingPath = path.join(appRoot, 'public/presets/shipping.json');
+  const recipesPath = path.join(vfxPublicRoot, 'recipes.json');
+  if (!fs.existsSync(shippingPath)) return;
+  const shipping = JSON.parse(fs.readFileSync(shippingPath, 'utf8'));
+  if (!shipping?.flipbook2d?.recipes) return;
+  fs.writeFileSync(
+    recipesPath,
+    `${JSON.stringify(shipping.flipbook2d, null, 2)}\n`,
+  );
+  console.log('[habby] synced recipes.json from shipping.flipbook2d');
+}
+
 function countTriangles(doc) {
   let tris = 0;
   for (const mesh of doc.getRoot().listMeshes()) {
@@ -227,6 +241,7 @@ async function writeOptimizedPng(src, dest) {
 
 console.info(`[habby] node time ${new Date().toISOString()}`);
 
+syncRecipesFromShipping();
 console.info('[habby] materialize 2D VFX frames → public/vfx/hit_ref_v1');
 const vfxCopied = copyVfxFrames(vfxPublicRoot);
 for (const layer of VFX_LAYERS) {

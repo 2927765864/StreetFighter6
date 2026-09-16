@@ -209,8 +209,10 @@ async function boot(): Promise<void> {
 
   // Content-seeded snapshot becomes the "project default" baseline before shipping.
   setActiveDefaultConfig(cloneConfig(cfg));
-  await loadShippingConfig();
+  // recipes.json = factory; shipping.flipbook2d overlays it. Hydrate first or
+  // Habby (empty localStorage) keeps the stale recipes and drops editor edits.
   await hydrateFlipbookFactory();
+  await loadShippingConfig();
   loadSavedConfig();
 
   const match = new MatchSim(move, catalog, applyConfigToMatchOpts(cfg));

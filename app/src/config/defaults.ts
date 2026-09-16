@@ -9,6 +9,7 @@ export function defaultExpandedSections(): ExpandedSections {
     inputBuffer: false,
     cancelHitstop: false,
     guardPush: true,
+    standPunchHitPush: true,
     locomotion: true,
     renderBoxes: true,
     camera: true,

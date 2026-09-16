@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   distributePushback,
   resolveBlockOnHit,
+  standPunchHitPushSlot,
+  tryStandPunchHitPushSteps,
 } from '../../src/combat/systems/BlockResolve';
 import type { MoveDefinition } from '../../src/combat/move/MoveDefinition';
 
@@ -68,5 +70,47 @@ describe('distributePushback', () => {
   it('uses MoveTime not stun when shorter', () => {
     const steps = distributePushback(0.3, 20, { moveTime: 8, easePower: 3 });
     expect(steps.length).toBe(8);
+  });
+});
+
+const punchOpts = {
+  standLpHitPushEasePower: 3,
+  standLpHitPushMoveTime: -1,
+  standLpHitPushTotal: -1,
+  standMpHitPushEasePower: 5,
+  standMpHitPushMoveTime: -1,
+  standMpHitPushTotal: -1,
+  standHpHitPushEasePower: 2,
+  standHpHitPushMoveTime: 10,
+  standHpHitPushTotal: 0.8,
+};
+
+describe('stand punch hit-push curves', () => {
+  it('maps only 5LP / 5MP / 5HP', () => {
+    expect(standPunchHitPushSlot('ryu_5lp')).toBe('lp');
+    expect(standPunchHitPushSlot('ryu_5mp')).toBe('mp');
+    expect(standPunchHitPushSlot('ryu_5hp')).toBe('hp');
+    expect(standPunchHitPushSlot('ryu_2hp')).toBeNull();
+    expect(standPunchHitPushSlot('ryu_5lk')).toBeNull();
+  });
+
+  it('rebuilds 5LP with its own ease; 2MK stays null', () => {
+    const lp = tryStandPunchHitPushSteps('ryu_5lp', 0.27, 14, 14, punchOpts);
+    expect(lp).not.toBeNull();
+    expect(lp!.length).toBe(14);
+    expect(lp!.reduce((a, b) => a + b, 0)).toBeCloseTo(0.27);
+    expect(tryStandPunchHitPushSteps('ryu_2mk', 0.5, 16, 16, punchOpts)).toBeNull();
+  });
+
+  it('5HP uses per-move frame count and total override', () => {
+    const hp = tryStandPunchHitPushSteps('ryu_5hp', 0.6, 27, 20, punchOpts);
+    expect(hp!.length).toBe(10);
+    expect(hp!.reduce((a, b) => a + b, 0)).toBeCloseTo(0.8);
+  });
+
+  it('higher ease power front-loads more than lower', () => {
+    const steep = tryStandPunchHitPushSteps('ryu_5mp', 0.5, 22, 22, punchOpts)!;
+    const mild = tryStandPunchHitPushSteps('ryu_5lp', 0.5, 22, 22, punchOpts)!;
+    expect(steep[0]!).toBeGreaterThan(mild[0]!);
   });
 });
