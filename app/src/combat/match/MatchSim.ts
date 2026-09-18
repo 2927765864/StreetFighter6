@@ -28,6 +28,7 @@ import { DummyController } from './DummyController';
 import {
   beginWalkEnd,
   beginWalkStart,
+  continueWalkEnd,
   stepWalk,
 } from '../loco/WalkController';
 import {
@@ -35,6 +36,7 @@ import {
   walkDirFromRel,
   type WalkDirEdge,
 } from '../loco/WalkInputFreeze';
+import { stepWalkStartCommit } from '../loco/WalkStartCommit';
 import type { RyuMovementTable } from '../../data/loadRyuMovement';
 import { parseRyuMovement } from '../../data/loadRyuMovement';
 import { buildFrontHeavyDashDx } from '../loco/DashProfile';
@@ -112,6 +114,10 @@ export type MatchSimOptions = {
   walkEarlyReleaseEndKeepRatio: number;
   /** §3.9.1.b: presentation freeze frames on walk dir press edge. */
   walkInputFreezeFrames: number;
+  /** §3.9.1.c: hold frames before walk start clip is a visual promise. 0=off. */
+  walkStartCommitHoldFrames: number;
+  /** §3.9.1.d: start-release buffer frames before opening end. 0=off. */
+  walkStartReleaseEndDelayFrames: number;
   jumpApex: number;
   jumpFwdDist: number;
   jumpBackDist: number;
@@ -232,6 +238,8 @@ const DEFAULT_OPTS: MatchSimOptions = {
   walkFirstFrameScale: 0.25,
   walkEarlyReleaseEndKeepRatio: 0.35,
   walkInputFreezeFrames: 4,
+  walkStartCommitHoldFrames: 2,
+  walkStartReleaseEndDelayFrames: 2,
   jumpApex: 2.115,
   jumpFwdDist: 1.9,
   jumpBackDist: 1.52,
@@ -783,6 +791,8 @@ export class MatchSim {
       walk_fwd: { start: 19, loop: 114, end: 47 },
       walk_back: { start: 15, loop: 118, end: 47 },
     };
+    const prevPhase = this.p1.locoPhase;
+    const prevEndFrame = this.p1.locoFrame;
     const { state, dxFacing, enteredStart } = stepWalk(this.p1.walkState, {
       holdFwd,
       holdBack,
@@ -791,10 +801,72 @@ export class MatchSim {
       backSpeed: this.opts.walkBackSpeed,
       firstFrameSpeedScale: this.opts.walkFirstFrameScale,
       earlyReleaseEndKeepRatio: this.opts.walkEarlyReleaseEndKeepRatio,
+      startReleaseEndDelayFrames: this.p1.walkStartVisualCommitted
+        ? Math.max(0, this.opts.walkStartReleaseEndDelayFrames ?? 0)
+        : 0,
     });
     this.p1.x += this.p1.facing * dxFacing;
     this.p1.applyWalkState(state);
-    this.emitWalkFootstepSfx(state, clips, enteredStart);
+    if (enteredStart && prevPhase === 'end') {
+      this.p1.walkEndResumeFrame = prevEndFrame;
+    }
+    this.applyWalkStartCommit(state.locoPhase, holdFwd || holdBack, enteredStart);
+    if (this.p1.walkStartVisualCommitted) {
+      this.p1.walkEndResumeFrame = null;
+      this.p1.walkKeepCurrentEnd = false;
+    }
+    const resumed = this.resumeWalkEndIfUncommittedTap(clips, state);
+    this.emitWalkFootstepSfx(resumed, clips, enteredStart);
+  }
+
+  /**
+   * §3.9.1.c: tap during end never restarts shortened end (same-clip locoFrame
+   * teleport). Restore the in-flight end and advance one frame.
+   */
+  private resumeWalkEndIfUncommittedTap(
+    clips: {
+      walk_fwd: { start: number; loop: number; end: number };
+      walk_back: { start: number; loop: number; end: number };
+    },
+    state: ReturnType<typeof stepWalk>['state'],
+  ): ReturnType<typeof stepWalk>['state'] {
+    const resumeAt = this.p1.walkEndResumeFrame;
+    if (
+      resumeAt == null ||
+      state.locoPhase !== 'end' ||
+      this.p1.walkStartVisualCommitted
+    ) {
+      return state;
+    }
+    const dir = state.walkDir ?? 'fwd';
+    const continued = continueWalkEnd(dir, clips, resumeAt);
+    this.p1.applyWalkState(continued);
+    this.p1.walkEndResumeFrame = null;
+    this.p1.walkKeepCurrentEnd = true;
+    this.applyWalkStartCommit(continued.locoPhase, false, false);
+    return continued;
+  }
+
+  /** §3.9.1.c: start clip is a visual promise only after consecutive hold frames. */
+  private applyWalkStartCommit(
+    locoPhase: ReturnType<typeof stepWalk>['state']['locoPhase'],
+    holdingWalk: boolean,
+    enteredStart: boolean,
+  ): void {
+    const next = stepWalkStartCommit(
+      {
+        holdFrames: this.p1.walkStartHoldFrames,
+        committed: this.p1.walkStartVisualCommitted,
+      },
+      {
+        locoPhase,
+        holdingWalk,
+        enteredStart,
+        commitHoldFrames: this.opts.walkStartCommitHoldFrames,
+      },
+    );
+    this.p1.walkStartHoldFrames = next.holdFrames;
+    this.p1.walkStartVisualCommitted = next.committed;
   }
 
   /** Foot plant SFX on walk start/loop; suppressed during input-freeze. */
@@ -878,6 +950,8 @@ export class MatchSim {
     if (cancel) {
       this.p1.walkFreezeSawLoop = false;
       this.p1.walkFreezeLastDir = null;
+      this.p1.walkEndResumeFrame = null;
+      this.p1.walkKeepCurrentEnd = false;
     }
   }
 
@@ -895,10 +969,20 @@ export class MatchSim {
       this.p1.applyWalkState(
         beginWalkStart(walkDir, { firstFramePending: false }),
       );
+      this.applyWalkStartCommit('start', true, true);
       this.walkFootClock = initialWalkFootstepClock();
       return;
     }
     // Released: no start — reopen end from entry (early-release if never looped).
+    // Tap-during-end already resumed the in-flight end; do not teleport to a
+    // shortened entry (same-clip scrub jump).
+    if (this.p1.walkKeepCurrentEnd) {
+      this.p1.walkKeepCurrentEnd = false;
+      return;
+    }
+    if (this.p1.phase !== 'walk') {
+      return;
+    }
     const dir =
       this.p1.walkFreezeLastDir ??
       this.p1.walkState.walkDir ??

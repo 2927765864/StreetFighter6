@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   beginWalkEnd,
   beginWalkStart,
+  continueWalkEnd,
   earlyReleaseEndStartFrame,
   initialWalkState,
   shouldLocoSoftBlend,
@@ -155,6 +156,101 @@ describe('WalkController', () => {
     }
     expect(s.locoPhase).toBe('none');
     expect(frames).toBe(7);
+  });
+
+  it('start-release delay keeps start with dx=0 then opens end', () => {
+    let s = initialWalkState();
+    let r = stepWalk(s, { ...base, holdFwd: true, holdBack: false });
+    s = r.state;
+    r = stepWalk(s, {
+      ...base,
+      holdFwd: false,
+      holdBack: false,
+      startReleaseEndDelayFrames: 2,
+    });
+    expect(r.state.locoPhase).toBe('start');
+    expect(r.enteredEnd).toBe(false);
+    expect(r.dxFacing).toBe(0);
+    expect(r.state.endEnterDelayRemain).toBe(2);
+    s = r.state;
+    r = stepWalk(s, {
+      ...base,
+      holdFwd: false,
+      holdBack: false,
+      startReleaseEndDelayFrames: 2,
+    });
+    expect(r.state.locoPhase).toBe('start');
+    expect(r.dxFacing).toBe(0);
+    expect(r.state.endEnterDelayRemain).toBe(1);
+    s = r.state;
+    r = stepWalk(s, {
+      ...base,
+      holdFwd: false,
+      holdBack: false,
+      startReleaseEndDelayFrames: 2,
+    });
+    expect(r.enteredEnd).toBe(true);
+    expect(r.state.locoPhase).toBe('end');
+  });
+
+  it('re-press during start-release delay cancels end', () => {
+    const longStart = {
+      walk_fwd: { start: 8, loop: 4, end: 2 },
+      walk_back: { start: 8, loop: 4, end: 2 },
+    };
+    let s = initialWalkState();
+    let r = stepWalk(s, {
+      ...base,
+      clips: longStart,
+      holdFwd: true,
+      holdBack: false,
+    });
+    s = r.state;
+    r = stepWalk(s, {
+      ...base,
+      clips: longStart,
+      holdFwd: false,
+      holdBack: false,
+      startReleaseEndDelayFrames: 2,
+    });
+    s = r.state;
+    r = stepWalk(s, {
+      ...base,
+      clips: longStart,
+      holdFwd: true,
+      holdBack: false,
+      startReleaseEndDelayFrames: 2,
+    });
+    expect(r.state.locoPhase).toBe('start');
+    expect(r.enteredEnd).toBe(false);
+    expect(r.state.endEnterDelayRemain).toBe(0);
+    expect(r.dxFacing).toBeGreaterThan(0);
+  });
+
+  it('continueWalkEnd advances in-place and idles after last frame', () => {
+    const longEnd = {
+      walk_fwd: { start: 5, loop: 10, end: 20 },
+      walk_back: { start: 5, loop: 10, end: 20 },
+    };
+    const s = continueWalkEnd('fwd', longEnd, 13);
+    expect(s.locoPhase).toBe('end');
+    expect(s.locoFrame).toBe(14);
+    expect(s.animRole).toBe('end');
+    const last = continueWalkEnd('fwd', longEnd, 19);
+    expect(last.locoPhase).toBe('none');
+  });
+
+  it('beginWalkEnd locoFrame override wins over earlyRelease', () => {
+    const longEnd = {
+      walk_fwd: { start: 5, loop: 10, end: 20 },
+      walk_back: { start: 5, loop: 10, end: 20 },
+    };
+    const s = beginWalkEnd('fwd', longEnd, {
+      earlyRelease: true,
+      keepRatio: 0.35,
+      locoFrame: 8,
+    });
+    expect(s.locoFrame).toBe(8);
   });
 
   it('beginWalkStart / beginWalkEnd support freeze unfreeze rewind', () => {

@@ -1,9 +1,8 @@
 /**
  * Presentation crossfade policy (§3.11).
  *
- * Mechanism (executor in FighterView): dual-advance old clip + blend-to-new
- * (optional debug freeze-old via cfg.crossfadeAdvanceMode).
- * Policy table decides whether to blend and for how long — not a single global fade.
+ * Walk idle/start/end uses §3.11.0 frame blend in FighterView (not this table).
+ * Other edges: historical dual-advance seconds via resolveCrossfadeSec.
  *
  * Never encroaches on attack lock (total): callers must pass duration 0 while
  * phase===attack locked; this module also returns 0 for lock-like targets.

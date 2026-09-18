@@ -539,6 +539,8 @@ function buildDom(): HTMLElement {
           ${rowNumber('walkFirstFrameScale', '走首帧比例', 0.05, 1, 0.05)}
           ${rowNumber('walkEarlyReleaseEndKeepRatio', '点按收步保留', 0.05, 1, 0.05)}
           ${rowNumber('walkInputFreezeFrames', '走输入冻帧', 0, 20, 1)}
+          ${rowNumber('walkStartCommitHoldFrames', '走 start 承诺帧', 0, 20, 1)}
+          ${rowNumber('walkStartReleaseEndDelayFrames', '走 start 松手进 end 延迟帧', 0, 20, 1)}
           ${rowNumber('dashFrames', '前冲帧数', 1, 40, 1)}
           ${rowNumber('dashBackFrames', '后冲帧数', 1, 40, 1)}
           ${rowNumber('dashFrontHeavyPower', 'dash 前重指数', 0.5, 4, 0.05)}
@@ -834,7 +836,14 @@ function buildDom(): HTMLElement {
           </div>
           ${rowToggle('footPlantEnabled', '出招支撑脚 XZ')}
           ${rowToggle('rootPoseLockAttack', 'rootPoseLockAttack')}
-          ${rowNumber('locoBlendSec', 'loco 溶图 (s)', 0, 0.35, 0.01)}
+          ${rowNumber('locoBlendSec', 'loco 溶图 (s，旧)', 0, 0.35, 0.01)}
+          ${rowNumber('walkXfadeFramesDefault', '走溶图默认帧', 0, 20, 1)}
+          ${rowNumber('walkXfadeIdleStart', '待机→起步 溶图帧', 0, 20, 1)}
+          ${rowNumber('walkXfadeStartEnd', '起步→收尾 溶图帧', 0, 20, 1)}
+          ${rowNumber('walkXfadeEndStart', '收尾→起步 溶图帧', 0, 20, 1)}
+          ${rowNumber('walkXfadeEndIdle', '收尾→待机 溶图帧', 0, 20, 1)}
+          ${rowNumber('walkXfadeIdleEnd', '待机→收尾 溶图帧', 0, 20, 1)}
+          ${rowNumber('walkXfadeStartIdle', '起步→待机 溶图帧', 0, 20, 1)}
           ${rowNumber('residualToMoveBlendSec', 'residual→移动溶图 (s)', 0, 0.35, 0.01)}
           ${rowNumber('residualToAttackBlendSec', 'residual→攻溶图 (s)', 0, 0.2, 0.01)}
           ${rowNumber('residualToStanceBlendSec', 'residual→站蹲 (s)', 0, 0.35, 0.01)}
@@ -1230,6 +1239,8 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'walkFirstFrameScale', path: 'walkFirstFrameScale' },
   { id: 'walkEarlyReleaseEndKeepRatio', path: 'walkEarlyReleaseEndKeepRatio' },
   { id: 'walkInputFreezeFrames', path: 'walkInputFreezeFrames' },
+  { id: 'walkStartCommitHoldFrames', path: 'walkStartCommitHoldFrames' },
+  { id: 'walkStartReleaseEndDelayFrames', path: 'walkStartReleaseEndDelayFrames' },
   { id: 'dashFrames', path: 'dashFrames' },
   { id: 'dashBackFrames', path: 'dashBackFrames' },
   { id: 'dashFrontHeavyPower', path: 'dashFrontHeavyPower' },
@@ -1299,6 +1310,13 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'footPlantEnabled', path: 'footPlantEnabled' },
   { id: 'rootPoseLockAttack', path: 'rootPoseLockAttack' },
   { id: 'locoBlendSec', path: 'locoBlendSec' },
+  { id: 'walkXfadeFramesDefault', path: 'walkXfadeFramesDefault' },
+  { id: 'walkXfadeIdleStart', path: 'walkXfadeIdleStart' },
+  { id: 'walkXfadeStartEnd', path: 'walkXfadeStartEnd' },
+  { id: 'walkXfadeEndStart', path: 'walkXfadeEndStart' },
+  { id: 'walkXfadeEndIdle', path: 'walkXfadeEndIdle' },
+  { id: 'walkXfadeIdleEnd', path: 'walkXfadeIdleEnd' },
+  { id: 'walkXfadeStartIdle', path: 'walkXfadeStartIdle' },
   { id: 'residualToMoveBlendSec', path: 'residualToMoveBlendSec' },
   { id: 'residualToAttackBlendSec', path: 'residualToAttackBlendSec' },
   { id: 'residualToStanceBlendSec', path: 'residualToStanceBlendSec' },
@@ -1622,6 +1640,13 @@ export function setupControlPanel(
     'footPlantEnabled',
     'rootPoseLockAttack',
     'locoBlendSec',
+    'walkXfadeFramesDefault',
+    'walkXfadeIdleStart',
+    'walkXfadeStartEnd',
+    'walkXfadeEndStart',
+    'walkXfadeEndIdle',
+    'walkXfadeIdleEnd',
+    'walkXfadeStartIdle',
     'residualToMoveBlendSec',
     'residualToAttackBlendSec',
     'residualToStanceBlendSec',

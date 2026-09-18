@@ -49,6 +49,16 @@ import {
   type CrossfadeDurations,
 } from '../combat/anim/AnimCrossfade';
 import {
+  defaultWalkXfadeFrameTable,
+  isWalkXfadeEdge,
+  linearFrameToWeight,
+  remainingAuthoredFrames,
+  walkXfadeEdgeFrames,
+  walkXfadeRole,
+  walkXfadeWindowFrames,
+  type WalkXfadeFrameTable,
+} from '../combat/anim/WalkFrameCrossfade';
+import {
   advanceFromTime,
   blendToWeight,
   stepDualAdvanceClocks,
@@ -123,6 +133,10 @@ type PoseBlend = {
   /** If true, `to` free-runs (idle/crouch main) during/after blend. */
   toFreeRun: boolean;
   mode: CrossfadeAdvanceMode;
+  /** `frame` = §3.11.0 walk idle/start/end; `legacy` = wall-clock dual-advance. */
+  kind: 'legacy' | 'frame';
+  frameWindow: number;
+  framesElapsed: number;
 };
 
 const HARD_CUT: CrossfadeDurations = {
@@ -173,6 +187,19 @@ export class FighterView {
   private poseBlend: PoseBlend | null = null;
   /** Latest §3.11 old-layer mode from sim cfg (set each syncFromLogic). */
   private crossfadeAdvanceMode: CrossfadeAdvanceMode = 'dual';
+  private walkXfadeTable: WalkXfadeFrameTable = defaultWalkXfadeFrameTable();
+  /** Logic steps this presentation tick (frame-blend clock). */
+  private lastLogicSteps = 0;
+  /**
+   * Interrupt: keep current A+B mix this frame; flush B→C next tick.
+   */
+  private walkXfadePending: {
+    to: THREE.AnimationAction;
+    toKey: string;
+    toFreeRun: boolean;
+    requestedFrames: number;
+  } | null = null;
+  private walkXfadeDefer = false;
   /**
    * One-shot override for the next switchToLogicAction blend (§3.9.1.b unfreeze:
    * freeze old snap frame while blending into walk start/end).
@@ -1677,6 +1704,8 @@ export class FighterView {
       this.poseBlend.from.setEffectiveWeight(0);
     }
     this.poseBlend = null;
+    this.walkXfadePending = null;
+    this.walkXfadeDefer = false;
   }
 
   /**
@@ -1699,6 +1728,151 @@ export class FighterView {
       to.setEffectiveWeight(0);
     }
     this.poseBlend = null;
+    this.walkXfadePending = null;
+    this.walkXfadeDefer = false;
+  }
+
+  private poseBlendToWeight(): number {
+    const b = this.poseBlend;
+    if (!b) return 1;
+    if (b.kind === 'frame') {
+      return linearFrameToWeight(b.framesElapsed, b.frameWindow);
+    }
+    return blendToWeight(b.elapsed, b.duration);
+  }
+
+  /** Interrupt frame: keep A+B mix, do not introduce C or advance the window. */
+  private applyHeldFrameBlend(): void {
+    const b = this.poseBlend;
+    if (!b || !this.mixer) return;
+    const w = this.poseBlendToWeight();
+    const fromLoops =
+      b.from.loop === THREE.LoopRepeat || b.from.loop === THREE.LoopPingPong;
+    const fromT = advanceFromTime(
+      b.fromStartTimeSec,
+      b.fromAdvancedSec,
+      b.from.getClip().duration,
+      b.mode,
+      fromLoops,
+    );
+    this.scrubActionTo(b.from, fromT, 1 - w, false);
+    this.scrubActionTo(b.to, b.to.time, w, true);
+  }
+
+  private flushWalkXfadePending(): void {
+    const pending = this.walkXfadePending;
+    const b = this.poseBlend;
+    this.walkXfadePending = null;
+    this.walkXfadeDefer = false;
+    if (!pending || !b || !this.mixer) return;
+    const from = b.to;
+    const fromKey = b.toKey;
+    if (b.from !== from) {
+      b.from.stop();
+      b.from.setEffectiveWeight(0);
+    }
+    this.poseBlend = null;
+    const fromLoops =
+      from.loop === THREE.LoopRepeat || from.loop === THREE.LoopPingPong;
+    const remain = remainingAuthoredFrames(
+      from.time,
+      from.getClip().duration,
+    );
+    const window = walkXfadeWindowFrames(
+      pending.requestedFrames,
+      remain,
+      fromLoops,
+    );
+    if (window <= 0) {
+      this.mixer.stopAllAction();
+      pending.to.reset();
+      pending.to.setLoop(
+        pending.toFreeRun ? THREE.LoopRepeat : THREE.LoopOnce,
+        Infinity,
+      );
+      pending.to.clampWhenFinished = !pending.toFreeRun;
+      pending.to.paused = !pending.toFreeRun;
+      pending.to.enabled = true;
+      pending.to.setEffectiveWeight(1);
+      pending.to.play();
+      this.mixer.update(0);
+      this.currentBinding = pending.toKey;
+      return;
+    }
+    this.beginFramePoseBlend(
+      from,
+      pending.to,
+      fromKey,
+      pending.toKey,
+      pending.toFreeRun,
+      window,
+    );
+    this.currentBinding = pending.toKey;
+  }
+
+  /**
+   * §3.11.0: dual-advance old tail vs new clip from frame 0, linear over N frames.
+   */
+  private beginFramePoseBlend(
+    from: THREE.AnimationAction,
+    to: THREE.AnimationAction,
+    fromKey: string,
+    toKey: string,
+    toFreeRun: boolean,
+    windowFrames: number,
+  ): void {
+    if (!this.mixer || windowFrames <= 0) {
+      this.clearPoseBlend(true);
+      this.mixer?.stopAllAction();
+      to.reset();
+      to.setLoop(toFreeRun ? THREE.LoopRepeat : THREE.LoopOnce, Infinity);
+      to.clampWhenFinished = !toFreeRun;
+      to.paused = !toFreeRun;
+      to.enabled = true;
+      to.setEffectiveWeight(1);
+      to.play();
+      this.mixer?.update(0);
+      return;
+    }
+
+    if (this.poseBlend && this.poseBlend.from !== from) {
+      this.poseBlend.from.stop();
+      this.poseBlend.from.setEffectiveWeight(0);
+    }
+
+    const fromTime = from.time;
+    from.enabled = true;
+    from.paused = true;
+    from.setEffectiveWeight(1);
+    from.play();
+
+    to.reset();
+    to.setLoop(toFreeRun ? THREE.LoopRepeat : THREE.LoopOnce, Infinity);
+    to.clampWhenFinished = !toFreeRun;
+    to.enabled = true;
+    to.paused = true;
+    to.setEffectiveWeight(0);
+    to.time = 0;
+    to.play();
+
+    const durSec = windowFrames / 60;
+    this.poseBlend = {
+      from,
+      to,
+      fromKey,
+      toKey,
+      duration: durSec,
+      elapsed: 0,
+      fromStartTimeSec: fromTime,
+      fromAdvancedSec: 0,
+      toAdvancedSec: 0,
+      toFreeRun,
+      mode: 'dual',
+      kind: 'frame',
+      frameWindow: windowFrames,
+      framesElapsed: 0,
+    };
+    this.mixer.update(0);
   }
 
   /** §3.9.1.b: snapshot the currently displayed action time for input freeze. */
@@ -1707,10 +1881,7 @@ export class FighterView {
     let binding = this.currentBinding;
     let time = 0;
     if (this.poseBlend) {
-      const w = blendToWeight(
-        this.poseBlend.elapsed,
-        this.poseBlend.duration,
-      );
+      const w = this.poseBlendToWeight();
       const layer = walkFreezeSnapLayer(w);
       if (layer === 'to') {
         action = this.poseBlend.to;
@@ -1740,6 +1911,50 @@ export class FighterView {
   /** After leaving freeze, force playBest to rebind (avoid same-key early return). */
   private invalidateBindingAfterWalkFreeze(): void {
     this.currentBinding = '';
+  }
+
+  /**
+   * §3.9.1.c: keep whatever is already on screen (idle / end / residual / hit)
+   * dual-advancing. Never promote walk start to weight 1.
+   */
+  private advanceUncommittedWalkHold(
+    wallDtSec: number,
+    freeRunDt: number,
+  ): void {
+    if (!this.mixer) return;
+    if (this.poseBlend) {
+      const toKey = this.poseBlend.toKey;
+      const toIsWalkStart =
+        toKey.endsWith('::start') &&
+        (toKey.startsWith('walk_') || toKey.startsWith('walk::'));
+      if (toIsWalkStart) {
+        const fromKey = this.poseBlend.fromKey;
+        const from = this.poseBlend.from;
+        this.clearPoseBlendKeeping(from);
+        this.currentBinding = fromKey;
+      } else {
+        this.stepPoseBlend(wallDtSec, freeRunDt);
+        return;
+      }
+    }
+    const bind = this.currentBinding;
+    if (!bind || bind.endsWith('::start')) return;
+    const action = this.logicActions.get(bind);
+    if (!action) return;
+    const [canon, rolePart] = bind.split('::');
+    const freeRun = this.isFreeRunLogic(canon ?? '', rolePart ?? 'main');
+    if (freeRun) {
+      action.paused = false;
+      action.setEffectiveWeight(1);
+      this.mixer.update(freeRunDt);
+      return;
+    }
+    const clip = action.getClip();
+    const t = Math.min(
+      Math.max(0, clip.duration - 1e-4),
+      action.time + freeRunDt,
+    );
+    this.scrubActionTo(action, t, 1, true);
   }
 
   /**
@@ -1805,6 +2020,9 @@ export class FighterView {
       toAdvancedSec: 0,
       toFreeRun,
       mode: mode === 'freeze' ? 'freeze' : 'dual',
+      kind: 'legacy',
+      frameWindow: 0,
+      framesElapsed: 0,
     };
     this.mixer.update(0);
   }
@@ -1820,11 +2038,25 @@ export class FighterView {
     const b = this.poseBlend;
     if (!b || !this.mixer) return 1;
 
-    const next = stepDualAdvanceClocks(wallDtSec, freeRunDtSec, b);
-    b.elapsed = next.elapsed;
-    b.fromAdvancedSec = next.fromAdvancedSec;
-    b.toAdvancedSec = next.toAdvancedSec;
-    const w = blendToWeight(b.elapsed, b.duration);
+    if (b.kind === 'frame') {
+      const steps = Math.max(0, this.lastLogicSteps);
+      const clipDt = steps / 60;
+      const prevElapsed = b.framesElapsed;
+      b.framesElapsed += steps;
+      b.elapsed += clipDt;
+      b.fromAdvancedSec += clipDt;
+      // New clip frame 0 on the first mix sample; then +1 per logic frame.
+      if (b.toFreeRun && prevElapsed > 0) b.toAdvancedSec += clipDt;
+    } else {
+      const next = stepDualAdvanceClocks(wallDtSec, freeRunDtSec, b);
+      b.elapsed = next.elapsed;
+      b.fromAdvancedSec = next.fromAdvancedSec;
+      b.toAdvancedSec = next.toAdvancedSec;
+    }
+    const w =
+      b.kind === 'frame'
+        ? linearFrameToWeight(b.framesElapsed, b.frameWindow)
+        : blendToWeight(b.elapsed, b.duration);
 
     // Looping old layers (idle→walk etc.) must wrap; clamp would pin the seam.
     const fromLoops =
@@ -1838,7 +2070,11 @@ export class FighterView {
     );
     this.scrubActionTo(b.from, fromT, 1 - w, false);
 
-    if (b.elapsed / Math.max(1e-4, b.duration) >= 1) {
+    const done =
+      b.kind === 'frame'
+        ? b.framesElapsed >= b.frameWindow
+        : b.elapsed / Math.max(1e-4, b.duration) >= 1;
+    if (done) {
       b.from.stop();
       b.from.setEffectiveWeight(0);
       b.to.setEffectiveWeight(1);
@@ -1865,7 +2101,7 @@ export class FighterView {
   } {
     const b = this.poseBlend;
     if (!b) return null;
-    const w = blendToWeight(b.elapsed, b.duration);
+    const w = this.poseBlendToWeight();
     return {
       mode: b.mode,
       fromKey: b.fromKey,
@@ -1923,6 +2159,82 @@ export class FighterView {
     const blendMode =
       this.nextPoseBlendMode ?? this.crossfadeAdvanceMode;
     this.nextPoseBlendMode = null;
+
+    const visualFromKey = this.poseBlend?.toKey ?? prevKey;
+    if (
+      prev &&
+      blendMode !== 'freeze' &&
+      isWalkXfadeEdge(visualFromKey, bind)
+    ) {
+      const fromRole = walkXfadeRole(visualFromKey)!;
+      const toRole = walkXfadeRole(bind)!;
+      const requested = walkXfadeEdgeFrames(
+        fromRole,
+        toRole,
+        this.walkXfadeTable,
+      );
+      if (
+        this.poseBlend?.kind === 'frame' &&
+        this.poseBlend.to !== action
+      ) {
+        this.walkXfadePending = {
+          to: action,
+          toKey: bind,
+          toFreeRun: freeRun,
+          requestedFrames: requested,
+        };
+        this.walkXfadeDefer = true;
+        if (
+          shouldClearHitstopPresentOffset({
+            softBlend: true,
+            prevCanon,
+            nextCanon: canon,
+          })
+        ) {
+          this.clearHitstopPresentOffset();
+        }
+        this.currentClip = canon;
+        this.currentBinding = bind;
+        this.attackHipsLockLocal = null;
+        this.plantWorldXZ = null;
+        return;
+      }
+      const fromAct = this.poseBlend?.kind === 'frame' ? this.poseBlend.to : prev;
+      const fromKeyUse =
+        this.poseBlend?.kind === 'frame' ? this.poseBlend.toKey : prevKey;
+      const fromLoops =
+        fromAct.loop === THREE.LoopRepeat ||
+        fromAct.loop === THREE.LoopPingPong;
+      const remain = remainingAuthoredFrames(
+        fromAct.time,
+        fromAct.getClip().duration,
+      );
+      const window = walkXfadeWindowFrames(requested, remain, fromLoops);
+      if (window > 0) {
+        this.beginFramePoseBlend(
+          fromAct,
+          action,
+          fromKeyUse,
+          bind,
+          freeRun,
+          window,
+        );
+        if (
+          shouldClearHitstopPresentOffset({
+            softBlend: true,
+            prevCanon,
+            nextCanon: canon,
+          })
+        ) {
+          this.clearHitstopPresentOffset();
+        }
+        this.currentClip = canon;
+        this.currentBinding = bind;
+        this.attackHipsLockLocal = null;
+        this.plantWorldXZ = null;
+        return;
+      }
+    }
 
     if (soft && prev) {
       // Capture from.time while it still includes any hitstop lead, then clear
@@ -2340,6 +2652,19 @@ export class FighterView {
     const role = fighter.animRole || 'main';
     this.crossfadeAdvanceMode =
       cfg.crossfadeAdvanceMode === 'freeze' ? 'freeze' : 'dual';
+    this.lastLogicSteps = logicSteps;
+    this.walkXfadeTable = defaultWalkXfadeFrameTable({
+      defaultFrames: cfg.walkXfadeFramesDefault ?? 5,
+      idleStart: cfg.walkXfadeIdleStart ?? 5,
+      startEnd: cfg.walkXfadeStartEnd ?? 5,
+      endStart: cfg.walkXfadeEndStart ?? 5,
+      endIdle: cfg.walkXfadeEndIdle ?? 5,
+      idleEnd: cfg.walkXfadeIdleEnd ?? 5,
+      startIdle: cfg.walkXfadeStartIdle ?? 5,
+    });
+    if (this.walkXfadeDefer && this.walkXfadePending) {
+      this.flushWalkXfadePending();
+    }
 
     if (this.previewMode) {
       if (this.mixer) this.mixer.update(previewDt);
@@ -2534,12 +2859,20 @@ export class FighterView {
 
     // Walk: scrub by locoFrame; §3.11 dual-advance (loco + residual→move)
     if (fighter.phase === 'walk') {
+      // §3.9.1.c: do not promise walk start clip until hold commit.
+      if (role === 'start' && !fighter.walkStartVisualCommitted) {
+        this.advanceUncommittedWalkHold(wallDtSec, freeRunDt);
+        this.afterAnimPose(fighter, cfg, wallDtSec);
+        return;
+      }
       this.playBest(fighter.clipId, role, fadePolicy);
       const action = this.resolveAction(fighter.clipId, role);
       if (action && this.mixer) {
         const mapTotal =
           this.logicMap?.frameCountForRole(fighter.clipId, role) ?? 60;
-        if (this.poseBlend && this.poseBlend.to === action) {
+        if (this.walkXfadeDefer && this.poseBlend) {
+          this.applyHeldFrameBlend();
+        } else if (this.poseBlend && this.poseBlend.to === action) {
           const w = this.stepPoseBlend(wallDtSec, freeRunDt);
           scrubTo(action, fighter.locoFrame, mapTotal, w, true);
         } else {
@@ -2731,7 +3064,9 @@ export class FighterView {
         role === 'main' ? 'main' : role,
       );
       if (action) {
-        if (this.poseBlend && this.poseBlend.to === action) {
+        if (this.walkXfadeDefer && this.poseBlend) {
+          this.applyHeldFrameBlend();
+        } else if (this.poseBlend && this.poseBlend.to === action) {
           const w = this.stepPoseBlend(wallDtSec, freeRunDt);
           if (this.poseBlend) {
             // Dual-advance: new free-run track advances from 0 by logic steps

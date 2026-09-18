@@ -252,6 +252,16 @@ export type MutableSimConfig = {
   walkEarlyReleaseEndKeepRatio: number;
   /** §3.9.1.b walk dir press-edge presentation freeze (logic frames; 0=off). */
   walkInputFreezeFrames: number;
+  /**
+   * §3.9.1.c consecutive 4/6 hold frames before walk *start clip* may blend in.
+   * 0 = scheme off (commit on press). Default 2 = 1-frame tap never shows start.
+   */
+  walkStartCommitHoldFrames: number;
+  /**
+   * §3.9.1.d logic frames to keep playing walk start after release before end.
+   * Displacement already 0. 0 = enter end on release. Default 2.
+   */
+  walkStartReleaseEndDelayFrames: number;
   jumpApex: number;
   jumpFwdDist: number;
   jumpBackDist: number;
@@ -270,8 +280,19 @@ export type MutableSimConfig = {
   applySelfMovement: boolean;
   selfMovementScale: number;
   showFootDebug: boolean;
-  /** Wall-clock seconds for walk/idle role crossfade (0 = hard cut). §3.11 loco. */
+  /** Wall-clock seconds for walk/idle role crossfade (0 = hard cut). Historical §3.11; walk idle/start/end uses frame table instead. */
   locoBlendSec: number;
+  /**
+   * §3.11.0 designated walk idle/start/end blend window (logic frames).
+   * 0 on an edge = hard cut. Default 5; each edge can override.
+   */
+  walkXfadeFramesDefault: number;
+  walkXfadeIdleStart: number;
+  walkXfadeStartEnd: number;
+  walkXfadeEndStart: number;
+  walkXfadeEndIdle: number;
+  walkXfadeIdleEnd: number;
+  walkXfadeStartIdle: number;
   /**
    * Dual-advance blend into walk/idle (§3.11): attack residual, guard leave,
    * and hitstun reaction → idle/crouch/walk. Not during attack lock or into-hit.
@@ -708,6 +729,8 @@ export function createDefaultSimConfig(): MutableSimConfig {
     walkFirstFrameScale: 0.25,
     walkEarlyReleaseEndKeepRatio: 0.35,
     walkInputFreezeFrames: 4,
+    walkStartCommitHoldFrames: 2,
+    walkStartReleaseEndDelayFrames: 2,
     jumpApex: 2.115,
     jumpFwdDist: 1.9,
     jumpBackDist: 1.52,
@@ -721,6 +744,13 @@ export function createDefaultSimConfig(): MutableSimConfig {
     selfMovementScale: 1,
     showFootDebug: false,
     locoBlendSec: 0.12,
+    walkXfadeFramesDefault: 5,
+    walkXfadeIdleStart: 5,
+    walkXfadeStartEnd: 5,
+    walkXfadeEndStart: 5,
+    walkXfadeEndIdle: 5,
+    walkXfadeIdleEnd: 5,
+    walkXfadeStartIdle: 5,
     residualToMoveBlendSec: 0.1,
     residualToAttackBlendSec: 0,
     residualToStanceBlendSec: 0.1,
@@ -978,6 +1008,8 @@ export function applyConfigToMatchOpts(cfg: MutableSimConfig) {
     walkFirstFrameScale: cfg.walkFirstFrameScale,
     walkEarlyReleaseEndKeepRatio: cfg.walkEarlyReleaseEndKeepRatio,
     walkInputFreezeFrames: cfg.walkInputFreezeFrames,
+    walkStartCommitHoldFrames: cfg.walkStartCommitHoldFrames ?? 2,
+    walkStartReleaseEndDelayFrames: cfg.walkStartReleaseEndDelayFrames ?? 2,
     jumpApex: cfg.jumpApex,
     jumpFwdDist: cfg.jumpFwdDist,
     jumpBackDist: cfg.jumpBackDist,

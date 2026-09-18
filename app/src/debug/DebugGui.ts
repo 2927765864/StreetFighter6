@@ -834,6 +834,14 @@ export function createDebugGui(
     .name('走输入冻帧')
     .onChange(syncOpts);
   moveStateFolder
+    .add(cfg, 'walkStartCommitHoldFrames', 0, 20, 1)
+    .name('走start承诺帧')
+    .onChange(syncOpts);
+  moveStateFolder
+    .add(cfg, 'walkStartReleaseEndDelayFrames', 0, 20, 1)
+    .name('走start松手进end延迟帧')
+    .onChange(syncOpts);
+  moveStateFolder
     .add(cfg, 'dashFrames', 1, 40, 1)
     .name('前冲帧数')
     .onChange(syncOpts);
@@ -924,7 +932,28 @@ export function createDebugGui(
   animDrive.add(cfg, 'rootPoseLockAttack').name('rootPoseLockAttack');
   animDrive
     .add(cfg, 'locoBlendSec', 0, 0.35, 0.01)
-    .name('locoBlendSec');
+    .name('locoBlendSec(旧)');
+  animDrive
+    .add(cfg, 'walkXfadeFramesDefault', 0, 20, 1)
+    .name('走溶图默认帧');
+  animDrive
+    .add(cfg, 'walkXfadeIdleStart', 0, 20, 1)
+    .name('待机→起步溶图帧');
+  animDrive
+    .add(cfg, 'walkXfadeStartEnd', 0, 20, 1)
+    .name('起步→收尾溶图帧');
+  animDrive
+    .add(cfg, 'walkXfadeEndStart', 0, 20, 1)
+    .name('收尾→起步溶图帧');
+  animDrive
+    .add(cfg, 'walkXfadeEndIdle', 0, 20, 1)
+    .name('收尾→待机溶图帧');
+  animDrive
+    .add(cfg, 'walkXfadeIdleEnd', 0, 20, 1)
+    .name('待机→收尾溶图帧');
+  animDrive
+    .add(cfg, 'walkXfadeStartIdle', 0, 20, 1)
+    .name('起步→待机溶图帧');
   animDrive
     .add(cfg, 'residualToMoveBlendSec', 0, 0.35, 0.01)
     .name('residual→move溶图');

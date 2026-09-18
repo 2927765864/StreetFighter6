@@ -30,6 +30,16 @@ export type RyuMovementTable = {
      * 0 = off.
      */
     inputFreezeFrames?: number;
+    /**
+     * Consecutive hold frames before walk start clip blends in (§3.9.1.c).
+     * Default 2 if omitted. 0 = scheme off (commit on press).
+     */
+    startCommitHoldFrames?: number;
+    /**
+     * Frames of start after committed release before opening end (§3.9.1.d).
+     * Default 2 if omitted. 0 = enter end on release.
+     */
+    startReleaseEndDelayFrames?: number;
     notes?: string;
     clipLogicFrames: {
       walk_fwd: WalkClipFrames;
@@ -183,6 +193,8 @@ export function movementToSimDefaults(t: RyuMovementTable) {
   const { dashDxFwd, dashDxBack } = dashDxFromTable(t);
   const keep = t.walk.earlyReleaseEndKeepRatio;
   const freeze = t.walk.inputFreezeFrames;
+  const commitHold = t.walk.startCommitHoldFrames;
+  const startEndDelay = t.walk.startReleaseEndDelayFrames;
   return {
     walkSpeed: t.walk.forwardSpeed,
     walkBackSpeed: t.walk.backSpeed,
@@ -195,6 +207,18 @@ export function movementToSimDefaults(t: RyuMovementTable) {
       typeof freeze === 'number' && Number.isFinite(freeze) && freeze >= 0
         ? Math.floor(freeze)
         : 4,
+    walkStartCommitHoldFrames:
+      typeof commitHold === 'number' &&
+      Number.isFinite(commitHold) &&
+      commitHold >= 0
+        ? Math.min(20, Math.floor(commitHold))
+        : 2,
+    walkStartReleaseEndDelayFrames:
+      typeof startEndDelay === 'number' &&
+      Number.isFinite(startEndDelay) &&
+      startEndDelay >= 0
+        ? Math.min(20, Math.floor(startEndDelay))
+        : 2,
     dashFrames: t.dash.forward.frames,
     dashBackFrames: t.dash.back.frames,
     dashAnimFrames: 42,

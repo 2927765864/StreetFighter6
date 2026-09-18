@@ -23,7 +23,9 @@
     "firstFrameSpeedScale": 0.25,
     "earlyReleaseEndKeepRatio": 0.35,
     "inputFreezeFrames": 4,
-    "notes": "earlyReleaseEndKeepRatio: when releasing during walk start (never reached loop), play only this tail fraction of the end clip (logic frames shortened). 1 = full end. Loop release always full end. inputFreezeFrames: on 4/6 press edge, freeze presentation pose for N logic frames (0=off); timer resets on re-edge; dash confirm cancels.",
+    "startCommitHoldFrames": 2,
+    "startReleaseEndDelayFrames": 2,
+    "notes": "earlyReleaseEndKeepRatio: when releasing during walk start (never reached loop), play only this tail fraction of the end clip (logic frames shortened). 1 = full end. Loop release always full end. inputFreezeFrames: on 4/6 press edge, freeze presentation pose for N logic frames (0=off); timer resets on re-edge; dash confirm cancels. startCommitHoldFrames: consecutive 4/6 hold frames before walk start clip may blend in (0=scheme off, commit on press; 2=tap never shows start). startReleaseEndDelayFrames: after committed start release, keep start (dx=0) for N frames before end; other input cancels the buffer.",
     "clipLogicFrames": {
       "walk_fwd": { "start": 19, "loop": 114, "end": 47 },
       "walk_back": { "start": 15, "loop": 118, "end": 47 }

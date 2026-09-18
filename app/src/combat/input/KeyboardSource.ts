@@ -10,6 +10,33 @@ import {
 } from '../types';
 
 /**
+ * World numpad from held axes.
+ * Left+right cancel (SF6 SOCD): both horizontals → 5 / 2 / 8, never last-wins.
+ */
+export function resolveNumpadDir(
+  up: boolean,
+  down: boolean,
+  left: boolean,
+  right: boolean,
+): NumpadDir {
+  const h = left === right ? 0 : left ? -1 : 1;
+  const v = down ? -1 : up ? 1 : 0;
+  if (v < 0) {
+    if (h < 0) return 1;
+    if (h > 0) return 3;
+    return 2;
+  }
+  if (v > 0) {
+    if (h < 0) return 7;
+    if (h > 0) return 9;
+    return 8;
+  }
+  if (h < 0) return 4;
+  if (h > 0) return 6;
+  return 5;
+}
+
+/**
  * Key map (Classic): A/U LP, S/I MP, D/O HP; Z/X/C or J/K/L kicks; arrows or WASD dirs.
  * Full button edge masks per plan Step 2.
  */
@@ -43,15 +70,7 @@ export class KeyboardSource {
     const left = this.has('ArrowLeft', 'KeyA');
     const right = this.has('ArrowRight', 'KeyD');
 
-    let dir: NumpadDir = 5;
-    if (down && left) dir = 1;
-    else if (down && right) dir = 3;
-    else if (down) dir = 2;
-    else if (up && left) dir = 7;
-    else if (up && right) dir = 9;
-    else if (up) dir = 8;
-    else if (left) dir = 4;
-    else if (right) dir = 6;
+    const dir = resolveNumpadDir(up, down, left, right);
 
     let buttons = 0;
     if (this.has('KeyU', 'Digit1', 'KeyQ')) buttons |= BTN_LP;

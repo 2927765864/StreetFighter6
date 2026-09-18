@@ -137,6 +137,17 @@ export class Fighter {
   walkFreezeSawLoop = false;
   /** Last fwd/back during freeze (for tap-unfreeze end if state already cleared). */
   walkFreezeLastDir: 'fwd' | 'back' | null = null;
+  /** §3.9.1.c consecutive hold frames while loco start. */
+  walkStartHoldFrames = 0;
+  /** §3.9.1.c start clip may be blend `to` / scrub target. */
+  walkStartVisualCommitted = false;
+  /**
+   * End locoFrame to resume if start was never committed (tap during end).
+   * Null when not interrupting an in-flight end.
+   */
+  walkEndResumeFrame: number | null = null;
+  /** After resuming end from an uncommitted tap, skip freeze rewind reopen. */
+  walkKeepCurrentEnd = false;
   /**
    * Remaining airborne frames when an air attack interrupts freefall.
    * Jump clock no longer pauses (§3.13); kept as debug/legacy mirror of stateTimer.
@@ -1873,6 +1884,10 @@ export class Fighter {
       this.stanceState = clearStanceTo(false);
       this.phase = 'idle';
       this.clearAnimTail();
+      this.walkStartHoldFrames = 0;
+      this.walkStartVisualCommitted = false;
+      this.walkEndResumeFrame = null;
+      this.walkKeepCurrentEnd = false;
       this.applyStancePresentation();
     } else {
       this.clearAttackResidual();
