@@ -165,6 +165,7 @@ export class FighterView {
   /** logicId::role binding key */
   private currentBinding = '';
   private lastClipRestartSeq = -1;
+  private lastMbClipRestartSeq = -1;
   private loaded = false;
   private plantWorldXZ: { x: number; z: number } | null = null;
   private footDebug: THREE.Mesh | null = null;
@@ -1183,6 +1184,7 @@ export class FighterView {
     // head/spine ancestor path; running it before sole clamp left idle/walk
     // without the lift-only floor heal that attack already had.
     this.maybePlantAfterPose(fighter, cfg, wallDtSec);
+    this.snapshotAnimBonesForMotionBlur();
     this.updateHeadbandPhysics(fighter, cfg, wallDtSec);
     this.updateBeltPhysics(fighter, cfg, wallDtSec);
     this.updatePantsPhysics(fighter, cfg, wallDtSec);
@@ -1190,6 +1192,30 @@ export class FighterView {
     this.updateLimbHistory(wallDtSec);
     // Wuda after world matrices (TRAP-LAG); never gated by hitstop.
     this.updateWudaCoat(fighter, cfg, wallDtSec);
+  }
+
+  /**
+   * Bone matrices after authored pose + sole plant, before cloth.
+   * Motion blur uses this so pants/body share the same animation velocity.
+   */
+  private snapshotAnimBonesForMotionBlur(): void {
+    this.modelRoot?.updateMatrixWorld(true);
+    this.root.traverse((object) => {
+      const mesh = object as THREE.SkinnedMesh;
+      if (mesh.isSkinnedMesh !== true) return;
+      const skel = mesh.skeleton;
+      const mats = skel?.boneMatrices;
+      if (!skel || !mats) return;
+      skel.update();
+      const skelAny = skel as unknown as { userData: Record<string, unknown> };
+      if (!skelAny.userData) skelAny.userData = {};
+      let snap = skelAny.userData.mbAnimBones as Float32Array | undefined;
+      if (!snap || snap.length !== mats.length) {
+        snap = new Float32Array(mats.length);
+        skelAny.userData.mbAnimBones = snap;
+      }
+      snap.set(mats);
+    });
   }
 
   private updateLimbHistory(dtSec: number): void {
@@ -2627,6 +2653,9 @@ export class FighterView {
     );
     this.applyDisplayOrder(displayFront);
     this.root.userData.motionBlurKind = motionBlurKindFromPhase(fighter.phase);
+    this.root.userData.motionBlurPosePulse =
+      this.lastMbClipRestartSeq !== fighter.clipRestartSeq;
+    this.lastMbClipRestartSeq = fighter.clipRestartSeq;
     this.root.rotation.y = Math.PI / 2;
 
     const previewDt =
@@ -2673,6 +2702,7 @@ export class FighterView {
     if (this.previewMode) {
       if (this.mixer) this.mixer.update(previewDt);
       if (cfg.plantMode === 'legacy') this.plantFeetOnGround();
+      this.snapshotAnimBonesForMotionBlur();
       this.updateHeadbandPhysics(fighter, cfg, wallDtSec);
       this.updateBeltPhysics(fighter, cfg, wallDtSec);
       this.updatePantsPhysics(fighter, cfg, wallDtSec);
