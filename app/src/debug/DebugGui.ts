@@ -278,6 +278,15 @@ export function createDebugGui(
   shake.add(cfg.cmosShake.presetOnBlockByStrength, 'M').name('中防御预设');
   shake.add(cfg.cmosShake.presetOnBlockByStrength, 'L').name('重防御预设');
 
+  const mblur = gui.addFolder('动态模糊');
+  mblur.add(cfg.motionBlur, 'enabled').name('启用');
+  mblur.add(cfg.motionBlur, 'moveScale', 0, 2, 0.05).name('移动强度（走/冲/跳）');
+  mblur.add(cfg.motionBlur, 'attackScale', 0, 2, 0.05).name('攻击/受击强度');
+  mblur.add(cfg.motionBlur, 'cameraScale', 0, 2, 0.05).name('镜头强度（仅震屏）');
+  mblur.add(cfg.motionBlur, 'maxRadiusPx', 0, 64, 1).name('最长拖尾像素');
+  mblur.add(cfg.motionBlur, 'samples', 2, 16, 1).name('采样次数');
+  mblur.add(cfg.motionBlur, 'debugView', 0, 2, 1).name('速度图 0关/1角色/2震屏');
+
   const light = gui.addFolder('打光');
   light.add(cfg, 'lightHelpersVisible').name('显示灯光辅助');
   light.add(cfg, 'lightOrbitMode').name('摆灯自由视角');
@@ -640,6 +649,8 @@ export function createDebugGui(
   cancelFolder.add(cfg, 'enableCancel').name('启用Cancel').onChange(syncOpts);
   cancelFolder.add(cfg, 'enableSpecials').name('启用必杀指令').onChange(syncOpts);
   cancelFolder.add(cfg, 'enableThrows').name('启用投技指令').onChange(syncOpts);
+  cancelFolder.add(cfg, 'enableJumpCrouch').name('启用跳跃和蹲下').onChange(syncOpts);
+  cancelFolder.add(cfg, 'enableDash').name('启用前前/后后dash').onChange(syncOpts);
   cancelFolder.add(cfg, 'standingPunchOnly').name('仅站立轻/中/重拳').onChange(syncOpts);
   cancelFolder
     .add(cfg, 'hitstopFramesOnHit', 0, 30, 1)
@@ -955,8 +966,11 @@ export function createDebugGui(
     .add(cfg, 'walkXfadeStartIdle', 0, 20, 1)
     .name('起步→待机溶图帧');
   animDrive
-    .add(cfg, 'residualToMoveBlendSec', 0, 0.35, 0.01)
+    .add(cfg, 'residualToMoveBlendSec', 0, 1, 0.01)
     .name('residual→move溶图');
+  animDrive
+    .add(cfg, 'hitToMoveBlendSec', 0, 1, 0.01)
+    .name('受击→待机溶图');
   animDrive
     .add(cfg, 'residualToAttackBlendSec', 0, 0.2, 0.01)
     .name('residual→攻溶图');

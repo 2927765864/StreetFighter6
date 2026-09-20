@@ -95,9 +95,10 @@ export function dropCameraFacingWallTris(
 
 function prepareLineMaterial(mat: THREE.Material): void {
   const m = mat as THREE.MeshStandardMaterial;
+  // Opaque tape — alphaTest cutout shimmered under sub-pixel camera follow.
   m.transparent = false;
   m.opacity = 1;
-  m.alphaTest = 0.35;
+  m.alphaTest = 0;
   m.depthWrite = true;
   m.depthTest = true;
   m.side = THREE.FrontSide;

@@ -24,6 +24,11 @@ import {
   createDefaultCmosShakeConfig,
   mergeCmosShakeConfig,
 } from './cmosShake';
+import {
+  cloneMotionBlurConfig,
+  createDefaultMotionBlurConfig,
+  mergeMotionBlurConfig,
+} from './motionBlur';
 import type { RuntimeConfig } from './types';
 import { CONFIG_VERSION } from './types';
 
@@ -189,6 +194,13 @@ export function mergeConfig(
       );
       continue;
     }
+    if (key === 'motionBlur' && isPlainObject(value)) {
+      out.motionBlur = mergeMotionBlurConfig(
+        out.motionBlur ?? createDefaultMotionBlurConfig(),
+        value,
+      );
+      continue;
+    }
     const baseVal = (out as Record<string, unknown>)[key];
     if (typeof baseVal === 'number' && typeof value === 'number' && Number.isFinite(value)) {
       (out as Record<string, unknown>)[key] = value;
@@ -277,6 +289,9 @@ export function applyConfig(
   );
   CONFIG.cmosShake = cloneCmosShakeConfig(
     merged.cmosShake ?? createDefaultCmosShakeConfig(),
+  );
+  CONFIG.motionBlur = cloneMotionBlurConfig(
+    merged.motionBlur ?? createDefaultMotionBlurConfig(),
   );
 }
 

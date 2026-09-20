@@ -2,6 +2,7 @@ import * as THREE from 'three/webgpu';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { clone as cloneSkeleton } from 'three/addons/utils/SkeletonUtils.js';
 import type { Fighter } from '../combat/fighter/Fighter';
+import { motionBlurKindFromPhase } from '../config/motionBlur';
 import {
   STAGE_GROUND_Y,
   type MutableSimConfig,
@@ -142,6 +143,7 @@ type PoseBlend = {
 const HARD_CUT: CrossfadeDurations = {
   locoSec: 0,
   residualToMoveSec: 0,
+  hitToMoveSec: 0,
   residualToStanceSec: 0,
   residualToAttackSec: 0,
 };
@@ -2353,6 +2355,7 @@ export class FighterView {
         ? defaultCrossfadeDurations({
             locoSec: durations,
             residualToMoveSec: durations,
+            hitToMoveSec: durations,
             residualToStanceSec: durations,
             residualToAttackSec: 0,
           })
@@ -2623,6 +2626,7 @@ export class FighterView {
       FIGHTER_DISPLAY_Z,
     );
     this.applyDisplayOrder(displayFront);
+    this.root.userData.motionBlurKind = motionBlurKindFromPhase(fighter.phase);
     this.root.rotation.y = Math.PI / 2;
 
     const previewDt =
@@ -2680,6 +2684,7 @@ export class FighterView {
     const fadePolicy = defaultCrossfadeDurations({
       locoSec: cfg.locoBlendSec ?? 0.12,
       residualToMoveSec: cfg.residualToMoveBlendSec ?? 0.1,
+      hitToMoveSec: cfg.hitToMoveBlendSec ?? 0.1,
       residualToStanceSec: cfg.residualToStanceBlendSec ?? 0.1,
       residualToAttackSec: cfg.residualToAttackBlendSec ?? 0,
     });

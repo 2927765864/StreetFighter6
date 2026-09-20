@@ -134,7 +134,16 @@ export function isPreparedTexturedModel(root: THREE.Object3D): boolean {
   return hits >= 2 || countEmbeddedColorMaps(root) >= 8;
 }
 
-export function sanitizeObjectMaterials(root: THREE.Object3D): void {
+export type SanitizeMaterialsOpts = {
+  /** Longest texture edge after load. Fighters default 1024; stage keeps more. */
+  maxTexSize?: number;
+};
+
+export function sanitizeObjectMaterials(
+  root: THREE.Object3D,
+  opts?: SanitizeMaterialsOpts,
+): void {
+  const maxTexSize = opts?.maxTexSize ?? MAX_TEX_SIZE;
   const prepared = isPreparedTexturedModel(root);
   const albedoByKey = collectAlbedoTextures(root);
   // FBX path needs external albedos; prepared textured glb must NOT be remapped.
@@ -175,7 +184,7 @@ export function sanitizeObjectMaterials(root: THREE.Object3D): void {
 
     const list = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
     const next = list.map((mat) =>
-      sanitizeOne(mat, mesh.name, albedoByKey, prepared),
+      sanitizeOne(mat, mesh.name, albedoByKey, prepared, maxTexSize),
     );
     mesh.material = Array.isArray(mesh.material) ? next : next[0]!;
     const m0 = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
@@ -451,12 +460,13 @@ function partColorTint(
 function prepareTexture(
   tex: THREE.Texture | null | undefined,
   colorSpace: THREE.ColorSpace,
+  maxTexSize = MAX_TEX_SIZE,
 ): THREE.Texture | null {
   if (!isUsableTexture(tex)) return null;
   if (isPlaceholderTexture(tex)) return null;
   tex.colorSpace = colorSpace;
   tex.needsUpdate = true;
-  downscaleTexture(tex, MAX_TEX_SIZE);
+  downscaleTexture(tex, maxTexSize);
   // downscale must not leave a broken image
   if (!isUsableTexture(tex)) return null;
   return tex;
@@ -503,6 +513,7 @@ function sanitizeOne(
   meshName: string,
   albedoCatalog: Map<string, THREE.Texture>,
   preparedTextured = false,
+  maxTexSize = MAX_TEX_SIZE,
 ): THREE.Material {
   const anyMat = mat as THREE.MeshStandardMaterial & {
     map?: THREE.Texture | null;
@@ -569,9 +580,9 @@ function sanitizeOne(
     roughnessMap = null;
   }
 
-  map = prepareTexture(map, THREE.SRGBColorSpace);
-  normalMap = prepareTexture(normalMap, THREE.NoColorSpace);
-  roughnessMap = prepareTexture(roughnessMap, THREE.NoColorSpace);
+  map = prepareTexture(map, THREE.SRGBColorSpace, maxTexSize);
+  normalMap = prepareTexture(normalMap, THREE.NoColorSpace, maxTexSize);
+  roughnessMap = prepareTexture(roughnessMap, THREE.NoColorSpace, maxTexSize);
 
   const matLabel = mat.name || '';
   const n = `${meshName} ${matLabel}`.toLowerCase();

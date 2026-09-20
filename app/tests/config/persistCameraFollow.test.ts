@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   migrateSavedCameraEdgeMargin,
   migrateSavedCameraFollow,
+  migrateSavedHitToMoveBlend,
   migrateSavedStageWidth,
 } from '../../src/config/persist';
 
@@ -59,5 +60,21 @@ describe('migrateSavedCameraEdgeMargin', () => {
       cameraNdcPad: 0.2,
     });
     expect(out.cameraEdgeMargin).toBe(0.8);
+  });
+});
+
+describe('migrateSavedHitToMoveBlend', () => {
+  it('copies residualToMove when hitToMove is missing', () => {
+    const out = migrateSavedHitToMoveBlend({ residualToMoveBlendSec: 0.2 });
+    expect(out.hitToMoveBlendSec).toBe(0.2);
+    expect(out.residualToMoveBlendSec).toBe(0.2);
+  });
+
+  it('keeps an explicit hitToMove', () => {
+    const out = migrateSavedHitToMoveBlend({
+      residualToMoveBlendSec: 0.2,
+      hitToMoveBlendSec: 0.5,
+    });
+    expect(out.hitToMoveBlendSec).toBe(0.5);
   });
 });

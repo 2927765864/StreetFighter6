@@ -3,6 +3,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { sanitizeObjectMaterials } from './materialUtils';
 import { prepareStageLineOverlay } from './stageLineOverlay';
 import { applyStageDrawPolicy } from './stageDrawPolicy';
+import { applyStageMaterialPolicy } from './stageMaterialPolicy';
 
 export type StageLayout = {
   targetWidth: number;
@@ -29,9 +30,10 @@ export class StageView {
     const gltf = await loader.loadAsync(url);
     const model = gltf.scene;
 
-    sanitizeObjectMaterials(model);
+    sanitizeObjectMaterials(model, { maxTexSize: 4096 });
     prepareStageLineOverlay(model);
     const draw = applyStageDrawPolicy(model);
+    applyStageMaterialPolicy(model);
     console.info(
       `[StageView] drawPolicy meshes=${draw.meshes} tris=${Math.round(draw.triangles)} (stage is low-poly; fighters dominate triangle count)`,
     );

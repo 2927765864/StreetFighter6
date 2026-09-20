@@ -29,18 +29,18 @@ export class HudDom {
     help.id = 'controls-help';
     Object.assign(help.style, {
       position: 'fixed',
-      left: '8px',
-      bottom: '8px',
-      padding: '6px 8px',
-      background: 'rgba(0,0,0,0.65)',
-      color: '#ccc',
-      font: '11px/1.35 system-ui,sans-serif',
+      left: '50%',
+      top: '12px',
+      transform: 'translateX(-50%)',
+      padding: '6px 12px',
+      background: 'rgba(0,0,0,0.55)',
+      color: '#e8e8e8',
+      font: '13px/1.35 system-ui,sans-serif',
       zIndex: '20',
       pointerEvents: 'none',
-      maxWidth: '90vw',
+      whiteSpace: 'nowrap',
     } as CSSStyleDeclaration);
-    help.textContent =
-      '移动 WASD/方向 · 拳U/I/O 脚J/K/L · 下+键=蹲攻 · 跳中键=j. · 6+I/O/L unique · 236P/623P/214K/236K/214P/22P · 66/44冲刺 · R重置 · 右上「指令反馈」';
+    help.textContent = '移动-WASD · 轻/中/重拳-U/I/O · 中/重震预设1/2';
     parent.appendChild(help);
   }
 

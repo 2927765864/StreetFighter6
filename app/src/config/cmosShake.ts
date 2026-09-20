@@ -309,7 +309,7 @@ export function mergeCmosShakePresets(
     out[id] = normalizeCmosShakeEffectPreset(id, raw, base[id], fovToVelocity);
   }
   const factory = createDefaultCmosShakePresets(fovToVelocity);
-  for (const id of ['S_impact', 'M_impact', 'L_impact'] as const) {
+  for (const id of ['S_impact', 'M_impact', 'M_impact2', 'L_impact', 'L_impact2'] as const) {
     if (!out[id] && factory[id]) out[id] = factory[id]!;
   }
   return out;
@@ -356,7 +356,15 @@ export function createDefaultCmosShakePresets(
       impulsePosM: 0.08,
       impulseVelM: 0.42,
     }),
+    M_impact2: p('中攻击冲击2', -1.76, -0.42, {
+      impulsePosM: 0.08,
+      impulseVelM: 0.42,
+    }),
     L_impact: p('重攻击冲击', -2.56, -0.7, {
+      impulsePosM: 0.12,
+      impulseVelM: 0.65,
+    }),
+    L_impact2: p('重攻击冲击2', -2.56, -0.7, {
       impulsePosM: 0.12,
       impulseVelM: 0.65,
     }),

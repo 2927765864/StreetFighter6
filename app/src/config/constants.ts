@@ -19,6 +19,10 @@ import {
   type CmosShakeConfig,
 } from './cmosShake';
 import {
+  createDefaultMotionBlurConfig,
+  type MotionBlurConfig,
+} from './motionBlur';
+import {
   createDefaultLights,
   type LightDesc,
 } from './lightTypes';
@@ -112,7 +116,7 @@ export type MutableSimConfig = {
   shadowMapSize: number;
   /**
    * WebGPU MSAA. Applied only at renderer construct — toggle requires reload.
-   * Default false: fill-rate is the 60fps bottleneck (see perf rings).
+   * Default on: stage grout / tape edges shimmer without coverage AA.
    */
   antialias: boolean;
   /**
@@ -205,6 +209,10 @@ export type MutableSimConfig = {
   enableSpecials: boolean;
   /** Gameplay gate: throw command usage (definitions stay loaded). */
   enableThrows: boolean;
+  /** Training gate: jump (7/8/9) and crouch (1/2/3). Walk 4/6 still work when off. */
+  enableJumpCrouch: boolean;
+  /** Training gate: forward/back dash (前前 / 后后). */
+  enableDash: boolean;
   /**
    * Training gate: only standing LP/MP/HP normals.
    * Blocks kicks, 6MP/6HP/4HP uniques, crouch normals, and jump attacks.
@@ -294,10 +302,15 @@ export type MutableSimConfig = {
   walkXfadeIdleEnd: number;
   walkXfadeStartIdle: number;
   /**
-   * Dual-advance blend into walk/idle (§3.11): attack residual, guard leave,
-   * and hitstun reaction → idle/crouch/walk. Not during attack lock or into-hit.
+   * Dual-advance blend into walk/idle (§3.11): attack residual, dash residual,
+   * guard leave, turn, stance. Not hit→idle (see hitToMoveBlendSec).
    */
   residualToMoveBlendSec: number;
+  /**
+   * Hit reaction → idle / crouch / walk after stun ends (§3.11.2).
+   * Independent of residualToMoveBlendSec.
+   */
+  hitToMoveBlendSec: number;
   /**
    * Attack residual → another attack (§3.11). Default 0 = hard cut (跟手).
    */
@@ -503,6 +516,10 @@ export type MutableSimConfig = {
    */
   cmosShake: CmosShakeConfig;
   /**
+   * Directional motion blur: object velocity scaled up, camera velocity clamped.
+   */
+  motionBlur: MotionBlurConfig;
+  /**
    * 命中屏幕冲击波（水波式画面扭曲，纯扭曲无亮边）。
    * 时长/半径/强度按轻(L)/中(M)/重(H)分档，均可在面板拧。
    */
@@ -629,7 +646,7 @@ export function createDefaultSimConfig(): MutableSimConfig {
     lightUseDynamicLighting: true,
     shadowMapEnabled: true,
     shadowMapSize: 512,
-    antialias: false,
+    antialias: true,
     fighterMeshLod: 'high',
     maxPixelRatio: 1,
     shadowCameraExtent: 20,
@@ -695,6 +712,8 @@ export function createDefaultSimConfig(): MutableSimConfig {
     enableCancel: true,
     enableSpecials: false,
     enableThrows: false,
+    enableJumpCrouch: true,
+    enableDash: true,
     standingPunchOnly: false,
     enableActionBuffer: true,
     dashFrames: dashFwdFrames,
@@ -752,6 +771,7 @@ export function createDefaultSimConfig(): MutableSimConfig {
     walkXfadeIdleEnd: 5,
     walkXfadeStartIdle: 5,
     residualToMoveBlendSec: 0.1,
+    hitToMoveBlendSec: 0.1,
     residualToAttackBlendSec: 0,
     residualToStanceBlendSec: 0.1,
     crossfadeAdvanceMode: 'dual',
@@ -897,6 +917,7 @@ export function createDefaultSimConfig(): MutableSimConfig {
     wudaLayerPresets: createDefaultWudaLayerPresets(),
     wudaActiveLayerPresetId: 'wuda_p1_default',
     cmosShake: createDefaultCmosShakeConfig(),
+    motionBlur: createDefaultMotionBlurConfig(),
     hitShockwaveEnabled: true,
     hitShockwaveMaxConcurrent: 4,
     hitShockwaveThickness: 0.035,
@@ -985,6 +1006,8 @@ export function applyConfigToMatchOpts(cfg: MutableSimConfig) {
     enableCancel: cfg.enableCancel,
     enableSpecials: cfg.enableSpecials,
     enableThrows: cfg.enableThrows,
+    enableJumpCrouch: cfg.enableJumpCrouch,
+    enableDash: cfg.enableDash,
     standingPunchOnly: cfg.standingPunchOnly,
     enableActionBuffer: cfg.enableActionBuffer,
     dashFrames: cfg.dashFrames,

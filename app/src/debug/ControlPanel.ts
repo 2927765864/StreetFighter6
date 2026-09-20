@@ -453,6 +453,8 @@ function buildDom(): HTMLElement {
           ${rowToggle('enableCancel', '启用 Cancel')}
           ${rowToggle('enableSpecials', '启用必杀指令')}
           ${rowToggle('enableThrows', '启用投技指令')}
+          ${rowToggle('enableJumpCrouch', '启用跳跃和蹲下')}
+          ${rowToggle('enableDash', '启用前前 / 后后 dash')}
           ${rowToggle('standingPunchOnly', '仅站立轻/中/重拳')}
           ${rowNumber('hitstopFramesOnHit', 'Hitstop 命中 (f)', 0, 30, 1)}
           ${rowNumber('hitstopFramesOnBlock', 'Hitstop 防御 (f)', 0, 30, 1)}
@@ -619,6 +621,24 @@ function buildDom(): HTMLElement {
           ${rowNumber('cameraFar', '远裁', 50, 2000, 10)}
           `,
           'expandCamera',
+        )}
+      </details>
+
+      <details class="panel-group" data-cat="动态模糊">
+        <summary>动态模糊</summary>
+        ${sectionShell(
+          'motionBlur',
+          '【动态模糊】走/冲/跳 与 出拳/受击 两套强度，镜头几乎不糊',
+          `
+          ${rowToggle('motionBlurEnabled', '启用动态模糊')}
+          ${rowNumber('motionBlurMoveScale', '移动强度 (走/冲/跳)', 0, 2, 0.05)}
+          ${rowNumber('motionBlurAttackScale', '攻击/受击强度', 0, 2, 0.05)}
+          ${rowNumber('motionBlurCameraScale', '镜头强度 (只糊命中震屏，不含跟镜)', 0, 2, 0.05)}
+          ${rowNumber('motionBlurMaxRadiusPx', '最长拖尾 (像素)', 0, 64, 1)}
+          ${rowNumber('motionBlurSamples', '采样次数', 2, 16, 1)}
+          ${rowNumber('motionBlurDebugView', '速度图调试 0关/1角色/2震屏', 0, 2, 1)}
+          `,
+          'expandMotionBlur',
         )}
       </details>
 
@@ -844,7 +864,8 @@ function buildDom(): HTMLElement {
           ${rowNumber('walkXfadeEndIdle', '收尾→待机 溶图帧', 0, 20, 1)}
           ${rowNumber('walkXfadeIdleEnd', '待机→收尾 溶图帧', 0, 20, 1)}
           ${rowNumber('walkXfadeStartIdle', '起步→待机 溶图帧', 0, 20, 1)}
-          ${rowNumber('residualToMoveBlendSec', 'residual→移动溶图 (s)', 0, 0.35, 0.01)}
+          ${rowNumber('residualToMoveBlendSec', 'residual→移动溶图 (s)', 0, 1, 0.01)}
+          ${rowNumber('hitToMoveBlendSec', '受击→待机溶图 (s)', 0, 1, 0.01)}
           ${rowNumber('residualToAttackBlendSec', 'residual→攻溶图 (s)', 0, 0.2, 0.01)}
           ${rowNumber('residualToStanceBlendSec', 'residual→站蹲 (s)', 0, 0.35, 0.01)}
           <div class="panel-row">
@@ -1205,6 +1226,8 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'enableCancel', path: 'enableCancel' },
   { id: 'enableSpecials', path: 'enableSpecials' },
   { id: 'enableThrows', path: 'enableThrows' },
+  { id: 'enableJumpCrouch', path: 'enableJumpCrouch' },
+  { id: 'enableDash', path: 'enableDash' },
   { id: 'hitstopFramesOnHit', path: 'hitstopFramesOnHit' },
   { id: 'hitstopFramesOnBlock', path: 'hitstopFramesOnBlock' },
   { id: 'hitstopAnimRate', path: 'hitstopAnimRate' },
@@ -1280,6 +1303,13 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'cameraFollowDeadzone', path: 'cameraFollowDeadzone' },
   { id: 'cameraNear', path: 'cameraNear' },
   { id: 'cameraFar', path: 'cameraFar' },
+  { id: 'motionBlurEnabled', path: 'motionBlur.enabled' },
+  { id: 'motionBlurMoveScale', path: 'motionBlur.moveScale' },
+  { id: 'motionBlurAttackScale', path: 'motionBlur.attackScale' },
+  { id: 'motionBlurCameraScale', path: 'motionBlur.cameraScale' },
+  { id: 'motionBlurMaxRadiusPx', path: 'motionBlur.maxRadiusPx' },
+  { id: 'motionBlurSamples', path: 'motionBlur.samples' },
+  { id: 'motionBlurDebugView', path: 'motionBlur.debugView' },
   { id: 'stageFitWidth', path: 'stageFitWidth' },
   { id: 'stageOriginX', path: 'stageOriginX' },
   { id: 'stageOriginZ', path: 'stageOriginZ' },
@@ -1318,6 +1348,7 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'walkXfadeIdleEnd', path: 'walkXfadeIdleEnd' },
   { id: 'walkXfadeStartIdle', path: 'walkXfadeStartIdle' },
   { id: 'residualToMoveBlendSec', path: 'residualToMoveBlendSec' },
+  { id: 'hitToMoveBlendSec', path: 'hitToMoveBlendSec' },
   { id: 'residualToAttackBlendSec', path: 'residualToAttackBlendSec' },
   { id: 'residualToStanceBlendSec', path: 'residualToStanceBlendSec' },
   { id: 'plantSlewPerSec', path: 'plantSlewPerSec' },
@@ -1498,6 +1529,8 @@ const TOGGLE_IDS = new Set([
   'enableCancel',
   'enableSpecials',
   'enableThrows',
+  'enableJumpCrouch',
+  'enableDash',
   'showCancelWindow',
   'enablePushResolve',
   'enableBlockPush',
@@ -1512,6 +1545,7 @@ const TOGGLE_IDS = new Set([
   'rootPoseLockAttack',
   'showFootDebug',
   'cameraZoomEnabled',
+  'motionBlurEnabled',
   'showFallbackGround',
   'showDebugGrid',
   'showAxes',
@@ -1591,6 +1625,13 @@ export function setupControlPanel(
     'cameraFollowDeadzone',
     'cameraNear',
     'cameraFar',
+    'motionBlur.enabled',
+    'motionBlur.moveScale',
+    'motionBlur.attackScale',
+    'motionBlur.cameraScale',
+    'motionBlur.maxRadiusPx',
+    'motionBlur.samples',
+    'motionBlur.debugView',
     'stageFitWidth',
     'stageOriginX',
     'stageOriginZ',
@@ -1648,6 +1689,7 @@ export function setupControlPanel(
     'walkXfadeIdleEnd',
     'walkXfadeStartIdle',
     'residualToMoveBlendSec',
+    'hitToMoveBlendSec',
     'residualToAttackBlendSec',
     'residualToStanceBlendSec',
     'crossfadeAdvanceMode',
@@ -1739,6 +1781,7 @@ export function setupControlPanel(
     ['expandLocomotion', 'locomotion', 'sect-locomotion'],
     ['expandRenderBoxes', 'renderBoxes', 'sect-renderBoxes'],
     ['expandCamera', 'camera', 'sect-camera'],
+    ['expandMotionBlur', 'motionBlur', 'sect-motionBlur'],
     ['expandLighting', 'lighting', 'sect-lighting'],
     // cmosShake expand bound in bindCmosShakePanel
     ['expandHitVfx', 'hitVfx', 'sect-hitVfx'],

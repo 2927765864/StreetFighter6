@@ -12,6 +12,10 @@ import type { CommandDef } from './CommandDef';
 export type ResolveConfig = MotionMatchConfig & {
   dashDirHoldMax: number;
   dashNeutralMax: number;
+  /** Default true. When false, skip jump and crouch intents. */
+  enableJumpCrouch?: boolean;
+  /** Default true. When false, skip dash_fwd / dash_back. */
+  enableDash?: boolean;
 };
 
 export type ResolveContext = {
@@ -62,8 +66,14 @@ export function resolveIntent(
   const detectJumpDash =
     ctx.phase !== 'prejump' && ctx.phase !== 'dash';
 
+  const jumpCrouchOn = cfg.enableJumpCrouch !== false;
+  const dashOn = cfg.enableDash !== false;
+
   if (detectJumpDash) {
-    if (detectDash(entries, now, 6, cfg.dashDirHoldMax, cfg.dashNeutralMax)) {
+    if (
+      dashOn &&
+      detectDash(entries, now, 6, cfg.dashDirHoldMax, cfg.dashNeutralMax)
+    ) {
       candidates.push({
         kind: 'dash_fwd',
         priority: INTENT_PRIORITY.dash,
@@ -71,7 +81,10 @@ export function resolveIntent(
         commandId: 'dash_f',
       });
     }
-    if (detectDash(entries, now, 4, cfg.dashDirHoldMax, cfg.dashNeutralMax)) {
+    if (
+      dashOn &&
+      detectDash(entries, now, 4, cfg.dashDirHoldMax, cfg.dashNeutralMax)
+    ) {
       candidates.push({
         kind: 'dash_back',
         priority: INTENT_PRIORITY.dash,
@@ -86,6 +99,7 @@ export function resolveIntent(
     // Hold-jump (§2.3.1): keeping 7/8/9 through air/land must rejump on canAct.
     // Edge-only detection dropped held-up through landing.
     if (
+      jumpCrouchOn &&
       (JUMP_DIRS as readonly number[]).includes(rel) &&
       (last?.pressed ?? 0) === 0
     ) {
@@ -101,7 +115,11 @@ export function resolveIntent(
   if (candidates.length === 0) {
     const last = entries[entries.length - 1];
     const rel: NumpadDir = last?.relDir ?? 5;
-    if (groundFree && (CROUCH_DIRS as readonly number[]).includes(rel)) {
+    if (
+      jumpCrouchOn &&
+      groundFree &&
+      (CROUCH_DIRS as readonly number[]).includes(rel)
+    ) {
       return {
         kind: 'crouch',
         priority: INTENT_PRIORITY.crouch,

@@ -61,7 +61,7 @@
         "intensity": 3.6,
         "position": {
           "x": -1.6,
-          "y": 3.8,
+          "y": 5.5,
           "z": -7.247715342408959
         },
         "target": {
@@ -83,7 +83,7 @@
         "intensity": 3.6,
         "position": {
           "x": 1.6,
-          "y": 3.8,
+          "y": 5.4,
           "z": -7.247715342408959
         },
         "target": {
@@ -105,7 +105,7 @@
         "intensity": 3.6,
         "position": {
           "x": -7.5,
-          "y": 3.8,
+          "y": 5.4,
           "z": -7.247715342408959
         },
         "target": {
@@ -127,7 +127,7 @@
         "intensity": 3.6,
         "position": {
           "x": 7.5,
-          "y": 3.8,
+          "y": 5.4,
           "z": -7.247715342408959
         },
         "target": {
@@ -478,7 +478,7 @@
         "follow": "none"
       }
     ],
-    "lightSelectedId": "directional_4bbfe1fe-b7f2-4699-a21e-b07935d26712",
+    "lightSelectedId": "point_msx68fp5_3559",
     "lightHelpersVisible": false,
     "lightOrbitMode": false,
     "lightOrbitPipX": 12,
@@ -554,6 +554,8 @@
     "enableCancel": false,
     "enableSpecials": false,
     "enableThrows": false,
+    "enableJumpCrouch": true,
+    "enableDash": true,
     "standingPunchOnly": true,
     "enableActionBuffer": true,
     "dashFrames": 19,
@@ -644,6 +646,7 @@
     "walkXfadeIdleEnd": 6,
     "walkXfadeStartIdle": 6,
     "residualToMoveBlendSec": 0.2,
+    "hitToMoveBlendSec": 1,
     "residualToAttackBlendSec": 0,
     "residualToStanceBlendSec": 0.1,
     "crossfadeAdvanceMode": "dual",
@@ -1564,8 +1567,8 @@
       "fovDampingRatio": 0.5,
       "maxFovDeg": 2.5,
       "posMass": 1,
-      "posAngularFreq": 90,
-      "posDampingRatio": 0.32,
+      "posAngularFreq": 105,
+      "posDampingRatio": 0.42,
       "maxPosM": 0.6,
       "posAzimuthDeg": 0,
       "posTiltDeg": 0,
@@ -1578,7 +1581,7 @@
       "presetOnHitByStrength": {
         "S": "S_impact",
         "M": "M_impact",
-        "L": "L_impact"
+        "L": "L_impact2"
       },
       "presetOnBlockByStrength": {
         "S": "tap",
@@ -1618,6 +1621,28 @@
           "impulseVelM": -5,
           "posAzimuthDeg": 90,
           "posTiltDeg": 12
+        },
+        "L_impact2": {
+          "label": "重-冲击2",
+          "impulsePosDeg": 0,
+          "impulseVelDeg": 0,
+          "fov": 0,
+          "fovKickDeg": 0,
+          "impulsePosM": 0.28,
+          "impulseVelM": -4.4,
+          "posAzimuthDeg": 90,
+          "posTiltDeg": 12
+        },
+        "M_impact2": {
+          "label": "中-冲击2",
+          "impulsePosDeg": 0,
+          "impulseVelDeg": 0,
+          "fov": 0,
+          "fovKickDeg": 0,
+          "impulsePosM": 0.24,
+          "impulseVelM": -3.7,
+          "posAzimuthDeg": 270,
+          "posTiltDeg": 0
         }
       },
       "debugImpulse": {
@@ -1631,6 +1656,16 @@
       "fovToVelocity": 8,
       "maxSpeedFov": 40,
       "minImpulseIntervalMS": 0
+    },
+    "motionBlur": {
+      "enabled": true,
+      "objectScale": 0.4,
+      "moveScale": 0.5,
+      "attackScale": 1,
+      "cameraScale": 0.25,
+      "maxRadiusPx": 16,
+      "samples": 8,
+      "debugView": 0
     },
     "hitShockwaveEnabled": true,
     "hitShockwaveMaxConcurrent": 4,
@@ -1702,8 +1737,9 @@
       "locomotion": true,
       "renderBoxes": true,
       "camera": true,
+      "motionBlur": true,
       "cmosShake": true,
-      "cmosShakeFov": true,
+      "cmosShakeFov": false,
       "cmosShakePos": true,
       "lighting": true,
       "animDrive": true,
@@ -2383,7 +2419,7 @@
             "randomRotationMinDeg": -15,
             "randomRotationMaxDeg": 15,
             "scale": 1,
-            "opacity": 0.2,
+            "opacity": 0.1,
             "brightness": 3.5,
             "lift": 0.15,
             "liftDark": 6.2,

@@ -16,6 +16,8 @@ export type CrossfadeDurations = {
   locoSec: number;
   /** Attack residual (or any attack clip) → walk / idle-like move (可稍长). */
   residualToMoveSec: number;
+  /** Hit reaction clip → idle / crouch / walk after stun ends. Independent of residual→move. */
+  hitToMoveSec: number;
   /**
    * Attack residual → stand↔crouch transition clip (可稍长).
    * Softens hard cut into crouch_to_stand / stand_to_crouch; does not replace the clip.
@@ -134,9 +136,9 @@ export function resolveCrossfadeSec(
 
   // 进受击：硬切（打上瞬间 / 连段再打上）
   if (to === 'hit') return 0;
-  // 受击 → 待机 / 蹲 / 走：硬直已结束，可溶（§3.11.2）
+  // 受击 → 待机 / 蹲 / 走：硬直已结束，可溶（§3.11.2）；独立时长
   if (from === 'hit' && isMoveLike(to)) {
-    return Math.max(0, d.residualToMoveSec);
+    return Math.max(0, d.hitToMoveSec);
   }
   // 受击 → 其它（攻/跳/冲/倒地衔接等）：硬切
   if (from === 'hit') return 0;
@@ -265,6 +267,7 @@ export function defaultCrossfadeDurations(
   return {
     locoSec: partial?.locoSec ?? 0.12,
     residualToMoveSec: partial?.residualToMoveSec ?? 0.1,
+    hitToMoveSec: partial?.hitToMoveSec ?? 0.1,
     residualToStanceSec: partial?.residualToStanceSec ?? 0.1,
     residualToAttackSec: partial?.residualToAttackSec ?? 0,
   };

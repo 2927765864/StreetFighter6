@@ -65,9 +65,11 @@ describe('cmosShake config merge / persist shape', () => {
     // 轻中重冲击预设始终补齐，避免映射悬空。
     expect(merged.cmosShake.presets.S_impact).toBeTruthy();
     expect(merged.cmosShake.presets.M_impact).toBeTruthy();
+    expect(merged.cmosShake.presets.M_impact2).toBeTruthy();
     expect(merged.cmosShake.presets.L_impact).toBeTruthy();
+    expect(merged.cmosShake.presets.L_impact2).toBeTruthy();
     expect(Object.keys(merged.cmosShake.presets).sort()).toEqual(
-      ['L_impact', 'M_impact', 'S_impact', 'onlyMine'].sort(),
+      ['L_impact', 'L_impact2', 'M_impact', 'M_impact2', 'S_impact', 'onlyMine'].sort(),
     );
   });
 

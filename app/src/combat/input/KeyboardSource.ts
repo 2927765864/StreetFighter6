@@ -37,7 +37,8 @@ export function resolveNumpadDir(
 }
 
 /**
- * Key map (Classic): A/U LP, S/I MP, D/O HP; Z/X/C or J/K/L kicks; arrows or WASD dirs.
+ * Key map (Classic): U LP, I MP, O HP; Z/X/C or J/K/L kicks; arrows or WASD dirs.
+ * Digit1/Digit2 are reserved for screen-shake preset toggle (not punches).
  * Full button edge masks per plan Step 2.
  */
 export class KeyboardSource {
@@ -73,8 +74,8 @@ export class KeyboardSource {
     const dir = resolveNumpadDir(up, down, left, right);
 
     let buttons = 0;
-    if (this.has('KeyU', 'Digit1', 'KeyQ')) buttons |= BTN_LP;
-    if (this.has('KeyI', 'Digit2')) buttons |= BTN_MP;
+    if (this.has('KeyU', 'KeyQ')) buttons |= BTN_LP;
+    if (this.has('KeyI')) buttons |= BTN_MP;
     if (this.has('KeyO', 'Digit3')) buttons |= BTN_HP;
     if (this.has('KeyJ', 'KeyZ')) buttons |= BTN_LK;
     if (this.has('KeyK', 'KeyX')) buttons |= BTN_MK;

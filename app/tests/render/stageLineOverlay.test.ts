@@ -59,7 +59,7 @@ describe('dropCameraFacingWallTris', () => {
 });
 
 describe('prepareStageLineOverlay', () => {
-  it('converts BLEND line mesh to alpha-test and strips +Z wall', () => {
+  it('converts BLEND line mesh to opaque and strips +Z wall', () => {
     const geo = new THREE.BufferGeometry();
     geo.setAttribute(
       'position',
@@ -81,7 +81,7 @@ describe('prepareStageLineOverlay', () => {
 
     expect(prepareStageLineOverlay(group)).toBe(1);
     expect(mat.transparent).toBe(false);
-    expect(mat.alphaTest).toBeGreaterThan(0);
+    expect(mat.alphaTest).toBe(0);
     expect(mat.depthWrite).toBe(true);
     expect(mesh.castShadow).toBe(false);
     expect(geo.getIndex()!.count).toBe(0);

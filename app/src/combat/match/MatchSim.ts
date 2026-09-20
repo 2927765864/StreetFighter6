@@ -81,6 +81,10 @@ export type MatchSimOptions = {
   enableSpecials: boolean;
   /** When false, throw command inputs never resolve/execute (data stays loaded). */
   enableThrows: boolean;
+  /** When false, jump (7/8/9) and crouch (1/2/3) never resolve/execute. */
+  enableJumpCrouch: boolean;
+  /** When false, forward/back dash never resolve/execute. */
+  enableDash: boolean;
   /** When true, only standing LP/MP/HP normals resolve/execute. */
   standingPunchOnly: boolean;
   enableActionBuffer: boolean;
@@ -214,6 +218,8 @@ const DEFAULT_OPTS: MatchSimOptions = {
   enableCancel: true,
   enableSpecials: false,
   enableThrows: false,
+  enableJumpCrouch: true,
+  enableDash: true,
   standingPunchOnly: false,
   enableActionBuffer: true,
   dashFrames: 19,
@@ -607,7 +613,11 @@ export class MatchSim {
   }
 
   private canExecute(intent: Intent): boolean {
-    if (intent.kind === 'none' || intent.kind === 'walk' || intent.kind === 'crouch') {
+    if (intent.kind === 'none' || intent.kind === 'walk') {
+      return this.p1.canAct();
+    }
+    if (intent.kind === 'crouch') {
+      if (!this.opts.enableJumpCrouch) return false;
       return this.p1.canAct();
     }
     if (intent.kind === 'special') {
@@ -638,9 +648,11 @@ export class MatchSim {
       );
     }
     if (intent.kind === 'dash_fwd' || intent.kind === 'dash_back') {
+      if (!this.opts.enableDash) return false;
       return this.p1.canAct();
     }
     if (intent.kind === 'jump') {
+      if (!this.opts.enableJumpCrouch) return false;
       return this.p1.canAct();
     }
     return false;
@@ -687,6 +699,18 @@ export class MatchSim {
   private executeIntent(intent: Intent): boolean {
     if (intent.kind === 'special' && !this.opts.enableSpecials) return false;
     if (intent.kind === 'throw' && !this.opts.enableThrows) return false;
+    if (
+      (intent.kind === 'jump' || intent.kind === 'crouch') &&
+      !this.opts.enableJumpCrouch
+    ) {
+      return false;
+    }
+    if (
+      (intent.kind === 'dash_fwd' || intent.kind === 'dash_back') &&
+      !this.opts.enableDash
+    ) {
+      return false;
+    }
     if (
       intent.kind === 'normal' &&
       this.opts.standingPunchOnly &&
@@ -1030,6 +1054,8 @@ export class MatchSim {
       motionStepGapMax: this.opts.motionStepGapMax,
       dashDirHoldMax: this.opts.dashDirHoldMax,
       dashNeutralMax: this.opts.dashNeutralMax,
+      enableJumpCrouch: this.opts.enableJumpCrouch,
+      enableDash: this.opts.enableDash,
     };
 
     if (this.p1.phase === 'prejump') {

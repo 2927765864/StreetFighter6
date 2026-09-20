@@ -120,13 +120,31 @@ export function migrateSavedCameraEdgeMargin(
   return { ...parsed, cameraEdgeMargin: margin };
 }
 
+/** Old saves used residualToMove for hit→idle; copy if the dedicated field is missing. */
+export function migrateSavedHitToMoveBlend(
+  parsed: Record<string, unknown>,
+): Record<string, unknown> {
+  if (typeof parsed.hitToMoveBlendSec === 'number' && Number.isFinite(parsed.hitToMoveBlendSec)) {
+    return parsed;
+  }
+  if (
+    typeof parsed.residualToMoveBlendSec === 'number' &&
+    Number.isFinite(parsed.residualToMoveBlendSec)
+  ) {
+    return { ...parsed, hitToMoveBlendSec: parsed.residualToMoveBlendSec };
+  }
+  return parsed;
+}
+
 /** Camera follow migrate then flat lights → lights[]. */
 export function migrateSavedConfig(
   parsed: Record<string, unknown>,
 ): Record<string, unknown> {
   return migrateFlatLightsToList(
     migrateSavedCameraEdgeMargin(
-      migrateSavedStageWidth(migrateSavedCameraFollow(parsed)),
+      migrateSavedStageWidth(
+        migrateSavedHitToMoveBlend(migrateSavedCameraFollow(parsed)),
+      ),
     ),
   );
 }

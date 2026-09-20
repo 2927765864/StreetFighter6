@@ -63,7 +63,7 @@
 - 左右 `LT/RT` 本阶段不选。  
 - 扫倒：磁盘 `DMG_ASHIBARAI_*`；躺地 `BAS_DN_*_Loop`；普通起 `BAS_DN_STD_*`；后跳起 `BAS_TECH_BR_*`。只用 **非 Light** 族（2HK 重脚）。  
 - 吹飞 `BLOW_*`、撞墙、气绝、SPIN **不接**。  
-- **表现溶图**（`consensus-design-v0.md` §3.11）：进受击反应片 **硬切**；硬直结束回待机 / 蹲 / 走 **可溶**（`residualToMoveSec`），不侵占硬直。
+- **表现溶图**（`consensus-design-v0.md` §3.11）：进受击反应片 **硬切**；硬直结束回待机 / 蹲 / 走 **可溶**（`hitToMoveSec` / 面板 **受击→待机溶图**），不侵占硬直；与攻击残留→移动（`residualToMoveSec`）分开。
 
 ---
 

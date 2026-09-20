@@ -37,6 +37,8 @@ import {
   type HitGlowStrength,
 } from './render/HitGlowFx';
 import { HitScreenCompositeFx } from './render/HitScreenCompositeFx';
+import { MotionBlurFx } from './render/MotionBlurFx';
+import { shouldHoldMotionBlurVelocity } from './config/motionBlur';
 import {
   HitCloudShadowFx,
   hitCloudShadowParamsFromConfig,
@@ -346,6 +348,8 @@ async function boot(): Promise<void> {
   const hitGlow = new HitGlowFx();
   hitGlow.applyParams(hitGlowParamsFromConfig(cfg));
   const hitScreenComposite = new HitScreenCompositeFx(hitShockwave, hitGlow);
+  const motionBlur = new MotionBlurFx();
+  const unshakenView = new THREE.Matrix4();
   const hitCloudShadow = new HitCloudShadowFx();
   hitCloudShadow.applyParams(hitCloudShadowParamsFromConfig(cfg));
   const flipbookCombat = new Flipbook2DCombat(
@@ -1186,6 +1190,18 @@ async function boot(): Promise<void> {
       // Allow key-repeat for scrubbing through frames.
       e.preventDefault();
       hooks.stepOnce();
+      return;
+    }
+    if (e.code === 'Digit1' || e.code === 'Digit2') {
+      if (e.repeat) return;
+      e.preventDefault();
+      const setA = e.code === 'Digit1';
+      const mId = setA ? 'M_impact' : 'M_impact2';
+      const lId = setA ? 'L_impact' : 'L_impact2';
+      CONFIG.cmosShake.presetOnHitByStrength.M = mId;
+      CONFIG.cmosShake.presetOnHitByStrength.L = lId;
+      panelApi.refresh();
+      panelFlash(`命中震动 → ${mId} / ${lId}`);
     }
   });
 
@@ -1329,6 +1345,9 @@ async function boot(): Promise<void> {
         aspect: viewAspect,
       });
     }
+
+    camera.updateMatrixWorld();
+    unshakenView.copy(camera.matrixWorldInverse);
 
     // CMOS screen shake: wall-clock by default; absolute write after fight camera.
     screenShake.step(presentDt, cfg.timeScaleAnim);
@@ -1475,6 +1494,16 @@ async function boot(): Promise<void> {
       // Shockwave UV warp + additive glow; no-ops when both idle.
       if (hitScreenComposite.hasActive()) {
         hitScreenComposite.apply(renderer, camera);
+      }
+      if (cfg.motionBlur.enabled) {
+        motionBlur.applyParams(cfg.motionBlur, viewH);
+        motionBlur.apply(renderer, scene, camera, {
+          holdVelocity: shouldHoldMotionBlurVelocity(
+            hooks.paused && !hooks.boxEditActive,
+            presentLogicSteps,
+          ),
+          unshakenView,
+        });
       }
 
       if (!cfg.lightOrbitMode || hooks.boxEditActive) return;

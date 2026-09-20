@@ -668,7 +668,7 @@ export function migrateFlatLightsToList(
   }
   if (typeof next.shadowMapEnabled !== 'boolean') next.shadowMapEnabled = true;
   if (typeof next.shadowMapSize !== 'number') next.shadowMapSize = 2048;
-  if (typeof next.antialias !== 'boolean') next.antialias = false;
+  if (typeof next.antialias !== 'boolean') next.antialias = true;
   if (next.fighterMeshLod !== 'medium' && next.fighterMeshLod !== 'low') {
     next.fighterMeshLod = 'high';
   }

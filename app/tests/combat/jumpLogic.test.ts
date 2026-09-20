@@ -402,4 +402,46 @@ describe('jump §3.13', () => {
     expect(resolveIntent(entries, 2, cfg, { phase: 'idle' }).kind).toBe('jump');
     expect(resolveIntent(entries, 2, cfg, { phase: 'prejump' }).kind).not.toBe('jump');
   });
+
+  it('resolver: enableJumpCrouch false skips jump and crouch', () => {
+    const cfg = {
+      motionStepGapMax: 9,
+      dashDirHoldMax: 8,
+      dashNeutralMax: 8,
+      enableJumpCrouch: false,
+    };
+    const jumpEntries = [
+      { relDir: 8 as const, buttons: 0, pressed: 0, logicFrame: 1 },
+    ];
+    const crouchEntries = [
+      { relDir: 2 as const, buttons: 0, pressed: 0, logicFrame: 1 },
+    ];
+    expect(resolveIntent(jumpEntries, 1, cfg, { phase: 'idle' }).kind).toBe(
+      'none',
+    );
+    expect(resolveIntent(crouchEntries, 1, cfg, { phase: 'idle' }).kind).toBe(
+      'none',
+    );
+  });
+
+  it('resolver: enableDash false skips 6-5-6 dash and keeps walk', () => {
+    const cfg = {
+      motionStepGapMax: 9,
+      dashDirHoldMax: 8,
+      dashNeutralMax: 8,
+      enableDash: false,
+    };
+    const entries = [
+      { relDir: 6 as const, buttons: 0, pressed: 0, logicFrame: 1 },
+      { relDir: 5 as const, buttons: 0, pressed: 0, logicFrame: 2 },
+      { relDir: 6 as const, buttons: 0, pressed: 0, logicFrame: 3 },
+    ];
+    expect(resolveIntent(entries, 3, cfg, { phase: 'idle' }).kind).toBe(
+      'walk',
+    );
+    const dashOn = { ...cfg, enableDash: true };
+    expect(resolveIntent(entries, 3, dashOn, { phase: 'idle' }).kind).toBe(
+      'dash_fwd',
+    );
+  });
 });

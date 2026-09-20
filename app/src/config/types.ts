@@ -14,6 +14,7 @@ export type ExpandedSections = {
   locomotion: boolean;
   renderBoxes: boolean;
   camera: boolean;
+  motionBlur: boolean;
   cmosShake: boolean;
   cmosShakeFov: boolean;
   cmosShakePos: boolean;
