@@ -24,6 +24,7 @@ import {
 } from './fighterMeshLod';
 import {
   accumulateHitstopPresentOffsetSecFromCurve,
+  applyHitstopExitEaseLeadSec,
   freeRunAnimDtSecWithHitstopCurve,
   shouldClearHitstopPresentOffset,
   logicFrameToClipTime,
@@ -2685,6 +2686,8 @@ export class FighterView {
    * @param opts.hitstopDuration Total frames of the current hitstop window.
    * @param opts.hitstopTimerAfter Remaining hitstop frames after this present's
    *   logic steps (used with ticks to recover per-tick progress).
+   * @param opts.hitstopExitEasePending One post-hitstop logic step at
+   *   (exitRate + 1) / 2 for free-run and scrub lead.
    * @param opts.inHitstop true while logic hitstop is active (or ticks>0 this
    *   present). Hit-slow lead is kept after hitstop; cleared on clip switch.
    */
@@ -2698,6 +2701,7 @@ export class FighterView {
       hitstopPresentTicks?: number;
       hitstopDuration?: number;
       hitstopTimerAfter?: number;
+      hitstopExitEasePending?: boolean;
       inHitstop?: boolean;
     },
   ): void {
@@ -2724,6 +2728,9 @@ export class FighterView {
     const hitstopCurve =
       cfg.hitstopAnimRateCurve ?? createDefaultHitstopAnimRateCurve();
     const hitstopScale = cfg.hitstopAnimRate;
+    const normalSteps = Math.max(0, logicSteps - hitstopTicks);
+    const exitEasePending =
+      opts?.hitstopExitEasePending === true && normalSteps > 0;
     const inHitstop = opts?.inHitstop === true || hitstopTicks > 0;
     this.wudaInHitstop = inHitstop;
     // Accumulate lead during hitstop only; do not clear when hitstop ends
@@ -2739,6 +2746,16 @@ export class FighterView {
         hitstopScale,
         cfg.timeScaleAnim || 1,
       );
+      // Exit-ease frame: logic advances full step; shrink lead so net visual
+      // advance is (exitRate + 1) / 2.
+      this.hitstopPresentOffsetSec = applyHitstopExitEaseLeadSec(
+        this.hitstopPresentOffsetSec,
+        exitEasePending,
+        hitstopDuration,
+        hitstopCurve,
+        hitstopScale,
+        cfg.timeScaleAnim || 1,
+      );
     }
     const freeRunDt = freeRunAnimDtSecWithHitstopCurve(
       logicSteps,
@@ -2748,6 +2765,7 @@ export class FighterView {
       hitstopCurve,
       hitstopScale,
       cfg.timeScaleAnim || 1,
+      exitEasePending,
     );
     const scrubMode = (cfg.scrubMode ?? 'uniform') as ScrubMode;
     const role = fighter.animRole || 'main';
@@ -3069,7 +3087,10 @@ export class FighterView {
         let localElapsed = 0;
         let localTotal = 1;
         if (fighter.phase === 'hitstun') {
-          localElapsed = Math.max(0, fighter.stunDuration - fighter.stunTimer);
+          // MatchSim advances stun on the contact step before presenting it.
+          // That consumed tick is the first displayed sample (index 0), not
+          // frame 1. Keep combat timers intact; only offset the clip timeline.
+          localElapsed = Math.max(0, fighter.stunDuration - fighter.stunTimer - 1);
           localTotal = Math.max(1, fighter.stunDuration);
         } else if (fighter.kdPhase === 'sweep') {
           localElapsed = Math.max(

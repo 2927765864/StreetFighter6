@@ -10,6 +10,8 @@ import type {
 } from '../combat/move/MoveDefinition';
 import {
   averageHitstopAnimRateForTicks,
+  hitstopExitEaseRate,
+  resolveHitstopExitAnimRate,
   type HitstopAnimRateKey,
 } from './hitstopAnimRateCurve';
 
@@ -156,21 +158,59 @@ export function freeRunAnimDtSecWithHitstopCurve(
   curve: readonly HitstopAnimRateKey[] | null | undefined,
   hitstopAnimRateScale: number,
   timeScaleAnim = 1,
+  exitEasePending = false,
 ): number {
   const steps = Math.max(0, logicSteps);
   const hs = Math.min(Math.max(0, hitstopPresentTicks), steps);
-  const normal = steps - hs;
-  return (
-    freeRunAnimDtSec(normal, timeScaleAnim) +
-    hitstopPresentDtSecFromCurve(
-      hs,
+  let normal = steps - hs;
+  let dt = hitstopPresentDtSecFromCurve(
+    hs,
+    hitstopDuration,
+    hitstopTimerAfter,
+    curve,
+    hitstopAnimRateScale,
+    timeScaleAnim,
+  );
+  // One logic step after freeze ends plays at (exitRate + 1) / 2.
+  if (exitEasePending && normal > 0) {
+    const exitRate = resolveHitstopExitAnimRate(
       hitstopDuration,
-      hitstopTimerAfter,
       curve,
       hitstopAnimRateScale,
-      timeScaleAnim,
-    )
+      clampHitstopAnimRate,
+    );
+    const mid = hitstopExitEaseRate(exitRate);
+    dt += freeRunAnimDtSec(1, timeScaleAnim) * mid;
+    normal -= 1;
+  }
+  dt += freeRunAnimDtSec(normal, timeScaleAnim);
+  return dt;
+}
+
+/**
+ * Scrub lead compensation for the exit-ease frame.
+ * Logic advances a full authored step (visual +1/60 if lead unchanged);
+ * shrink lead by (1 - midRate)/60 so net visual advance is midRate/60.
+ */
+export function applyHitstopExitEaseLeadSec(
+  currentSec: number,
+  apply: boolean,
+  hitstopDuration: number,
+  curve: readonly HitstopAnimRateKey[] | null | undefined,
+  hitstopAnimRateScale: number,
+  timeScaleAnim = 1,
+): number {
+  const cur = Number.isFinite(currentSec) ? Math.max(0, currentSec) : 0;
+  if (!apply) return cur;
+  const exitRate = resolveHitstopExitAnimRate(
+    hitstopDuration,
+    curve,
+    hitstopAnimRateScale,
+    clampHitstopAnimRate,
   );
+  const mid = hitstopExitEaseRate(exitRate);
+  const shrink = freeRunAnimDtSec(1, timeScaleAnim) * (1 - mid);
+  return Math.max(0, cur - shrink);
 }
 
 /**

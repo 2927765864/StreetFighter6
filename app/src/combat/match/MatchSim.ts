@@ -343,6 +343,12 @@ export class MatchSim {
    * Presentation uses this for hit-slow (not logic advance).
    */
   hitstopPresentTicks = 0;
+  /**
+   * After hitstop timer hits 0, the next non-hitstop logic step plays at
+   * (exitRate + 1) / 2 for presentation continuity. Cleared when consumed
+   * or when a new hitstop begins.
+   */
+  hitstopExitEasePending = false;
   lastIntent: Intent = {
     kind: 'none',
     priority: -1,
@@ -522,6 +528,7 @@ export class MatchSim {
     const n = Math.max(0, Math.floor(frames));
     this.hitstopTimer = n;
     this.hitstopDuration = n;
+    this.hitstopExitEasePending = false;
   }
 
   reset(): void {
@@ -537,6 +544,7 @@ export class MatchSim {
     this.hitstopTimer = 0;
     this.hitstopDuration = 0;
     this.hitstopPresentTicks = 0;
+    this.hitstopExitEasePending = false;
     this.actionBuffer.clear();
     this.history.clear();
     this.drive.setBars(DRIVE_MAX);
@@ -1157,6 +1165,10 @@ export class MatchSim {
     if (this.hitstopTimer > 0) {
       this.hitstopTimer -= 1;
       this.hitstopPresentTicks += 1;
+      if (this.hitstopTimer === 0) {
+        // Next non-hitstop logic step gets a one-frame rate bridge.
+        this.hitstopExitEasePending = true;
+      }
       // Clear presentation freeze — no walk anim gate across hitstop
       this.stepWalkInputFreezeGate(input.relDir, intent, true);
       this.syncDebugProbe();

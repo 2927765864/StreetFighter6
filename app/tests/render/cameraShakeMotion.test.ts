@@ -127,6 +127,7 @@ describe('frame-step motion blur hold', () => {
     const renderer = {
       getDrawingBufferSize: (out: { set: (x: number, y: number) => void }) => out.set(1280, 720),
       autoClear: true,
+      copyFramebufferToTexture: vi.fn(),
       render: vi.fn(),
     } as unknown as Parameters<MotionBlurFx['apply']>[0];
     const scene = new Scene();

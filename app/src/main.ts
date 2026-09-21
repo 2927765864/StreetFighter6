@@ -1373,6 +1373,7 @@ async function boot(): Promise<void> {
       match.hitstopPresentTicks = 0;
       const hitstopDuration = match.hitstopDuration;
       const hitstopTimerAfter = match.hitstopTimer;
+      const hitstopExitEasePending = match.hitstopExitEasePending;
       const inHitstop = hitstopTimerAfter > 0 || hitstopPresentTicks > 0;
       const p1Front =
         pickDisplayFrontId(
@@ -1384,6 +1385,7 @@ async function boot(): Promise<void> {
         hitstopPresentTicks,
         hitstopDuration,
         hitstopTimerAfter,
+        hitstopExitEasePending,
         inHitstop,
       });
       p2View.syncFromLogic(match.p2, cfg, presentDt, presentLogicSteps, {
@@ -1391,8 +1393,14 @@ async function boot(): Promise<void> {
         hitstopPresentTicks,
         hitstopDuration,
         hitstopTimerAfter,
+        hitstopExitEasePending,
         inHitstop,
       });
+      // Consume the one-frame exit bridge once a non-hitstop logic step ran.
+      const normalSteps = Math.max(0, presentLogicSteps - hitstopPresentTicks);
+      if (hitstopExitEasePending && normalSteps > 0) {
+        match.hitstopExitEasePending = false;
+      }
     }
     perf.end('syncView');
 

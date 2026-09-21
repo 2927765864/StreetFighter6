@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import {
   accumulateHitstopPresentOffsetSec,
   accumulateHitstopPresentOffsetSecFromCurve,
+  applyHitstopExitEaseLeadSec,
   clampHitstopAnimRate,
   freeRunAnimDtSec,
   freeRunAnimDtSecWithHitstop,
@@ -18,8 +19,10 @@ import {
 } from '../../src/render/AnimScrub';
 import {
   createDefaultHitstopAnimRateCurve,
+  hitstopExitEaseRate,
   hitstopProgress01,
   normalizeHitstopAnimRateCurve,
+  resolveHitstopExitAnimRate,
   sampleHitstopAnimRateCurve,
 } from '../../src/render/hitstopAnimRateCurve';
 import { parseMoveDefinition } from '../../src/combat/move/MoveDefinition';
@@ -184,6 +187,44 @@ describe('hitstop presentation slow', () => {
     expect(pts.some((p) => p.t === 0.5 && p.v === 0.5)).toBe(true);
     expect(pts[pts.length - 1]!.t).toBe(1);
     expect(pts[pts.length - 1]!.v).toBe(1);
+  });
+
+  it('exit ease rate is midpoint of exit hitstop rate and 1', () => {
+    expect(hitstopExitEaseRate(0)).toBeCloseTo(0.5, 5);
+    expect(hitstopExitEaseRate(0.08)).toBeCloseTo((0.08 + 1) / 2, 5);
+    expect(hitstopExitEaseRate(1)).toBeCloseTo(1, 5);
+  });
+
+  it('one exit-ease free-run step uses midpoint rate', () => {
+    const flat = createDefaultHitstopAnimRateCurve();
+    const scale = 0.08;
+    const exitRate = resolveHitstopExitAnimRate(
+      8,
+      flat,
+      scale,
+      clampHitstopAnimRate,
+    );
+    expect(exitRate).toBeCloseTo(0.08, 5);
+    const mid = hitstopExitEaseRate(exitRate);
+    // 0 hitstop ticks + 1 normal with ease pending
+    expect(
+      freeRunAnimDtSecWithHitstopCurve(1, 0, 8, 0, flat, scale, 1, true),
+    ).toBeCloseTo((1 / 60) * mid, 5);
+    // Without pending: full speed
+    expect(
+      freeRunAnimDtSecWithHitstopCurve(1, 0, 8, 0, flat, scale, 1, false),
+    ).toBeCloseTo(1 / 60, 5);
+  });
+
+  it('exit-ease lead shrink makes scrub net advance at midpoint', () => {
+    const flat = createDefaultHitstopAnimRateCurve();
+    const scale = 0.08;
+    const mid = hitstopExitEaseRate(0.08);
+    const lead = 0.05;
+    const next = applyHitstopExitEaseLeadSec(lead, true, 8, flat, scale);
+    // Logic +1/60, lead shrink (1-mid)/60 → net visual +(mid)/60
+    const net = 1 / 60 + (next - lead);
+    expect(net).toBeCloseTo(mid / 60, 5);
   });
 
   it('shouldClearHitstopPresentOffset: soft/restart/clip change vs same-clip hard', () => {

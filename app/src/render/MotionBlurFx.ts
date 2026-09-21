@@ -1,33 +1,29 @@
 /**
- * Object-led directional motion blur.
+ * Image-confirmed screen-space motion blur.
  *
- * Velocity RT is fighters only (half-res). Camera-shake uses consecutive
- * projections with real per-pixel depth. Layer depth is copied before display
- * clears, without re-drawing geometry. Beauty is copied once per composite.
+ * Velocity RT is fighters only, at drawing-buffer resolution. Camera-shake uses
+ * consecutive projections with real per-pixel depth. Layer depth is copied before display
+ * clears, without re-drawing geometry. Unfiltered image history confirms visible
+ * displacement; neighborhood reconstruction extends blur beyond the silhouette.
  */
 import * as THREE from 'three/webgpu';
 import {
   Fn,
   float,
-  int,
   vec2,
   vec4,
   uniform,
   objectGroup,
   uniformGroup,
   screenUV,
-  viewportTexture,
   texture,
-  Loop,
   If,
   max,
   min,
-  abs,
   length,
   positionLocal,
   positionWorld,
   modelWorldMatrix,
-  uv,
   attribute,
   add,
   buffer,
@@ -35,17 +31,20 @@ import {
 } from 'three/tsl';
 import type { MotionBlurConfig, MotionBlurObjectKind } from '../config/motionBlur';
 import { pickMotionBlurObjectScale } from '../config/motionBlur';
+import { ScreenMotionField } from './ScreenMotionField';
+import { reconstructScreenMotion } from './reconstructScreenMotion';
+import { confirmCameraScreenMotion } from './confirmCameraScreenMotion';
 import { CameraShakeMotion } from './CameraShakeMotion';
+import { MOTION_BLUR_MAX_BONES, copyMotionBlurBones } from './motionBlurBones';
 import { MotionBlurDepth, type MotionBlurDepthLayer } from './MotionBlurDepth';
 import {
   LAYER_FIGHTER_BACK,
   LAYER_FIGHTER_FRONT,
 } from './fighterDisplayOrder';
 
-const VELOCITY_RES_SCALE = 0.5;
-/** Shader unrolls this many taps; panel samples are clamped to it. */
-const COMPOSITE_MAX_SAMPLES = 8;
-const MAX_BONES = 384;
+/** Match the panel's quality range; no hidden eight-tap ceiling. */
+const COMPOSITE_MAX_SAMPLES = 16;
+const MAX_BONES = MOTION_BLUR_MAX_BONES;
 
 const _size = new THREE.Vector2();
 const _currViewProj = new THREE.Matrix4();
@@ -64,38 +63,8 @@ export function unregisterMotionBlurRoot(root: THREE.Object3D): void {
   _blurRoots.delete(root);
 }
 
-function fillIdentityBones(out: Float32Array, fromBone = 0): void {
-  const n = (out.length / 16) | 0;
-  for (let i = fromBone; i < n; i += 1) {
-    const o = i * 16;
-    out[o] = 1;
-    out[o + 1] = 0;
-    out[o + 2] = 0;
-    out[o + 3] = 0;
-    out[o + 4] = 0;
-    out[o + 5] = 1;
-    out[o + 6] = 0;
-    out[o + 7] = 0;
-    out[o + 8] = 0;
-    out[o + 9] = 0;
-    out[o + 10] = 1;
-    out[o + 11] = 0;
-    out[o + 12] = 0;
-    out[o + 13] = 0;
-    out[o + 14] = 0;
-    out[o + 15] = 1;
-  }
-}
-
-function copyBonesToScratch(dest: Float32Array, src: Float32Array | null): void {
-  const n = src ? Math.min(src.length, dest.length) : 0;
-  if (n > 0 && src) dest.set(src.subarray(0, n));
-  const fromBone = (n / 16) | 0;
-  if (fromBone * 16 < dest.length) fillIdentityBones(dest, fromBone);
-}
-
-fillIdentityBones(_prevBoneScratch);
-fillIdentityBones(_currBoneScratch);
+copyMotionBlurBones(_prevBoneScratch, null);
+copyMotionBlurBones(_currBoneScratch, null);
 
 function animBonesOf(skeleton: THREE.Skeleton): Float32Array | null {
   const snap = (skeleton as unknown as { userData?: { mbAnimBones?: unknown } })
@@ -116,11 +85,11 @@ function prevBonesOf(skeleton: THREE.Skeleton): Float32Array {
 }
 
 function loadPrevBonesScratch(skeleton: THREE.Skeleton | undefined): void {
-  copyBonesToScratch(_prevBoneScratch, skeleton ? prevBonesOf(skeleton) : null);
+  copyMotionBlurBones(_prevBoneScratch, skeleton ? prevBonesOf(skeleton) : null);
 }
 
 function loadCurrBonesScratch(skeleton: THREE.Skeleton | undefined): void {
-  copyBonesToScratch(
+  copyMotionBlurBones(
     _currBoneScratch,
     skeleton ? animBonesOf(skeleton) : null,
   );
@@ -227,6 +196,8 @@ function usePoseBoneVelocity(object: THREE.Object3D): boolean {
 
 export class MotionBlurFx {
   private readonly velocityRT: THREE.RenderTarget;
+  private readonly screenMotion: ScreenMotionField;
+  private readonly uDisplayLayer = uniform(1);
   private readonly velocityMaterial: THREE.NodeMaterial;
   private readonly compositeMaterial: THREE.NodeMaterial;
   private readonly quad: THREE.QuadMesh;
@@ -241,8 +212,6 @@ export class MotionBlurFx {
   private moveScale = 0.8;
   private attackScale = 0.8;
   private readonly uCameraScale = uniform(0.1);
-  private readonly uMaxRadiusUv = uniform(0.02);
-  private readonly uDeadzoneUv = uniform(0.001);
   private readonly uSamples = uniform(8);
   private readonly uDebugView = uniform(0);
   private readonly shakeMotion = new CameraShakeMotion();
@@ -275,6 +244,7 @@ export class MotionBlurFx {
     });
     this.velocityRT.texture.name = 'MotionBlurVelocity';
     this.velocityRT.texture.colorSpace = THREE.NoColorSpace;
+    this.screenMotion = new ScreenMotionField(this.velocityRT.texture, this.capturedDepth);
 
     this.uPrevWorld.onObjectUpdate(({ object }) => {
       if (!object) return;
@@ -291,6 +261,7 @@ export class MotionBlurFx {
     const uPrevWorld = this.uPrevWorld;
     const uCurrViewProj = this.uCurrViewProj;
     const uObjectScale = this.uObjectScale;
+    const uDisplayLayer = this.uDisplayLayer;
     const uHasSkin = this.uHasSkin;
     const uPrevBones = this.uPrevBones;
     const uCurrBones = this.uCurrBones;
@@ -344,76 +315,50 @@ export class MotionBlurFx {
       });
       const ndcCurr = clipCurr.xy.div(max(clipCurr.w, float(1e-6)));
       const ndcPrevObj = clipPrevObj.xy.div(max(clipPrevObj.w, float(1e-6)));
-      const velObj = ndcCurr.sub(ndcPrevObj).mul(uObjectScale);
-      return vec4(velObj.mul(0.5).add(0.5), float(0.5), float(1));
+      // Raw projected displacement is a proposal, not blur strength. Image
+      // matching chooses the visible displacement before applying user scale.
+      const velObj = ndcCurr.sub(ndcPrevObj);
+      return vec4(velObj.mul(vec2(0.5, -0.5)), clipCurr.w,
+        uDisplayLayer.mul(4).add(uObjectScale));
     })();
 
-    const velTex = texture(this.velocityRT.texture, uv());
-    const beauty = viewportTexture();
-    beauty.generateMipmaps = false;
-    const backgroundDepth = texture(this.capturedDepth.background);
-    const foregroundDepth = texture(this.capturedDepth.foreground);
-    const visibleDepth = Fn(([at]: [THREE.Node<'vec2'>]) => {
-      const front = foregroundDepth.sample(at).x;
-      return front.lessThan(1).select(front, backgroundDepth.sample(at).x);
-    });
+    const field = this.screenMotion;
+    const visibleDepth = field.depthAt;
     const uDepthToNdc = this.uDepthToNdc;
     const uCameraScale = this.uCameraScale;
-    const uMaxRadiusUv = this.uMaxRadiusUv;
-    const uDeadzoneUv = this.uDeadzoneUv;
     const uSamples = this.uSamples;
     const uDebugView = this.uDebugView;
     const uPreviousShakeClip = this.uPreviousShakeClip;
     const uUseObjectVel = this.uUseObjectVel;
+    const rawObjectVelocity = texture(this.velocityRT.texture);
     const colorNode = Fn(() => {
       const uvCoord = screenUV.toVar();
-      const packed = velTex.sample(uvCoord);
-      const obj = packed.xy.sub(0.5).mul(2).toVar();
-      If(packed.w.lessThan(float(0.1)).or(uUseObjectVel.lessThan(float(0.5))), () => {
-        obj.assign(vec2(0, 0));
-      });
+      const packed = field.velocity.sample(uvCoord);
+      const obj = packed.xy.mul(vec2(2, -2));
       // UV has downward Y; projection NDC has upward Y. A zoom produces
       // radial velocity rather than one uniform direction for the whole image.
       const ndc = vec2(uvCoord.x.mul(2).sub(1), float(1).sub(uvCoord.y.mul(2)));
       const depth = visibleDepth(uvCoord);
       const ndcDepth = depth.mul(uDepthToNdc.x).add(uDepthToNdc.y);
       const previousClip = uPreviousShakeClip.mul(vec4(ndc, ndcDepth, 1));
-      const velCam = ndc.sub(previousClip.xy.div(max(previousClip.w, float(1e-6))));
-      const uvOff = obj.add(velCam.mul(uCameraScale)).mul(vec2(0.5, -0.5)).toVar();
-      const len = length(uvOff);
-      If(len.lessThan(uDeadzoneUv), () => {
-        uvOff.assign(vec2(0, 0));
+      const projectedCameraUv = ndc.sub(previousClip.xy.div(max(previousClip.w, float(1e-6))))
+        .mul(vec2(0.5, -0.5));
+      const objectUv = uUseObjectVel.greaterThan(0.5)
+        .select(rawObjectVelocity.sample(uvCoord).xy, vec2(0));
+      const measuredCameraUv = confirmCameraScreenMotion(field, uvCoord, projectedCameraUv, objectUv);
+      const velCam = measuredCameraUv.mul(vec2(2, -2));
+      // Strength is a fraction of actual screen-pixel travel, not a depth
+      // multiplier. Clamp in pixels so horizontal/vertical trails agree.
+      const pixels = measuredCameraUv.mul(field.size).mul(uCameraScale).toVar();
+      const len = length(pixels);
+      If(len.lessThan(0.25), () => {
+        pixels.assign(vec2(0, 0));
       });
-      const lim = max(uMaxRadiusUv, float(1e-6));
-      uvOff.assign(uvOff.mul(min(float(1), lim.div(max(len, float(1e-8))))));
+      // The shutter samples [-0.5, +0.5]: a radius of R allows 2R total travel.
+      pixels.mulAssign(min(float(1), field.maxRadius.mul(2).div(max(len, float(1e-8)))));
+      const uvOff = pixels.div(field.size);
 
-      const acc = beauty.sample(uvCoord).rgb.toVar();
-      const weight = float(1).toVar();
-      If(length(uvOff).greaterThanEqual(uDeadzoneUv), () => {
-        Loop(
-          {
-            start: int(1),
-            end: int(COMPOSITE_MAX_SAMPLES),
-            type: 'int',
-            condition: '<=',
-          },
-          ({ i }) => {
-            If(float(i).lessThanEqual(uSamples), () => {
-              const t = float(i)
-                .div(max(uSamples.sub(1), float(1)))
-                .sub(0.5);
-              const sUv = uvCoord.add(uvOff.mul(t));
-              const sDepth = visibleDepth(sUv);
-              const keep = float(1).sub(
-                min(abs(sDepth.sub(depth)).mul(80), float(1)),
-              );
-              acc.addAssign(beauty.sample(sUv).rgb.mul(keep));
-              weight.addAssign(keep);
-            });
-          },
-        );
-      });
-      const out = vec4(acc.div(max(weight, float(1e-4))), 1).toVar();
+      const out = reconstructScreenMotion(field, uvCoord, uvOff, uSamples, uUseObjectVel).toVar();
       If(uDebugView.greaterThan(float(0.5)), () => {
         const dbg = vec4(0, 0, 0, 1).toVar();
         If(uDebugView.lessThan(float(1.5)), () => {
@@ -440,15 +385,15 @@ export class MotionBlurFx {
     this.quad.name = 'MotionBlurQuad';
   }
 
-  applyParams(cfg: MotionBlurConfig, heightPx: number): void {
+  applyParams(cfg: MotionBlurConfig, _heightPx: number): void {
     this.moveScale = cfg.moveScale;
     this.attackScale = cfg.attackScale;
     this.uCameraScale.value = cfg.cameraScale;
-    this.uSamples.value = Math.min(COMPOSITE_MAX_SAMPLES, cfg.samples);
+    this.uSamples.value = Math.max(
+      2, Math.min(COMPOSITE_MAX_SAMPLES, Math.round(cfg.samples)),
+    );
     this.uDebugView.value = cfg.debugView ?? 0;
-    const h = Math.max(heightPx, 1);
-    this.uMaxRadiusUv.value = cfg.maxRadiusPx / h;
-    this.uDeadzoneUv.value = 0.75 / h;
+    this.screenMotion.maxRadius.value = cfg.maxRadiusPx;
   }
 
   captureDepth(renderer: THREE.WebGPURenderer, layer: MotionBlurDepthLayer): void {
@@ -466,12 +411,16 @@ export class MotionBlurFx {
     },
   ): void {
     renderer.getDrawingBufferSize(_size);
-    const velW = Math.max(1, Math.round(_size.x * VELOCITY_RES_SCALE) | 0);
-    const velH = Math.max(1, Math.round(_size.y * VELOCITY_RES_SCALE) | 0);
+    const velW = Math.max(1, Math.round(_size.x) | 0);
+    const velH = Math.max(1, Math.round(_size.y) | 0);
+    // Full resolution preserves narrow fingers, wrists and silhouette velocity.
+    // Keep one allocation across attack/idle transitions; idle still skips draws.
     if (this.velocityRT.width !== velW || this.velocityRT.height !== velH) {
       this.velocityRT.setSize(velW, velH);
     }
 
+    camera.updateMatrixWorld();
+    this.screenMotion.capture(renderer, camera, opts?.holdVelocity === true);
     if (opts?.holdVelocity) {
       this.composite(renderer);
       return;
@@ -549,6 +498,7 @@ export class MotionBlurFx {
           motionBlurKindOf(object),
           { moveScale: this.moveScale, attackScale: this.attackScale },
         );
+        this.uDisplayLayer.value = object.layers.isEnabled(LAYER_FIGHTER_FRONT) ? 2 : 1;
         const poseDelta = usePoseBoneVelocity(object);
         this.uHasSkin.value = poseDelta ? 1 : 0;
         if (poseDelta && isSkinnedFighter(object)) {
@@ -653,6 +603,7 @@ export class MotionBlurFx {
     renderer.autoClearColor = prevAutoClearColor;
     renderer.autoClearDepth = prevAutoClearDepth;
 
+    this.screenMotion.resolve(renderer);
     this.composite(renderer);
     this.hasPrev = true;
   }
@@ -671,11 +622,13 @@ export class MotionBlurFx {
   /** Disabled frames must not leave an old shake pose as the next reference. */
   resetCameraHistory(): void {
     this.shakeMotion.reset();
+    this.screenMotion.reset();
     this.uPreviousShakeClip.value.identity();
     this.mbFrameGroup.needsUpdate = true;
   }
 
   dispose(): void {
+    this.screenMotion.dispose();
     this.capturedDepth.dispose();
     this.velocityRT.dispose();
     this.velocityMaterial.dispose();

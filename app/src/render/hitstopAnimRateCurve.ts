@@ -126,3 +126,26 @@ export function averageHitstopAnimRateForTicks(
   }
   return sum / ticks;
 }
+
+/**
+ * Rate on the last frozen logic step (timerBefore === 1).
+ * Used for the one-frame exit ease after hitstop ends.
+ */
+export function resolveHitstopExitAnimRate(
+  hitstopDuration: number,
+  curve: readonly HitstopAnimRateKey[] | null | undefined,
+  hitstopAnimRateScale: number,
+  clampRate: (r: number) => number,
+): number {
+  const d = Math.max(0, hitstopDuration);
+  if (d <= 0) return 0;
+  const u = hitstopProgress01(d, 1);
+  return clampRate(sampleHitstopAnimRateCurve(curve, u) * clampRate(hitstopAnimRateScale));
+}
+
+/** One-frame bridge after hitstop: (exitRate + 1) / 2. */
+export function hitstopExitEaseRate(exitHitstopRate: number): number {
+  const a = Number.isFinite(exitHitstopRate) ? exitHitstopRate : 0;
+  const clamped = Math.min(1, Math.max(0, a));
+  return Math.min(1, Math.max(0, (clamped + 1) * 0.5));
+}
