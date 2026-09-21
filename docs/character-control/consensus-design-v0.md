@@ -172,6 +172,12 @@
 
 - **Startup / Active / Recovery**；startup 计数与项目帧索引约定一致（含 FAF / 第一 active）。
 - 命中进入 **hitstop**；输入按 §2 处理。
+- **卡帧画面慢播（2026-09-21）**：逻辑 hitstop 仍冻结对战推进；画面 scrub / free-run 按 **曲线(进度) × 整体缩放** 继续慢播，不是整段钉死。
+  - 进度 `u`：按**本次**卡帧总帧数归一化到 `[0,1]`（首个冻结逻辑步 `u=0`）。
+  - 曲线：`hitstopAnimRateCurve` 多关键点折线（`t`/`v` ∈ `[0,1]`）；整体缩放：`hitstopAnimRate`。
+  - 最终倍率：`clamp01(sample(curve, u) × hitstopAnimRate)`；`0`=硬冻，`1`=满速。
+  - 调参：控制面板 → **战斗 →【战斗】取消与硬直**（折线编辑器 +「卡帧表现倍率（整体缩放）」）。
+  - 卡帧结束后保留表现超前量（lead），避免回弹；切 clip / 软溶 / 攻击重开时清除。
 
 ### 3.4 可打断矩阵（逻辑）
 
@@ -957,4 +963,5 @@ docs/character-control/action-tables/
 | **2026-09-17** | **§3.9.1.c 补**：end 中点按未承诺即松 → **续播当前 end**，禁止重开缩短入口（同 binding `playBest` 早退 + `scrubTo` 瞬移是跳跃感根因）。 |
 | **2026-09-17** | **§3.9.1.c**：`walkStartCommitHoldFrames = 0` 关闭延迟承诺（按下当帧溶进 start）。 |
 | **2026-09-18** | **§3.11.0 指定按帧溶图**：idle/start/end 双播、默认 5 帧、按边可调、打断当帧不溶新片。§3.11.1 墙钟 dual-advance **将要舍弃**。 |
+| **2026-09-21** | **§3.3 卡帧画面慢播曲线**：`hitstopAnimRateCurve`（进度 0→1 折线）× `hitstopAnimRate` 整体缩放；面板折线编辑器在【战斗】取消与硬直。 |
 | **2026-09-18** | **§3.9.1.d 走路 start 松手进 end 延迟**：已承诺 start 后松手，位移立刻 0，画面再播 N 帧 start（默认 2）才进 end 溶图；缓冲内其它输入取消 end。 |

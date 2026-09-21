@@ -3,16 +3,25 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
   accumulateHitstopPresentOffsetSec,
+  accumulateHitstopPresentOffsetSecFromCurve,
   clampHitstopAnimRate,
   freeRunAnimDtSec,
   freeRunAnimDtSecWithHitstop,
+  freeRunAnimDtSecWithHitstopCurve,
   hitstopPresentDtSec,
+  hitstopPresentDtSecFromCurve,
   logicFrameToClipTime,
   remapLogicToClipTime,
   remapLogicToMotionFrame,
   shouldClearHitstopPresentOffset,
   visualFrameToClipTime,
 } from '../../src/render/AnimScrub';
+import {
+  createDefaultHitstopAnimRateCurve,
+  hitstopProgress01,
+  normalizeHitstopAnimRateCurve,
+  sampleHitstopAnimRateCurve,
+} from '../../src/render/hitstopAnimRateCurve';
 import { parseMoveDefinition } from '../../src/combat/move/MoveDefinition';
 
 describe('logicFrameToClipTime', () => {
@@ -99,6 +108,82 @@ describe('hitstop presentation slow', () => {
     // Leaving hitstop (0 ticks) must not snap lead back to 0.
     lead = accumulateHitstopPresentOffsetSec(lead, 0, 0.08);
     expect(lead).toBeCloseTo((2 / 60) * 0.08, 5);
+  });
+
+  it('flat curve × scale matches constant hitstopAnimRate', () => {
+    const flat = createDefaultHitstopAnimRateCurve();
+    const scale = 0.08;
+    // 8f hitstop, consume all 8 ticks → timerAfter 0
+    expect(
+      hitstopPresentDtSecFromCurve(8, 8, 0, flat, scale),
+    ).toBeCloseTo(hitstopPresentDtSec(8, scale), 5);
+    expect(
+      freeRunAnimDtSecWithHitstopCurve(8, 8, 8, 0, flat, scale),
+    ).toBeCloseTo(freeRunAnimDtSecWithHitstop(8, 8, scale), 5);
+  });
+
+  it('ramp curve samples mid progress higher than start', () => {
+    const ramp = normalizeHitstopAnimRateCurve([
+      { t: 0, v: 0 },
+      { t: 1, v: 1 },
+    ]);
+    expect(sampleHitstopAnimRateCurve(ramp, 0)).toBeCloseTo(0, 5);
+    expect(sampleHitstopAnimRateCurve(ramp, 0.5)).toBeCloseTo(0.5, 5);
+    expect(sampleHitstopAnimRateCurve(ramp, 1)).toBeCloseTo(1, 5);
+    expect(hitstopProgress01(8, 8)).toBeCloseTo(0, 5);
+    expect(hitstopProgress01(8, 1)).toBeCloseTo(7 / 8, 5);
+
+    // First frozen frame only (timerBefore=8 → after=7): rate≈0
+    expect(hitstopPresentDtSecFromCurve(1, 8, 7, ramp, 1)).toBeCloseTo(0, 5);
+    // Last frozen frame (timerBefore=1 → after=0): rate≈7/8
+    expect(hitstopPresentDtSecFromCurve(1, 8, 0, ramp, 1)).toBeCloseTo(
+      (1 / 60) * (7 / 8),
+      5,
+    );
+  });
+
+  it('accumulate from curve keeps lead after hitstop ends', () => {
+    const flat = createDefaultHitstopAnimRateCurve();
+    let lead = 0;
+    lead = accumulateHitstopPresentOffsetSecFromCurve(
+      lead,
+      1,
+      8,
+      7,
+      flat,
+      0.08,
+    );
+    lead = accumulateHitstopPresentOffsetSecFromCurve(
+      lead,
+      1,
+      8,
+      6,
+      flat,
+      0.08,
+    );
+    expect(lead).toBeCloseTo((2 / 60) * 0.08, 5);
+    lead = accumulateHitstopPresentOffsetSecFromCurve(
+      lead,
+      0,
+      8,
+      0,
+      flat,
+      0.08,
+    );
+    expect(lead).toBeCloseTo((2 / 60) * 0.08, 5);
+  });
+
+  it('normalizeHitstopAnimRateCurve sorts, clamps, pads', () => {
+    const pts = normalizeHitstopAnimRateCurve([
+      { t: 1.5, v: 2 },
+      { t: -0.2, v: 0.25 },
+      { t: 0.5, v: 0.5 },
+    ]);
+    expect(pts[0]!.t).toBe(0);
+    expect(pts[0]!.v).toBeCloseTo(0.25, 5);
+    expect(pts.some((p) => p.t === 0.5 && p.v === 0.5)).toBe(true);
+    expect(pts[pts.length - 1]!.t).toBe(1);
+    expect(pts[pts.length - 1]!.v).toBe(1);
   });
 
   it('shouldClearHitstopPresentOffset: soft/restart/clip change vs same-clip hard', () => {

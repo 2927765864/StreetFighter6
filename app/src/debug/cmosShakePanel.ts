@@ -11,6 +11,7 @@ import { saveCurrentConfig } from '../config/persist';
 import { CONFIG, getPath, setPath } from '../config/store';
 import type { ExpandedSections, RuntimeConfig } from '../config/types';
 import { attachDragScrub } from './dragScrub';
+import { springHalfCycleFrames } from '../motion/SpringDamper1D';
 
 type OnChange = (key: string, value: unknown, config: RuntimeConfig) => void;
 
@@ -54,7 +55,12 @@ export function cmosShakeSectionHtml(): string {
               <input id="inp-cmosShakeIntensity" type="number" min="0" max="1" step="0.01" />
             </div>
             <div class="panel-row row-toggle">
-              ${paramLabel('跟随游戏倍速', '开=卡帧/慢放时震动也变慢；关=墙钟感（推荐，命中停顿仍能感到冲击）', 'val-cmosShakeUseGameSpeed')}
+              ${paramLabel('每趟帧数对齐', '开=每趟固定帧数，掉帧时不跳步；关=按实际时间推进', 'val-cmosShakeFrameLocked')}
+              <input id="inp-cmosShakeFrameLocked" type="checkbox" />
+            </div>
+            <p class="panel-hint">以 60 帧节奏标定。初速度为 0、没有新冲击打断时，从首帧拉开位置起每趟等帧，摆幅逐趟缩小。</p>
+            <div class="panel-row row-toggle">
+              ${paramLabel('跟随游戏倍速', '开=跟随游戏倍速调整节奏；帧对齐时仍取整帧', 'val-cmosShakeUseGameSpeed')}
               <input id="inp-cmosShakeUseGameSpeed" type="checkbox" />
             </div>
             <p class="panel-hint" style="font-weight:600;margin-top:6px">按轻/中/重自动选预设</p>
@@ -141,8 +147,11 @@ export function cmosShakeSectionHtml(): string {
                 </div>
                 <p class="panel-hint" style="font-weight:600;margin-top:8px">FOV 全局动力学（所有预设共用）</p>
                 <div class="panel-row">
-                  ${paramLabel('自然频率 ωn', '调大→回弹更快更脆（rad/s）', 'val-cmosFovAngularFreq')}
+                  ${paramLabel('自然频率 ωn', '调大→每趟更短；帧对齐时取最近整数帧（rad/s）', 'val-cmosFovAngularFreq')}
                   <input id="inp-cmosFovAngularFreq" type="number" min="4" max="120" step="0.5" />
+                </div>
+                <div class="panel-row">
+                  ${paramLabel('每趟帧数', '由频率、阻尼与倍速自动确定，最少 2 帧', 'val-cmosFovHalfCycleFrames')}
                 </div>
                 <div class="panel-row">
                   ${paramLabel('阻尼比 ζ', '调大→少过冲；调小→来回伸缩更弹', 'val-cmosFovDampingRatio')}
@@ -186,8 +195,11 @@ export function cmosShakeSectionHtml(): string {
                 </div>
                 <p class="panel-hint" style="font-weight:600;margin-top:8px">位移全局动力学（所有预设共用）</p>
                 <div class="panel-row">
-                  ${paramLabel('自然频率 ωn', '调大→回弹更快更脆（rad/s）', 'val-cmosPosAngularFreq')}
+                  ${paramLabel('自然频率 ωn', '调大→每趟更短；帧对齐时取最近整数帧（rad/s）', 'val-cmosPosAngularFreq')}
                   <input id="inp-cmosPosAngularFreq" type="number" min="4" max="120" step="0.5" />
+                </div>
+                <div class="panel-row">
+                  ${paramLabel('每趟帧数', '由频率、阻尼与倍速自动确定，最少 2 帧', 'val-cmosPosHalfCycleFrames')}
                 </div>
                 <div class="panel-row">
                   ${paramLabel('阻尼比 ζ', '调大→少过冲；调小→来回晃更弹', 'val-cmosPosDampingRatio')}
@@ -204,14 +216,10 @@ export function cmosShakeSectionHtml(): string {
               </div>
             </div>
 
-            <p class="panel-hint" style="font-weight:600;margin-top:8px">共用积分器</p>
+            <p class="panel-hint" style="font-weight:600;margin-top:8px">按时间推进设置</p>
             <div class="panel-row">
-              ${paramLabel('单帧积分时间上限 (秒)', '调大→掉帧时一步走更远（易飞）；一般保持 0.05', 'val-cmosMaxDtSec')}
+              ${paramLabel('单帧时间上限 (秒)', '仅关闭帧对齐时生效；调大允许掉帧时推进更远', 'val-cmosMaxDtSec')}
               <input id="inp-cmosMaxDtSec" type="number" min="0.01" max="0.1" step="0.005" />
-            </div>
-            <div class="panel-row">
-              ${paramLabel('积分子步数', '调大→更稳更准、略耗 CPU；通常 4', 'val-cmosSubsteps')}
-              <input id="inp-cmosSubsteps" type="number" min="1" max="8" step="1" />
             </div>
           </div>
         </div>
@@ -230,7 +238,6 @@ const CMOS_NUM_BINDS: Array<{ id: string; path: string }> = [
   { id: 'cmosMaxPosM', path: 'cmosShake.maxPosM' },
   { id: 'cmosPosMass', path: 'cmosShake.posMass' },
   { id: 'cmosMaxDtSec', path: 'cmosShake.maxDtSec' },
-  { id: 'cmosSubsteps', path: 'cmosShake.substeps' },
   { id: 'cmosDebugImpulsePos', path: 'cmosShake.debugImpulse.impulsePosDeg' },
   { id: 'cmosDebugImpulseVel', path: 'cmosShake.debugImpulse.impulseVelDeg' },
 ];
@@ -288,6 +295,12 @@ export function bindCmosShakePanel(opts: {
   );
   bindToggle('inp-cmosShakeEnabled', 'cmosShake.enabled', ['关', '开'], 'val-cmosShakeEnabled');
   bindToggle(
+    'inp-cmosShakeFrameLocked',
+    'cmosShake.frameLocked',
+    ['关', '开'],
+    'val-cmosShakeFrameLocked',
+  );
+  bindToggle(
     'inp-cmosShakeUseGameSpeed',
     'cmosShake.useGameSpeed',
     ['关', '开'],
@@ -296,6 +309,26 @@ export function bindCmosShakePanel(opts: {
   for (const { id, path } of CMOS_NUM_BINDS) {
     bindNumber(`inp-${id}`, path, `val-${id}`);
   }
+
+  const syncFrameCounts = () => {
+    const cfg = CONFIG.cmosShake;
+    const speed = cfg.useGameSpeed && Number.isFinite(CONFIG.timeScaleAnim) && CONFIG.timeScaleAnim > 0
+      ? CONFIG.timeScaleAnim : 1;
+    for (const [id, wn, zeta] of [
+      ['val-cmosFovHalfCycleFrames', cfg.fovAngularFreq, cfg.fovDampingRatio],
+      ['val-cmosPosHalfCycleFrames', cfg.posAngularFreq, cfg.posDampingRatio],
+    ] as const) {
+      const el = root.querySelector(`#${id}`);
+      const frames = springHalfCycleFrames(wn, zeta, speed);
+      if (el) el.textContent = cfg.frameLocked === false ? '未开启' : frames == null ? '不往返' : `${frames} 帧`;
+    }
+    const maxDt = root.querySelector<HTMLInputElement>('#inp-cmosMaxDtSec');
+    if (maxDt) maxDt.disabled = cfg.frameLocked !== false;
+  };
+  syncers.push(syncFrameCounts);
+  root.addEventListener('input', syncFrameCounts);
+  root.addEventListener('change', syncFrameCounts);
+  syncFrameCounts();
 
   const bindText = (inputId: string, path: string, valueId: string) => {
     const input = root.querySelector(`#${CSS.escape(inputId)}`) as HTMLInputElement | null;

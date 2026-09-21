@@ -29,6 +29,7 @@ import {
   createDefaultMotionBlurConfig,
   mergeMotionBlurConfig,
 } from './motionBlur';
+import { normalizeHitstopAnimRateCurve } from '../render/hitstopAnimRateCurve';
 import type { RuntimeConfig } from './types';
 import { CONFIG_VERSION } from './types';
 
@@ -199,6 +200,10 @@ export function mergeConfig(
         out.motionBlur ?? createDefaultMotionBlurConfig(),
         value,
       );
+      continue;
+    }
+    if (key === 'hitstopAnimRateCurve' && Array.isArray(value)) {
+      out.hitstopAnimRateCurve = normalizeHitstopAnimRateCurve(value);
       continue;
     }
     const baseVal = (out as Record<string, unknown>)[key];

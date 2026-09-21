@@ -31,7 +31,8 @@ export class ScreenShakeFx {
 
   /**
    * Integrate shake with presentation dt (seconds).
-   * Default: wall-clock (not scaled by game/hitstop); optional useGameSpeed.
+   * 默认按有效显示帧推进；关闭 frameLocked 时使用墙钟时间。
+   * 倍速由运动核在帧取整前处理，避免重新引入分数帧周期。
    */
   step(dtSec: number, gameSpeed = 1): void {
     const cfg = CONFIG.cmosShake;
@@ -39,15 +40,7 @@ export class ScreenShakeFx {
       this.model.hardReset();
       return;
     }
-    let t = Math.max(0, dtSec);
-    if (cfg.useGameSpeed) {
-      const speed =
-        typeof gameSpeed === 'number' && Number.isFinite(gameSpeed) && gameSpeed > 0
-          ? gameSpeed
-          : 1;
-      t *= speed;
-    }
-    this.model.step(t);
+    this.model.step(Math.max(0, dtSec), gameSpeed);
   }
 
   /**

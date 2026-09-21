@@ -351,6 +351,7 @@ async function boot(): Promise<void> {
   const hitScreenComposite = new HitScreenCompositeFx(hitShockwave, hitGlow);
   const motionBlur = new MotionBlurFx();
   const unshakenView = new THREE.Matrix4();
+  const unshakenProjection = new THREE.Matrix4();
   const hitCloudShadow = new HitCloudShadowFx();
   hitCloudShadow.applyParams(hitCloudShadowParamsFromConfig(cfg));
   const flipbookCombat = new Flipbook2DCombat(
@@ -840,6 +841,10 @@ async function boot(): Promise<void> {
   logBox('p2', p2View);
   logBox('stage', stage.root);
 
+  if (cfg.hitVfxEnabled && cfg.hitVfxPlayMode === 'flipbook2d') {
+    await flipbookCombat.prepareTextures(renderer);
+  }
+
   const debugDraw = new DebugDraw(scene);
   const hud = new HudDom();
   const perf = new PerfMonitor();
@@ -1222,7 +1227,6 @@ async function boot(): Promise<void> {
   });
 
   let loggedFrame = false;
-  let lastShadowPoseKey = '';
   function frame(now: number): void {
     const wallDt = (now - last) / 1000;
     last = now;
@@ -1352,6 +1356,7 @@ async function boot(): Promise<void> {
 
     camera.updateMatrixWorld();
     unshakenView.copy(camera.matrixWorldInverse);
+    unshakenProjection.copy(camera.projectionMatrix);
 
     // CMOS screen shake: wall-clock by default; absolute write after fight camera.
     screenShake.step(presentDt, cfg.timeScaleAnim);
@@ -1366,7 +1371,9 @@ async function boot(): Promise<void> {
     {
       const hitstopPresentTicks = match.hitstopPresentTicks;
       match.hitstopPresentTicks = 0;
-      const inHitstop = match.hitstopTimer > 0 || hitstopPresentTicks > 0;
+      const hitstopDuration = match.hitstopDuration;
+      const hitstopTimerAfter = match.hitstopTimer;
+      const inHitstop = hitstopTimerAfter > 0 || hitstopPresentTicks > 0;
       const p1Front =
         pickDisplayFrontId(
           match.p1.lastAttackAcceptSeq,
@@ -1375,11 +1382,15 @@ async function boot(): Promise<void> {
       p1View.syncFromLogic(match.p1, cfg, presentDt, presentLogicSteps, {
         displayFront: p1Front,
         hitstopPresentTicks,
+        hitstopDuration,
+        hitstopTimerAfter,
         inHitstop,
       });
       p2View.syncFromLogic(match.p2, cfg, presentDt, presentLogicSteps, {
         displayFront: !p1Front,
         hitstopPresentTicks,
+        hitstopDuration,
+        hitstopTimerAfter,
         inHitstop,
       });
     }
@@ -1469,6 +1480,7 @@ async function boot(): Promise<void> {
     const presentFightLayers = (
       cam: THREE.Camera,
       autoClearFirst: boolean,
+      captureBlurDepth = false,
     ): void => {
       const flipbook2d = cfg.hitVfxPlayMode === 'flipbook2d';
       renderFightDisplayLayers({
@@ -1486,25 +1498,19 @@ async function boot(): Promise<void> {
           hasActive: () => hitCloudShadow.hasActive(),
           apply: (_r, cam) => hitCloudShadow.apply(renderer, cam),
         },
+        captureDepth: captureBlurDepth
+          ? (layer) => motionBlur.captureDepth(renderer, layer)
+          : undefined,
       });
     };
 
     const fullRender = (): void => {
       renderer.setScissorTest(false);
       renderer.setViewport(0, 0, viewW, viewH);
-      // One bake per present: layers / PIP share the light-space map.
-      // Idle: skip rebake — cloth micro-motion is not worth a 2048 map every frame.
-      const p1 = match.p1;
-      const p2 = match.p2;
-      const bothIdle = p1.phase === 'idle' && p2.phase === 'idle';
-      const poseKey = bothIdle
-        ? `${(p1.x * 10) | 0}:${(p2.x * 10) | 0}:${(camera.position.x * 20) | 0}`
-        : `m:${p1.phase}:${p2.phase}:${p1.clipRestartSeq}:${p2.clipRestartSeq}:${(p1.x * 20) | 0}:${(p2.x * 20) | 0}:${p1.y | 0}:${p2.y | 0}`;
-      if (poseKey !== lastShadowPoseKey) {
-        lastShadowPoseKey = poseKey;
-        markShadowMapsNeedUpdate(lights);
-      }
-      presentFightLayers(camera, true);
+      // Bone animation, hitstop easing and cloth can move without a phase/root change.
+      // Refresh once per presented pose; layers / PIP reuse this light-space map.
+      markShadowMapsNeedUpdate(lights);
+      presentFightLayers(camera, true, cfg.motionBlur.enabled);
       // Shockwave UV warp + additive glow; no-ops when both idle.
       if (hitScreenComposite.hasActive()) {
         hitScreenComposite.apply(renderer, camera);
@@ -1517,7 +1523,10 @@ async function boot(): Promise<void> {
             presentLogicSteps,
           ),
           unshakenView,
+          unshakenProjection,
         });
+      } else {
+        motionBlur.resetCameraHistory();
       }
 
       if (!cfg.lightOrbitMode || hooks.boxEditActive) return;

@@ -55,6 +55,8 @@ export type CmosShakeConfig = {
   enabled: boolean;
   intensity: number;
   useGameSpeed: boolean;
+  /** 每个有效显示帧推进一次，并将往返周期对齐到整数帧。 */
+  frameLocked: boolean;
   fovMass: number;
   fovAngularFreq: number;
   fovDampingRatio: number;
@@ -68,6 +70,7 @@ export type CmosShakeConfig = {
   /** 全局位移方向：相对相机 Z 的倾角 0～90。 */
   posTiltDeg: number;
   maxDtSec: number;
+  /** 旧存档兼容；解析推进不再依赖积分子步。 */
   substeps: number;
   settleFovDeg: number;
   settleFovVel: number;
@@ -398,6 +401,7 @@ export function createDefaultCmosShakeConfig(): CmosShakeConfig {
     enabled: true,
     intensity: 1,
     useGameSpeed: false,
+    frameLocked: true,
     fovMass: 1,
     fovAngularFreq: 20,
     fovDampingRatio: 0.68,
@@ -463,6 +467,7 @@ export function mergeCmosShakeConfig(
     enabled: bool(incoming.enabled, base.enabled),
     intensity: Math.max(0, Math.min(1, numOr(incoming.intensity, base.intensity))),
     useGameSpeed: bool(incoming.useGameSpeed, base.useGameSpeed),
+    frameLocked: bool(incoming.frameLocked, base.frameLocked ?? true),
     fovMass: numOr(incoming.fovMass, base.fovMass),
     fovAngularFreq: numOr(incoming.fovAngularFreq, base.fovAngularFreq),
     fovDampingRatio: numOr(incoming.fovDampingRatio, base.fovDampingRatio),

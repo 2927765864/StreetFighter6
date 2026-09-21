@@ -6,6 +6,7 @@
  * Optional: behind-flipbook, cloud-shadow quad, front hit-VFX overlay.
  */
 import type * as THREE from 'three/webgpu';
+import type { MotionBlurDepthLayer } from './MotionBlurDepth';
 import {
   LAYER_FIGHTER_BACK,
   LAYER_FIGHTER_FRONT,
@@ -55,6 +56,8 @@ export function renderFightDisplayLayers(opts: {
   behindVfx: boolean;
   frontVfx: boolean;
   cloudShadow: FightDisplayCloudShadow;
+  /** Capture visible geometry depth before later 2.5D passes clear it. */
+  captureDepth?: (layer: MotionBlurDepthLayer) => void;
 }): void {
   const {
     renderer,
@@ -68,45 +71,57 @@ export function renderFightDisplayLayers(opts: {
     cloudShadow,
   } = opts;
 
-  cam.layers.set(LAYER_SCENE);
-  renderer.autoClear = autoClearFirst;
-  renderer.render(scene, cam);
-
+  // All layers in this call use one pose. Refresh the scene once, including
+  // nested shadow renders, and restore the caller's state even on failure.
+  const matrixAutoUpdate = scene.matrixWorldAutoUpdate;
   const prevBackground = scene.background;
   const prevAutoClear = renderer.autoClear;
   const prevAutoClearColor = renderer.autoClearColor;
   const prevAutoClearDepth = renderer.autoClearDepth;
-  scene.background = null;
-  renderer.autoClear = false;
-  renderer.autoClearColor = false;
-  renderer.autoClearDepth = false;
-
-  if (behindVfx) {
+  const prevMask = cam.layers.mask;
+  if (matrixAutoUpdate) scene.updateMatrixWorld();
+  scene.matrixWorldAutoUpdate = false;
+  try {
     cam.layers.set(LAYER_SCENE);
-    renderer.render(hitVfxBehindScene, cam);
-  }
+    renderer.autoClear = autoClearFirst;
+    renderer.render(scene, cam);
 
-  cam.layers.set(LAYER_FIGHTER_BACK);
-  renderer.render(scene, cam);
+    scene.background = null;
+    renderer.autoClear = false;
+    renderer.autoClearColor = false;
+    renderer.autoClearDepth = false;
 
-  renderer.clearDepth();
-  cam.layers.set(LAYER_FIGHTER_FRONT);
-  renderer.render(scene, cam);
+    if (behindVfx) {
+      cam.layers.set(LAYER_SCENE);
+      renderer.render(hitVfxBehindScene, cam);
+    }
 
-  if (cloudShadow.hasActive()) {
-    cloudShadow.apply(renderer, cam);
-  }
+    cam.layers.set(LAYER_FIGHTER_BACK);
+    renderer.render(scene, cam);
+    opts.captureDepth?.('background');
 
-  if (frontVfx) {
     renderer.clearDepth();
-    cam.layers.set(LAYER_SCENE);
-    renderer.render(hitVfxScene, cam);
-  }
+    cam.layers.set(LAYER_FIGHTER_FRONT);
+    renderer.render(scene, cam);
+    opts.captureDepth?.('foreground');
 
-  scene.background = prevBackground;
-  renderer.autoClear = prevAutoClear;
-  renderer.autoClearColor = prevAutoClearColor;
-  renderer.autoClearDepth = prevAutoClearDepth;
+    if (cloudShadow.hasActive()) {
+      cloudShadow.apply(renderer, cam);
+    }
+
+    if (frontVfx) {
+      renderer.clearDepth();
+      cam.layers.set(LAYER_SCENE);
+      renderer.render(hitVfxScene, cam);
+    }
+  } finally {
+    scene.matrixWorldAutoUpdate = matrixAutoUpdate;
+    scene.background = prevBackground;
+    renderer.autoClear = prevAutoClear;
+    renderer.autoClearColor = prevAutoClearColor;
+    renderer.autoClearDepth = prevAutoClearDepth;
+    cam.layers.mask = prevMask;
+  }
 
   cam.layers.set(LAYER_SCENE);
   cam.layers.enable(LAYER_FIGHTER_BACK);

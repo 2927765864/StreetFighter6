@@ -10,7 +10,7 @@ import { tryCommitLogicalFacing, toFacingRelative } from '../input/facing';
 import { heldPostureFromRelDir } from '../anim/AnimResidual';
 import { resolveIntent } from '../command/IntentResolver';
 import {
-  isStandingPunchOnlyCommand,
+  isNormalAllowedByPunchGates,
   RYU_FEEDBACK_COMMANDS,
 } from '../command/ryuCommands';
 import type { CommandDef } from '../command/CommandDef';
@@ -87,6 +87,8 @@ export type MatchSimOptions = {
   enableDash: boolean;
   /** When true, only standing LP/MP/HP normals resolve/execute. */
   standingPunchOnly: boolean;
+  /** When true, only standing HP (5HP) normals resolve/execute. */
+  standingHeavyPunchOnly: boolean;
   enableActionBuffer: boolean;
   dashFrames: number;
   dashBackFrames: number;
@@ -221,6 +223,7 @@ const DEFAULT_OPTS: MatchSimOptions = {
   enableJumpCrouch: true,
   enableDash: true,
   standingPunchOnly: false,
+  standingHeavyPunchOnly: false,
   enableActionBuffer: true,
   dashFrames: 19,
   dashBackFrames: 23,
@@ -330,6 +333,11 @@ export class MatchSim {
   lastHitResult: HitResult = 'none';
   logicFrame = 0;
   hitstopTimer = 0;
+  /**
+   * Total frames of the current hitstop window (set with hitstopTimer).
+   * Presentation samples the rate curve with progress (duration - timer) / duration.
+   */
+  hitstopDuration = 0;
   /**
    * Logic steps that early-returned on hitstop since last present consume.
    * Presentation uses this for hit-slow (not logic advance).
@@ -509,6 +517,13 @@ export class MatchSim {
     return this.history;
   }
 
+  /** Start a hitstop window; duration drives presentation rate-curve progress. */
+  beginHitstop(frames: number): void {
+    const n = Math.max(0, Math.floor(frames));
+    this.hitstopTimer = n;
+    this.hitstopDuration = n;
+  }
+
   reset(): void {
     this.p1 = new Fighter('p1', -1.2, 1, DEFAULT_HP);
     this.p2 = new Fighter('p2', 1.2, -1, DEFAULT_HP);
@@ -520,6 +535,7 @@ export class MatchSim {
     this.lastHitResult = 'none';
     this.logicFrame = 0;
     this.hitstopTimer = 0;
+    this.hitstopDuration = 0;
     this.hitstopPresentTicks = 0;
     this.actionBuffer.clear();
     this.history.clear();
@@ -602,9 +618,12 @@ export class MatchSim {
       if (c.kind === 'special' && !this.opts.enableSpecials) return false;
       if (c.kind === 'throw' && !this.opts.enableThrows) return false;
       if (
-        this.opts.standingPunchOnly &&
         c.kind === 'normal' &&
-        !isStandingPunchOnlyCommand(c.id)
+        !isNormalAllowedByPunchGates(
+          c.id,
+          this.opts.standingPunchOnly,
+          this.opts.standingHeavyPunchOnly,
+        )
       ) {
         return false;
       }
@@ -635,8 +654,11 @@ export class MatchSim {
     }
     if (intent.kind === 'normal') {
       if (
-        this.opts.standingPunchOnly &&
-        !isStandingPunchOnlyCommand(intent.commandId)
+        !isNormalAllowedByPunchGates(
+          intent.commandId,
+          this.opts.standingPunchOnly,
+          this.opts.standingHeavyPunchOnly,
+        )
       ) {
         return false;
       }
@@ -713,8 +735,11 @@ export class MatchSim {
     }
     if (
       intent.kind === 'normal' &&
-      this.opts.standingPunchOnly &&
-      !isStandingPunchOnlyCommand(intent.commandId)
+      !isNormalAllowedByPunchGates(
+        intent.commandId,
+        this.opts.standingPunchOnly,
+        this.opts.standingHeavyPunchOnly,
+      )
     ) {
       return false;
     }
@@ -1275,7 +1300,7 @@ export class MatchSim {
             this.p2.queueBlockPush(steps, away);
           }
           this.lastHitResult = 'block';
-          this.hitstopTimer = br.hitstop;
+          this.beginHitstop(br.hitstop);
           this.emitSfx({
             kind: 'block',
             moveId: mv.moveId || mv.id,
@@ -1370,7 +1395,7 @@ export class MatchSim {
             }
           }
           this.lastHitResult = 'hit';
-          this.hitstopTimer = hr.hitstop;
+          this.beginHitstop(hr.hitstop);
           this.emitSfx({
             kind: 'hit',
             moveId: mv.moveId || mv.id,

@@ -652,6 +652,7 @@ export function createDebugGui(
   cancelFolder.add(cfg, 'enableJumpCrouch').name('启用跳跃和蹲下').onChange(syncOpts);
   cancelFolder.add(cfg, 'enableDash').name('启用前前/后后dash').onChange(syncOpts);
   cancelFolder.add(cfg, 'standingPunchOnly').name('仅站立轻/中/重拳').onChange(syncOpts);
+  cancelFolder.add(cfg, 'standingHeavyPunchOnly').name('仅站立重拳').onChange(syncOpts);
   cancelFolder
     .add(cfg, 'hitstopFramesOnHit', 0, 30, 1)
     .name('Hitstop命中(f)')
@@ -662,7 +663,7 @@ export function createDebugGui(
     .onChange(syncOpts);
   cancelFolder
     .add(cfg, 'hitstopAnimRate', 0, 1, 0.01)
-    .name('卡帧表现倍率');
+    .name('卡帧表现倍率(整体缩放)');
   cancelFolder.add(cfg, 'showCancelWindow').name('HUD显示取消窗');
 
   const guardFolder = gui.addFolder('防住 / 推挤 / 位移');

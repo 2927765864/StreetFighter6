@@ -23,9 +23,8 @@ import {
   type FighterMeshLod,
 } from './fighterMeshLod';
 import {
-  accumulateHitstopPresentOffsetSec,
-  clampHitstopAnimRate,
-  freeRunAnimDtSecWithHitstop,
+  accumulateHitstopPresentOffsetSecFromCurve,
+  freeRunAnimDtSecWithHitstopCurve,
   shouldClearHitstopPresentOffset,
   logicFrameToClipTime,
   remapLogicToClipTime,
@@ -33,6 +32,7 @@ import {
   visualFrameToClipTime,
   type ScrubMode,
 } from './AnimScrub';
+import { createDefaultHitstopAnimRateCurve } from './hitstopAnimRateCurve';
 import {
   bakeSkinnedMeshesToStatic,
   normalizeModelToHeight,
@@ -82,6 +82,7 @@ import { WudaVertexCoatRuntime } from './wudaParticle/WudaVertexCoatRuntime';
 import type { WudaPlumeBurst } from './wudaParticle/WudaPlumeBurst';
 import { resolveWudaCoverMeshes } from './wudaParticle/evalSkinnedSurface';
 import { syncSkinnedMeshBoneMatrices } from './wudaParticle/wudaSkeletonSync';
+import { shareEquivalentSkeletons } from './shareEquivalentSkeletons';
 import { wudaFighterSideFromId } from './wudaParticle/wudaBodyRegions';
 import {
   isWudaStandHpHitVictim,
@@ -191,6 +192,9 @@ export class FighterView {
   private mbSkinnedMeshes: THREE.SkinnedMesh[] = [];
   private hipsBone: THREE.Bone | null = null;
   private hipsBoneResolved = false;
+  private contactSoleBones: THREE.Bone[] | null = null;
+  private readonly limbBoneCache = new Map<string, THREE.Bone | null>();
+  private readonly shinBoneCache = new Map<string, THREE.Bone[]>();
   private lightFollowAnchorY = 0;
   private presentationCamera: THREE.Camera | null = null;
   private placeholder: THREE.Mesh;
@@ -502,6 +506,9 @@ export class FighterView {
     }
 
     this.modelRoot = model;
+    this.contactSoleBones = null;
+    this.limbBoneCache.clear();
+    this.shinBoneCache.clear();
     this.root.add(model);
     this.lastPlantPolicyPhase = 'idle';
 
@@ -553,6 +560,7 @@ export class FighterView {
     // One-shot sole align after stance pose + spring binds (not per-frame).
     this.plantFeetOnGround();
     this.modelGroundRestY = this.modelRoot.position.y;
+    shareEquivalentSkeletons(model);
     this.collectMotionBlurSkeletons();
     this.hipsBone = null;
     this.hipsBoneResolved = false;
@@ -727,32 +735,29 @@ export class FighterView {
    */
   private measureContactSoleY(): number | null {
     if (!this.modelRoot) return null;
-    this.modelRoot.updateMatrixWorld(true);
+    if (!this.contactSoleBones) {
+      const toes: THREE.Bone[] = [];
+      const ankles: THREE.Bone[] = [];
+      this.modelRoot.traverse((object) => {
+        const bone = object as THREE.Bone;
+        if (!bone.isBone) return;
+        if (/Foot(pinky|ring|middle|index|thumb)2$/i.test(bone.name) || /ToeBase$/i.test(bone.name)) {
+          toes.push(bone);
+        } else if (/^(L_|R_)?Foot$/i.test(bone.name) || bone.name === 'LeftFoot' || bone.name === 'RightFoot') {
+          ankles.push(bone);
+        }
+      });
+      this.contactSoleBones = toes.length > 0 ? toes : ankles;
+    }
 
-    let toeMin = Infinity;
-    let ankleMin = Infinity;
-    const p = new THREE.Vector3();
-    this.modelRoot.traverse((o) => {
-      const bone = o as THREE.Bone;
-      if (!bone.isBone) return;
-      const n = bone.name;
-      bone.getWorldPosition(p);
-      // Distal toe chain ends (Footpinky2, Footindex2, …) ≈ sole
-      if (/Foot(pinky|ring|middle|index|thumb)2$/i.test(n) || /ToeBase$/i.test(n)) {
-        if (p.y < toeMin) toeMin = p.y;
-        return;
-      }
-      if (
-        /^(L_|R_)?Foot$/i.test(n) ||
-        n === 'LeftFoot' ||
-        n === 'RightFoot'
-      ) {
-        if (p.y < ankleMin) ankleMin = p.y;
-      }
-    });
-
-    if (Number.isFinite(toeMin)) return toeMin;
-    if (Number.isFinite(ankleMin)) return ankleMin;
+    // Only contact bones need fresh ancestor paths. Updating every bone's
+    // parents repeated the same work thousands of times on the extracted rig.
+    let minY = Infinity;
+    for (const bone of this.contactSoleBones) {
+      bone.getWorldPosition(this._limbNow);
+      if (this._limbNow.y < minY) minY = this._limbNow.y;
+    }
+    if (Number.isFinite(minY)) return minY;
 
     const box = worldBox(this.modelRoot);
     return box ? box.min.y : null;
@@ -843,6 +848,8 @@ export class FighterView {
     nameOk: (n: string) => boolean,
   ): THREE.Bone | null {
     if (!this.modelRoot) return null;
+    const cacheKey = exact.join('|');
+    if (this.limbBoneCache.has(cacheKey)) return this.limbBoneCache.get(cacheKey)!;
     let found: THREE.Bone | null = null;
     this.modelRoot.traverse((o) => {
       const b = o as THREE.Bone;
@@ -851,6 +858,7 @@ export class FighterView {
       if (exact.includes(n)) found = b;
       else if (nameOk(n)) found = b;
     });
+    this.limbBoneCache.set(cacheKey, found);
     return found;
   }
 
@@ -903,6 +911,8 @@ export class FighterView {
   }
 
   private findLowerShinBones(side: 'L' | 'R'): THREE.Bone[] {
+    const cached = this.shinBoneCache.get(side);
+    if (cached) return cached;
     const names =
       side === 'L'
         ? ['L_Shin_3', 'L_Shin_4', 'L_Shin_5']
@@ -914,6 +924,7 @@ export class FighterView {
       if (!b.isBone) return;
       if (names.includes(b.name)) out.push(b);
     });
+    this.shinBoneCache.set(side, out);
     return out;
   }
 
@@ -2671,6 +2682,9 @@ export class FighterView {
    *   depthTest); omit to keep legacy default (p1 front).
    * @param opts.hitstopPresentTicks MatchSim steps that froze on hitstop this
    *   present; drives presentation hit-slow.
+   * @param opts.hitstopDuration Total frames of the current hitstop window.
+   * @param opts.hitstopTimerAfter Remaining hitstop frames after this present's
+   *   logic steps (used with ticks to recover per-tick progress).
    * @param opts.inHitstop true while logic hitstop is active (or ticks>0 this
    *   present). Hit-slow lead is kept after hitstop; cleared on clip switch.
    */
@@ -2682,6 +2696,8 @@ export class FighterView {
     opts?: {
       displayFront?: boolean;
       hitstopPresentTicks?: number;
+      hitstopDuration?: number;
+      hitstopTimerAfter?: number;
       inHitstop?: boolean;
     },
   ): void {
@@ -2703,24 +2719,34 @@ export class FighterView {
     const previewDt =
       Math.min(Math.max(wallDtSec, 0), 0.1) * (cfg.timeScaleAnim || 1);
     const hitstopTicks = Math.max(0, opts?.hitstopPresentTicks ?? 0);
-    const hitstopRate = clampHitstopAnimRate(cfg.hitstopAnimRate);
+    const hitstopDuration = Math.max(0, opts?.hitstopDuration ?? 0);
+    const hitstopTimerAfter = Math.max(0, opts?.hitstopTimerAfter ?? 0);
+    const hitstopCurve =
+      cfg.hitstopAnimRateCurve ?? createDefaultHitstopAnimRateCurve();
+    const hitstopScale = cfg.hitstopAnimRate;
     const inHitstop = opts?.inHitstop === true || hitstopTicks > 0;
     this.wudaInHitstop = inHitstop;
     // Accumulate lead during hitstop only; do not clear when hitstop ends
     // (avoids snap-back / replaying the slow segment). Clear happens on
     // switchToLogicAction / restartLogicAction / preview exit.
     if (!this.previewMode) {
-      this.hitstopPresentOffsetSec = accumulateHitstopPresentOffsetSec(
+      this.hitstopPresentOffsetSec = accumulateHitstopPresentOffsetSecFromCurve(
         this.hitstopPresentOffsetSec,
         hitstopTicks,
-        hitstopRate,
+        hitstopDuration,
+        hitstopTimerAfter,
+        hitstopCurve,
+        hitstopScale,
         cfg.timeScaleAnim || 1,
       );
     }
-    const freeRunDt = freeRunAnimDtSecWithHitstop(
+    const freeRunDt = freeRunAnimDtSecWithHitstopCurve(
       logicSteps,
       hitstopTicks,
-      hitstopRate,
+      hitstopDuration,
+      hitstopTimerAfter,
+      hitstopCurve,
+      hitstopScale,
       cfg.timeScaleAnim || 1,
     );
     const scrubMode = (cfg.scrubMode ?? 'uniform') as ScrubMode;

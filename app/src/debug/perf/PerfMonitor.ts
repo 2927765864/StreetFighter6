@@ -42,6 +42,7 @@ export class PerfMonitor {
   private ring: PerfSnapshot[] = [];
   private lastSnap: PerfSnapshot | null = null;
   private presentStartMs = 0;
+  private lastOverlayUpdateMs = -Infinity;
 
   applyCfg(cfg: PerfMonitorCfg): void {
     this.meter.setHistoryLength(cfg.perfHistoryLength);
@@ -112,10 +113,15 @@ export class PerfMonitor {
 
     this.lastSnap = snap;
     this.pushRing(snap, cfg.perfExportRingBufferSec);
-    this.overlay.update(snap, toOverlayCfg(cfg), {
-      frameMsHistory: meter.frameMsHistory,
-      fpsHistory: meter.fpsHistory,
-    });
+    // Keep every sample in the export ring, but repaint the diagnostic DOM
+    // and graphs at the configured refresh rate, not once (or twice) per frame.
+    if (nowMs - this.lastOverlayUpdateMs >= Math.max(50, cfg.perfRefreshMs)) {
+      this.lastOverlayUpdateMs = nowMs;
+      this.overlay.update(snap, toOverlayCfg(cfg), {
+        frameMsHistory: meter.frameMsHistory,
+        fpsHistory: meter.fpsHistory,
+      });
+    }
 
     if (cfg.perfGpuTimingEnabled) {
       void this.gpu.sampleAfterPresent(renderer, true).then((gpu) => {
@@ -126,11 +132,6 @@ export class PerfMonitor {
           gpuComputeMs: gpu.gpuComputeMs,
           warnings: gpu.warnings,
         };
-        const m = this.meter.sample(this.lastSnap.frameMs);
-        this.overlay.update(this.lastSnap, toOverlayCfg(cfg), {
-          frameMsHistory: m.frameMsHistory,
-          fpsHistory: m.fpsHistory,
-        });
       });
     }
 
@@ -139,6 +140,7 @@ export class PerfMonitor {
 
   /** Update visibility without a new present (e.g. toggle). */
   refreshOverlay(cfg: PerfMonitorCfg): void {
+    this.lastOverlayUpdateMs = -Infinity;
     this.applyCfg(cfg);
     if (!cfg.perfOverlayEnabled) {
       this.overlay.hide();

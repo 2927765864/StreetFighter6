@@ -23,9 +23,15 @@ import {
   type MotionBlurConfig,
 } from './motionBlur';
 import {
+  createDefaultHitstopAnimRateCurve,
+  type HitstopAnimRateKey,
+} from '../render/hitstopAnimRateCurve';
+import {
   createDefaultLights,
   type LightDesc,
 } from './lightTypes';
+
+export type { HitstopAnimRateKey };
 
 export const LOGIC_FPS = 60;
 export const LOGIC_DT = 1 / LOGIC_FPS;
@@ -199,11 +205,16 @@ export type MutableSimConfig = {
   hitstopFramesOnHit: number;
   hitstopFramesOnBlock: number;
   /**
-   * Presentation playback rate during logic hitstop (0 = hard freeze, 1 = full).
-   * Logic timelines stay frozen; scrub/free-run advance at this fraction.
-   * Scrub lead is kept after hitstop until the logic clip switches.
+   * Overall scale for hitstop presentation rate (0 = hard freeze, 1 = full).
+   * Multiplies {@link hitstopAnimRateCurve} sample over the freeze window.
+   * Logic timelines stay frozen; scrub lead is kept until the logic clip switches.
    */
   hitstopAnimRate: number;
+  /**
+   * Piecewise-linear curve over normalized hitstop progress (0→1).
+   * Final rate = sample(curve, u) × hitstopAnimRate.
+   */
+  hitstopAnimRateCurve: HitstopAnimRateKey[];
   enableCancel: boolean;
   /** Gameplay gate: special command usage (definitions stay loaded). */
   enableSpecials: boolean;
@@ -218,6 +229,11 @@ export type MutableSimConfig = {
    * Blocks kicks, 6MP/6HP/4HP uniques, crouch normals, and jump attacks.
    */
   standingPunchOnly: boolean;
+  /**
+   * Training gate: only standing HP (5HP).
+   * Stricter than standingPunchOnly; both on → 5HP only.
+   */
+  standingHeavyPunchOnly: boolean;
   enableActionBuffer: boolean;
   dashFrames: number;
   dashBackFrames: number;
@@ -709,12 +725,15 @@ export function createDefaultSimConfig(): MutableSimConfig {
     hitstopFramesOnBlock: HITSTOP_ON_BLOCK,
     /** ~1 visual frame creep over a 13f heavy hitstop; lead kept until clip switch. */
     hitstopAnimRate: 0.08,
+    /** Flat 1×; multiply by hitstopAnimRate for the effective freeze creep. */
+    hitstopAnimRateCurve: createDefaultHitstopAnimRateCurve(),
     enableCancel: true,
     enableSpecials: false,
     enableThrows: false,
     enableJumpCrouch: true,
     enableDash: true,
     standingPunchOnly: false,
+    standingHeavyPunchOnly: false,
     enableActionBuffer: true,
     dashFrames: dashFwdFrames,
     dashBackFrames,
@@ -1009,6 +1028,7 @@ export function applyConfigToMatchOpts(cfg: MutableSimConfig) {
     enableJumpCrouch: cfg.enableJumpCrouch,
     enableDash: cfg.enableDash,
     standingPunchOnly: cfg.standingPunchOnly,
+    standingHeavyPunchOnly: cfg.standingHeavyPunchOnly,
     enableActionBuffer: cfg.enableActionBuffer,
     dashFrames: cfg.dashFrames,
     dashBackFrames: cfg.dashBackFrames,

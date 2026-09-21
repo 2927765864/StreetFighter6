@@ -7,6 +7,7 @@ import {
   flipbookSpinRad,
   layerLocalOffset,
   layerOverCharacter,
+  syncFlipbookMaterial,
 } from '../../src/hitVfxEditor/flipbook2d/Flipbook2DCombat';
 import { defaultFlipbookBank } from '../../src/hitVfxEditor/flipbook2d/defaults';
 import {
@@ -31,11 +32,43 @@ const layer = (over: Partial<FlipbookLayer> = {}): FlipbookLayer => ({
   opacity: 1,
   brightness: 1,
   lift: 0,
+  liftDark: 0,
+  liftBright: 0,
+  tint: '#ffffff',
   despill: 0.35,
   startFrame: 1,
   duration: 10,
   blend: 'add',
   ...over,
+});
+
+describe('flipbook material reuse', () => {
+  it('advances sheet bindings without invalidating the shader every frame', () => {
+    const item = { material: new THREE.MeshBasicMaterial(), layer: layer(), lookApplied: false };
+    const first = new THREE.Texture();
+    const second = new THREE.Texture();
+    syncFlipbookMaterial(item, first);
+    const version = item.material.version;
+    syncFlipbookMaterial(item, second);
+    expect(item.material.map).toBe(second);
+    expect(item.material.version).toBe(version);
+    expect(item.material.opacity).toBe(item.layer.opacity);
+  });
+
+  it('still applies in-place editor edits and rebound recipe layers', () => {
+    const item = { material: new THREE.MeshBasicMaterial(), layer: layer(), lookApplied: false };
+    const tex = new THREE.Texture();
+    syncFlipbookMaterial(item, tex);
+    item.layer.opacity = 0.25;
+    item.layer.brightness = 2;
+    syncFlipbookMaterial(item, tex, true);
+    expect(item.material.opacity).toBe(0.25);
+    expect(item.material.color.r).toBe(2);
+    item.layer = layer({ opacity: 0.75 });
+    item.lookApplied = false;
+    syncFlipbookMaterial(item, tex);
+    expect(item.material.opacity).toBe(0.75);
+  });
 });
 
 describe('sourceFrameAt', () => {

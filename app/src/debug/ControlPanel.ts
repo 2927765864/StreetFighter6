@@ -54,6 +54,10 @@ import {
 } from '../render/wudaParticle/wudaClip';
 import { reloadMoveFromPublic } from './DebugGui';
 import { bindCmosShakePanel, cmosShakeSectionHtml } from './cmosShakePanel';
+import {
+  bindHitstopAnimRateCurvePanel,
+  hitstopAnimRateCurveEditorHtml,
+} from './hitstopAnimRateCurvePanel';
 import { bindSfxPanel, sfxSectionHtml } from './sfxPanel';
 import type { CombatSfxPlayer } from '../combat/sfx/SfxPlayer';
 
@@ -456,9 +460,11 @@ function buildDom(): HTMLElement {
           ${rowToggle('enableJumpCrouch', '启用跳跃和蹲下')}
           ${rowToggle('enableDash', '启用前前 / 后后 dash')}
           ${rowToggle('standingPunchOnly', '仅站立轻/中/重拳')}
+          ${rowToggle('standingHeavyPunchOnly', '仅站立重拳')}
           ${rowNumber('hitstopFramesOnHit', 'Hitstop 命中 (f)', 0, 30, 1)}
           ${rowNumber('hitstopFramesOnBlock', 'Hitstop 防御 (f)', 0, 30, 1)}
-          ${rowNumber('hitstopAnimRate', '卡帧表现倍率', 0, 1, 0.01)}
+          ${rowNumber('hitstopAnimRate', '卡帧表现倍率（整体缩放）', 0, 1, 0.01)}
+          ${hitstopAnimRateCurveEditorHtml()}
           ${rowToggle('showCancelWindow', 'HUD 显示取消窗')}
           `,
           'expandCancelHitstop',
@@ -628,12 +634,12 @@ function buildDom(): HTMLElement {
         <summary>动态模糊</summary>
         ${sectionShell(
           'motionBlur',
-          '【动态模糊】走/冲/跳 与 出拳/受击 两套强度，镜头几乎不糊',
+          '【动态模糊】角色动作与震屏分别调节；镜头强度影响角色和场景',
           `
           ${rowToggle('motionBlurEnabled', '启用动态模糊')}
           ${rowNumber('motionBlurMoveScale', '移动强度 (走/冲/跳)', 0, 2, 0.05)}
           ${rowNumber('motionBlurAttackScale', '攻击/受击强度', 0, 2, 0.05)}
-          ${rowNumber('motionBlurCameraScale', '镜头强度 (只糊命中震屏，不含跟镜)', 0, 2, 0.05)}
+          ${rowNumber('motionBlurCameraScale', '镜头强度 (震屏位移/FOV，不含跟镜)', 0, 2, 0.05)}
           ${rowNumber('motionBlurMaxRadiusPx', '最长拖尾 (像素)', 0, 64, 1)}
           ${rowNumber('motionBlurSamples', '采样次数', 2, 16, 1)}
           ${rowNumber('motionBlurDebugView', '速度图调试 0关/1角色/2震屏', 0, 2, 1)}
@@ -1223,6 +1229,7 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'enableActionBuffer', path: 'enableActionBuffer' },
   { id: 'showBuffer', path: 'showBuffer' },
   { id: 'standingPunchOnly', path: 'standingPunchOnly' },
+  { id: 'standingHeavyPunchOnly', path: 'standingHeavyPunchOnly' },
   { id: 'enableCancel', path: 'enableCancel' },
   { id: 'enableSpecials', path: 'enableSpecials' },
   { id: 'enableThrows', path: 'enableThrows' },
@@ -1526,6 +1533,7 @@ const TOGGLE_IDS = new Set([
   'enableActionBuffer',
   'showBuffer',
   'standingPunchOnly',
+  'standingHeavyPunchOnly',
   'enableCancel',
   'enableSpecials',
   'enableThrows',
@@ -1854,6 +1862,11 @@ export function setupControlPanel(
     registerFlush: (fn) => {
       flushCmosShakeEditor = fn;
     },
+  });
+  bindHitstopAnimRateCurvePanel({
+    root: host,
+    syncers,
+    onChange: notify,
   });
   bindSfxPanel(host, hooks.combatSfx, syncers);
 

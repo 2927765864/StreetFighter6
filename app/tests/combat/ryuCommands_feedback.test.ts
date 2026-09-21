@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { resolveIntent } from '../../src/combat/command/IntentResolver';
 import { tryMatchCommand } from '../../src/combat/command/MotionMatcher';
 import {
+  isNormalAllowedByPunchGates,
+  isStandingHeavyPunchOnlyCommand,
   isStandingPunchOnlyCommand,
   RYU_FEEDBACK_COMMANDS,
 } from '../../src/combat/command/ryuCommands';
@@ -131,6 +133,32 @@ describe('RYU_FEEDBACK_COMMANDS', () => {
         commands: table,
       }).kind,
     ).toBe('none');
+  });
+
+  it('standingHeavyPunchOnly keeps 5HP and remaps LP/MP/unique/kick', () => {
+    const table = RYU_FEEDBACK_COMMANDS.filter(
+      (c) => c.kind !== 'normal' || isStandingHeavyPunchOnlyCommand(c.id),
+    );
+    const ctx = { phase: 'idle' as const, commands: table };
+
+    expect(resolveIntent([entry(5, BTN_HP, 1)], 1, cfg, ctx).moveId).toBe(
+      'ryu_5hp',
+    );
+    expect(resolveIntent([entry(5, BTN_LP, 1)], 1, cfg, ctx).kind).toBe('none');
+    expect(resolveIntent([entry(5, BTN_MP, 1)], 1, cfg, ctx).kind).toBe('none');
+    expect(resolveIntent([entry(5, BTN_LK, 1)], 1, cfg, ctx).kind).toBe('none');
+    expect(resolveIntent([entry(6, BTN_HP, 1)], 1, cfg, ctx).moveId).toBe(
+      'ryu_5hp',
+    );
+    expect(resolveIntent([entry(4, BTN_HP, 1)], 1, cfg, ctx).moveId).toBe(
+      'ryu_5hp',
+    );
+  });
+
+  it('both punch gates intersect on 5HP', () => {
+    expect(isNormalAllowedByPunchGates('n_5hp', true, true)).toBe(true);
+    expect(isNormalAllowedByPunchGates('n_5lp', true, true)).toBe(false);
+    expect(isNormalAllowedByPunchGates('n_5mp', true, true)).toBe(false);
   });
 
   it('6+MP → unique ryu_6mp over 5mp', () => {

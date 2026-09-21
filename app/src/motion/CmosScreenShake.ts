@@ -8,7 +8,12 @@
  * 方向 = 球面：azimuth φ（XY：0°=右，90°=上），tilt θ（0°=相机 +Z，90°=纯 XY）。
  */
 
-import { SpringDamper1D, type SpringDamper1DParams } from './SpringDamper1D';
+import {
+  SpringDamper1D,
+  frameAlignedSpringParams,
+  SHAKE_FRAME_RATE,
+  type SpringDamper1DParams,
+} from './SpringDamper1D';
 import { CONFIG } from '../config/store';
 import {
   normalizeCmosShakeEffectPreset,
@@ -138,6 +143,8 @@ export class CmosScreenShake {
   readonly posZ = new SpringDamper1D();
 
   private intensityOverride: number | null = null;
+  private showFovImpulse = false;
+  private showPosImpulse = false;
 
   setIntensity(v: number): void {
     this.intensityOverride = clampNum(v, 0, 1);
@@ -151,6 +158,8 @@ export class CmosScreenShake {
   }
 
   hardReset(): void {
+    this.showFovImpulse = false;
+    this.showPosImpulse = false;
     this.fov.reset(0, 0);
     this.posX.reset(0, 0);
     this.posY.reset(0, 0);
@@ -161,29 +170,51 @@ export class CmosScreenShake {
     // MSMD 单次冲量无排程；保留 API 以免面板/宿主旧调用报错。
   }
 
-  step(dtSec: number): void {
+  step(dtSec: number, gameSpeed = 1): void {
     const cfg = CONFIG.cmosShake;
     if (!cfg || !cfg.enabled) {
       this.hardReset();
       return;
     }
 
-    const dt = Math.max(0, dtSec);
-    const pFov: SpringDamper1DParams = {
+    const locked = cfg.frameLocked !== false;
+    const speed = cfg.useGameSpeed && Number.isFinite(gameSpeed) && gameSpeed > 0
+      ? gameSpeed : 1;
+    // 暂停重绘不推进；锁帧时掉帧也只前进一步，不跳过转折点。
+    // 暂停中触发的阶跃已被显示，不应在恢复时额外停留一帧。
+    if (!(dtSec > 0)) {
+      this.showFovImpulse = false;
+      this.showPosImpulse = false;
+      return;
+    }
+    const dt = locked ? 1 / SHAKE_FRAME_RATE : dtSec * speed;
+    let pFov: SpringDamper1DParams = {
       mass: cfg.fovMass,
-      angularFreq: cfg.fovAngularFreq,
+      angularFreq: clampNum(cfg.fovAngularFreq, 1e-6, 120),
       dampingRatio: cfg.fovDampingRatio,
     };
-    const pPos: SpringDamper1DParams = {
+    let pPos: SpringDamper1DParams = {
       mass: cfg.posMass ?? 1,
-      angularFreq: cfg.posAngularFreq ?? 18,
+      angularFreq: clampNum(cfg.posAngularFreq ?? 18, 1e-6, 120),
       dampingRatio: cfg.posDampingRatio ?? 0.55,
     };
 
-    this.fov.step(dt, 0, pFov, cfg.maxDtSec, cfg.substeps);
-    this.posX.step(dt, 0, pPos, cfg.maxDtSec, cfg.substeps);
-    this.posY.step(dt, 0, pPos, cfg.maxDtSec, cfg.substeps);
-    this.posZ.step(dt, 0, pPos, cfg.maxDtSec, cfg.substeps);
+    if (locked) {
+      pFov = frameAlignedSpringParams(pFov, speed);
+      pPos = frameAlignedSpringParams(pPos, speed);
+    }
+    const maxDt = locked ? dt : cfg.maxDtSec;
+    // 首张画面保留位置阶跃，之后再走完整的第一趟。
+    if (!locked || !this.showFovImpulse) {
+      this.fov.step(dt, 0, pFov, maxDt, cfg.substeps);
+    }
+    if (!locked || !this.showPosImpulse) {
+      this.posX.step(dt, 0, pPos, maxDt, cfg.substeps);
+      this.posY.step(dt, 0, pPos, maxDt, cfg.substeps);
+      this.posZ.step(dt, 0, pPos, maxDt, cfg.substeps);
+    }
+    this.showFovImpulse = false;
+    this.showPosImpulse = false;
     softClampAxis(this.fov, cfg.maxFovDeg);
     softClampVec3(this.posX, this.posY, this.posZ, cfg.maxPosM);
   }
@@ -226,6 +257,9 @@ export class CmosScreenShake {
     this.posX.x += xPos * dir.x;
     this.posY.x += xPos * dir.y;
     this.posZ.x += xPos * dir.z;
+    // 纯速度冲量不插入一张无位移的空白画面；各通道互不暂停。
+    this.showFovImpulse ||= posFov !== 0;
+    this.showPosImpulse ||= xPos !== 0;
     softClampAxis(this.fov, cfg.maxFovDeg);
     softClampVec3(this.posX, this.posY, this.posZ, cfg.maxPosM);
   }

@@ -24,7 +24,7 @@ import {
   atan,
   mix,
   clamp,
-  step,
+  If,
 } from 'three/tsl';
 import { snoise } from 'three/addons/tsl/math/curlNoise.js';
 import { worldToScreenUV } from './HitShockwaveFx';
@@ -34,6 +34,8 @@ export const HIT_CLOUD_SHADOW_MAX_SLOTS = 4;
 export const HIT_CLOUD_SHADOW_MAX_SPOKES = 16;
 
 const TAU = Math.PI * 2;
+const vec4Uniform = (value: THREE.Vector4) => uniform(value);
+type Vec4Uniform = ReturnType<typeof vec4Uniform>;
 
 export type HitCloudShadowStrength = 'L' | 'M' | 'H';
 
@@ -229,17 +231,17 @@ export function cloudShadowEnvelope(t01: number): {
 export class HitCloudShadowFx {
   private readonly slots: ShadowSlot[] = [];
   /** xy = center UV, z = radius, w = intensity (0 = dead). */
-  private readonly shadowData: Array<ReturnType<typeof uniform>>;
+  private readonly shadowData: Array<Vec4Uniform>;
   /**
    * Per slot: 4×Vector4 = 16 baked spoke angles (CPU hash).
-   * Inactive angle = -1000 so the shader can gate with step.
+   * Inactive angle = -1000 so the shader skips that lobe entirely.
    */
   private readonly anglePacks: Array<
     [
-      ReturnType<typeof uniform>,
-      ReturnType<typeof uniform>,
-      ReturnType<typeof uniform>,
-      ReturnType<typeof uniform>,
+      Vec4Uniform,
+      Vec4Uniform,
+      Vec4Uniform,
+      Vec4Uniform,
     ]
   >;
   private readonly uSpokeCount = uniform(6);
@@ -273,12 +275,12 @@ export class HitCloudShadowFx {
           () => -1000,
         ),
       });
-      this.shadowData.push(uniform(new THREE.Vector4(0.5, 0.5, 0, 0)));
+      this.shadowData.push(vec4Uniform(new THREE.Vector4(0.5, 0.5, 0, 0)));
       this.anglePacks.push([
-        uniform(new THREE.Vector4(-1000, -1000, -1000, -1000)),
-        uniform(new THREE.Vector4(-1000, -1000, -1000, -1000)),
-        uniform(new THREE.Vector4(-1000, -1000, -1000, -1000)),
-        uniform(new THREE.Vector4(-1000, -1000, -1000, -1000)),
+        vec4Uniform(new THREE.Vector4(-1000, -1000, -1000, -1000)),
+        vec4Uniform(new THREE.Vector4(-1000, -1000, -1000, -1000)),
+        vec4Uniform(new THREE.Vector4(-1000, -1000, -1000, -1000)),
+        vec4Uniform(new THREE.Vector4(-1000, -1000, -1000, -1000)),
       ]);
     }
 
@@ -299,10 +301,10 @@ export class HitCloudShadowFx {
 
     const angleAt = (
       packs: [
-        ReturnType<typeof uniform>,
-        ReturnType<typeof uniform>,
-        ReturnType<typeof uniform>,
-        ReturnType<typeof uniform>,
+        Vec4Uniform,
+        Vec4Uniform,
+        Vec4Uniform,
+        Vec4Uniform,
       ],
       index: number,
     ) => {
@@ -316,12 +318,12 @@ export class HitCloudShadowFx {
 
     /** Capture packs in closure — TSL Fn args cannot reliably pass JS arrays. */
     const makeSpokeMask = (
-      data: ReturnType<typeof uniform>,
+      data: Vec4Uniform,
       packs: [
-        ReturnType<typeof uniform>,
-        ReturnType<typeof uniform>,
-        ReturnType<typeof uniform>,
-        ReturnType<typeof uniform>,
+        Vec4Uniform,
+        Vec4Uniform,
+        Vec4Uniform,
+        Vec4Uniform,
       ],
     ) =>
       Fn(([uv]: any[]) => {
@@ -343,12 +345,15 @@ export class HitCloudShadowFx {
         const spokeSum = float(0).toVar();
         for (let i = 0; i < HIT_CLOUD_SHADOW_MAX_SPOKES; i += 1) {
           const spokeAng = angleAt(packs, i);
-          const gate = step(float(-100), spokeAng);
-          const diff = angle.sub(spokeAng);
-          const angDist = abs(atan(sin(diff), cos(diff)));
-          const tAng = angDist.div(max(halfWidth, float(1e-4)));
-          const lobe = exp(tAng.mul(tAng).negate());
-          spokeSum.addAssign(lobe.mul(gate));
+          // The angle is a uniform: inactive lobes have exactly zero weight.
+          // Branch before the trigonometry instead of computing then masking.
+          If(spokeAng.greaterThanEqual(float(-100)), () => {
+            const diff = angle.sub(spokeAng);
+            const angDist = abs(atan(sin(diff), cos(diff)));
+            const tAng = angDist.div(max(halfWidth, float(1e-4)));
+            const lobe = exp(tAng.mul(tAng).negate());
+            spokeSum.addAssign(lobe);
+          });
         }
         const spokes = min(spokeSum, float(1));
 
@@ -370,10 +375,18 @@ export class HitCloudShadowFx {
       const uv = screenUV.toVar();
       const base = viewportTexture(uv).toVar();
       const w = float(0).toVar();
-      w.addAssign(mask0(uv));
-      w.addAssign(mask1(uv));
-      w.addAssign(mask2(uv));
-      w.addAssign(mask3(uv));
+      If(s0.w.notEqual(float(0)), () => {
+        w.addAssign(mask0(uv));
+      });
+      If(s1.w.notEqual(float(0)), () => {
+        w.addAssign(mask1(uv));
+      });
+      If(s2.w.notEqual(float(0)), () => {
+        w.addAssign(mask2(uv));
+      });
+      If(s3.w.notEqual(float(0)), () => {
+        w.addAssign(mask3(uv));
+      });
       const weight = min(w, float(1));
       const shadowed = base.mul(vec3(uColor));
       return mix(base, shadowed, weight);

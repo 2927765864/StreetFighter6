@@ -13,7 +13,7 @@ export type MotionBlurConfig = {
   moveScale: number;
   /** While fighter.phase is attack or hitstun (出招 / 受击). */
   attackScale: number;
-  /** Scale on hit-shake camera offset only (not follow). */
+  /** Scale on inter-frame hit-shake motion (translation + FOV, not follow). */
   cameraScale: number;
   /** Clamp blur radius in pixels (longest sample arm). */
   maxRadiusPx: number;

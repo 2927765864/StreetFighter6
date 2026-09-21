@@ -45,14 +45,27 @@ export function copyBoneMatricesByBoneRef(
   if (!src.boneMatrices || !dst.boneMatrices) return false;
   if (dstBones.length === 0) return false;
 
+  // Common unified layout: copy the contiguous palette in one operation.
+  // Avoid allocating one TypedArray view per bone, per mesh, per present.
+  if (dstBones.length === src.bones.length && dstBones.every((bone, i) => bone === src.bones[i])) {
+    dst.boneMatrices.set(src.boneMatrices);
+    if (dst.boneTexture) dst.boneTexture.needsUpdate = true;
+    return true;
+  }
+
   const srcIndex = boneIndexMap(src);
   const srcMats = src.boneMatrices;
   const dstMats = dst.boneMatrices;
   for (let i = 0; i < dstBones.length; i++) {
     const j = srcIndex.get(dstBones[i]!);
     if (j === undefined) return false;
-    dstMats.set(srcMats.subarray(j * 16, j * 16 + 16), i * 16);
+    const from = j * 16;
+    const to = i * 16;
+    for (let component = 0; component < 16; component++) {
+      dstMats[to + component] = srcMats[from + component]!;
+    }
   }
+  if (dst.boneTexture) dst.boneTexture.needsUpdate = true;
   return true;
 }
 

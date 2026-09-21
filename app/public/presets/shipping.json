@@ -18,7 +18,7 @@
     "cameraZoomSepK": 0.35,
     "cameraZMax": 6,
     "cameraNdcPad": 0.12,
-    "cameraLerp": 0.12,
+    "cameraLerp": 0.08,
     "cameraFollowDeadzone": 0,
     "cameraNear": 0.05,
     "cameraFar": 500,
@@ -550,13 +550,52 @@
     "motionHistoryCapacity": 32,
     "hitstopFramesOnHit": 8,
     "hitstopFramesOnBlock": 8,
-    "hitstopAnimRate": 0.05,
+    "hitstopAnimRate": 0.18,
+    "hitstopAnimRateCurve": [
+      {
+        "t": 0,
+        "v": 1
+      },
+      {
+        "t": 0.2068640053877748,
+        "v": 0.9258698846795687
+      },
+      {
+        "t": 0.358272274343918,
+        "v": 0.7852271123398673
+      },
+      {
+        "t": 0.4447912851759998,
+        "v": 0.670155753152839
+      },
+      {
+        "t": 0.5572659992577063,
+        "v": 0.4400130347787824
+      },
+      {
+        "t": 0.6870445155058289,
+        "v": 0.2610131427100717
+      },
+      {
+        "t": 0.7822154274211192,
+        "v": 0.18429890325205278
+      },
+      {
+        "t": 0.8600825371699927,
+        "v": 0.14594178352304332
+      },
+      {
+        "t": 0.9898610534181154,
+        "v": 0.05644183748868792
+      }
+    ],
     "enableCancel": false,
     "enableSpecials": false,
     "enableThrows": false,
     "enableJumpCrouch": false,
     "enableDash": true,
     "standingPunchOnly": true,
+    "standingHeavyPunchOnly": true,
     "enableActionBuffer": true,
     "dashFrames": 19,
     "dashBackFrames": 23,
@@ -1562,13 +1601,14 @@
       "enabled": true,
       "intensity": 1,
       "useGameSpeed": false,
+      "frameLocked": true,
       "fovMass": 1,
       "fovAngularFreq": 40,
       "fovDampingRatio": 0.5,
       "maxFovDeg": 2.5,
       "posMass": 1,
-      "posAngularFreq": 105,
-      "posDampingRatio": 0.42,
+      "posAngularFreq": 100,
+      "posDampingRatio": 0.4,
       "maxPosM": 0.6,
       "posAzimuthDeg": 0,
       "posTiltDeg": 0,
@@ -1581,7 +1621,7 @@
       "presetOnHitByStrength": {
         "S": "S_impact",
         "M": "M_impact",
-        "L": "L_impact2"
+        "L": "L_impact"
       },
       "presetOnBlockByStrength": {
         "S": "tap",
@@ -1617,9 +1657,9 @@
           "impulseVelDeg": 0,
           "fov": 0,
           "fovKickDeg": 0,
-          "impulsePosM": 0.31,
-          "impulseVelM": -5,
-          "posAzimuthDeg": 90,
+          "impulsePosM": 0.22,
+          "impulseVelM": 0,
+          "posAzimuthDeg": 45,
           "posTiltDeg": 12
         },
         "L_impact2": {
@@ -1662,7 +1702,7 @@
       "objectScale": 0.2,
       "moveScale": 0.2,
       "attackScale": 0.45,
-      "cameraScale": 0.25,
+      "cameraScale": 0.3,
       "maxRadiusPx": 16,
       "samples": 8,
       "debugView": 0

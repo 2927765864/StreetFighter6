@@ -14,6 +14,7 @@ import {
   length,
   max,
   exp,
+  If,
 } from 'three/tsl';
 import type { HitGlowFx } from './HitGlowFx';
 import type { HitShockwaveFx } from './HitShockwaveFx';
@@ -68,19 +69,36 @@ export class HitScreenCompositeFx {
       return falloff.mul(intensity);
     });
 
+    const isActive = Fn(([data]: any[]) => data.w.notEqual(float(0)));
     const colorNode = Fn(() => {
       const uv = screenUV.toVar();
       const off = vec2(0, 0).toVar();
-      off.addAssign(waveOffset(uv, w0));
-      off.addAssign(waveOffset(uv, w1));
-      off.addAssign(waveOffset(uv, w2));
-      off.addAssign(waveOffset(uv, w3));
+      If(isActive(w0), () => {
+        off.addAssign(waveOffset(uv, w0));
+      });
+      If(isActive(w1), () => {
+        off.addAssign(waveOffset(uv, w1));
+      });
+      If(isActive(w2), () => {
+        off.addAssign(waveOffset(uv, w2));
+      });
+      If(isActive(w3), () => {
+        off.addAssign(waveOffset(uv, w3));
+      });
       const base = viewportTexture(uv.add(off)).toVar();
       const w = float(0).toVar();
-      w.addAssign(softDisk(uv, g0));
-      w.addAssign(softDisk(uv, g1));
-      w.addAssign(softDisk(uv, g2));
-      w.addAssign(softDisk(uv, g3));
+      If(isActive(g0), () => {
+        w.addAssign(softDisk(uv, g0));
+      });
+      If(isActive(g1), () => {
+        w.addAssign(softDisk(uv, g1));
+      });
+      If(isActive(g2), () => {
+        w.addAssign(softDisk(uv, g2));
+      });
+      If(isActive(g3), () => {
+        w.addAssign(softDisk(uv, g3));
+      });
       return base.add(vec3(uColor).mul(w));
     })();
 

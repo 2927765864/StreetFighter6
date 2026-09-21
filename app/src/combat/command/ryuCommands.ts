@@ -236,6 +236,28 @@ export const RYU_P0_COMMANDS = RYU_FEEDBACK_COMMANDS;
 /** Training gate: standing LP/MP/HP only (no kicks, uniques, crouch, jump attacks). */
 export const STANDING_PUNCH_ONLY_IDS = new Set(['n_5lp', 'n_5mp', 'n_5hp']);
 
+/** Training gate: standing HP only (5HP). */
+export const STANDING_HEAVY_PUNCH_ONLY_IDS = new Set(['n_5hp']);
+
 export function isStandingPunchOnlyCommand(id: string | undefined): boolean {
   return !!id && STANDING_PUNCH_ONLY_IDS.has(id);
+}
+
+export function isStandingHeavyPunchOnlyCommand(
+  id: string | undefined,
+): boolean {
+  return !!id && STANDING_HEAVY_PUNCH_ONLY_IDS.has(id);
+}
+
+/** Both punch gates may be on; intersection applies (heavy is a subset). */
+export function isNormalAllowedByPunchGates(
+  id: string | undefined,
+  standingPunchOnly: boolean,
+  standingHeavyPunchOnly: boolean,
+): boolean {
+  if (standingHeavyPunchOnly && !isStandingHeavyPunchOnlyCommand(id)) {
+    return false;
+  }
+  if (standingPunchOnly && !isStandingPunchOnlyCommand(id)) return false;
+  return true;
 }

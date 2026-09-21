@@ -8,8 +8,13 @@ import type {
   AnimRemapSegment,
   AnimSequenceSegment,
 } from '../combat/move/MoveDefinition';
+import {
+  averageHitstopAnimRateForTicks,
+  type HitstopAnimRateKey,
+} from './hitstopAnimRateCurve';
 
 export type { AnimRemapSegment, AnimSequenceSegment };
+export type { HitstopAnimRateKey };
 export type ScrubMode = 'uniform' | 'truncate';
 
 export type ResolvedAnimSequenceFrame = {
@@ -84,6 +89,7 @@ export function clampHitstopAnimRate(
 /**
  * Presentation-only dt while logic is in hit freeze.
  * `hitstopPresentTicks` = MatchSim steps that early-returned on hitstop.
+ * Constant-rate helper (flat curve); prefer {@link hitstopPresentDtSecFromCurve}.
  */
 export function hitstopPresentDtSec(
   hitstopPresentTicks: number,
@@ -93,6 +99,32 @@ export function hitstopPresentDtSec(
   const rate = clampHitstopAnimRate(hitstopAnimRate);
   if (rate <= 0) return 0;
   return freeRunAnimDtSec(hitstopPresentTicks, timeScaleAnim) * rate;
+}
+
+/**
+ * Hitstop presentation dt using curve(progress)×scale.
+ * Batch average rate × capped free-run dt (same cap as constant path).
+ */
+export function hitstopPresentDtSecFromCurve(
+  hitstopPresentTicks: number,
+  hitstopDuration: number,
+  hitstopTimerAfter: number,
+  curve: readonly HitstopAnimRateKey[] | null | undefined,
+  hitstopAnimRateScale: number,
+  timeScaleAnim = 1,
+): number {
+  const ticks = Math.max(0, hitstopPresentTicks);
+  if (ticks <= 0) return 0;
+  const avg = averageHitstopAnimRateForTicks(
+    ticks,
+    hitstopDuration,
+    hitstopTimerAfter,
+    curve,
+    hitstopAnimRateScale,
+    clampHitstopAnimRate,
+  );
+  if (avg <= 0) return 0;
+  return freeRunAnimDtSec(ticks, timeScaleAnim) * avg;
 }
 
 /**
@@ -115,11 +147,38 @@ export function freeRunAnimDtSecWithHitstop(
   );
 }
 
+/** Free-run mixer dt with curve-sampled hitstop portion. */
+export function freeRunAnimDtSecWithHitstopCurve(
+  logicSteps: number,
+  hitstopPresentTicks: number,
+  hitstopDuration: number,
+  hitstopTimerAfter: number,
+  curve: readonly HitstopAnimRateKey[] | null | undefined,
+  hitstopAnimRateScale: number,
+  timeScaleAnim = 1,
+): number {
+  const steps = Math.max(0, logicSteps);
+  const hs = Math.min(Math.max(0, hitstopPresentTicks), steps);
+  const normal = steps - hs;
+  return (
+    freeRunAnimDtSec(normal, timeScaleAnim) +
+    hitstopPresentDtSecFromCurve(
+      hs,
+      hitstopDuration,
+      hitstopTimerAfter,
+      curve,
+      hitstopAnimRateScale,
+      timeScaleAnim,
+    )
+  );
+}
+
 /**
  * Grow presentation hitstop lead while logic is frozen.
  * Does not reset when ticks are 0 — keep the lead after hitstop so scrub
  * continues from the slow-play head (no snap-back). Clear via
  * {@link shouldClearHitstopPresentOffset} on clip switch / blend / restart.
+ * Constant-rate helper; prefer {@link accumulateHitstopPresentOffsetSecFromCurve}.
  */
 export function accumulateHitstopPresentOffsetSec(
   currentSec: number,
@@ -133,6 +192,31 @@ export function accumulateHitstopPresentOffsetSec(
   const rate = clampHitstopAnimRate(hitstopAnimRate);
   if (rate <= 0) return cur;
   return cur + hitstopPresentDtSec(ticks, rate, timeScaleAnim);
+}
+
+/** Curve-aware hitstop lead accumulation. */
+export function accumulateHitstopPresentOffsetSecFromCurve(
+  currentSec: number,
+  hitstopPresentTicks: number,
+  hitstopDuration: number,
+  hitstopTimerAfter: number,
+  curve: readonly HitstopAnimRateKey[] | null | undefined,
+  hitstopAnimRateScale: number,
+  timeScaleAnim = 1,
+): number {
+  const cur = Number.isFinite(currentSec) ? Math.max(0, currentSec) : 0;
+  const ticks = Math.max(0, hitstopPresentTicks);
+  if (ticks <= 0) return cur;
+  const dt = hitstopPresentDtSecFromCurve(
+    ticks,
+    hitstopDuration,
+    hitstopTimerAfter,
+    curve,
+    hitstopAnimRateScale,
+    timeScaleAnim,
+  );
+  if (dt <= 0) return cur;
+  return cur + dt;
 }
 
 /**

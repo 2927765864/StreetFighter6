@@ -32,6 +32,7 @@ type LayerBillboard = {
   material: THREE.MeshBasicMaterial;
   layer: FlipbookLayer;
   lookApplied: boolean;
+  materialPoolKey: string;
   /** Last parent spin used; reparent when overCharacter flips. */
   overCharacter: boolean;
   /** One-shot ±degrees sampled at spawn / when random controls change. */
@@ -41,6 +42,7 @@ type LayerBillboard = {
 };
 
 type Shot = {
+  disposed: boolean;
   frontRoot: THREE.Group;
   behindRoot: THREE.Group;
   frontSpin: THREE.Group;
@@ -56,6 +58,10 @@ type Shot = {
 const texCache = new Map<string, THREE.Texture>();
 /** Shared unit quad; scale per mesh. Faces +Z so camera-quat parents billboard correctly. */
 const planeGeo = new THREE.PlaneGeometry(1, 1);
+
+function materialLookKey(layer: FlipbookLayer): string {
+  return JSON.stringify([layer.blend, layer.opacity, layer.brightness, layer.lift, layer.tint]);
+}
 
 function cacheKey(
   url: string,
@@ -115,6 +121,23 @@ function applyMaterialLook(
   // Parent scale.x = -1 mirrors the shot; double-side keeps the flipped plane visible.
   mat.side = THREE.DoubleSide;
   mat.needsUpdate = true;
+}
+
+export function syncFlipbookMaterial(
+  item: Pick<LayerBillboard, 'material' | 'layer' | 'lookApplied'>,
+  tex: THREE.Texture,
+  forceLook = false,
+): void {
+  if (item.material.map !== tex) {
+    // Adding a map changes the shader; advancing a sheet of the same format
+    // only changes its binding, not the material program.
+    if (!item.material.map) item.material.needsUpdate = true;
+    item.material.map = tex;
+  }
+  if (forceLook || !item.lookApplied) {
+    applyMaterialLook(item.material, item.layer);
+    item.lookApplied = true;
+  }
 }
 
 /**
@@ -204,6 +227,9 @@ export class Flipbook2DCombat {
   private editorShot: Shot | null = null;
   private readonly frontPool: THREE.Group;
   private readonly behindPool: THREE.Group;
+  private readonly texturesReady: Promise<void>;
+  private readonly materialPool = new Map<string, THREE.MeshBasicMaterial[]>();
+  private pooledMaterialCount = 0;
 
   constructor(
     overlayScene: THREE.Object3D,
@@ -221,7 +247,34 @@ export class Flipbook2DCombat {
     this.behindPool.name = 'Flipbook2DCombatBehind';
     this.overlayScene.add(this.frontPool);
     this.behindScene.add(this.behindPool);
-    void this.warmTextures();
+    this.texturesReady = this.warmTextures();
+  }
+
+  /** Upload playable sheets during loading, before the first contact frame. */
+  async prepareTextures(renderer: Pick<THREE.WebGPURenderer, 'initTexture'>): Promise<void> {
+    await this.texturesReady;
+    const uploaded = new Set<THREE.Texture>();
+    for (const strength of ['L', 'M', 'H'] as const) {
+      const recipe = this.bank[strength];
+      for (const layer of recipe.layers) {
+        if (!layer.enabled) continue;
+        const urls = FLIPBOOK_SHEETS[layer.id] ?? [];
+        const look = prepLookForBlend(layer.blend);
+        const lifts = steamLiftsFromLayer(layer);
+        for (let frame = 0; frame < recipe.length; frame++) {
+          const index = sourceFrameAt(layer, frame, urls.length);
+          if (index == null) continue;
+          const tex = texCache.get(cacheKey(urls[index]!, layer.despill, look, lifts.dark, lifts.bright));
+          if (!tex || uploaded.has(tex)) continue;
+          renderer.initTexture(tex);
+          uploaded.add(tex);
+          // Keep the loading UI responsive while uploading hundreds of sheets.
+          if (uploaded.size % 16 === 0) {
+            await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+          }
+        }
+      }
+    }
   }
 
   setCamera(camera: THREE.Camera): void {
@@ -389,8 +442,16 @@ export class Flipbook2DCombat {
     const layers: LayerBillboard[] = [];
     const size = flipbookWorldSize(CONFIG.hitVfxFlipbookSize);
     for (const layer of this.recipe.layers) {
-      const mat = new THREE.MeshBasicMaterial();
-      applyMaterialLook(mat, layer);
+      const materialPoolKey = materialLookKey(layer);
+      const pool = this.materialPool.get(materialPoolKey);
+      let mat = pool?.pop();
+      if (mat) {
+        this.pooledMaterialCount--;
+        if (pool!.length === 0) this.materialPool.delete(materialPoolKey);
+      } else {
+        mat = new THREE.MeshBasicMaterial();
+        applyMaterialLook(mat, layer);
+      }
       const mesh = new THREE.Mesh(planeGeo, mat);
       mesh.frustumCulled = false;
       mesh.renderOrder = 20 + layer.z;
@@ -405,6 +466,7 @@ export class Flipbook2DCombat {
         material: mat,
         layer,
         lookApplied: true,
+        materialPoolKey,
         overCharacter: over,
         rotJitterDeg,
         randomRotKey: layerRandomRotationKey(layer),
@@ -413,6 +475,7 @@ export class Flipbook2DCombat {
     this.frontPool.add(frontRoot);
     this.behindPool.add(behindRoot);
     const shot: Shot = {
+      disposed: false,
       frontRoot,
       behindRoot,
       frontSpin,
@@ -455,7 +518,8 @@ export class Flipbook2DCombat {
     shot.behindSpin.rotation.z = spin;
   }
 
-  private applyFrame(shot: Shot, _forceLook = false): void {
+  private applyFrame(shot: Shot, forceLook = false): void {
+    if (shot.disposed) return;
     const size = flipbookWorldSize(CONFIG.hitVfxFlipbookSize);
     for (const item of shot.layers) {
       const over = layerOverCharacter(item.layer);
@@ -504,19 +568,28 @@ export class Flipbook2DCombat {
       }
       item.mesh.rotation.z = layerRotationRad(item.layer, item.rotJitterDeg);
       item.mesh.renderOrder = 20 + item.layer.z;
-      if (item.material.map !== tex) item.material.map = tex;
-      applyMaterialLook(item.material, item.layer);
-      item.lookApplied = true;
+      if (forceLook || !item.lookApplied) item.materialPoolKey = materialLookKey(item.layer);
+      syncFlipbookMaterial(item, tex, forceLook);
       item.mesh.visible = item.layer.enabled;
     }
   }
 
   private disposeShot(shot: Shot): void {
+    shot.disposed = true;
     this.frontPool.remove(shot.frontRoot);
     this.behindPool.remove(shot.behindRoot);
     for (const item of shot.layers) {
-      item.material.map = null;
-      item.material.dispose();
+      // Keep a bounded set of compiled materials alive between impacts. Once
+      // the last material is disposed, Three releases its cached GPU pipeline.
+      const pool = this.materialPool.get(item.materialPoolKey) ?? [];
+      if (this.pooledMaterialCount < 64 && pool.length < 4) {
+        pool.push(item.material);
+        this.materialPool.set(item.materialPoolKey, pool);
+        this.pooledMaterialCount++;
+      } else {
+        item.material.map = null;
+        item.material.dispose();
+      }
     }
   }
 
