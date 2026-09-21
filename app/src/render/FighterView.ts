@@ -3,6 +3,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { clone as cloneSkeleton } from 'three/addons/utils/SkeletonUtils.js';
 import type { Fighter } from '../combat/fighter/Fighter';
 import { motionBlurKindFromPhase } from '../config/motionBlur';
+import { registerMotionBlurRoot } from './MotionBlurFx';
 import {
   STAGE_GROUND_Y,
   type MutableSimConfig,
@@ -80,6 +81,7 @@ import { WudaCoatRuntime } from './wudaParticle/WudaCoatRuntime';
 import { WudaVertexCoatRuntime } from './wudaParticle/WudaVertexCoatRuntime';
 import type { WudaPlumeBurst } from './wudaParticle/WudaPlumeBurst';
 import { resolveWudaCoverMeshes } from './wudaParticle/evalSkinnedSurface';
+import { syncSkinnedMeshBoneMatrices } from './wudaParticle/wudaSkeletonSync';
 import { wudaFighterSideFromId } from './wudaParticle/wudaBodyRegions';
 import {
   isWudaStandHpHitVictim,
@@ -183,6 +185,14 @@ export class FighterView {
    * so every part occludes the back fighter without breaking self-occlusion.
    */
   private displayFront = true;
+  private displayOrderApplied = false;
+  /** Unique skins used for motion-blur pose snapshots (not per-mesh). */
+  private mbSkeletons: THREE.Skeleton[] = [];
+  private mbSkinnedMeshes: THREE.SkinnedMesh[] = [];
+  private hipsBone: THREE.Bone | null = null;
+  private hipsBoneResolved = false;
+  private lightFollowAnchorY = 0;
+  private presentationCamera: THREE.Camera | null = null;
   private placeholder: THREE.Mesh;
   private procedural = new ProceduralRyuAnim();
   private useProcedural = false;
@@ -313,6 +323,7 @@ export class FighterView {
     this.placeholder.name = 'placeholder';
     this.root.add(this.placeholder);
     scene.add(this.root);
+    registerMotionBlurRoot(this.root);
   }
 
   async loadGltf(
@@ -542,6 +553,10 @@ export class FighterView {
     // One-shot sole align after stance pose + spring binds (not per-frame).
     this.plantFeetOnGround();
     this.modelGroundRestY = this.modelRoot.position.y;
+    this.collectMotionBlurSkeletons();
+    this.hipsBone = null;
+    this.hipsBoneResolved = false;
+    this.displayOrderApplied = false;
 
     console.info(
       `[FighterView] install pruned=${pruned} baked=${baked} procedural=${this.useProcedural} ` +
@@ -976,7 +991,12 @@ export class FighterView {
   }
 
   private findHipsBone(): THREE.Bone | null {
-    if (!this.modelRoot) return null;
+    if (this.hipsBoneResolved) return this.hipsBone;
+    this.hipsBoneResolved = true;
+    if (!this.modelRoot) {
+      this.hipsBone = null;
+      return null;
+    }
     let found: THREE.Bone | null = null;
     this.modelRoot.traverse((o) => {
       const b = o as THREE.Bone;
@@ -985,6 +1005,7 @@ export class FighterView {
         found = b;
       }
     });
+    this.hipsBone = found;
     return found;
   }
 
@@ -993,7 +1014,9 @@ export class FighterView {
    * FRONT). Layers are per-object (not inherited).
    */
   private applyDisplayOrder(displayFront: boolean): void {
+    if (this.displayOrderApplied && this.displayFront === displayFront) return;
     this.displayFront = displayFront;
+    this.displayOrderApplied = true;
     const layer = displayFront ? LAYER_FIGHTER_FRONT : LAYER_FIGHTER_BACK;
     const order = displayFront
       ? FIGHTER_RENDER_ORDER_FRONT
@@ -1019,14 +1042,12 @@ export class FighterView {
    * (animation) both move the light. Falls back to root.y when no hips bone.
    */
   getLightFollowAnchorY(): number {
-    this.root.updateMatrixWorld(true);
-    const hips = this.findHipsBone();
-    if (hips) {
-      const p = new THREE.Vector3();
-      hips.getWorldPosition(p);
-      return p.y;
-    }
-    return this.root.position.y;
+    return this.lightFollowAnchorY || this.root.position.y;
+  }
+
+  setPresentationCamera(camera: THREE.Camera | null): void {
+    this.presentationCamera = camera;
+    if (camera) this.wudaClipPlayer.setCamera(camera);
   }
 
   /** Attack support-foot lock (world XZ). Consensus §3.9 */
@@ -1184,29 +1205,55 @@ export class FighterView {
     // head/spine ancestor path; running it before sole clamp left idle/walk
     // without the lift-only floor heal that attack already had.
     this.maybePlantAfterPose(fighter, cfg, wallDtSec);
-    this.snapshotAnimBonesForMotionBlur();
+    this.snapshotAnimBonesForMotionBlur(cfg);
     this.updateHeadbandPhysics(fighter, cfg, wallDtSec);
     this.updateBeltPhysics(fighter, cfg, wallDtSec);
     this.updatePantsPhysics(fighter, cfg, wallDtSec);
     this.modelRoot?.updateMatrixWorld(true);
+    this.refreshLightFollowAnchor();
     this.updateLimbHistory(wallDtSec);
     // Wuda after world matrices (TRAP-LAG); never gated by hitstop.
     this.updateWudaCoat(fighter, cfg, wallDtSec);
+  }
+
+  private collectMotionBlurSkeletons(): void {
+    const seen = new Set<THREE.Skeleton>();
+    this.mbSkeletons = [];
+    this.mbSkinnedMeshes = [];
+    this.modelRoot?.traverse((object) => {
+      const mesh = object as THREE.SkinnedMesh;
+      if (mesh.isSkinnedMesh !== true) return;
+      this.mbSkinnedMeshes.push(mesh);
+      const skel = mesh.skeleton;
+      if (!skel || seen.has(skel)) return;
+      seen.add(skel);
+      this.mbSkeletons.push(skel);
+    });
+  }
+
+  private refreshLightFollowAnchor(): void {
+    const hips = this.findHipsBone();
+    if (hips) {
+      this.lightFollowAnchorY = hips.getWorldPosition(this._limbNow).y;
+      return;
+    }
+    this.lightFollowAnchorY = this.root.position.y;
   }
 
   /**
    * Bone matrices after authored pose + sole plant, before cloth.
    * Motion blur uses this so pants/body share the same animation velocity.
    */
-  private snapshotAnimBonesForMotionBlur(): void {
+  private snapshotAnimBonesForMotionBlur(cfg: MutableSimConfig): void {
+    if (cfg.motionBlur?.enabled !== true) return;
+    if (this.mbSkinnedMeshes.length === 0) this.collectMotionBlurSkeletons();
     this.modelRoot?.updateMatrixWorld(true);
-    this.root.traverse((object) => {
-      const mesh = object as THREE.SkinnedMesh;
-      if (mesh.isSkinnedMesh !== true) return;
-      const skel = mesh.skeleton;
-      const mats = skel?.boneMatrices;
-      if (!skel || !mats) return;
-      skel.update();
+    if (this.mbSkinnedMeshes.length > 0) {
+      syncSkinnedMeshBoneMatrices(this.mbSkinnedMeshes);
+    }
+    for (const skel of this.mbSkeletons) {
+      const mats = skel.boneMatrices;
+      if (!mats) continue;
       const skelAny = skel as unknown as { userData: Record<string, unknown> };
       if (!skelAny.userData) skelAny.userData = {};
       let snap = skelAny.userData.mbAnimBones as Float32Array | undefined;
@@ -1215,7 +1262,7 @@ export class FighterView {
         skelAny.userData.mbAnimBones = snap;
       }
       snap.set(mats);
-    });
+    }
   }
 
   private updateLimbHistory(dtSec: number): void {
@@ -1361,13 +1408,14 @@ export class FighterView {
 
   private ensureWudaClipPlayer(): void {
     if (this.wudaClipPlayerBound) return;
-    this.wudaClipPlayer.bind({ parent: this.scene });
-    this.wudaClipPlayerBound = true;
-    this.scene.traverse((o) => {
-      if ((o as THREE.Camera).isCamera) {
-        this.wudaClipPlayer.setCamera(o as THREE.Camera);
-      }
+    this.wudaClipPlayer.bind({
+      parent: this.scene,
+      camera: this.presentationCamera,
     });
+    this.wudaClipPlayerBound = true;
+    if (this.presentationCamera) {
+      this.wudaClipPlayer.setCamera(this.presentationCamera);
+    }
   }
 
   private shimForWudaLayer(
@@ -1421,11 +1469,7 @@ export class FighterView {
     coat: WudaCoatRuntime | WudaVertexCoatRuntime,
   ): void {
     if (coat.hasCamera) return;
-    this.scene.traverse((o) => {
-      if ((o as THREE.Camera).isCamera) {
-        coat.setCamera(o as THREE.Camera);
-      }
-    });
+    if (this.presentationCamera) coat.setCamera(this.presentationCamera);
   }
 
   /**
@@ -1451,11 +1495,9 @@ export class FighterView {
         this.wudaClipPlayer.loadClip(wudaClipHub.clip);
         this.wudaClipLoaded = wudaClipHub.clip;
       }
-      this.scene.traverse((o) => {
-        if ((o as THREE.Camera).isCamera) {
-          this.wudaClipPlayer.setCamera(o as THREE.Camera);
-        }
-      });
+      if (this.presentationCamera) {
+        this.wudaClipPlayer.setCamera(this.presentationCamera);
+      }
       const victimHit = isWudaStandHpHitVictim({
         phase: fighter.phase,
         hitstunDetachPulseFrames: fighter.hitstunDetachPulseFrames,
@@ -2702,11 +2744,12 @@ export class FighterView {
     if (this.previewMode) {
       if (this.mixer) this.mixer.update(previewDt);
       if (cfg.plantMode === 'legacy') this.plantFeetOnGround();
-      this.snapshotAnimBonesForMotionBlur();
+      this.snapshotAnimBonesForMotionBlur(cfg);
       this.updateHeadbandPhysics(fighter, cfg, wallDtSec);
       this.updateBeltPhysics(fighter, cfg, wallDtSec);
       this.updatePantsPhysics(fighter, cfg, wallDtSec);
       this.modelRoot?.updateMatrixWorld(true);
+      this.refreshLightFollowAnchor();
       this.updateWudaCoat(fighter, cfg, wallDtSec);
       return;
     }

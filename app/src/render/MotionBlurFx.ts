@@ -56,17 +56,44 @@ const _prevWorldByObject = new WeakMap<THREE.Object3D, THREE.Matrix4>();
 const _prevBonesBySkeleton = new WeakMap<THREE.Skeleton, Float32Array>();
 const _prevBoneScratch = new Float32Array(MAX_BONES * 16);
 const _currBoneScratch = new Float32Array(MAX_BONES * 16);
+const _blurRoots = new Set<THREE.Object3D>();
 
-function fillIdentityBones(out: Float32Array): void {
-  out.fill(0);
+export function registerMotionBlurRoot(root: THREE.Object3D): void {
+  _blurRoots.add(root);
+}
+
+export function unregisterMotionBlurRoot(root: THREE.Object3D): void {
+  _blurRoots.delete(root);
+}
+
+function fillIdentityBones(out: Float32Array, fromBone = 0): void {
   const n = (out.length / 16) | 0;
-  for (let i = 0; i < n; i += 1) {
+  for (let i = fromBone; i < n; i += 1) {
     const o = i * 16;
     out[o] = 1;
+    out[o + 1] = 0;
+    out[o + 2] = 0;
+    out[o + 3] = 0;
+    out[o + 4] = 0;
     out[o + 5] = 1;
+    out[o + 6] = 0;
+    out[o + 7] = 0;
+    out[o + 8] = 0;
+    out[o + 9] = 0;
     out[o + 10] = 1;
+    out[o + 11] = 0;
+    out[o + 12] = 0;
+    out[o + 13] = 0;
+    out[o + 14] = 0;
     out[o + 15] = 1;
   }
+}
+
+function copyBonesToScratch(dest: Float32Array, src: Float32Array | null): void {
+  const n = src ? Math.min(src.length, dest.length) : 0;
+  if (n > 0 && src) dest.set(src.subarray(0, n));
+  const fromBone = (n / 16) | 0;
+  if (fromBone * 16 < dest.length) fillIdentityBones(dest, fromBone);
 }
 
 fillIdentityBones(_prevBoneScratch);
@@ -91,21 +118,13 @@ function prevBonesOf(skeleton: THREE.Skeleton): Float32Array {
 }
 
 function loadPrevBonesScratch(skeleton: THREE.Skeleton | undefined): void {
-  fillIdentityBones(_prevBoneScratch);
-  if (!skeleton) return;
-  const src = prevBonesOf(skeleton);
-  _prevBoneScratch.set(
-    src.subarray(0, Math.min(src.length, _prevBoneScratch.length)),
-  );
+  copyBonesToScratch(_prevBoneScratch, skeleton ? prevBonesOf(skeleton) : null);
 }
 
 function loadCurrBonesScratch(skeleton: THREE.Skeleton | undefined): void {
-  fillIdentityBones(_currBoneScratch);
-  if (!skeleton) return;
-  const src = animBonesOf(skeleton);
-  if (!src) return;
-  _currBoneScratch.set(
-    src.subarray(0, Math.min(src.length, _currBoneScratch.length)),
+  copyBonesToScratch(
+    _currBoneScratch,
+    skeleton ? animBonesOf(skeleton) : null,
   );
 }
 
@@ -170,27 +189,37 @@ function motionBlurKindOf(object: THREE.Object3D): MotionBlurObjectKind {
   return 'move';
 }
 
-function stampFighterPrev(scene: THREE.Scene): void {
-  scene.traverse((object) => {
-    if (isBlurRoot(object) || isFighterMesh(object)) {
-      prevWorldOf(object).copy(object.matrixWorld);
-    }
-    if (isSkinnedFighter(object)) captureBones(object.skeleton);
-  });
+function stampFighterPrev(_scene?: THREE.Scene): void {
+  const seenSkel = new Set<THREE.Skeleton>();
+  for (const root of _blurRoots) {
+    prevWorldOf(root).copy(root.matrixWorld);
+    root.traverse((object) => {
+      if (object !== root && isFighterMesh(object)) {
+        prevWorldOf(object).copy(object.matrixWorld);
+      }
+      if (isSkinnedFighter(object)) {
+        const skel = object.skeleton;
+        if (!skel || seenSkel.has(skel)) return;
+        seenSkel.add(skel);
+        captureBones(skel);
+      }
+    });
+  }
 }
 
-function fightersNeedObjectVel(scene: THREE.Scene): boolean {
-  let need = false;
-  scene.traverse((object) => {
-    if (need || !isBlurRoot(object)) return;
-    if (object.userData.motionBlurKind === 'attack') {
-      need = true;
-      return;
-    }
-    const prev = _prevWorldByObject.get(object);
-    if (!prev || !prev.equals(object.matrixWorld)) need = true;
-  });
-  return need;
+function blurRootNeedsObjectVel(object: THREE.Object3D): boolean {
+  if (!isBlurRoot(object)) return false;
+  if (object.userData.motionBlurKind === 'attack') return true;
+  if (object.userData.motionBlurPosePulse === true) return true;
+  const prev = _prevWorldByObject.get(object);
+  return !prev || !prev.equals(object.matrixWorld);
+}
+
+function fightersNeedObjectVel(_scene?: THREE.Scene): boolean {
+  for (const object of _blurRoots) {
+    if (blurRootNeedsObjectVel(object)) return true;
+  }
+  return false;
 }
 
 function fighterRootMoved(object: THREE.Object3D): boolean {
@@ -484,7 +513,11 @@ export class MotionBlurFx {
     const prevObjFn = renderer.getRenderObjectFunction();
     const prevMask = camera.layers.mask;
     const velMat = this.velocityMaterial;
-    const skeletonsDrawn = new Set<THREE.Skeleton>();
+    let lastBoneSkel: THREE.Skeleton | null = null;
+    const activeRoots = new Set<THREE.Object3D>();
+    for (const root of _blurRoots) {
+      if (debugOn || blurRootNeedsObjectVel(root)) activeRoots.add(root);
+    }
 
     renderer.setRenderObjectFunction(
       (
@@ -498,6 +531,8 @@ export class MotionBlurFx {
         clippingContext,
         passId,
       ) => {
+        const root = blurRootOf(object);
+        if (!debugOn && !activeRoots.has(root)) return;
         this.uPrevWorld.value.copy(prevWorldOf(object));
         this.uObjectScale.value = pickMotionBlurObjectScale(
           motionBlurKindOf(object),
@@ -506,18 +541,25 @@ export class MotionBlurFx {
         const poseDelta = usePoseBoneVelocity(object);
         this.uHasSkin.value = poseDelta ? 1 : 0;
         if (poseDelta && isSkinnedFighter(object)) {
-          loadPrevBonesScratch(object.skeleton);
-          loadCurrBonesScratch(object.skeleton);
-          skeletonsDrawn.add(object.skeleton);
-          const bump = this.uPrevBones as {
-            addUpdateRange?: (s: number, c: number) => void;
-          };
-          bump.addUpdateRange?.(0, MAX_BONES * 16);
-          (
-            this.uCurrBones as {
+          const skel = object.skeleton;
+          if (skel && skel !== lastBoneSkel) {
+            lastBoneSkel = skel;
+            loadPrevBonesScratch(skel);
+            loadCurrBonesScratch(skel);
+            const n = Math.min(
+              MAX_BONES * 16,
+              animBonesOf(skel)?.length ?? MAX_BONES * 16,
+            );
+            const bump = this.uPrevBones as {
               addUpdateRange?: (s: number, c: number) => void;
-            }
-          ).addUpdateRange?.(0, MAX_BONES * 16);
+            };
+            bump.addUpdateRange?.(0, n);
+            (
+              this.uCurrBones as {
+                addUpdateRange?: (s: number, c: number) => void;
+              }
+            ).addUpdateRange?.(0, n);
+          }
         }
         renderer.renderObject(
           object,
@@ -544,17 +586,39 @@ export class MotionBlurFx {
     renderer.autoClearColor = true;
     renderer.autoClearDepth = true;
 
-    camera.layers.set(LAYER_FIGHTER_BACK);
-    renderer.render(scene, camera);
+    // Draw fighter subgraphs only (not the stage). Same velocity math;
+    // skip a 2.5D pass when that display layer has no moving fighter.
+    const velLayers = [LAYER_FIGHTER_BACK, LAYER_FIGHTER_FRONT];
+    let velPass = 0;
+    for (const layer of velLayers) {
+      let any = debugOn;
+      if (!any) {
+        for (const root of activeRoots) {
+          if (root.layers.isEnabled(layer)) {
+            any = true;
+            break;
+          }
+        }
+      }
+      if (!any) continue;
+      camera.layers.set(layer);
+      if (velPass === 0) {
+        renderer.autoClear = true;
+        renderer.autoClearColor = true;
+        renderer.autoClearDepth = true;
+      } else {
+        renderer.autoClear = false;
+        renderer.autoClearColor = false;
+        renderer.autoClearDepth = false;
+        renderer.clearDepth();
+      }
+      velPass += 1;
+      for (const root of _blurRoots) {
+        if (!debugOn && !activeRoots.has(root)) continue;
+        renderer.render(root as unknown as THREE.Scene, camera);
+      }
+    }
 
-    renderer.autoClear = false;
-    renderer.autoClearColor = false;
-    renderer.autoClearDepth = false;
-    renderer.clearDepth();
-    camera.layers.set(LAYER_FIGHTER_FRONT);
-    renderer.render(scene, camera);
-
-    for (const skel of skeletonsDrawn) captureBones(skel);
     stampFighterPrev(scene);
 
     renderer.setRenderObjectFunction(prevObjFn);

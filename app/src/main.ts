@@ -296,6 +296,7 @@ async function boot(): Promise<void> {
     });
   }
   renderer.shadowMap.enabled = cfg.shadowMapEnabled;
+  renderer.shadowMap.autoUpdate = false;
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(cfg.bgColor);
@@ -642,6 +643,8 @@ async function boot(): Promise<void> {
   p2View.setWudaPlumeBurst(wudaPlumeBurst);
   p1View.setWudaRenderer(renderer);
   p2View.setWudaRenderer(renderer);
+  p1View.setPresentationCamera(camera);
+  p2View.setPresentationCamera(camera);
 
   let fighterMeshTemplate: THREE.Object3D | null = null;
   let fighterLogicMap: LogicGlbMap | null = null;
@@ -1219,6 +1222,7 @@ async function boot(): Promise<void> {
   });
 
   let loggedFrame = false;
+  let lastShadowPoseKey = '';
   function frame(now: number): void {
     const wallDt = (now - last) / 1000;
     last = now;
@@ -1489,7 +1493,17 @@ async function boot(): Promise<void> {
       renderer.setScissorTest(false);
       renderer.setViewport(0, 0, viewW, viewH);
       // One bake per present: layers / PIP share the light-space map.
-      markShadowMapsNeedUpdate(lights);
+      // Idle: skip rebake — cloth micro-motion is not worth a 2048 map every frame.
+      const p1 = match.p1;
+      const p2 = match.p2;
+      const bothIdle = p1.phase === 'idle' && p2.phase === 'idle';
+      const poseKey = bothIdle
+        ? `${(p1.x * 10) | 0}:${(p2.x * 10) | 0}:${(camera.position.x * 20) | 0}`
+        : `m:${p1.phase}:${p2.phase}:${p1.clipRestartSeq}:${p2.clipRestartSeq}:${(p1.x * 20) | 0}:${(p2.x * 20) | 0}:${p1.y | 0}:${p2.y | 0}`;
+      if (poseKey !== lastShadowPoseKey) {
+        lastShadowPoseKey = poseKey;
+        markShadowMapsNeedUpdate(lights);
+      }
       presentFightLayers(camera, true);
       // Shockwave UV warp + additive glow; no-ops when both idle.
       if (hitScreenComposite.hasActive()) {
