@@ -88,11 +88,13 @@ describe('MatchSim ungarded hit', () => {
     const sim = new MatchSim(lp, undefined, {
       dummyGuardPolicy: 'none',
       hitstopFramesOnHit: 2,
+      hitFeedbackDelayFrames: 0,
     });
     runUntilHit(sim);
     expect(sim.p2.phase).toBe('hitstun');
     // applyHitstun sets 3; hit frame already completed so pulse is still active
     expect(sim.p2.hitstunDetachPulseFrames).toBeGreaterThan(0);
+    expect(sim.p2.hitstunDetachArmDelayFrames).toBe(0);
     const armed = sim.p2.hitstunDetachPulseFrames;
     sim.pendingInput = neutral();
     sim.step(); // hitstop step still ages the pulse
@@ -102,6 +104,25 @@ describe('MatchSim ungarded hit', () => {
     sim.pendingInput = neutral();
     sim.step();
     expect(sim.p2.hitstunDetachPulseFrames).toBe(0);
+  });
+
+  it('hitFeedbackDelayFrames holds wuda detach open without burning pulse', () => {
+    const sim = new MatchSim(lp, undefined, {
+      dummyGuardPolicy: 'none',
+      hitstopFramesOnHit: 4,
+      hitFeedbackDelayFrames: 1,
+    });
+    runUntilHit(sim);
+    expect(sim.p2.phase).toBe('hitstun');
+    expect(sim.p2.hitstunDetachPulseFrames).toBe(3);
+    expect(sim.p2.hitstunDetachArmDelayFrames).toBe(1);
+    sim.pendingInput = neutral();
+    sim.step(); // consumes arm delay; pulse length preserved
+    expect(sim.p2.hitstunDetachArmDelayFrames).toBe(0);
+    expect(sim.p2.hitstunDetachPulseFrames).toBe(3);
+    sim.pendingInput = neutral();
+    sim.step();
+    expect(sim.p2.hitstunDetachPulseFrames).toBe(2);
   });
 
   it('stand_block + low => hitstun not blockstun', () => {

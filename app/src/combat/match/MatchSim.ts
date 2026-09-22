@@ -76,6 +76,11 @@ export type MatchSimOptions = {
   motionHistoryCapacity: number;
   hitstopFramesOnHit: number;
   hitstopFramesOnBlock: number;
+  /**
+   * Align wuda hitstun detach open with presentation hit juice delay
+   * (`hitFeedbackDelayFrames`). 0 = detach on contact present.
+   */
+  hitFeedbackDelayFrames: number;
   enableCancel: boolean;
   /** When false, special command inputs never resolve/execute (data stays loaded). */
   enableSpecials: boolean;
@@ -217,6 +222,7 @@ const DEFAULT_OPTS: MatchSimOptions = {
   motionHistoryCapacity: 32,
   hitstopFramesOnHit: 8,
   hitstopFramesOnBlock: 8,
+  hitFeedbackDelayFrames: 1,
   enableCancel: true,
   enableSpecials: false,
   enableThrows: false,
@@ -1379,6 +1385,7 @@ export class MatchSim {
             this.p2.applyHitstun(hr.hitstun, hr.damage, {
               reactClipId,
               sourceMoveId: mv.moveId || mv.id,
+              detachArmDelayFrames: this.opts.hitFeedbackDelayFrames,
             });
           }
           if (this.opts.enableHitPush && hr.pushbackTotal !== 0) {

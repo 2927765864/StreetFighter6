@@ -87,9 +87,16 @@ export class Fighter {
   stunDuration = 0;
   /**
    * Wuda「仅受击瞬间」: remaining match logic steps (incl. hitstop) that may
-   * open detach. Set in applyHitstun; ticked down once per MatchSim.step.
+   * open detach. Set in applyHitstun; ticked down once per MatchSim.step
+   * after {@link hitstunDetachArmDelayFrames} reaches 0.
    */
   hitstunDetachPulseFrames = 0;
+  /**
+   * Presentation-aligned hold before the hitstun detach pulse can open wuda.
+   * Matches hitFeedbackDelayFrames so coat/clip wait with VFX / shake.
+   * Ages once per MatchSim.step (incl. hitstop); pulse length is preserved.
+   */
+  hitstunDetachArmDelayFrames = 0;
   /** Move that last put this fighter in hit/block/KD (for wuda stand-HP lock). */
   lastHitByMoveId: string | null = null;
   kdPhase: KnockdownPhase = 'none';
@@ -1350,6 +1357,10 @@ export class Fighter {
   static readonly HITSTUN_DETACH_PULSE_FRAMES = 3;
 
   tickHitstunDetachPulse(): void {
+    if (this.hitstunDetachArmDelayFrames > 0) {
+      this.hitstunDetachArmDelayFrames -= 1;
+      return;
+    }
     if (this.hitstunDetachPulseFrames > 0) {
       this.hitstunDetachPulseFrames -= 1;
     }
@@ -1358,7 +1369,12 @@ export class Fighter {
   applyHitstun(
     frames: number,
     damage: number,
-    opts?: { reactClipId?: string; sourceMoveId?: string },
+    opts?: {
+      reactClipId?: string;
+      sourceMoveId?: string;
+      /** Delay wuda detach open to align with hitFeedbackDelayFrames. */
+      detachArmDelayFrames?: number;
+    },
   ): void {
     if (frames <= 0) return;
     if (opts?.sourceMoveId) this.lastHitByMoveId = opts.sourceMoveId;
@@ -1371,6 +1387,10 @@ export class Fighter {
     this.stunTimer = frames;
     this.stunDuration = frames;
     this.hitstunDetachPulseFrames = Fighter.HITSTUN_DETACH_PULSE_FRAMES;
+    this.hitstunDetachArmDelayFrames = Math.max(
+      0,
+      Math.floor(opts?.detachArmDelayFrames ?? 0),
+    );
     this.hp = Math.max(0, this.hp - damage);
     this.mover.move = null;
     this.clipId = opts?.reactClipId ?? 'dmg_hl_st';
@@ -1594,6 +1614,7 @@ export class Fighter {
       if (this.stunTimer <= 0) {
         this.stunTimer = 0;
         this.hitstunDetachPulseFrames = 0;
+        this.hitstunDetachArmDelayFrames = 0;
         if (this.phase === 'blockstun' && this.holdGuardLoopClipId) {
           const rest = this.holdGuardLoopClipId;
           const crouchHold = rest === 'crouch' || rest.includes('crouch');

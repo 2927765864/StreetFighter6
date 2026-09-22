@@ -40,6 +40,7 @@ const HIT_VFX_EDITOR_DRAFT_KEYS = [
   'hitVfxSeedLocked',
   'hitVfxSeed',
   'hitVfxFollowHitstop',
+  'hitFeedbackDelayFrames',
   'hitVfxHeightOffsets',
   'hitVfxMaxConcurrent',
   'hitVfxSparkLightPoolSize',

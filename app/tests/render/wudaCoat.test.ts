@@ -278,6 +278,18 @@ describe('wudaCoatMath', () => {
     expect(isHitstunDetachPulse({ hitstunDetachPulseFrames: 3 })).toBe(true);
     expect(isHitstunDetachPulse({ hitstunDetachPulseFrames: 0 })).toBe(false);
     expect(isHitstunDetachPulse({})).toBe(false);
+    expect(
+      isHitstunDetachPulse({
+        hitstunDetachPulseFrames: 3,
+        hitstunDetachArmDelayFrames: 1,
+      }),
+    ).toBe(false);
+    expect(
+      isHitstunDetachPulse({
+        hitstunDetachPulseFrames: 3,
+        hitstunDetachArmDelayFrames: 0,
+      }),
+    ).toBe(true);
   });
 
   it('resolveWudaAllowDetach ORs locks; hitstun lock is entry pulse only', () => {

@@ -1513,6 +1513,7 @@ export class FighterView {
       const victimHit = isWudaStandHpHitVictim({
         phase: fighter.phase,
         hitstunDetachPulseFrames: fighter.hitstunDetachPulseFrames,
+        hitstunDetachArmDelayFrames: fighter.hitstunDetachArmDelayFrames,
         moveId: fighter.mover.moveId,
         lastHitByMoveId: fighter.lastHitByMoveId,
       });
@@ -1607,6 +1608,7 @@ export class FighterView {
           phase: fighter.phase,
           stunTimer: fighter.stunTimer,
           hitstunDetachPulseFrames: fighter.hitstunDetachPulseFrames,
+          hitstunDetachArmDelayFrames: fighter.hitstunDetachArmDelayFrames,
           mover: fighter.mover,
           moveId: fighter.mover.moveId,
           lastHitByMoveId: fighter.lastHitByMoveId,
@@ -1622,6 +1624,7 @@ export class FighterView {
         const victimHit = isWudaStandHpHitVictim({
           phase: fighter.phase,
           hitstunDetachPulseFrames: fighter.hitstunDetachPulseFrames,
+          hitstunDetachArmDelayFrames: fighter.hitstunDetachArmDelayFrames,
           moveId: fighter.mover.moveId,
           lastHitByMoveId: fighter.lastHitByMoveId,
         });

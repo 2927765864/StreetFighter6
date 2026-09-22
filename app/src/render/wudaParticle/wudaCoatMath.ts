@@ -106,7 +106,10 @@ export function isHitstunFrame(fighter: {
 /** True during the short post-hit impact pulse (命中起连续数逻辑帧). */
 export function isHitstunDetachPulse(fighter: {
   hitstunDetachPulseFrames?: number;
+  /** When >0, pulse is armed but not yet open (hit-feedback delay). */
+  hitstunDetachArmDelayFrames?: number;
 }): boolean {
+  if ((fighter.hitstunDetachArmDelayFrames ?? 0) > 0) return false;
   return (fighter.hitstunDetachPulseFrames ?? 0) > 0;
 }
 
@@ -126,6 +129,7 @@ export function isWudaStandHeavyPunch(moveId?: string | null): boolean {
 export function isWudaStandHpHitVictim(fighter: {
   phase?: string;
   hitstunDetachPulseFrames?: number;
+  hitstunDetachArmDelayFrames?: number;
   moveId?: string | null;
   lastHitByMoveId?: string | null;
 }): boolean {
@@ -138,6 +142,7 @@ export function isWudaStandHpHitVictim(fighter: {
 function relevantWudaAttackMoveId(fighter: {
   phase: string;
   hitstunDetachPulseFrames?: number;
+  hitstunDetachArmDelayFrames?: number;
   moveId?: string | null;
   lastHitByMoveId?: string | null;
 }): string | null {
@@ -170,6 +175,7 @@ export function resolveWudaAllowDetach(
     phase: string;
     stunTimer?: number;
     hitstunDetachPulseFrames?: number;
+    hitstunDetachArmDelayFrames?: number;
     mover: { currentHitBoxesLocal: () => unknown[] };
     moveId?: string | null;
     lastHitByMoveId?: string | null;

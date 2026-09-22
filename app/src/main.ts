@@ -113,6 +113,12 @@ import {
   limbImpulseSampleCount,
 } from './render/hitVfx/attackLimb';
 import type { HitVfxTriggerArgs } from './render/hitVfx/hitVfxTypes';
+import {
+  ageDeferredHitFeedback,
+  enqueueDeferredHitFeedback,
+  normalizeHitFeedbackDelayFrames,
+  type DeferredHitFeedback,
+} from './render/hitFeedbackDelay';
 
 // Mesh-only skinned Ryu; combat clips from private/assets/ryu/anims via map
 import stageUrl from '@interim/SF6 Training Stage/SF6 Training Stage.glb?url';
@@ -359,8 +365,26 @@ async function boot(): Promise<void> {
     camera,
     hitVfxBehindScene,
   );
-  /** Contact fires in logic before pose; spawn after FighterView.sync. */
+  /**
+   * Contact fires in logic before pose. Same-present: limb-lock after
+   * FighterView.sync, then optionally defer juice by hitFeedbackDelayFrames
+   * so the defender hit-react pose leads VFX / CMOS shake / composites.
+   * Hit/block SFX stay on the contact frame via onCombatSfx.
+   */
   const pendingHitVfx: HitVfxMatchEvent[] = [];
+  type HitFeedbackPayload = {
+    args: HitVfxTriggerArgs;
+    kind: HitVfxMatchEvent['kind'];
+    shakePresetId: string | null;
+  };
+  const deferredHitFeedback: DeferredHitFeedback<HitFeedbackPayload>[] = [];
+  /** Ready juice whose shake was already played before camera this present. */
+  let readyHitFeedback: HitFeedbackPayload[] = [];
+  const clearDeferredHitFeedback = (): void => {
+    pendingHitVfx.length = 0;
+    deferredHitFeedback.length = 0;
+    readyHitFeedback = [];
+  };
   const limbScratch = new THREE.Vector3();
   const limbVelScratch = new THREE.Vector3();
 
@@ -400,15 +424,56 @@ async function boot(): Promise<void> {
     return args;
   };
 
-  match.opts.onHitVfx = (ev) => {
-    pendingHitVfx.push(ev);
+  const shakePresetForEvent = (ev: HitVfxMatchEvent): string | null => {
     const strength = resolveGuardStrength({
       guardStrength: ev.guardStrength,
       hitstopOnBlock:
         ev.kind === 'onBlock' ? ev.hitstopOnBlock : ev.hitstopOnHit,
     });
-    const id = resolveCmosShakePresetId(cfg.cmosShake, ev.kind, strength);
-    if (id) screenShake.play(id);
+    return resolveCmosShakePresetId(cfg.cmosShake, ev.kind, strength) || null;
+  };
+
+  /** Must run before screenShake.step so position-step impulse hits this present. */
+  const playHitFeedbackShake = (shakePresetId: string | null): void => {
+    if (shakePresetId) screenShake.play(shakePresetId);
+  };
+
+  /** VFX / composites only — shake is armed earlier (before camera step). */
+  const fireHitFeedbackVisuals = (item: HitFeedbackPayload): void => {
+    const { args, kind } = item;
+    if (cfg.hitVfxPlayMode === 'flipbook2d') {
+      flipbookCombat.trigger(args);
+    } else {
+      hitVfxDirector.previewTrigger(args);
+    }
+    // Screen shockwave / glow / cloud: same fixed world anchor as flipbook.
+    if (kind === 'onHit') {
+      const world = worldPosFromTrigger(
+        args,
+        cfg.hitVfxHeightOffsets,
+        cfg.modelYOffset,
+      );
+      const strength = args.strength as HitShockwaveStrength;
+      hitShockwave.triggerWorld(world.x, world.y, world.z, camera, strength);
+      hitGlow.triggerWorld(
+        world.x,
+        world.y,
+        world.z,
+        camera,
+        strength as HitGlowStrength,
+      );
+      hitCloudShadow.triggerWorld(
+        world.x,
+        world.y,
+        world.z,
+        camera,
+        strength as HitCloudShadowStrength,
+      );
+    }
+  };
+
+  match.opts.onHitVfx = (ev) => {
+    pendingHitVfx.push(ev);
   };
 
   // Wuda coat detach splash: same overlay scene as hit VFX (composites above fighters).
@@ -941,6 +1006,7 @@ async function boot(): Promise<void> {
     boxEditor.stop();
     boxEditor = null;
     match.reset();
+    clearDeferredHitFeedback();
     setPaused(false);
   };
 
@@ -1012,6 +1078,7 @@ async function boot(): Promise<void> {
     boxEditActive: false,
     enterBoxEdit,
     exitBoxEdit,
+    onMatchReset: clearDeferredHitFeedback,
     setPaused: (paused: boolean) => {
       setPaused(
         paused,
@@ -1186,6 +1253,7 @@ async function boot(): Promise<void> {
       e.preventDefault();
       keys.clear();
       match.reset();
+      clearDeferredHitFeedback();
       return;
     }
     if (e.code === 'KeyP') {
@@ -1309,6 +1377,22 @@ async function boot(): Promise<void> {
     const viewAspect = viewW / Math.max(viewH, 1);
 
     perf.begin('syncView');
+    // Arm CMOS shake before step/apply so 位置阶跃 lands on this present and
+    // CameraShakeMotion can blur the jump (play-after-step skipped that frame).
+    readyHitFeedback = [];
+    if (presentLogicSteps > 0) {
+      readyHitFeedback = ageDeferredHitFeedback(deferredHitFeedback);
+      for (const item of readyHitFeedback) {
+        playHitFeedbackShake(item.shakePresetId);
+      }
+      // delay=0: contact juice shares this present — shake must precede step.
+      if (normalizeHitFeedbackDelayFrames(cfg.hitFeedbackDelayFrames) === 0) {
+        for (const ev of pendingHitVfx) {
+          playHitFeedbackShake(shakePresetForEvent(ev));
+        }
+      }
+    }
+
     const fightPose = cameraRig.update(
       {
         p1x: match.p1.x,
@@ -1408,46 +1492,38 @@ async function boot(): Promise<void> {
     // Age existing flipbook shots before spawning new ones so the contact frame
     // keeps the first visible sheet (not age-advanced away on the same present).
     flipbookCombat.tick(presentDt, match.hitstopTimer > 0);
-    if (pendingHitVfx.length > 0) {
-      for (const ev of pendingHitVfx) {
-        const args = applyLimbLock(ev);
-        if (cfg.hitVfxPlayMode === 'flipbook2d') {
-          flipbookCombat.trigger(args);
-        } else {
-          hitVfxDirector.previewTrigger(args);
+    // Limb-lock after pose sync. Shake for ready juice already played pre-camera.
+    if (presentLogicSteps > 0) {
+      const delay = normalizeHitFeedbackDelayFrames(cfg.hitFeedbackDelayFrames);
+      if (delay === 0) {
+        for (const ev of pendingHitVfx) {
+          fireHitFeedbackVisuals({
+            args: applyLimbLock(ev),
+            kind: ev.kind,
+            shakePresetId: null,
+          });
         }
-        // Screen shockwave: same fixed world anchor as 2D flipbook (contact limb pose).
-        if (ev.kind === 'onHit') {
-          const world = worldPosFromTrigger(
-            args,
-            cfg.hitVfxHeightOffsets,
-            cfg.modelYOffset,
-          );
-          const strength = args.strength as HitShockwaveStrength;
-          hitShockwave.triggerWorld(
-            world.x,
-            world.y,
-            world.z,
-            camera,
-            strength,
-          );
-          hitGlow.triggerWorld(
-            world.x,
-            world.y,
-            world.z,
-            camera,
-            strength as HitGlowStrength,
-          );
-          hitCloudShadow.triggerWorld(
-            world.x,
-            world.y,
-            world.z,
-            camera,
-            strength as HitCloudShadowStrength,
+        pendingHitVfx.length = 0;
+      } else {
+        for (const ev of pendingHitVfx) {
+          enqueueDeferredHitFeedback(
+            deferredHitFeedback,
+            {
+              args: applyLimbLock(ev),
+              kind: ev.kind,
+              shakePresetId: shakePresetForEvent(ev),
+            },
+            delay,
           );
         }
+        pendingHitVfx.length = 0;
+        // Burn one present on newly queued items (delay=1 → skip 0, fire next).
+        ageDeferredHitFeedback(deferredHitFeedback);
       }
-      pendingHitVfx.length = 0;
+      for (const item of readyHitFeedback) {
+        fireHitFeedbackVisuals(item);
+      }
+      readyHitFeedback = [];
     }
     hitShockwave.step(presentDt, camera);
     hitGlow.step(presentDt, camera);

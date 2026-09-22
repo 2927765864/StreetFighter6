@@ -485,6 +485,13 @@ export type MutableSimConfig = {
   hitVfxSeedLocked: boolean;
   hitVfxSeed: number;
   hitVfxFollowHitstop: boolean;
+  /**
+   * Presentation-only: delay hit juice (VFX / CMOS shake / shockwave / glow /
+   * cloud shadow) by N presents-with-logic after contact. 0 = same frame as
+   * hit-react pose; 1 = pose first, juice next frame. Hit/block SFX stay on
+   * the contact frame.
+   */
+  hitFeedbackDelayFrames: number;
   hitVfxHeightOffsets: HitVfxHeightOffset;
   hitVfxMaxConcurrent: number;
   hitVfxSparkLightPoolSize: number;
@@ -918,6 +925,7 @@ export function createDefaultSimConfig(): MutableSimConfig {
     hitVfxSeedLocked: true,
     hitVfxSeed: 1,
     hitVfxFollowHitstop: false,
+    hitFeedbackDelayFrames: 1,
     hitVfxHeightOffsets: defaultHeightOffsets(),
     hitVfxMaxConcurrent: 6,
     hitVfxSparkLightPoolSize: 4,
@@ -1022,6 +1030,7 @@ export function applyConfigToMatchOpts(cfg: MutableSimConfig) {
     motionHistoryCapacity: cfg.motionHistoryCapacity,
     hitstopFramesOnHit: cfg.hitstopFramesOnHit,
     hitstopFramesOnBlock: cfg.hitstopFramesOnBlock,
+    hitFeedbackDelayFrames: cfg.hitFeedbackDelayFrames,
     enableCancel: cfg.enableCancel,
     enableSpecials: cfg.enableSpecials,
     enableThrows: cfg.enableThrows,

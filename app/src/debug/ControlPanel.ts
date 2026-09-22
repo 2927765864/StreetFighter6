@@ -74,6 +74,8 @@ export type ControlPanelHooks = {
   boxEditActive?: boolean;
   enterBoxEdit?: () => void;
   exitBoxEdit?: () => void;
+  /** After match.reset — drop deferred hit juice so reset does not fire stale FX. */
+  onMatchReset?: () => void;
   /** Append a pants feel log entry (note from pantsFeelNote). */
   recordPantsFeel?: () => void | Promise<void>;
   startPantsRecord?: () => void;
@@ -734,6 +736,8 @@ function buildDom(): HTMLElement {
           </div>
           ${rowNumber('hitVfxFlipbookSize', '2D 特效世界尺寸', 0.2, 8, 0.05)}
           ${rowToggle('hitVfxFollowHitstop', '顿帧时冻结特效')}
+          ${rowNumber('hitFeedbackDelayFrames', '命中反馈延迟（帧）', 0, 8, 1)}
+          <p class="panel-hint">0=受击姿势与特效/震屏/武打脱落同帧；1=第一帧只出受击姿势，下一帧特效+震屏+武打粒子等一起出现。打击声仍在命中当帧。</p>
           ${rowToggle('hitVfxDebug', '显示击中点标记')}
           ${rowNumber('hitVfxMaxConcurrent', '并发实例上限', 1, 16, 1)}
           <div class="panel-row">
@@ -1465,6 +1469,7 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'pantsHealthSessionKeep', path: 'pantsHealthSessionKeep' },
   { id: 'hitVfxEnabled', path: 'hitVfxEnabled' },
   { id: 'hitVfxFollowHitstop', path: 'hitVfxFollowHitstop' },
+  { id: 'hitFeedbackDelayFrames', path: 'hitFeedbackDelayFrames' },
   { id: 'hitVfxDebug', path: 'hitVfxDebug' },
   { id: 'hitVfxMaxConcurrent', path: 'hitVfxMaxConcurrent' },
   { id: 'hitVfxFlipbookSize', path: 'hitVfxFlipbookSize' },
@@ -3046,6 +3051,7 @@ export function setupControlPanel(
 
   byId<HTMLButtonElement>(host, 'btn-reset-match').addEventListener('click', () => {
     match.reset();
+    hooks.onMatchReset?.();
     syncHp();
     setFlash('对局已重置');
   });
