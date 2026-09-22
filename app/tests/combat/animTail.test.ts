@@ -59,6 +59,17 @@ describe('anim residual tail §3.7.1', () => {
     expect(f.clipId).toBe('idle');
   });
 
+  it('presentation clip end drops the tail before animFrameCount', () => {
+    const f = new Fighter('p1', 0, 1, 10000);
+    f.startMove(baseMove({ animFrameCount: 48 }));
+    for (let i = 0; i < 18; i++) f.advance(adv);
+    expect(f.hasAnimTail).toBe(true);
+    expect(f.endAnimTailAtClipEnd()).toBe(true);
+    expect(f.hasAnimTail).toBe(false);
+    expect(f.clipId).toBe('idle');
+    expect(f.phase).toBe('idle');
+  });
+
   it('walk interrupts residual', () => {
     const f = new Fighter('p1', 0, 1, 10000);
     f.startMove(baseMove());

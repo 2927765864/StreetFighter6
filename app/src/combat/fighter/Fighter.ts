@@ -1075,45 +1075,65 @@ export class Fighter {
     if (!this.animTail) return;
     this.animTail.visualFrame += 1;
     if (this.animTail.visualFrame >= this.animTail.animFrameCount) {
-      if (this.animTail.holdAir && this.jumpPhase === 'air') {
-        this.animTail.visualFrame = this.animTail.animFrameCount - 1;
-        this.clipId = this.animTail.clipId;
-        this.animRole = this.animTail.animRole;
-        return;
-      }
-      const st = this.animTail.stance;
-      const wasLand = this.animTail.animRole === 'land';
-      this.clearAnimTail();
-      // Post-hardstun land hold ended → open crouch_to_stand (§3.13.7), not idle/turn.
-      if (
-        wasLand &&
-        !this.neutralLandRiseStarted &&
-        (this.phase === 'idle' || this.phase === 'crouch') &&
-        !this.turning
-      ) {
-        this.stanceState = beginToStand(this.stanceCfg);
-        this.neutralLandRiseStarted = true;
-        this.landRiseAge = 0;
-        this.phase = 'crouch';
-        this.presentCrouchToStand();
-        if (
-          this.pendingTurnAfterLand &&
-          this.landRiseAge >= this.riseToTurnDelayFrames()
-        ) {
-          this.presentNeutralLandIdleOrTurn();
-        }
-        return;
-      }
-      if (this.pendingTurnAfterLand && (this.phase === 'idle' || this.phase === 'crouch')) {
-        this.beginTurnClip();
-      } else if (this.phase === 'idle' || this.phase === 'crouch') {
-        const crouch = st === 'crouch' || this.phase === 'crouch';
-        this.stanceState = clearStanceTo(crouch);
-        this.applyStancePresentation();
-      }
+      this.finishAnimTail();
     } else {
       this.clipId = this.animTail.clipId;
       this.animRole = this.animTail.animRole;
+    }
+  }
+
+  /**
+   * Presentation has shown the last authored attack frame (hitstop lead
+   * included). Drop the tail now so the last pose is not held for the
+   * frames the lead already consumed.
+   * Air tails keep their landing hold. Land tails keep their rise timing.
+   */
+  endAnimTailAtClipEnd(): boolean {
+    const tail = this.animTail;
+    if (!tail) return false;
+    if (tail.holdAir && this.jumpPhase === 'air') return false;
+    if (tail.animRole === 'land') return false;
+    this.finishAnimTail();
+    return true;
+  }
+
+  private finishAnimTail(): void {
+    if (!this.animTail) return;
+    if (this.animTail.holdAir && this.jumpPhase === 'air') {
+      this.animTail.visualFrame = this.animTail.animFrameCount - 1;
+      this.clipId = this.animTail.clipId;
+      this.animRole = this.animTail.animRole;
+      return;
+    }
+    const st = this.animTail.stance;
+    const wasLand = this.animTail.animRole === 'land';
+    this.clearAnimTail();
+    // Post-hardstun land hold ended → open crouch_to_stand (§3.13.7), not idle/turn.
+    if (
+      wasLand &&
+      !this.neutralLandRiseStarted &&
+      (this.phase === 'idle' || this.phase === 'crouch') &&
+      !this.turning
+    ) {
+      this.stanceState = beginToStand(this.stanceCfg);
+      this.neutralLandRiseStarted = true;
+      this.landRiseAge = 0;
+      this.phase = 'crouch';
+      this.presentCrouchToStand();
+      if (
+        this.pendingTurnAfterLand &&
+        this.landRiseAge >= this.riseToTurnDelayFrames()
+      ) {
+        this.presentNeutralLandIdleOrTurn();
+      }
+      return;
+    }
+    if (this.pendingTurnAfterLand && (this.phase === 'idle' || this.phase === 'crouch')) {
+      this.beginTurnClip();
+    } else if (this.phase === 'idle' || this.phase === 'crouch') {
+      const crouch = st === 'crouch' || this.phase === 'crouch';
+      this.stanceState = clearStanceTo(crouch);
+      this.applyStancePresentation();
     }
   }
 

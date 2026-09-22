@@ -15,6 +15,7 @@ import {
   remapLogicToClipTime,
   remapLogicToMotionFrame,
   shouldClearHitstopPresentOffset,
+  attackClipPresentationExhausted,
   visualFrameToClipTime,
 } from '../../src/render/AnimScrub';
 import {
@@ -40,6 +41,15 @@ describe('logicFrameToClipTime', () => {
     const d = 1.0; // 60 samples
     expect(logicFrameToClipTime(0, 13, d, 'truncate')).toBe(0);
     expect(logicFrameToClipTime(30, 13, d, 'truncate')).toBeCloseTo(12 / 60, 5);
+  });
+});
+
+describe('attackClipPresentationExhausted', () => {
+  it('lead that reaches the clip end counts as finished', () => {
+    const dur = 40 / 60;
+    expect(attackClipPresentationExhausted(30 / 60, 10 / 60, dur)).toBe(true);
+    expect(attackClipPresentationExhausted(30 / 60, 5 / 60, dur)).toBe(false);
+    expect(attackClipPresentationExhausted(40 / 60, 0, dur)).toBe(true);
   });
 });
 

@@ -1181,7 +1181,43 @@ export class MatchSim {
       return;
     }
 
-    // --- §4.4 order: displace → push → hit → advance ---
+    // Enter the frame this step will judge and present, then displace → push → hit.
+    // Advancing after the hit check presented the next frame's boxes one step
+    // before that frame was judged, so the hit reaction lagged the first hitbox.
+    // A move accepted this step sets skipP1Advance and stays on frame 0.
+    const crouchHeld = heldPostureFromRelDir(input.relDir) === 'crouch';
+    // §3.13.6: sample early crouch while air / landing hardstun
+    if (crouchHeld) {
+      this.p1.notePreLandCrouchHold();
+    }
+    const dashBack = this.p1.clipId === 'dash_back';
+    const dashSpeed = dashBack ? this.opts.dashBackSpeed : this.opts.dashSpeed;
+    const dashDx = dashBack ? this.opts.dashDxBack : this.opts.dashDxFwd;
+    const adv = {
+      airFrames: this.opts.airFrames,
+      landingFrames: this.opts.landingFrames,
+      dashSpeed,
+      dashDx,
+      applySelfMovement: this.opts.applySelfMovement,
+      selfMovementScale: this.opts.selfMovementScale,
+      jumpApex: this.opts.jumpApex,
+      jumpFwdDist: this.opts.jumpFwdDist,
+      jumpBackDist: this.opts.jumpBackDist,
+      jumpNeutralDist: this.opts.jumpNeutralDist,
+      landingAnimFrames: this.opts.landingAnimFrames,
+      neutralLandToRiseIdleRatio: this.opts.neutralLandToRiseIdleRatio,
+      neutralLandToRiseTurnRatio: this.opts.neutralLandToRiseTurnRatio,
+      neutralRiseToTurnDissolveRatio: this.opts.neutralRiseToTurnDissolveRatio,
+      crouchHeld,
+    };
+    if (!this.skipP1Advance) {
+      this.p1.advance(adv);
+    } else if (this.p1.jumpPhase === 'air') {
+      this.p1.continueJumpArc(adv);
+    }
+    this.p2.advance(adv);
+
+    // --- §4.4 order: displace → push → hit (on the frame just entered) ---
     const prevP1x = this.p1.x;
     const prevP2x = this.p2.x;
 
@@ -1441,39 +1477,6 @@ export class MatchSim {
     }
 
     this.markWhiffIfNeeded();
-
-    // 7. Advance timelines (no Place here)
-    const crouchHeld = heldPostureFromRelDir(input.relDir) === 'crouch';
-    // §3.13.6: sample early crouch while air / landing hardstun
-    if (crouchHeld) {
-      this.p1.notePreLandCrouchHold();
-    }
-    const dashBack = this.p1.clipId === 'dash_back';
-    const dashSpeed = dashBack ? this.opts.dashBackSpeed : this.opts.dashSpeed;
-    const dashDx = dashBack ? this.opts.dashDxBack : this.opts.dashDxFwd;
-    const adv = {
-      airFrames: this.opts.airFrames,
-      landingFrames: this.opts.landingFrames,
-      dashSpeed,
-      dashDx,
-      applySelfMovement: this.opts.applySelfMovement,
-      selfMovementScale: this.opts.selfMovementScale,
-      jumpApex: this.opts.jumpApex,
-      jumpFwdDist: this.opts.jumpFwdDist,
-      jumpBackDist: this.opts.jumpBackDist,
-      jumpNeutralDist: this.opts.jumpNeutralDist,
-      landingAnimFrames: this.opts.landingAnimFrames,
-      neutralLandToRiseIdleRatio: this.opts.neutralLandToRiseIdleRatio,
-      neutralLandToRiseTurnRatio: this.opts.neutralLandToRiseTurnRatio,
-      neutralRiseToTurnDissolveRatio: this.opts.neutralRiseToTurnDissolveRatio,
-      crouchHeld,
-    };
-    if (!this.skipP1Advance) {
-      this.p1.advance(adv);
-    } else if (this.p1.jumpPhase === 'air') {
-      this.p1.continueJumpArc(adv);
-    }
-    this.p2.advance(adv);
     this.syncP2GuardPresentation();
     // Residual Place frame tick after advance (same sample used this frame)
     if (this.p1.attackResidual) this.p1.tickAttackResidual();

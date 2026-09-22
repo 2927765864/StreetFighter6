@@ -539,7 +539,7 @@ export type MutableSimConfig = {
    */
   cmosShake: CmosShakeConfig;
   /**
-   * Directional motion blur: object velocity scaled up, camera velocity clamped.
+   * Local character blur: camera-independent pose velocity and short depth-aware reconstruction.
    */
   motionBlur: MotionBlurConfig;
   /**

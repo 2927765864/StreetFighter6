@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  composeMotionUvOffset,
+  localBlurExposureScale,
   createDefaultMotionBlurConfig,
   mergeMotionBlurConfig,
   motionBlurKindFromPhase,
@@ -24,21 +24,17 @@ describe('shouldHoldMotionBlurVelocity', () => {
   });
 });
 
-describe('composeMotionUvOffset', () => {
-  it('keeps object motion when camera scale is 0', () => {
-    const o = composeMotionUvOffset(0.2, 0, 0.05, 0, 1, 0, 1);
-    expect(o.x).toBeCloseTo(0.075, 6);
-    expect(o.y).toBe(0);
+describe('local exposure', () => {
+  it('gives the same trail for the same speed at 30, 60 and 120 Hz', () => {
+    for (const fps of [30, 60, 120]) {
+      const frameTravel = 120 / fps;
+      expect(frameTravel * localBlurExposureScale(20, 1 / fps)).toBeCloseTo(1.56);
+    }
   });
-
-  it('keeps only scaled camera motion when object scale is 0', () => {
-    const o = composeMotionUvOffset(0.2, 0, 0.2, 0, 0, 0.1, 1);
-    expect(o.x).toBeCloseTo(0.01, 6);
-  });
-
-  it('clamps UV radius', () => {
-    const o = composeMotionUvOffset(2, 0, 0, 0, 1, 0, 0.05);
-    expect(Math.hypot(o.x, o.y)).toBeCloseTo(0.05, 6);
+  it('zero exposure and invalid time produce no travel', () => {
+    expect(localBlurExposureScale(0, 1 / 60)).toBe(0);
+    expect(localBlurExposureScale(20, 0)).toBe(0);
+    expect(localBlurExposureScale(20, NaN)).toBe(0);
   });
 });
 
@@ -49,9 +45,9 @@ describe('mergeMotionBlurConfig', () => {
       cameraScale: -1,
       objectScale: 8,
     });
-    expect(out.samples).toBe(16);
+    expect(out.samples).toBe(32);
     expect(out.cameraScale).toBe(0);
-    expect(out.objectScale).toBe(2);
+    expect(out).not.toHaveProperty('objectScale');
     expect(out.moveScale).toBe(2);
     expect(out.attackScale).toBe(2);
   });
@@ -63,6 +59,16 @@ describe('mergeMotionBlurConfig', () => {
     });
     expect(out.moveScale).toBe(0.2);
     expect(out.attackScale).toBe(1.5);
+  });
+
+  it('clamps local controls and ignores non-finite values', () => {
+    const out = mergeMotionBlurConfig(createDefaultMotionBlurConfig(), {
+      exposureMs: 90, centerWeight: -1, neighborRadiusPx: Infinity, minSpeedPx: NaN,
+    });
+    expect(out.exposureMs).toBe(50);
+    expect(out.centerWeight).toBe(0.1);
+    expect(out.neighborRadiusPx).toBe(13);
+    expect(out.minSpeedPx).toBe(0.5);
   });
 
   it('clamps debugView', () => {
@@ -80,7 +86,7 @@ describe('mergeConfig motionBlur', () => {
     });
     expect(out.motionBlur.enabled).toBe(false);
     expect(out.motionBlur.cameraScale).toBe(0.05);
-    expect(out.motionBlur.objectScale).toBe(0.8);
+    expect(out.motionBlur.exposureMs).toBe(16.67);
     expect(out.motionBlur.moveScale).toBe(0.8);
     expect(out.motionBlur.attackScale).toBe(0.8);
   });

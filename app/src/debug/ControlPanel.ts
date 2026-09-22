@@ -636,14 +636,18 @@ function buildDom(): HTMLElement {
         <summary>动态模糊</summary>
         ${sectionShell(
           'motionBlur',
-          '【动态模糊】角色动作与震屏分别调节；镜头强度影响角色和场景',
+          '【局部动态模糊】只取角色自身运动，移动与攻击/受击独立调节；曝光越长拖影越明显，清晰保留越高主体越清楚。震屏强度单独生效。',
           `
           ${rowToggle('motionBlurEnabled', '启用动态模糊')}
           ${rowNumber('motionBlurMoveScale', '移动强度 (走/冲/跳)', 0, 2, 0.05)}
           ${rowNumber('motionBlurAttackScale', '攻击/受击强度', 0, 2, 0.05)}
           ${rowNumber('motionBlurCameraScale', '镜头强度 (震屏位移/FOV，不含跟镜)', 0, 2, 0.05)}
           ${rowNumber('motionBlurMaxRadiusPx', '最长拖尾 (像素)', 0, 64, 1)}
-          ${rowNumber('motionBlurSamples', '采样次数', 2, 16, 1)}
+          ${rowNumber('motionBlurExposureMs', '曝光时长 (毫秒)', 0, 50, 0.5)}
+          ${rowNumber('motionBlurCenterWeight', '主体清晰保留', 0.1, 8, 0.05)}
+          ${rowNumber('motionBlurNeighborRadiusPx', '局部采样范围 (像素)', 0, 64, 1)}
+          ${rowNumber('motionBlurMinSpeedPx', '最小运动阈值 (像素)', 0, 4, 0.1)}
+          ${rowNumber('motionBlurSamples', '采样次数', 2, 32, 1)}
           ${rowNumber('motionBlurDebugView', '速度图调试 0关/1角色/2震屏', 0, 2, 1)}
           `,
           'expandMotionBlur',
@@ -1319,6 +1323,10 @@ const SIM_PATHS: Array<{ id: string; path: keyof RuntimeConfig | string }> = [
   { id: 'motionBlurAttackScale', path: 'motionBlur.attackScale' },
   { id: 'motionBlurCameraScale', path: 'motionBlur.cameraScale' },
   { id: 'motionBlurMaxRadiusPx', path: 'motionBlur.maxRadiusPx' },
+  { id: 'motionBlurExposureMs', path: 'motionBlur.exposureMs' },
+  { id: 'motionBlurCenterWeight', path: 'motionBlur.centerWeight' },
+  { id: 'motionBlurNeighborRadiusPx', path: 'motionBlur.neighborRadiusPx' },
+  { id: 'motionBlurMinSpeedPx', path: 'motionBlur.minSpeedPx' },
   { id: 'motionBlurSamples', path: 'motionBlur.samples' },
   { id: 'motionBlurDebugView', path: 'motionBlur.debugView' },
   { id: 'stageFitWidth', path: 'stageFitWidth' },
@@ -1643,6 +1651,10 @@ export function setupControlPanel(
     'motionBlur.attackScale',
     'motionBlur.cameraScale',
     'motionBlur.maxRadiusPx',
+    'motionBlur.exposureMs',
+    'motionBlur.centerWeight',
+    'motionBlur.neighborRadiusPx',
+    'motionBlur.minSpeedPx',
     'motionBlur.samples',
     'motionBlur.debugView',
     'stageFitWidth',

@@ -1606,6 +1606,7 @@ async function boot(): Promise<void> {
             hooks.paused && !hooks.boxEditActive,
             presentLogicSteps,
           ),
+          deltaSeconds: presentDt,
           unshakenView,
           unshakenProjection,
         });

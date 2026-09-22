@@ -67,6 +67,22 @@ export function visualFrameToClipTime(
 }
 
 /**
+ * Hitstop lead already walked the clip. Once base time + lead reaches the
+ * authored end, further logic frames only clamp the last pose.
+ */
+export function attackClipPresentationExhausted(
+  baseTimeSec: number,
+  hitstopLeadSec: number,
+  clipDurationSec: number,
+): boolean {
+  const dur = Math.max(0, clipDurationSec);
+  if (dur <= 1e-8) return false;
+  const lead = Number.isFinite(hitstopLeadSec) ? Math.max(0, hitstopLeadSec) : 0;
+  const base = Number.isFinite(baseTimeSec) ? Math.max(0, baseTimeSec) : 0;
+  return base + lead >= dur - 1e-4;
+}
+
+/**
  * Free-run loops (idle / crouch / guard loop): one authored 60Hz sample per logic step.
  * Matches {@link visualFrameToClipTime} so lowering experimental `logicFps` slows
  * free-run the same way as scrubbed clips. Cap matches blendWallDt.

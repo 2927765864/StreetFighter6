@@ -1,11 +1,4 @@
-/**
- * Image-confirmed screen-space motion blur.
- *
- * Velocity RT is fighters only, at drawing-buffer resolution. Camera-shake uses
- * consecutive projections with real per-pixel depth. Layer depth is copied before display
- * clears, without re-drawing geometry. Unfiltered image history confirms visible
- * displacement; neighborhood reconstruction extends blur beyond the silhouette.
- */
+/** Local character motion reconstruction; camera shake remains independently scaled. */
 import * as THREE from 'three/webgpu';
 import {
   Fn,
@@ -16,7 +9,6 @@ import {
   objectGroup,
   uniformGroup,
   screenUV,
-  texture,
   If,
   max,
   min,
@@ -30,10 +22,9 @@ import {
   reference,
 } from 'three/tsl';
 import type { MotionBlurConfig, MotionBlurObjectKind } from '../config/motionBlur';
-import { pickMotionBlurObjectScale } from '../config/motionBlur';
-import { ScreenMotionField } from './ScreenMotionField';
-import { reconstructScreenMotion } from './reconstructScreenMotion';
-import { confirmCameraScreenMotion } from './confirmCameraScreenMotion';
+import { pickMotionBlurObjectScale, localBlurExposureScale } from '../config/motionBlur';
+import { LocalMotionBlurField } from './LocalMotionBlurField';
+import { reconstructLocalMotion } from './reconstructLocalMotion';
 import { CameraShakeMotion } from './CameraShakeMotion';
 import { MOTION_BLUR_MAX_BONES, copyMotionBlurBones } from './motionBlurBones';
 import { MotionBlurDepth, type MotionBlurDepthLayer } from './MotionBlurDepth';
@@ -43,7 +34,7 @@ import {
 } from './fighterDisplayOrder';
 
 /** Match the panel's quality range; no hidden eight-tap ceiling. */
-const COMPOSITE_MAX_SAMPLES = 16;
+const COMPOSITE_MAX_SAMPLES = 32;
 const MAX_BONES = MOTION_BLUR_MAX_BONES;
 
 const _size = new THREE.Vector2();
@@ -196,7 +187,7 @@ function usePoseBoneVelocity(object: THREE.Object3D): boolean {
 
 export class MotionBlurFx {
   private readonly velocityRT: THREE.RenderTarget;
-  private readonly screenMotion: ScreenMotionField;
+  private readonly screenMotion: LocalMotionBlurField;
   private readonly uDisplayLayer = uniform(1);
   private readonly velocityMaterial: THREE.NodeMaterial;
   private readonly compositeMaterial: THREE.NodeMaterial;
@@ -208,9 +199,7 @@ export class MotionBlurFx {
   private readonly uCurrViewProj = uniform(new THREE.Matrix4()).setGroup(
     this.mbFrameGroup,
   );
-  private readonly uObjectScale = uniform(0.8);
-  private moveScale = 0.8;
-  private attackScale = 0.8;
+  private readonly uObjectKind = uniform(1);
   private readonly uCameraScale = uniform(0.1);
   private readonly uSamples = uniform(8);
   private readonly uDebugView = uniform(0);
@@ -233,6 +222,8 @@ export class MotionBlurFx {
     MAX_BONES,
   ).setGroup(objectGroup);
   private hasPrev = false;
+  private exposureMs = 16.67;
+  private frameDeltaSeconds = 1 / 60;
 
   constructor() {
     this.velocityRT = new THREE.RenderTarget(4, 4, {
@@ -244,23 +235,20 @@ export class MotionBlurFx {
     });
     this.velocityRT.texture.name = 'MotionBlurVelocity';
     this.velocityRT.texture.colorSpace = THREE.NoColorSpace;
-    this.screenMotion = new ScreenMotionField(this.velocityRT.texture, this.capturedDepth);
+    this.screenMotion = new LocalMotionBlurField(this.velocityRT.texture, this.capturedDepth);
 
     this.uPrevWorld.onObjectUpdate(({ object }) => {
       if (!object) return;
       this.uPrevWorld.value.copy(prevWorldOf(object));
     });
-    this.uObjectScale.onObjectUpdate(({ object }) => {
+    this.uObjectKind.onObjectUpdate(({ object }) => {
       if (!object) return;
-      this.uObjectScale.value = pickMotionBlurObjectScale(
-        motionBlurKindOf(object),
-        { moveScale: this.moveScale, attackScale: this.attackScale },
-      );
+      this.uObjectKind.value = motionBlurKindOf(object) === 'attack' ? 2 : 1;
     });
 
     const uPrevWorld = this.uPrevWorld;
     const uCurrViewProj = this.uCurrViewProj;
-    const uObjectScale = this.uObjectScale;
+    const uObjectKind = this.uObjectKind;
     const uDisplayLayer = this.uDisplayLayer;
     const uHasSkin = this.uHasSkin;
     const uPrevBones = this.uPrevBones;
@@ -315,11 +303,11 @@ export class MotionBlurFx {
       });
       const ndcCurr = clipCurr.xy.div(max(clipCurr.w, float(1e-6)));
       const ndcPrevObj = clipPrevObj.xy.div(max(clipPrevObj.w, float(1e-6)));
-      // Raw projected displacement is a proposal, not blur strength. Image
-      // matching chooses the visible displacement before applying user scale.
+      // Both poses use the CURRENT camera: follow / shake / zoom cannot
+      // introduce character velocity. Strength and exposure are applied later.
       const velObj = ndcCurr.sub(ndcPrevObj);
       return vec4(velObj.mul(vec2(0.5, -0.5)), clipCurr.w,
-        uDisplayLayer.mul(4).add(uObjectScale));
+        uDisplayLayer.mul(4).add(uObjectKind));
     })();
 
     const field = this.screenMotion;
@@ -330,7 +318,6 @@ export class MotionBlurFx {
     const uDebugView = this.uDebugView;
     const uPreviousShakeClip = this.uPreviousShakeClip;
     const uUseObjectVel = this.uUseObjectVel;
-    const rawObjectVelocity = texture(this.velocityRT.texture);
     const colorNode = Fn(() => {
       const uvCoord = screenUV.toVar();
       const packed = field.velocity.sample(uvCoord);
@@ -343,13 +330,10 @@ export class MotionBlurFx {
       const previousClip = uPreviousShakeClip.mul(vec4(ndc, ndcDepth, 1));
       const projectedCameraUv = ndc.sub(previousClip.xy.div(max(previousClip.w, float(1e-6))))
         .mul(vec2(0.5, -0.5));
-      const objectUv = uUseObjectVel.greaterThan(0.5)
-        .select(rawObjectVelocity.sample(uvCoord).xy, vec2(0));
-      const measuredCameraUv = confirmCameraScreenMotion(field, uvCoord, projectedCameraUv, objectUv);
-      const velCam = measuredCameraUv.mul(vec2(2, -2));
+      const velCam = projectedCameraUv.mul(vec2(2, -2));
       // Strength is a fraction of actual screen-pixel travel, not a depth
       // multiplier. Clamp in pixels so horizontal/vertical trails agree.
-      const pixels = measuredCameraUv.mul(field.size).mul(uCameraScale).toVar();
+      const pixels = projectedCameraUv.mul(field.size).mul(uCameraScale).mul(field.exposureScale.div(0.65)).toVar();
       const len = length(pixels);
       If(len.lessThan(0.25), () => {
         pixels.assign(vec2(0, 0));
@@ -358,7 +342,7 @@ export class MotionBlurFx {
       pixels.mulAssign(min(float(1), field.maxRadius.mul(2).div(max(len, float(1e-8)))));
       const uvOff = pixels.div(field.size);
 
-      const out = reconstructScreenMotion(field, uvCoord, uvOff, uSamples, uUseObjectVel).toVar();
+      const out = reconstructLocalMotion(field, uvCoord, uvOff, uSamples, uUseObjectVel).toVar();
       If(uDebugView.greaterThan(float(0.5)), () => {
         const dbg = vec4(0, 0, 0, 1).toVar();
         If(uDebugView.lessThan(float(1.5)), () => {
@@ -386,14 +370,19 @@ export class MotionBlurFx {
   }
 
   applyParams(cfg: MotionBlurConfig, _heightPx: number): void {
-    this.moveScale = cfg.moveScale;
-    this.attackScale = cfg.attackScale;
+    this.screenMotion.moveScale.value = pickMotionBlurObjectScale('move', cfg);
+    this.screenMotion.attackScale.value = pickMotionBlurObjectScale('attack', cfg);
     this.uCameraScale.value = cfg.cameraScale;
     this.uSamples.value = Math.max(
       2, Math.min(COMPOSITE_MAX_SAMPLES, Math.round(cfg.samples)),
     );
     this.uDebugView.value = cfg.debugView ?? 0;
     this.screenMotion.maxRadius.value = cfg.maxRadiusPx;
+    this.exposureMs = cfg.exposureMs;
+    this.screenMotion.exposureScale.value = localBlurExposureScale(this.exposureMs, this.frameDeltaSeconds);
+    this.screenMotion.minSpeed.value = cfg.minSpeedPx;
+    this.screenMotion.neighborRadius.value = cfg.neighborRadiusPx;
+    this.screenMotion.centerWeight.value = cfg.centerWeight;
   }
 
   captureDepth(renderer: THREE.WebGPURenderer, layer: MotionBlurDepthLayer): void {
@@ -406,6 +395,7 @@ export class MotionBlurFx {
     camera: THREE.Camera,
     opts?: {
       holdVelocity?: boolean;
+      deltaSeconds?: number;
       unshakenView?: THREE.Matrix4;
       unshakenProjection?: THREE.Matrix4;
     },
@@ -420,11 +410,22 @@ export class MotionBlurFx {
     }
 
     camera.updateMatrixWorld();
-    this.screenMotion.capture(renderer, camera, opts?.holdVelocity === true);
+    const resized = this.screenMotion.capture(renderer, camera);
+    if (resized) this.resetCameraHistory();
+    if (!this.hasPrev) {
+      // First frame, re-enable and resize must never compare stale poses.
+      stampFighterPrev(scene);
+      this.uUseObjectVel.value = 0;
+      this.hasPrev = true;
+      return;
+    }
     if (opts?.holdVelocity) {
+      if (this.uUseObjectVel.value > 0.5) this.screenMotion.resolve(renderer);
       this.composite(renderer);
       return;
     }
+    this.frameDeltaSeconds = Math.max(1e-4, opts?.deltaSeconds ?? 1 / 60);
+    this.screenMotion.exposureScale.value = localBlurExposureScale(this.exposureMs, this.frameDeltaSeconds);
 
     camera.updateMatrixWorld();
     _currViewProj.multiplyMatrices(
@@ -494,10 +495,7 @@ export class MotionBlurFx {
         const root = blurRootOf(object);
         if (!debugOn && !activeRoots.has(root)) return;
         this.uPrevWorld.value.copy(prevWorldOf(object));
-        this.uObjectScale.value = pickMotionBlurObjectScale(
-          motionBlurKindOf(object),
-          { moveScale: this.moveScale, attackScale: this.attackScale },
-        );
+        this.uObjectKind.value = motionBlurKindOf(object) === 'attack' ? 2 : 1;
         this.uDisplayLayer.value = object.layers.isEnabled(LAYER_FIGHTER_FRONT) ? 2 : 1;
         const poseDelta = usePoseBoneVelocity(object);
         this.uHasSkin.value = poseDelta ? 1 : 0;
@@ -533,7 +531,6 @@ export class MotionBlurFx {
           clippingContext,
           passId,
         );
-        prevWorldOf(object).copy(object.matrixWorld);
       },
     );
 
@@ -583,6 +580,7 @@ export class MotionBlurFx {
         root.matrixWorldAutoUpdate = false;
         try {
           renderer.render(root as unknown as THREE.Scene, camera);
+          renderer.autoClear = false;
         } finally {
           root.matrixWorldAutoUpdate = autoUpdate;
         }
@@ -622,7 +620,8 @@ export class MotionBlurFx {
   /** Disabled frames must not leave an old shake pose as the next reference. */
   resetCameraHistory(): void {
     this.shakeMotion.reset();
-    this.screenMotion.reset();
+    this.hasPrev = false;
+    this.uUseObjectVel.value = 0;
     this.uPreviousShakeClip.value.identity();
     this.mbFrameGroup.needsUpdate = true;
   }

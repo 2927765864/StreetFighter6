@@ -68,16 +68,19 @@ describe('standing HP hit reaction presentation', () => {
   it.each([0, 13])('shows frame 0 on contact with %i hitstop frames, then advances without extending stun', (hitstop) => {
     const { sim, action, bone, present, hit, move } = setup(0, hitstop);
     hit();
-    expect(sim.p2.stunTimer).toBe(move.hitstun - 1);
+    // Contact present is clip frame 0; the stun tick waits until the next step.
+    // The attack frame that connected is still the one on screen (hitboxes included).
+    expect(sim.p2.stunTimer).toBe(move.hitstun);
+    expect(sim.p1.worldHitBoxes().length).toBeGreaterThan(0);
     expect(action.time).toBe(0);
     expect(bone.position.x).toBe(0);
     for (let i = 0; i < hitstop; i++) {
       sim.step();
       present();
       expect(action.time).toBe(0);
-      expect(sim.p2.stunTimer).toBe(move.hitstun - 1);
+      expect(sim.p2.stunTimer).toBe(move.hitstun);
     }
-    for (let frame = 1; frame < move.hitstun - 1; frame++) {
+    for (let frame = 1; frame < move.hitstun; frame++) {
       sim.step();
       present();
       expect(action.time).toBeCloseTo(frame / 60);

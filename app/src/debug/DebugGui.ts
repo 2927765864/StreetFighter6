@@ -284,7 +284,11 @@ export function createDebugGui(
   mblur.add(cfg.motionBlur, 'attackScale', 0, 2, 0.05).name('攻击/受击强度');
   mblur.add(cfg.motionBlur, 'cameraScale', 0, 2, 0.05).name('镜头强度（仅震屏）');
   mblur.add(cfg.motionBlur, 'maxRadiusPx', 0, 64, 1).name('最长拖尾像素');
-  mblur.add(cfg.motionBlur, 'samples', 2, 16, 1).name('采样次数');
+  mblur.add(cfg.motionBlur, 'exposureMs', 0, 50, 0.5).name('曝光时长（毫秒）');
+  mblur.add(cfg.motionBlur, 'centerWeight', 0.1, 8, 0.05).name('主体清晰保留');
+  mblur.add(cfg.motionBlur, 'neighborRadiusPx', 0, 64, 1).name('局部采样范围（像素）');
+  mblur.add(cfg.motionBlur, 'minSpeedPx', 0, 4, 0.1).name('最小运动阈值（像素）');
+  mblur.add(cfg.motionBlur, 'samples', 2, 32, 1).name('采样次数');
   mblur.add(cfg.motionBlur, 'debugView', 0, 2, 1).name('速度图 0关/1角色/2震屏');
 
   const light = gui.addFolder('打光');

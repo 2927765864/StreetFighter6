@@ -29,6 +29,7 @@ import {
   shouldClearHitstopPresentOffset,
   logicFrameToClipTime,
   remapLogicToClipTime,
+  attackClipPresentationExhausted,
   resolveAnimSequenceFrame,
   visualFrameToClipTime,
   type ScrubMode,
@@ -47,6 +48,7 @@ import {
   worldBox,
 } from './materialUtils';
 import {
+  categorizeBinding,
   defaultCrossfadeDurations,
   resolveCrossfadeSec,
   type CrossfadeDurations,
@@ -2910,21 +2912,35 @@ export class FighterView {
       this.playBest(tailClip, scrubRole, leaveFade);
       const action = this.resolveAction(tailClip, scrubRole);
       if (action && this.mixer) {
+        const dur = action.getClip().duration;
         const rem = fighter.animTail.animRemap;
         const t = seq
-          ? visualFrameToClipTime(seq.motionFrame, action.getClip().duration)
+          ? visualFrameToClipTime(seq.motionFrame, dur)
           : rem?.length
-            ? remapLogicToClipTime(vf, rem, action.getClip().duration)
-            : visualFrameToClipTime(vf, action.getClip().duration);
-        if (this.poseBlend && this.poseBlend.to === action) {
-          const w = this.stepPoseBlend(wallDtSec, freeRunDt);
-          this.scrubActionTo(action, t, w, true);
+            ? remapLogicToClipTime(vf, rem, dur)
+            : visualFrameToClipTime(vf, dur);
+        const clipDone = attackClipPresentationExhausted(
+          t,
+          this.hitstopPresentOffsetSec,
+          dur,
+        );
+        if (clipDone && fighter.endAnimTailAtClipEnd()) {
+          // Last authored frame already on screen via the hitstop lead.
+          // Fall through so this present starts the idle crossfade.
         } else {
-          this.scrubActionTo(action, t);
+          if (this.poseBlend && this.poseBlend.to === action) {
+            const w = this.stepPoseBlend(wallDtSec, freeRunDt);
+            this.scrubActionTo(action, t, w, true);
+          } else {
+            this.scrubActionTo(action, t);
+          }
+          this.afterAnimPose(fighter, cfg, wallDtSec);
+          return;
         }
+      } else {
+        this.afterAnimPose(fighter, cfg, wallDtSec);
+        return;
       }
-      this.afterAnimPose(fighter, cfg, wallDtSec);
-      return;
     }
 
     // Stance transition scrub (§3.7.2 必接片). Residual→stance may dual-advance (§3.11).
@@ -3090,10 +3106,9 @@ export class FighterView {
         let localElapsed = 0;
         let localTotal = 1;
         if (fighter.phase === 'hitstun') {
-          // MatchSim advances stun on the contact step before presenting it.
-          // That consumed tick is the first displayed sample (index 0), not
-          // frame 1. Keep combat timers intact; only offset the clip timeline.
-          localElapsed = Math.max(0, fighter.stunDuration - fighter.stunTimer - 1);
+          // Contact step applies stun and presents before the timer ticks, so
+          // remaining == duration is clip frame 0 (the same present as the hitbox).
+          localElapsed = Math.max(0, fighter.stunDuration - fighter.stunTimer);
           localTotal = Math.max(1, fighter.stunDuration);
         } else if (fighter.kdPhase === 'sweep') {
           localElapsed = Math.max(
@@ -3180,17 +3195,19 @@ export class FighterView {
       return;
     }
 
-    // Idle / crouch: free-run; soft-blend from walk end or residual→idle (§3.11)
+    // Idle / crouch: free-run. Attack clip → idle/crouch is a hard cut so the
+    // last attack pose is not held across the residual blend window.
+    const idleRole = role === 'main' ? 'main' : role;
+    const fromAttackClip =
+      categorizeBinding(this.currentBinding ?? '') === 'attack' &&
+      (fighter.clipId === 'idle' || fighter.clipId === 'crouch');
     this.playBest(
       fighter.clipId,
-      role === 'main' ? 'main' : role,
-      fadePolicy,
+      idleRole,
+      fromAttackClip ? HARD_CUT : fadePolicy,
     );
     if (this.mixer) {
-      const action = this.resolveAction(
-        fighter.clipId,
-        role === 'main' ? 'main' : role,
-      );
+      const action = this.resolveAction(fighter.clipId, idleRole);
       if (action) {
         if (this.walkXfadeDefer && this.poseBlend) {
           this.applyHeldFrameBlend();
