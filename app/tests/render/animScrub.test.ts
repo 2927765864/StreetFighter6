@@ -127,12 +127,19 @@ describe('hitstop presentation slow', () => {
     const flat = createDefaultHitstopAnimRateCurve();
     const scale = 0.08;
     // 8f hitstop, consume all 8 ticks → timerAfter 0
+    // Seven curve frames at `scale`, last frozen frame at (scale + 1) / 2.
+    // 8/60 exceeds the 0.1s free-run cap, so dt is cap × mean rate.
+    const mid = (scale + 1) / 2;
+    const mean = (7 * scale + mid) / 8;
     expect(
       hitstopPresentDtSecFromCurve(8, 8, 0, flat, scale),
-    ).toBeCloseTo(hitstopPresentDtSec(8, scale), 5);
+    ).toBeCloseTo(0.1 * mean, 5);
+    expect(
+      hitstopPresentDtSecFromCurve(7, 8, 1, flat, scale),
+    ).toBeCloseTo(hitstopPresentDtSec(7, scale), 5);
     expect(
       freeRunAnimDtSecWithHitstopCurve(8, 8, 8, 0, flat, scale),
-    ).toBeCloseTo(freeRunAnimDtSecWithHitstop(8, 8, scale), 5);
+    ).toBeCloseTo(0.1 * mean, 5);
   });
 
   it('ramp curve samples mid progress higher than start', () => {
@@ -148,9 +155,14 @@ describe('hitstop presentation slow', () => {
 
     // First frozen frame only (timerBefore=8 → after=7): rate≈0
     expect(hitstopPresentDtSecFromCurve(1, 8, 7, ramp, 1)).toBeCloseTo(0, 5);
-    // Last frozen frame (timerBefore=1 → after=0): rate≈7/8
+    // Second-to-last (timerBefore=2 → after=1): progress 6/8
+    expect(hitstopPresentDtSecFromCurve(1, 8, 1, ramp, 1)).toBeCloseTo(
+      (1 / 60) * (6 / 8),
+      5,
+    );
+    // Last frozen frame bridges (penultimate 6/8 + 1) / 2
     expect(hitstopPresentDtSecFromCurve(1, 8, 0, ramp, 1)).toBeCloseTo(
-      (1 / 60) * (7 / 8),
+      (1 / 60) * ((6 / 8 + 1) / 2),
       5,
     );
   });

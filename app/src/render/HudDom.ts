@@ -40,7 +40,7 @@ export class HudDom {
       pointerEvents: 'none',
       whiteSpace: 'nowrap',
     } as CSSStyleDeclaration);
-    help.textContent = '移动-WASD · 轻/中/重拳-U/I/O · 中/重震预设1/2';
+    help.textContent = '移动-A/D · 重拳O · 重置R · 暂停P · 逐帧N';
     parent.appendChild(help);
   }
 

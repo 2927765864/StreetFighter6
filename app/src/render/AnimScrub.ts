@@ -187,7 +187,8 @@ export function freeRunAnimDtSecWithHitstopCurve(
     hitstopAnimRateScale,
     timeScaleAnim,
   );
-  // One logic step after freeze ends plays at (exitRate + 1) / 2.
+  // First logic step after freeze plays at the same bridge as the last
+  // frozen step: (penultimate hitstop rate + 1) / 2.
   if (exitEasePending && normal > 0) {
     const exitRate = resolveHitstopExitAnimRate(
       hitstopDuration,
@@ -204,9 +205,10 @@ export function freeRunAnimDtSecWithHitstopCurve(
 }
 
 /**
- * Scrub lead compensation for the exit-ease frame.
+ * Scrub lead compensation for the first frame after hitstop.
  * Logic advances a full authored step (visual +1/60 if lead unchanged);
  * shrink lead by (1 - midRate)/60 so net visual advance is midRate/60.
+ * midRate matches the last frozen frame: (penultimate rate + 1) / 2.
  */
 export function applyHitstopExitEaseLeadSec(
   currentSec: number,

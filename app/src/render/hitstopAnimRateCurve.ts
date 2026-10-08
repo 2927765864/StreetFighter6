@@ -118,18 +118,40 @@ export function averageHitstopAnimRateForTicks(
   if (ticks <= 0) return 0;
   const T = Math.max(0, hitstopTimerAfter);
   const scale = clampRate(hitstopAnimRateScale);
+  const d = Math.max(0, hitstopDuration);
   let sum = 0;
   for (let i = 0; i < ticks; i++) {
     const timerBefore = T + ticks - i;
-    const u = hitstopProgress01(hitstopDuration, timerBefore);
-    sum += clampRate(sampleHitstopAnimRateCurve(curve, u) * scale);
+    // Last frozen step bridges toward full speed: (penultimate rate + 1) / 2.
+    // The following non-hitstop step uses the same bridge (see exit ease).
+    if (timerBefore === 1 && T === 0) {
+      sum += hitstopExitEaseRate(
+        rawHitstopAnimRateAt(d, d >= 2 ? 2 : 1, curve, scale, clampRate),
+      );
+    } else {
+      sum += rawHitstopAnimRateAt(d, timerBefore, curve, scale, clampRate);
+    }
   }
   return sum / ticks;
 }
 
+/** Curve×scale at one frozen step. Not the exit bridge. */
+function rawHitstopAnimRateAt(
+  hitstopDuration: number,
+  timerBeforeDecrement: number,
+  curve: readonly HitstopAnimRateKey[] | null | undefined,
+  scale: number,
+  clampRate: (r: number) => number,
+): number {
+  const u = hitstopProgress01(hitstopDuration, timerBeforeDecrement);
+  return clampRate(sampleHitstopAnimRateCurve(curve, u) * scale);
+}
+
 /**
- * Rate on the last frozen logic step (timerBefore === 1).
- * Used for the one-frame exit ease after hitstop ends.
+ * Raw curve×scale on the frame before the last frozen step
+ * (`timerBefore === 2`, or the only step when duration is 1).
+ * Last hitstop frame and the first frame after hitstop both play at
+ * {@link hitstopExitEaseRate} of this value.
  */
 export function resolveHitstopExitAnimRate(
   hitstopDuration: number,
@@ -139,11 +161,11 @@ export function resolveHitstopExitAnimRate(
 ): number {
   const d = Math.max(0, hitstopDuration);
   if (d <= 0) return 0;
-  const u = hitstopProgress01(d, 1);
-  return clampRate(sampleHitstopAnimRateCurve(curve, u) * clampRate(hitstopAnimRateScale));
+  const scale = clampRate(hitstopAnimRateScale);
+  return rawHitstopAnimRateAt(d, d >= 2 ? 2 : 1, curve, scale, clampRate);
 }
 
-/** One-frame bridge after hitstop: (exitRate + 1) / 2. */
+/** Bridge rate: (hitstopRate + full speed) / 2. */
 export function hitstopExitEaseRate(exitHitstopRate: number): number {
   const a = Number.isFinite(exitHitstopRate) ? exitHitstopRate : 0;
   const clamped = Math.min(1, Math.max(0, a));

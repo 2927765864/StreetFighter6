@@ -2691,8 +2691,8 @@ export class FighterView {
    * @param opts.hitstopDuration Total frames of the current hitstop window.
    * @param opts.hitstopTimerAfter Remaining hitstop frames after this present's
    *   logic steps (used with ticks to recover per-tick progress).
-   * @param opts.hitstopExitEasePending One post-hitstop logic step at
-   *   (exitRate + 1) / 2 for free-run and scrub lead.
+   * @param opts.hitstopExitEasePending First post-hitstop logic step at
+   *   (penultimateRate + 1) / 2, same bridge as the last frozen frame.
    * @param opts.inHitstop true while logic hitstop is active (or ticks>0 this
    *   present). Hit-slow lead is kept after hitstop; cleared on clip switch.
    */

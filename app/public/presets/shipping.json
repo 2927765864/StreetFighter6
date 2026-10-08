@@ -585,8 +585,12 @@
         "v": 0.23544172955739862
       },
       {
-        "t": 0.9893694681292968,
-        "v": 0.20987031640472575
+        "t": 0.9348033718286382,
+        "v": 0.22191363787081375
+      },
+      {
+        "t": 1,
+        "v": 0.17688266805623654
       }
     ],
     "enableCancel": false,
@@ -1658,10 +1662,10 @@
           "impulseVelDeg": 0,
           "fov": 0,
           "fovKickDeg": 0,
-          "impulsePosM": 0.2,
+          "impulsePosM": 0.12,
           "impulseVelM": 0,
           "posAzimuthDeg": 45,
-          "posTiltDeg": 18
+          "posTiltDeg": 10
         },
         "L_impact2": {
           "label": "重-冲击2",
@@ -1796,7 +1800,7 @@
       "pants": false,
       "hitVfx": false,
       "hitShockwave": false,
-      "hitGlow": true,
+      "hitGlow": false,
       "hitCloudShadow": true,
       "extendedSim": false,
       "extendedLoco": true,
